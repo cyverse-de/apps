@@ -142,11 +142,11 @@
   [props config-valid configs]
   "apps.workspace.metadata.category.attrs" ["rdf:type", "http://edamontology.org/has_topic"])
 
-(cc/defprop-optstr uid-domain
+(cc/defprop-str uid-domain
   "The domain name to append to the user identifier to get the fully qualified
    user identifier."
   [props config-valid configs]
-  "apps.uid.domain" "cyverse.org")
+  "apps.uid.domain")
 
 (cc/defprop-optstr irods-home
   "The path to the home directory in iRODS."
@@ -281,10 +281,10 @@
   [props config-valid configs]
   "apps.email.base-url" "http://iplant-email:60000")
 
-(cc/defprop-optstr app-deletion-notification-src-addr
+(cc/defprop-str app-deletion-notification-src-addr
   "The source email address of app deletion notification messages."
   [props config-valid configs]
-  "apps.email.app-deletion.from" "prod-user@cyverse.org")
+  "apps.email.app-deletion.from")
 
 (cc/defprop-optstr app-deletion-notification-subject
   "The email subject of app deletion notification messages."
