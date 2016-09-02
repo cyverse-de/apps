@@ -426,8 +426,6 @@
     (perms/check-app-permissions username "read" [app-id]))
   (let [details (load-app-details app-id)
         tools   (get-app-tools app-id)]
-    (when (empty? tools)
-      (throw  (IllegalArgumentException. (str "no tools associated with app, " app-id))))
     (->> (format-app-details username details tools)
          (remove-nil-vals))))
 
