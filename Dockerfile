@@ -1,5 +1,8 @@
 FROM clojure:alpine
 
+RUN apk add --update git && \
+    rm -rf /var/cache/apk
+
 RUN mkdir -p /etc/iplant/de/crypto && \
     touch /etc/iplant/de/crypto/pubring.gpg && \
     touch /etc/iplant/de/crypto/random_seed && \
@@ -16,9 +19,6 @@ COPY . /usr/src/app
 COPY conf/main/logback.xml /usr/src/app/logback.xml
 
 WORKDIR /usr/src/app
-
-RUN apk add --update git && \
-    rm -rf /var/cache/apk
 
 RUN lein uberjar && \
     cp target/apps-standalone.jar .
