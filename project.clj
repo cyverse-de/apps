@@ -7,9 +7,9 @@
       (string/trim (:out (sh "git" "rev-parse" "HEAD")))
       ""))
 
-(defproject org.iplantc/apps "5.2.8.0"
+(defproject org.cyverse/apps "2.8.1-SNAPSHOT"
   :description "Framework for hosting DiscoveryEnvironment metadata services."
-  :url "https://github.com/iPlantCollaborativeOpenSource/DE"
+  :url "https://github.com/cyverse-de/apps"
   :license {:name "BSD"
             :url "http://iplantcollaborative.org/sites/default/files/iPLANT-LICENSE.txt"}
   :manifest {"Git-Ref" ~(git-ref)}
@@ -21,16 +21,16 @@
                  [de.ubercode.clostache/clostache "1.4.0"]
                  [medley "0.7.0"]
                  [metosin/compojure-api "0.24.5"]
-                 [org.iplantc/authy "5.2.8.0"]
-                 [org.iplantc/clojure-commons "5.2.8.0"]
-                 [org.iplantc/kameleon "5.2.8.0"]
-                 [org.iplantc/mescal "5.2.8.0"]
-                 [org.iplantc/metadata-client "5.2.8.0"]
-                 [org.iplantc/common-cli "5.2.8.0"]
-                 [org.iplantc/common-cfg "5.2.8.0"]
-                 [org.iplantc/common-swagger-api "5.2.8.0"]
-                 [org.iplantc/permissions-client "5.2.8.0"]
-                 [org.iplantc/service-logging "5.2.8.0"]
+                 [org.cyverse/authy "2.8.0"]
+                 [org.cyverse/clojure-commons "2.8.0"]
+                 [org.cyverse/kameleon "2.8.0"]
+                 [org.cyverse/mescal "2.8.0"]
+                 [org.cyverse/metadata-client "2.8.0"]
+                 [org.cyverse/common-cli "2.8.0"]
+                 [org.cyverse/common-cfg "2.8.0"]
+                 [org.cyverse/common-swagger-api "2.8.0"]
+                 [org.cyverse/permissions-client "2.8.0"]
+                 [org.cyverse/service-logging "2.8.0"]
                  [me.raynes/fs "1.4.6"]
                  [mvxcvi/clj-pgp "0.8.0"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
