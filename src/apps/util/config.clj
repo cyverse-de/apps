@@ -12,7 +12,7 @@
 (def svc-info
   {:desc "Framework for hosting DiscoveryEnvironment metadata services."
    :app-name "apps"
-   :group-id "org.iplantc"
+   :group-id "org.cyverse"
    :art-id "apps"
    :service "apps"})
 
