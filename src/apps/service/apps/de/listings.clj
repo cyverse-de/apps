@@ -15,6 +15,7 @@
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :refer [get-app get-app-tools] :as amp]
             [apps.service.apps.de.categorization :as categorization]
+            [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.permissions :as perms]
             [cemerick.url :as curl]
             [metadata-client.core :as metadata-client]))
@@ -261,7 +262,7 @@
       (format-app-ratings)
       (format-app-pipeline-eligibility)
       (format-app-permissions perms)
-      (assoc :can_favor true :can_rate true :app_type "DE")
+      (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
       (assoc :beta (contains? beta-ids-set id))
       (assoc :is_public (contains? public-app-ids id))
       (remove-nil-vals)))
@@ -413,7 +414,8 @@
              :references           (map :reference_text (:app_references details))
              :tools                (map remove-nil-vals tools)
              :categories           (get-groups-for-app app-id)
-             :suggested_categories (get-suggested-groups-for-app app-id))
+             :suggested_categories (get-suggested-groups-for-app app-id)
+             :system_id            c/system-id)
       (format-app-hierarchies username)
       format-wiki-url)))
 
@@ -428,27 +430,6 @@
         tools   (get-app-tools app-id)]
     (->> (format-app-details username details tools)
          (remove-nil-vals))))
-
-(defn load-app-ids
-  "Loads the identifiers for all apps that refer to valid tools from the database."
-  []
-  (map :id
-       (select [:apps :app]
-               (modifier "distinct")
-               (fields :app.id)
-               (join [:app_steps :step]
-                     {:app.id :step.app_id})
-               (where (not [(sqlfn :exists (subselect [:tasks :t]
-                                                      (join [:tools :dc]
-                                                            {:t.tool_id :dc.id})
-                                                      (where {:t.id :step.task_id
-                                                              :t.tool_id nil})))]))
-               (order :id :ASC))))
-
-(defn list-app-ids
-  "This service obtains the identifiers of all apps that refer to valid tools."
-  []
-  {:app_ids (load-app-ids)})
 
 (defn- with-task-params
   "Includes a list of related file parameters in the query's result set,
@@ -502,7 +483,7 @@
         tasks    (get-tasks-with-file-params task-ids)]
     (-> app
         (select-keys [:id :name :description])
-        (assoc :tasks tasks))))
+        (assoc :tasks tasks :system_id c/system-id))))
 
 (defn get-app-task-listing
   "A service used to list the file parameters in an app."

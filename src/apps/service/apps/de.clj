@@ -62,9 +62,6 @@
   (previewCommandLine [_ app]
     (app-metadata/preview-command-line app))
 
-  (listAppIds [_]
-    (listings/list-app-ids))
-
   (deleteApps [_ deletion-request]
     (app-metadata/delete-apps user deletion-request))
 

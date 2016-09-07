@@ -144,6 +144,7 @@
   (validate-jobs-for-user user [job-id] "read")
   (let [job (jp/get-job-by-id job-id)]
     {:app_id     (:app-id job)
+     :system_id  (string/lower-case (:job-type job))
      :parameters (job-params/get-parameter-values apps-client job)}))
 
 (defn get-job-relaunch-info

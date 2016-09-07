@@ -51,14 +51,6 @@
          `/arg-preview` service in the JEX. Please see the JEX documentation for more information."
          (ok (apps/preview-command-line current-user body)))
 
-  (GET* "/ids" []
-        :query [params SecuredQueryParams]
-        :return AppIdList
-        :summary "List All App Identifiers"
-        :description "The export script needs to have a way to obtain the identifiers of all of the apps
-        in the Discovery Environment, deleted or not. This service provides that information."
-        (ok (apps/list-app-ids current-user)))
-
   (POST* "/shredder" []
          :query [params SecuredQueryParams]
          :body [body (describe AppDeletionRequest "List of App IDs to delete.")]

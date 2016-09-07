@@ -4,7 +4,8 @@
         [kameleon.entities]
         [apps.util.conversions :only [remove-nil-vals]])
   (:require [apps.metadata.params :as mp]
-            [apps.persistence.app-metadata :as amp]))
+            [apps.persistence.app-metadata :as amp]
+            [apps.service.apps.de.constants :as c]))
 
 (defn- mapped-input-subselect
   [step-id]
@@ -77,9 +78,10 @@
 (defn- format-app
   [{app-id :id name :name :as app}]
   (-> (select-keys app [:id :name :description :disabled :deleted])
-      (assoc :label  name
-             :groups   (remove (comp empty? :parameters) (format-steps app-id))
-             :app_type "DE")))
+      (assoc :label     name
+             :groups    (remove (comp empty? :parameters) (format-steps app-id))
+             :app_type  "DE"
+             :system_id (c/system-id))))
 
 (defn get-app
   "This service obtains an app description in a format that is suitable for building the job

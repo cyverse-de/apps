@@ -1,5 +1,5 @@
 (ns apps.routes.schemas.analysis
-  (:use [common-swagger-api.schema :only [describe]]
+  (:use [common-swagger-api.schema :only [describe NonBlankString]]
         [schema.core :only [defschema optional-key Any Bool Keyword]]
         [apps.routes.schemas.containers :only [ToolContainer]])
   (:import [java.util UUID]))
@@ -38,6 +38,7 @@
 
 (defschema AnalysisParameters
   {:app_id     (describe String "The ID of the app used to perform the analysis.")
+   :system_id  (describe NonBlankString "The ID of the app execution system.")
    :parameters (describe [AnalysisParameter] "The list of parameters.")})
 
 (defschema AnalysisShredderRequest

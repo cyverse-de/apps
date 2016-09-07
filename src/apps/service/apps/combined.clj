@@ -75,9 +75,6 @@
   (previewCommandLine [_ app]
     (.previewCommandLine (util/get-apps-client clients) app))
 
-  (listAppIds [_]
-    (apply merge-with concat (map #(.listAppIds %) clients)))
-
   (deleteApps [_ deletion-request]
     (.deleteApps (util/get-apps-client clients) deletion-request))
 

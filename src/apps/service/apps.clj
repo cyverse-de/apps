@@ -105,10 +105,6 @@
   [user app]
   (.previewCommandLine (get-apps-client user) app))
 
-(defn list-app-ids
-  [user]
-  (.listAppIds (get-apps-client user)))
-
 (defn delete-apps
   [user deletion-request]
   (.deleteApps (get-apps-client user) deletion-request))

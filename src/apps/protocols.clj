@@ -14,7 +14,6 @@
   (canEditApps [_])
   (addApp [_ app])
   (previewCommandLine [_ app])
-  (listAppIds [_])
   (deleteApps [_ deletion-request])
   (getAppJobView [_ app-id])
   (getAppSubmissionInfo [_ app-id])

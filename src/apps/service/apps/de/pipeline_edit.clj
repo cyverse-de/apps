@@ -18,6 +18,7 @@
                                       validate-pipeline]]
         [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]])
   (:require [apps.clients.permissions :as permissions]
+            [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.listings :as listings]))
 
 (defn- add-app-type
@@ -115,7 +116,8 @@
         (select-keys [:id :name :description])
         (assoc :tasks tasks
                :steps steps
-               :mappings mappings))))
+               :mappings mappings
+               :system_id c/system-id))))
 
 (defn- convert-app-to-copy
   "Adds copies of the steps and mappings fields to the app, and formats

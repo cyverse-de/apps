@@ -86,6 +86,7 @@
     :app_name        (:app_name jex-submission)
     :batch           batch?
     :description     (:description jex-submission)
+    :system_id       "de"
     :id              (str job-id)
     :name            (:name jex-submission)
     :notify          (:notify jex-submission)
