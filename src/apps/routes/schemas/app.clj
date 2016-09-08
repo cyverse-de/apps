@@ -195,7 +195,7 @@
    :description                     (describe String "The App's description")
    (optional-key :integration_date) (describe Date "The App's Date of public submission")
    (optional-key :edited_date)      (describe Date "The App's Date of its last edit")
-   :system_id                       (describe NonBlankString "The primary execution system ID for the app.")})
+   (optional-key :system_id)        (describe NonBlankString "The primary execution system ID for the app.")})
 
 (defschema App
   (merge AppBase

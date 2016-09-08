@@ -50,7 +50,7 @@
     :app_name        (:app-name job)
     :description     (:description job)
     :enddate         (job-timestamp (:end-date job))
-    :system_id       (string/lower-case (:job_type job))
+    :system_id       (string/lower-case (:job-type job))
     :id              id
     :name            (:job-name job)
     :resultfolderid  (:result-folder-path job)

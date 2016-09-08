@@ -81,7 +81,7 @@
       (assoc :label     name
              :groups    (remove (comp empty? :parameters) (format-steps app-id))
              :app_type  "DE"
-             :system_id (c/system-id))))
+             :system_id c/system-id)))
 
 (defn get-app
   "This service obtains an app description in a format that is suitable for building the job
