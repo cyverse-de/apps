@@ -374,9 +374,6 @@
      :step_count
      (describe Long "The number of Tasks this App executes")
 
-     :system_id
-     (describe NonBlankString "The primary execution system ID for the app.")
-
      (optional-key :wiki_url)
      AppDocUrlParam
 
