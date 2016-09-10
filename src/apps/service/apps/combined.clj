@@ -37,6 +37,9 @@
   (getJobTypes [_]
     (mapcat #(.getJobTypes %) clients))
 
+  (supportsSystemId [_ system-id]
+    (some #(.supportsSystemId % system-id) clients))
+
   (listAppCategories [_ params]
     (mapcat #(.listAppCategories % params) clients))
 
@@ -72,14 +75,25 @@
   (addApp [_ app]
     (.addApp (util/get-apps-client clients) app))
 
+  (addApp [_ system-id app]
+    (.addApp (util/get-apps-client clients system-id) app))
+
   (previewCommandLine [_ app]
     (.previewCommandLine (util/get-apps-client clients) app))
 
+  (previewCommandLine [_ system-id app]
+    (.previewCommandLine (util/get-apps-client clients system-id) app))
+
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (deleteApps [_ deletion-request]
     (.deleteApps (util/get-apps-client clients) deletion-request))
 
   (getAppJobView [_ app-id]
     (job-view/get-app app-id clients))
+
+  ;; TODO: implement me
+  (getAppJobView [_ system-id app-id]
+    #_(job-view/get-app system-id app-id clients))
 
   (getAppSubmissionInfo [_ app-id]
     (job-view/get-app-submission-info app-id clients))
