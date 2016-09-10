@@ -24,10 +24,10 @@
      (or (first (filter #(.canEditApps %) clients))
          (throw+ {:type  :clojure-commons.exception/bad-request-field
                   :error "apps are not editable at this time."})))
-  ([clients client-name]
-     (or (first (filter #(= client-name (.getClientName %)) clients))
+  ([clients system-id]
+     (or (first (filter #(.supportsSystemId % system-id) clients))
          (throw+ {:type  :clojure-commons.exception/bad-request-field
-                  :error (str "unrecognized client name " client-name)}))))
+                  :error (str "unrecognized system ID " system-id)}))))
 
 (defn apps-client-for-job
   [{app-id :app_id :as submission} clients]

@@ -1,5 +1,6 @@
 (ns apps.service.apps.util
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojure-commons.exception-util :as cxu]))
 
 (defn supports-job-type?
   [apps-client job-type]
@@ -11,3 +12,10 @@
     (if (string/blank? app-name)
       (str "app ID " app-id)
       app-name)))
+
+(defn validate-system-id
+  [supported-system-ids system-id]
+  (when-not (supported-system-ids system-id)
+    (cxu/bad-request "Unsupported system ID."
+                     {:system-id            system-id
+                      :supported-system-ids supported-system-ids})))
