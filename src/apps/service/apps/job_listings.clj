@@ -42,6 +42,8 @@
   [apps-client rep-steps {:keys [parent-id id]}]
   (and (nil? parent-id) (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))))
 
+(def job-type-to-system-id string/lower-case)
+
 (defn format-job
   [apps-client app-tables rep-steps {:keys [parent-id id] :as job}]
   (remove-nil-vals
@@ -50,7 +52,7 @@
     :app_name        (:app-name job)
     :description     (:description job)
     :enddate         (job-timestamp (:end-date job))
-    :system_id       (string/lower-case (:job-type job))
+    :system_id       (job-type-to-system-id (:job-type job))
     :id              id
     :name            (:job-name job)
     :resultfolderid  (:result-folder-path job)

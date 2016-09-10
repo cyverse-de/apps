@@ -119,7 +119,7 @@
     :batch           false
     :description     (:description job)
     :enddate         (:enddate job)
-    :system_id       "agave"
+    :system_id       jp/agave-client-name
     :id              job-id
     :name            (:name job)
     :notify          (:notify job)
