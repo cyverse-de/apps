@@ -24,7 +24,7 @@
                  [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "2.8.0"]
                  [org.cyverse/kameleon "2.8.0"]
-                 [org.cyverse/mescal "2.8.0"]
+                 [org.cyverse/mescal "2.8.1-SNAPSHOT"]
                  [org.cyverse/metadata-client "2.8.0"]
                  [org.cyverse/common-cli "2.8.0"]
                  [org.cyverse/common-cfg "2.8.0"]

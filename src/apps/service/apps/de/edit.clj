@@ -17,7 +17,8 @@
   (:require [clojure.set :as set]
             [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
-            [apps.service.apps.de.categorization :as categorization]))
+            [apps.service.apps.de.categorization :as categorization]
+            [apps.service.apps.de.constants :as c]))
 
 (def ^:private copy-prefix "Copy of ")
 (def ^:private max-app-name-len 255)
@@ -199,7 +200,8 @@
       (-> app
           (assoc :references (map :reference_text (:app_references app))
                  :tools      (map remove-nil-vals (persistence/get-app-tools (:id app)))
-                 :groups     (map format-group (:parameter_groups task)))
+                 :groups     (map format-group (:parameter_groups task))
+                 :system_id  c/system-id)
           (dissoc :app_references
                   :tasks)))))
 
@@ -365,7 +367,9 @@
         (persistence/remove-parameter-values current-param-ids))
       (when-not (empty? references)
         (persistence/set-app-references app-id references))
-      (assoc app :groups (update-app-groups task-id groups)))))
+      (assoc app
+        :groups    (update-app-groups task-id groups)
+        :system_id c/system-id))))
 
 (defn get-user-subcategory
   [username index]

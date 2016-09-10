@@ -5,6 +5,7 @@
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.service.util :as util]
+            [clojure.string :as string]
             [kameleon.db :as db]))
 
 (defn- job-timestamp
@@ -37,6 +38,12 @@
                        (into {}))
                   :total (count children)))))
 
+(defn- job-supports-sharing?
+  [apps-client rep-steps {:keys [parent-id id]}]
+  (and (nil? parent-id) (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))))
+
+(def job-type-to-system-id string/lower-case)
+
 (defn format-job
   [apps-client app-tables rep-steps {:keys [parent-id id] :as job}]
   (remove-nil-vals
@@ -45,6 +52,7 @@
     :app_name        (:app-name job)
     :description     (:description job)
     :enddate         (job-timestamp (:end-date job))
+    :system_id       (job-type-to-system-id (:job-type job))
     :id              id
     :name            (:job-name job)
     :resultfolderid  (:result-folder-path job)
@@ -58,7 +66,7 @@
     :parent_id       parent-id
     :batch           (:is-batch job)
     :batch_status    (when (:is-batch job) (format-batch-status id))
-    :can_share       (and (nil? parent-id) (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id)))}))
+    :can_share       (job-supports-sharing? apps-client rep-steps job)}))
 
 (defn- list-jobs*
   [{:keys [username]} search-params types analysis-ids]

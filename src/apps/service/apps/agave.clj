@@ -64,9 +64,6 @@
   (canEditApps [_]
     false)
 
-  (listAppIds [_]
-    nil)
-
   (getAppJobView [_ app-id]
     (when-not (util/uuid? app-id)
       (.getApp agave app-id)))

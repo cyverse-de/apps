@@ -2,7 +2,6 @@
   (:use [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+]])
   (:require [clojure.tools.logging :as log]
-            [clojure.string :as string]
             [clojure-commons.error-codes :as ce]
             [clojure-commons.exception-util :as cxu]
             [kameleon.db :as db]
@@ -144,6 +143,7 @@
   (validate-jobs-for-user user [job-id] "read")
   (let [job (jp/get-job-by-id job-id)]
     {:app_id     (:app-id job)
+     :system_id  (listings/job-type-to-system-id (:job-type job))
      :parameters (job-params/get-parameter-values apps-client job)}))
 
 (defn get-job-relaunch-info
