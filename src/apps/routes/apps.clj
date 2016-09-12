@@ -315,4 +315,15 @@
         :description "The app integration utility in the DE uses this service to obtain the App
         description JSON so that it can be edited. The App must have been integrated by the
         requesting user."
-        (ok (apps/get-app-ui current-user app-id))))
+        (ok (apps/get-app-ui current-user app-id)))
+
+  (context* "/:system-id" []
+            :path-params [system-id :- SystemIdPathParam]
+
+            (POST* "/" []
+              :query [params SecuredQueryParamsRequired]
+              :body [body (describe AppRequest "The App to add.")]
+              :return App
+              :summary "Add a new App."
+              :description "This service adds a new App to the user's workspace."
+              (ok (apps/add-app current-user system-id body)))))
