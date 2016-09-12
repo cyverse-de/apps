@@ -16,15 +16,21 @@
   []
   (service/bad-request "Cannot edit documentation for HPC apps with this service"))
 
+(def app-integration-rejection "Cannot add or modify HPC apps with this service")
+
 (def app-permission-rejection "Cannot list or modify the permissions of HPC apps with this service")
 
 (def analysis-permission-rejection "Cannot list or modify the permissions of HPC analyses with this service")
 
-(def integration-data-rejection "Cannot list or modify integration data for HPC apps with this service.")
+(def integration-data-rejection "Cannot list or modify integration data for HPC apps with this service")
 
 (defn- reject-app-permission-request
   []
   (service/bad-request app-permission-rejection))
+
+(defn- reject-app-integration-request
+  []
+  (service/bad-request app-integration-rejection))
 
 (def ^:private supported-system-ids #{jp/agave-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -69,6 +75,10 @@
 
   (canEditApps [_]
     false)
+
+  (addApp [_ system-id _]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
 
   (getAppJobView [_ app-id]
     (when-not (util/uuid? app-id)

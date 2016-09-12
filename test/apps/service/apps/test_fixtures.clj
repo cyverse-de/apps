@@ -2,6 +2,7 @@
   (:use [apps.service.apps.test-utils :only [users get-user]]
         [kameleon.uuids :only [uuidify uuid]])
   (:require [apps.clients.iplant-groups :as ipg]
+            [apps.persistence.jobs :as jp]
             [apps.service.apps :as apps]
             [apps.service.workspace :as workspace]
             [apps.tools :as tools]
@@ -84,14 +85,14 @@
    (create-test-app user (:name app-definition)))
   ([user name]
    (sql/delete :apps (sql/where {:name name}))
-   (let [app (apps/add-app user (assoc app-definition :name name))]
+   (let [app (apps/add-app user jp/de-client-name (assoc app-definition :name name))]
      (apps/owner-add-app-docs user (:id app) {:documentation "This is a test."})
      app)))
 
 (defn create-test-tool-app [user name]
   (sql/delete :apps (sql/where {:name name}))
   (let [tool (tools/get-tool test-tool-id)
-        app  (apps/add-app user (assoc app-definition :name name :tools [tool]))]
+        app  (apps/add-app user jp/de-client-name (assoc app-definition :name name :tools [tool]))]
     (apps/owner-add-app-docs user (:id app) {:documentation "This is a test."})
     app))
 
