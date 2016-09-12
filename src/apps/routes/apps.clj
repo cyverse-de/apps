@@ -28,8 +28,8 @@
 (get-endpoint-delegate-block
   "metadata"
   "POST /ontologies/{ontology-version}/filter-targets"))
-        (ok (coerce! AppListing
-                 (apps/search-apps current-user params))))
+    (ok (coerce! AppListing
+          (apps/search-apps current-user params))))
 
   (POST "/" []
          :query [params SecuredQueryParamsRequired]
@@ -143,7 +143,7 @@
 (get-endpoint-delegate-block
   "metadata"
   "POST /avus/filter-targets"))
-          (ok (apps/relabel-app current-user (assoc body :id app-id))))
+    (ok (apps/relabel-app current-user (assoc body :id app-id))))
 
   (PUT "/:app-id" []
         :path-params [app-id :- AppIdPathParam]
@@ -164,7 +164,7 @@
 (get-endpoint-delegate-block
   "metadata"
   "POST /avus/filter-targets"))
-        (ok (apps/update-app current-user (assoc body :id app-id))))
+    (ok (apps/update-app current-user (assoc body :id app-id))))
 
   (GET "/:app-id/integration-data" []
         :path-params [app-id :- AppIdPathParam]
@@ -194,8 +194,8 @@
   "metadata"
   "POST /ontologies/{ontology-version}/filter")
 "Please see the metadata service documentation for information about the `hierarchies` response field.")
-        (ok (coerce! AppDetails
-                 (apps/get-app-details current-user app-id))))
+    (ok (coerce! AppDetails
+          (apps/get-app-details current-user app-id))))
 
   (GET "/:app-id/documentation" []
         :path-params [app-id :- AppIdJobViewPathParam]
