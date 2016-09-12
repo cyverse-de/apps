@@ -80,6 +80,10 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (previewCommandLine [_ system-id _]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (getAppJobView [_ app-id]
     (when-not (util/uuid? app-id)
       (.getApp agave app-id)))
