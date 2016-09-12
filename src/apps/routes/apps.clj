@@ -326,4 +326,16 @@
               :return App
               :summary "Add a new App."
               :description "This service adds a new App to the user's workspace."
-              (ok (apps/add-app current-user system-id body)))))
+              (ok (apps/add-app current-user system-id body)))
+
+            (POST* "/arg-preview" []
+              :query [params SecuredQueryParams]
+              :body [body (describe AppPreviewRequest "The App to preview.")]
+              :summary "Preview Command Line Arguments"
+              :description "The app integration utility in the DE uses this service to obtain an example list
+              of command-line arguments so that the user can tell what the command-line might look like
+              without having to run a job using the app that is being integrated first. The App request
+              body also requires that each parameter contain a `value` field that contains the parameter
+              value to include on the command line. The response body is in the same format as the
+              `/arg-preview` service in the JEX. Please see the JEX documentation for more information."
+              (ok (apps/preview-command-line current-user system-id body)))))

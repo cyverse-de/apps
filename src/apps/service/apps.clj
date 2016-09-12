@@ -104,8 +104,10 @@
    (.addApp (get-apps-client user) system-id app)))
 
 (defn preview-command-line
-  [user app]
-  (.previewCommandLine (get-apps-client user) app))
+  ([user app]
+   (.previewCommandLine (get-apps-client user) app))
+  ([user system-id app]
+   (.previewCommandLine (get-apps-client user) system-id app)))
 
 (defn delete-apps
   [user deletion-request]

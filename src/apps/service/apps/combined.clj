@@ -82,7 +82,7 @@
     (.previewCommandLine (util/get-apps-client clients) app))
 
   (previewCommandLine [_ system-id app]
-    (.previewCommandLine (util/get-apps-client clients system-id) app))
+    (.previewCommandLine (util/get-apps-client clients system-id) system-id app))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (deleteApps [_ deletion-request]
