@@ -35,11 +35,12 @@
                  [mvxcvi/clj-pgp "0.8.0"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
-  :plugins [[lein-ring "0.9.6"]
-            [lein-swank "1.4.4"]
+  :plugins [[lein-swank "1.4.4"]
             [test2junit "1.1.3"]
             [jonase/eastwood "0.2.3"]]
-  :profiles {:dev {:resource-paths ["conf/test"]}}
+  :profiles {:dev {:dependencies   [[ring "1.5.0"]]
+                   :plugins        [[lein-ring "0.9.7"]]
+                   :resource-paths ["conf/test"]}}
   :repl-options {:timeout 120000}
   ;; compojure-api route macros should not be AOT compiled:
   ;; https://github.com/metosin/compojure-api/issues/135#issuecomment-121388539
