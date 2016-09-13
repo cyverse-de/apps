@@ -7,8 +7,8 @@
         [apps.user :only [current-user]])
   (:require [apps.service.apps :as apps]))
 
-(defroutes* pipelines
-  (POST* "/" []
+(defroutes pipelines
+  (POST "/" []
          :query [params SecuredQueryParamsRequired]
          :body [body (describe PipelineCreateRequest "The Pipeline to create.")]
          :return Pipeline
@@ -17,7 +17,7 @@
          (ok (coerce! Pipeline
                   (apps/add-pipeline current-user body))))
 
-  (PUT* "/:app-id" []
+  (PUT "/:app-id" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParamsEmailRequired]
         :body [body (describe PipelineUpdateRequest "The Pipeline to update.")]
@@ -28,7 +28,7 @@
         (ok (coerce! Pipeline
                  (apps/update-pipeline current-user (assoc body :id app-id)))))
 
-  (POST* "/:app-id/copy" []
+  (POST "/:app-id/copy" []
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParamsRequired]
          :return Pipeline
@@ -39,7 +39,7 @@
          (ok (coerce! Pipeline
                   (apps/copy-pipeline current-user app-id))))
 
-  (GET* "/:app-id/ui" []
+  (GET "/:app-id/ui" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParamsEmailRequired]
         :return Pipeline

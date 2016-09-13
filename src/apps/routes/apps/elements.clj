@@ -8,15 +8,15 @@
   (:require [apps.util.service :as service]
             [compojure.route :as route]))
 
-(defroutes* app-elements
-  (GET* "/" []
+(defroutes app-elements
+  (GET "/" []
         :query [params SecuredIncludeHiddenParams]
         :summary "List All Available App Elements"
         :description "This endpoint may be used to obtain lists of all available elements that may be
         included in an App."
         (ok (list-elements "all" params)))
 
-  (GET* "/data-sources" []
+  (GET "/data-sources" []
         :query [params SecuredQueryParams]
         :return DataSourceListing
         :summary "List App File Parameter Data Sources"
@@ -26,7 +26,7 @@
         apply only to file parameters that are associated with an output."
         (ok (list-elements "data-sources" params)))
 
-  (GET* "/file-formats" []
+  (GET "/file-formats" []
         :query [params SecuredQueryParams]
         :return FileFormatListing
         :summary "List App Parameter File Formats"
@@ -35,7 +35,7 @@
         varieties of FASTQ files and Barcode files, among others."
         (ok (list-elements "file-formats" params)))
 
-  (GET* "/info-types" []
+  (GET "/info-types" []
         :query [params SecuredQueryParams]
         :return InfoTypeListing
         :summary "List Tool Info Types"
@@ -49,7 +49,7 @@
         tool."
         (ok (list-elements "info-types" params)))
 
-  (GET* "/parameter-types" []
+  (GET "/parameter-types" []
         :query [params AppParameterTypeParams]
         :return ParameterTypeListing
         :summary "List App Parameter Types"
@@ -65,7 +65,7 @@
         tool type name will result in an error"
         (ok (list-elements "parameter-types" params)))
 
-  (GET* "/rule-types" []
+  (GET "/rule-types" []
         :query [params SecuredQueryParams]
         :return RuleTypeListing
         :summary "List App Parameter Rule Types"
@@ -75,7 +75,7 @@
         specific format, such as a phone number, then the `Regex` rule type may be used."
         (ok (list-elements "rule-types" params)))
 
-  (GET* "/tools" []
+  (GET "/tools" []
         :query [params SecuredIncludeHiddenParams]
         :return ToolListing
         :summary "List App Tools"
@@ -83,7 +83,7 @@
         tools (usually, command-line tools) that can be executed from within the DE."
         (ok (list-elements "tools" params)))
 
-  (GET* "/tool-types" []
+  (GET "/tool-types" []
         :query [params SecuredQueryParams]
         :return ToolTypeListing
         :summary "List App Tool Types"
@@ -91,7 +91,7 @@
         a different tool type for each execution environment that is supported by the DE."
         (ok (list-elements "tool-types" params)))
 
-  (GET* "/value-types" []
+  (GET "/value-types" []
         :query [params SecuredQueryParams]
         :return ValueTypeListing
         :summary "List App Parameter and Rule Value Types"
@@ -103,4 +103,4 @@
         by the user."
         (ok (list-elements "value-types" params)))
 
-  (route/not-found (service/unrecognized-path-response)))
+  (undocumented (route/not-found (service/unrecognized-path-response))))

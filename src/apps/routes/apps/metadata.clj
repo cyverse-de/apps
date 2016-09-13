@@ -8,12 +8,12 @@
             [apps.util.service :as service]
             [compojure.route :as route]))
 
-(defroutes* app-metadata
+(defroutes app-metadata
 
-  (GET* "/" []
+  (GET "/" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "View all Metadata AVUs"
         :description (str
 "Lists all AVUs associated with an app.
@@ -25,10 +25,10 @@
 Please see the metadata service documentation for response information.")
         (avus/list-avus current-user app-id false))
 
-  (POST* "/" [:as {:keys [body]}]
+  (POST "/" [:as {:keys [body]}]
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParams]
-         :middlewares [wrap-metadata-base-url]
+         :middleware [wrap-metadata-base-url]
          :summary "Add/Update Metadata AVUs"
          :description (str
 "Adds or updates Metadata AVUs on the app.
@@ -45,10 +45,10 @@ Please see the metadata service documentation for response information.")
 Please see the metadata service documentation for request and response information.")
          (avus/update-avus current-user app-id body false))
 
-  (PUT* "/" [:as {:keys [body]}]
+  (PUT "/" [:as {:keys [body]}]
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "Set Metadata AVUs"
         :description (str
 "Sets Metadata AVUs on the app.
@@ -65,14 +65,14 @@ Please see the metadata service documentation for request and response informati
 Please see the metadata service documentation for request and response information.")
         (avus/set-avus current-user app-id body false))
 
-  (route/not-found (service/unrecognized-path-response)))
+  (undocumented (route/not-found (service/unrecognized-path-response))))
 
-(defroutes* admin-app-metadata
+(defroutes admin-app-metadata
 
-  (GET* "/" []
+  (GET "/" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "View all Metadata AVUs"
         :description (str
 "Lists all AVUs associated with the app."
@@ -83,10 +83,10 @@ Please see the metadata service documentation for request and response informati
 Please see the metadata service documentation for response information.")
         (avus/list-avus current-user app-id true))
 
-  (POST* "/" [:as {:keys [body]}]
+  (POST "/" [:as {:keys [body]}]
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParams]
-         :middlewares [wrap-metadata-base-url]
+         :middleware [wrap-metadata-base-url]
          :summary "Add/Update Metadata AVUs"
          :description (str
 "Adds or updates Metadata AVUs on the app.
@@ -102,10 +102,10 @@ Please see the metadata service documentation for response information.")
 Please see the metadata service documentation for request and response information.")
          (avus/update-avus current-user app-id body true))
 
-  (PUT* "/" [:as {:keys [body]}]
+  (PUT "/" [:as {:keys [body]}]
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "Set Metadata AVUs"
         :description (str
 "Sets Metadata AVUs on the app.
@@ -121,4 +121,4 @@ Please see the metadata service documentation for request and response informati
 Please see the metadata service documentation for request and response information.")
         (avus/set-avus current-user app-id body true))
 
-  (route/not-found (service/unrecognized-path-response)))
+  (undocumented (route/not-found (service/unrecognized-path-response))))

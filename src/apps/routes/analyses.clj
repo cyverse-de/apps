@@ -12,8 +12,8 @@
             [apps.service.apps :as apps]
             [apps.util.coercions :as coercions]))
 
-(defroutes* analyses
-  (GET* "/" []
+(defroutes analyses
+  (GET "/" []
         :query   [{:keys [filter] :as params} SecuredAnalysisListingParams]
         :return  AnalysisList
         :summary "List Analyses"
@@ -27,7 +27,7 @@
                      (assoc SecuredAnalysisListingParams OptionalKeyFilter [FilterParams])
                      (assoc params :filter (json/from-json filter)))))))
 
-  (POST* "/" []
+  (POST "/" []
          :query   [params SecuredQueryParamsEmailRequired]
          :body    [body AnalysisSubmission]
          :return  AnalysisResponse
@@ -39,7 +39,7 @@
          (ok (coerce! AnalysisResponse
                   (apps/submit-job current-user body))))
 
-  (POST* "/permission-lister" []
+  (POST "/permission-lister" []
          :query [params SecuredQueryParams]
          :body [body (describe perms/AnalysisIdList "The analysis permission listing request.")]
          :return perms/AnalysisPermissionListing
@@ -49,7 +49,7 @@
          endpoint to succeed."
          (ok (apps/list-job-permissions current-user (:analyses body))))
 
-  (POST* "/sharing" []
+  (POST "/sharing" []
          :query [params SecuredQueryParams]
          :body [body (describe perms/AnalysisSharingRequest "The analysis sharing request.")]
          :return perms/AnalysisSharingResponse
@@ -64,7 +64,7 @@
          may be worthwhile to repeat failed or timed out calls to this endpoint."
          (ok (apps/share-jobs current-user (:sharing body))))
 
-  (POST* "/unsharing" []
+  (POST "/unsharing" []
          :query [params SecuredQueryParams]
          :body [body (describe perms/AnalysisUnsharingRequest "The analysis unsharing request.")]
          :return perms/AnalysisUnsharingResponse
@@ -75,7 +75,7 @@
          operation."
          (ok (apps/unshare-jobs current-user (:unsharing body))))
 
-  (PATCH* "/:analysis-id" []
+  (PATCH "/:analysis-id" []
           :path-params [analysis-id :- AnalysisIdPathParam]
           :query       [params SecuredQueryParams]
           :body        [body AnalysisUpdate]
@@ -85,14 +85,14 @@
           (ok (coerce! AnalysisUpdateResponse
                    (apps/update-job current-user analysis-id body))))
 
-  (DELETE* "/:analysis-id" []
+  (DELETE "/:analysis-id" []
            :path-params [analysis-id :- AnalysisIdPathParam]
            :query       [params SecuredQueryParams]
            :summary     "Delete an Analysis"
            :description       "This service marks an analysis as deleted in the DE database."
            (ok (apps/delete-job current-user analysis-id)))
 
-  (POST* "/shredder" []
+  (POST "/shredder" []
          :query   [params SecuredQueryParams]
          :body    [body AnalysisShredderRequest]
          :summary "Delete Multiple Analyses"
@@ -100,7 +100,7 @@
          in the apps database."
          (ok (apps/delete-jobs current-user body)))
 
-  (GET* "/:analysis-id/parameters" []
+  (GET "/:analysis-id/parameters" []
         :path-params [analysis-id :- AnalysisIdPathParam]
         :query       [params SecuredQueryParams]
         :return      AnalysisParameters
@@ -110,7 +110,7 @@
         (ok (coerce! AnalysisParameters
                  (apps/get-parameter-values current-user analysis-id))))
 
-  (GET* "/:analysis-id/relaunch-info" []
+  (GET "/:analysis-id/relaunch-info" []
         :path-params [analysis-id :- AnalysisIdPathParam]
         :query       [params SecuredQueryParams]
         :return      AppJobView
@@ -121,7 +121,7 @@
         (ok (coerce! AppJobView
                  (apps/get-job-relaunch-info current-user analysis-id))))
 
-  (POST* "/:analysis-id/stop" []
+  (POST "/:analysis-id/stop" []
          :path-params [analysis-id :- AnalysisIdPathParam]
          :query       [params SecuredQueryParams]
          :return      StopAnalysisResponse
@@ -130,7 +130,7 @@
          (ok (coerce! StopAnalysisResponse
                   (apps/stop-job current-user analysis-id))))
 
-  (GET* "/:analysis-id/steps" []
+  (GET "/:analysis-id/steps" []
         :path-params [analysis-id :- AnalysisIdPathParam]
         :query       [params SecuredQueryParams]
         :return      AnalysisStepList

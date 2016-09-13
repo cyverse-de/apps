@@ -6,8 +6,8 @@
         [ring.util.http-response :only [ok]])
   (:require [apps.service.workspace :as workspace]))
 
-(defroutes* workspaces
-  (GET* "/" []
+(defroutes workspaces
+  (GET "/" []
         :query [params SecuredQueryParams]
         :return Workspace
         :summary "Obtain user workspace information."

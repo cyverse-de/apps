@@ -36,15 +36,15 @@
                   :error (str "A container for " tool-id " was not found.")})
          (ok retval)))
 
-(defroutes* container-images
-  (GET* "/" []
+(defroutes container-images
+  (GET "/" []
         :query [params SecuredQueryParams]
         :return Images
         :summary "List Container Images"
         :description "Returns all of the container images defined in the database."
         (ok (list-images)))
 
-  (GET* "/:image-id" []
+  (GET "/:image-id" []
         :path-params [image-id :- ImageId]
         :query [params SecuredQueryParams]
         :return Image
@@ -52,7 +52,7 @@
         :description "Returns a JSON description of a container image."
         (ok (image-info image-id)))
 
-  (POST* "/" []
+  (POST "/" []
         :query [params SecuredQueryParams]
         :body [body NewImage]
         :return Image
@@ -60,14 +60,14 @@
         :description "Adds a new container image to the system."
         (ok (add-image-info body)))
 
-  (DELETE* "/:image-id" []
+  (DELETE "/:image-id" []
            :path-params [image-id :- ImageId]
            :query [{:keys [user]} SecuredQueryParams]
            :summary "Delete Container Image"
            :description "Deletes a container image from the system."
            (ok (delete-image image-id user)))
 
-  (PATCH* "/:image-id" []
+  (PATCH "/:image-id" []
           :path-params [image-id :- ImageId]
           :query [{:keys [user overwrite-public]} ImageUpdateParams]
           :body [body ImageUpdateRequest]
@@ -84,7 +84,7 @@
     public apps."
           (ok (modify-image-info image-id user overwrite-public body)))
 
-  (GET* "/:image-id/public-tools" []
+  (GET "/:image-id/public-tools" []
         :path-params [image-id :- ImageId]
         :query [params SecuredQueryParams]
         :return ToolListing
@@ -92,15 +92,15 @@
         :description "Returns a list of a public tools using the given image ID."
         (ok (image-public-tools image-id))))
 
- (defroutes* data-containers
-   (GET* "/" []
+ (defroutes data-containers
+   (GET "/" []
          :query [params SecuredQueryParams]
          :return DataContainers
          :summary "List Data Containers"
          :description "Lists all of the available data containers."
          (ok (list-data-containers)))
 
-   (GET* "/:data-container-id" []
+   (GET "/:data-container-id" []
          :path-params [data-container-id :- DataContainerIdParam]
          :query [params SecuredQueryParams]
          :return DataContainer
@@ -108,8 +108,8 @@
          :description "Returns a JSON description of a data container."
          (ok (data-container data-container-id))))
 
-(defroutes* admin-data-containers
-  (PATCH* "/:data-container-id" []
+(defroutes admin-data-containers
+  (PATCH "/:data-container-id" []
           :path-params [data-container-id :- DataContainerIdParam]
           :query [params SecuredQueryParams]
           :body [body DataContainerUpdateRequest]
@@ -118,8 +118,8 @@
           :description "Updates a data container's settings."
           (ok (modify-data-container data-container-id body))))
 
-(defroutes* tools
-  (GET* "/" []
+(defroutes tools
+  (GET "/" []
         :query [params ToolSearchParams]
         :return ToolListing
         :summary "Search Tools"
@@ -127,7 +127,7 @@
         contains the given search term."
         (ok (search-tools params)))
 
-  (GET* "/:tool-id" []
+  (GET "/:tool-id" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return ToolDetails
@@ -135,7 +135,7 @@
         :description "This endpoint returns the details for one tool."
         (ok (get-tool tool-id)))
 
-  (GET* "/:tool-id/container" []
+  (GET "/:tool-id/container" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return ToolContainer
@@ -144,7 +144,7 @@
         returns a 404 if the tool is not run inside a container."
         (requester tool-id (tool-container-info tool-id)))
 
-  (GET* "/:tool-id/container/devices" []
+  (GET "/:tool-id/container/devices" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return Devices
@@ -152,7 +152,7 @@
         :description "Returns device information for the container associated with a tool."
         (requester tool-id (tool-device-info tool-id)))
 
-  (GET* "/:tool-id/container/devices/:device-id" []
+  (GET "/:tool-id/container/devices/:device-id" []
         :path-params [tool-id :- ToolIdParam,
                       device-id :- DeviceIdParam]
         :query [params SecuredQueryParams]
@@ -161,7 +161,7 @@
         :description "Returns device information for the container associated with a tool."
         (requester tool-id (tool-device tool-id device-id)))
 
-  (GET* "/:tool-id/container/devices/:device-id/host-path" []
+  (GET "/:tool-id/container/devices/:device-id/host-path" []
         :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
         :query [params SecuredQueryParams]
         :return DeviceHostPath
@@ -169,7 +169,7 @@
         :description "Returns a device's host path."
         (requester tool-id (device-field tool-id device-id :host_path)))
 
-  (GET* "/:tool-id/container/devices/:device-id/container-path" []
+  (GET "/:tool-id/container/devices/:device-id/container-path" []
         :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
         :query [params SecuredQueryParams]
         :return DeviceContainerPath
@@ -177,7 +177,7 @@
         :description "Returns a device's in-container path."
         (requester tool-id (device-field tool-id device-id :container_path)))
 
-  (GET* "/:tool-id/container/cpu-shares" []
+  (GET "/:tool-id/container/cpu-shares" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return CPUShares
@@ -185,7 +185,7 @@
         :description "Returns the number of shares of the CPU that the tool container will receive."
         (requester tool-id (get-settings-field tool-id :cpu_shares)))
 
-  (GET* "/:tool-id/container/memory-limit" []
+  (GET "/:tool-id/container/memory-limit" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return MemoryLimit
@@ -193,7 +193,7 @@
         :description "Returns the maximum amount of RAM that can be allocated to the tool container (in bytes)."
         (requester tool-id (get-settings-field tool-id :memory_limit)))
 
-  (GET* "/:tool-id/container/network-mode" []
+  (GET "/:tool-id/container/network-mode" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return NetworkMode
@@ -201,7 +201,7 @@
         :description "Returns the network mode the tool container will operate in. Usually 'bridge' or 'none'."
         (requester tool-id (get-settings-field tool-id :network_mode)))
 
-  (GET* "/:tool-id/container/working-directory" []
+  (GET "/:tool-id/container/working-directory" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return WorkingDirectory
@@ -209,7 +209,7 @@
         :description "Sets the initial working directory for the tool container."
         (requester tool-id (get-settings-field tool-id :working_directory)))
 
-  (GET* "/:tool-id/container/entrypoint" []
+  (GET "/:tool-id/container/entrypoint" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return Entrypoint
@@ -217,7 +217,7 @@
         :description "Get the entrypoint setting for the tool container."
         (requester tool-id (get-settings-field tool-id :entrypoint)))
 
-  (GET* "/:tool-id/container/name" []
+  (GET "/:tool-id/container/name" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return ContainerName
@@ -225,7 +225,7 @@
         :description "The user supplied name that the container will be assigned when it runs."
         (requester tool-id (get-settings-field tool-id :name)))
 
-  (GET* "/:tool-id/container/volumes" []
+  (GET "/:tool-id/container/volumes" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return Volumes
@@ -233,7 +233,7 @@
         :description "Returns volume information for the container associated with a tool."
         (requester tool-id (tool-volume-info tool-id)))
 
-  (GET* "/:tool-id/container/volumes/:volume-id" []
+  (GET "/:tool-id/container/volumes/:volume-id" []
         :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
         :query [params SecuredQueryParams]
         :return Volume
@@ -241,7 +241,7 @@
         :description "Returns volume information for the container associated with a tool."
         (requester tool-id (tool-volume tool-id volume-id)))
 
-  (GET* "/:tool-id/container/volumes/:volume-id/host-path" []
+  (GET "/:tool-id/container/volumes/:volume-id/host-path" []
         :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
         :query [params SecuredQueryParams]
         :return VolumeHostPath
@@ -249,7 +249,7 @@
         :description "Returns volume host path for the container associated with a tool."
         (requester tool-id (volume-field tool-id volume-id :host_path)))
 
-  (GET* "/:tool-id/container/volumes/:volume-id/container-path" []
+  (GET "/:tool-id/container/volumes/:volume-id/container-path" []
         :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
         :query [params SecuredQueryParams]
         :return VolumeContainerPath
@@ -257,7 +257,7 @@
         :description "Returns volume container path for the container associated with a tool."
         (requester tool-id (volume-field tool-id volume-id :container_path)))
 
-  (GET* "/:tool-id/container/volumes-from" []
+  (GET "/:tool-id/container/volumes-from" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return VolumesFromList
@@ -265,7 +265,7 @@
         :description "Returns a list of container names that the container associated with the tool should import volumes from."
         (requester tool-id (tool-volumes-from-info tool-id)))
 
-  (GET* "/:tool-id/container/volumes-from/:volumes-from-id" []
+  (GET "/:tool-id/container/volumes-from/:volumes-from-id" []
         :path-params [tool-id :- ToolIdParam volumes-from-id :- VolumesFromIdParam]
         :query [params SecuredQueryParams]
         :return VolumesFrom
@@ -274,7 +274,7 @@
          should import volumes from."
         (requester tool-id (tool-volumes-from tool-id volumes-from-id)))
 
-  (GET* "/:tool-id/integration-data" []
+  (GET "/:tool-id/integration-data" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
         :return IntegrationData
@@ -282,8 +282,8 @@
         :description "This service returns the integration data associated with an app."
         (ok (apps/get-tool-integration-data current-user tool-id))))
 
-(defroutes* tool-requests
-  (GET* "/" []
+(defroutes tool-requests
+  (GET "/" []
         :query [params ToolRequestListingParams]
         :return ToolRequestListing
         :summary "List Tool Requests"
@@ -291,7 +291,7 @@
         A user may track their own tool requests with this endpoint."
         (ok (list-tool-requests (assoc params :username (:username current-user)))))
 
-  (POST* "/" []
+  (POST "/" []
          :query [params SecuredQueryParams]
          :body [body (describe ToolRequest
                        "A tool installation request. One of `source_url` or `source_upload_file`
@@ -303,7 +303,7 @@
          related to the tool request will be tracked in the Discovery Environment database."
          (ok (submit-tool-request current-user body)))
 
-  (GET* "/status-codes" []
+  (GET "/status-codes" []
         :query [params StatusCodeListingParams]
         :summary "List Tool Request Status Codes"
         :return StatusCodeListing
@@ -312,8 +312,8 @@
         caller to list the known status codes."
         (ok (list-tool-request-status-codes params))))
 
-(defroutes* admin-tools
-  (POST* "/" []
+(defroutes admin-tools
+  (POST "/" []
          :query [params SecuredQueryParams]
          :body [body (describe ToolsImportRequest "The Tools to import.")]
          :summary "Add new Tools."
@@ -323,14 +323,14 @@
                         volumes-warning)
          (ok (add-tools body)))
 
-  (DELETE* "/:tool-id" []
+  (DELETE "/:tool-id" []
            :path-params [tool-id :- ToolIdParam]
            :query [{:keys [user]} SecuredQueryParams]
            :summary "Delete a Tool"
            :description "Deletes a tool, as long as it is not in use by any apps."
            (ok (delete-tool user tool-id)))
 
-  (PATCH* "/:tool-id" []
+  (PATCH "/:tool-id" []
           :path-params [tool-id :- ToolIdParam]
           :query [{:keys [overwrite-public]} ToolUpdateParams]
           :body [body (describe ToolUpdateRequest "The Tool to update.")]
@@ -350,7 +350,7 @@ included in it. Any existing settings not included in the request's `container` 
     If required, the `overwrite-public` flag may be used to update these settings for public tools."
           (ok (update-tool overwrite-public (assoc body :id tool-id))))
 
-  (POST* "/:tool-id/container/devices" []
+  (POST "/:tool-id/container/devices" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body NewDevice]
@@ -359,7 +359,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "Adds a new device to a tool container."
          (requester tool-id (add-tool-device tool-id body)))
 
-  (DELETE* "/:tool-id/container/devices/:device-id" []
+  (DELETE "/:tool-id/container/devices/:device-id" []
            :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
            :query [params SecuredQueryParams]
            :return nil
@@ -367,7 +367,7 @@ included in it. Any existing settings not included in the request's `container` 
            :description "Deletes a device from the tool's container"
            (ok (delete-tool-device tool-id device-id)))
 
-  (POST* "/:tool-id/container/devices/:device-id/host-path" []
+  (POST "/:tool-id/container/devices/:device-id/host-path" []
          :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
          :query [params SecuredQueryParams]
          :body [body DeviceHostPath]
@@ -376,7 +376,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "This endpoint updates a device's host path for the tool's container."
          (requester tool-id (update-device-field tool-id device-id :host_path (:host_path body))))
 
-  (POST* "/:tool-id/container/devices/:device-id/container-path" []
+  (POST "/:tool-id/container/devices/:device-id/container-path" []
          :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
          :query [params SecuredQueryParams]
          :body [body DeviceContainerPath]
@@ -385,7 +385,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "This endpoint updates a device's container path for the tool's container."
          (requester tool-id (update-device-field tool-id device-id :container_path (:container_path body))))
 
-  (POST* "/:tool-id/container/entrypoint" []
+  (POST "/:tool-id/container/entrypoint" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body Entrypoint]
@@ -396,7 +396,7 @@ included in it. Any existing settings not included in the request's `container` 
                         entrypoint-warning)
          (requester tool-id (update-settings-field tool-id :entrypoint (:entrypoint body))))
 
-  (POST* "/:tool-id/container/cpu-shares" []
+  (POST "/:tool-id/container/cpu-shares" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body CPUShares]
@@ -405,7 +405,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "This endpoint updates a the CPU shares for the tool's container."
          (requester tool-id (update-settings-field tool-id :cpu_shares (:cpu_shares body))))
 
-  (POST* "/:tool-id/container/memory-limit" []
+  (POST "/:tool-id/container/memory-limit" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body MemoryLimit]
@@ -414,7 +414,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "This endpoint updates a the memory limit for the tool's container."
          (requester tool-id (update-settings-field tool-id :memory_limit (:memory_limit body))))
 
-  (POST* "/:tool-id/container/network-mode" []
+  (POST "/:tool-id/container/network-mode" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body NetworkMode]
@@ -423,7 +423,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "This endpoint updates a the network mode for the tool's container."
          (requester tool-id (update-settings-field tool-id :network_mode (:network_mode body))))
 
-  (POST* "/:tool-id/container/working-directory" []
+  (POST "/:tool-id/container/working-directory" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body WorkingDirectory]
@@ -432,7 +432,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "This endpoint updates the working directory for the tool's container."
          (requester tool-id (update-settings-field tool-id :working_directory (:working_directory body))))
 
-  (POST* "/:tool-id/container/name" []
+  (POST "/:tool-id/container/name" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body ContainerName]
@@ -441,7 +441,7 @@ included in it. Any existing settings not included in the request's `container` 
          :description "This endpoint updates the container name for the tool's container."
          (requester tool-id (update-settings-field tool-id :name (:name body))))
 
-  (POST* "/:tool-id/container/volumes" []
+  (POST "/:tool-id/container/volumes" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body NewVolume]
@@ -452,7 +452,7 @@ included in it. Any existing settings not included in the request's `container` 
                         volumes-warning)
          (requester tool-id (add-tool-volume tool-id body)))
 
-  (DELETE* "/:tool-id/container/volumes/:volume-id" []
+  (DELETE "/:tool-id/container/volumes/:volume-id" []
            :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
            :query [params SecuredQueryParams]
            :return nil
@@ -460,7 +460,7 @@ included in it. Any existing settings not included in the request's `container` 
            :description "Deletes a volume from a tool container."
            (ok (delete-tool-volume tool-id volume-id)))
 
-  (POST* "/:tool-id/container/volumes/:volume-id/host-path" []
+  (POST "/:tool-id/container/volumes/:volume-id/host-path" []
          :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
          :query [params SecuredQueryParams]
          :body [body VolumeHostPath]
@@ -471,7 +471,7 @@ included in it. Any existing settings not included in the request's `container` 
                         volumes-warning)
          (requester tool-id (update-volume-field tool-id volume-id :host_path (:host_path body))))
 
-  (POST* "/:tool-id/container/volumes/:volume-id/container-path" []
+  (POST "/:tool-id/container/volumes/:volume-id/container-path" []
          :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
          :query [params SecuredQueryParams]
          :body [body VolumeContainerPath]
@@ -482,7 +482,7 @@ included in it. Any existing settings not included in the request's `container` 
                         volumes-warning)
          (requester tool-id (update-volume-field tool-id volume-id :container_path (:container_path body))))
 
-  (PUT* "/:tool-id/container/volumes-from" []
+  (PUT "/:tool-id/container/volumes-from" []
          :path-params [tool-id :- ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body NewVolumesFrom]
@@ -493,7 +493,7 @@ included in it. Any existing settings not included in the request's `container` 
                         volumes-warning)
          (requester tool-id (add-tool-volumes-from tool-id body)))
 
-  (DELETE* "/:tool-id/container/volumes-from/:volumes-from-id" []
+  (DELETE "/:tool-id/container/volumes-from/:volumes-from-id" []
            :path-params [tool-id :- ToolIdParam volumes-from-id :- VolumesFromIdParam]
            :query [params SecuredQueryParams]
            :return nil
@@ -501,7 +501,7 @@ included in it. Any existing settings not included in the request's `container` 
            :description "Deletes a container name that the tool container should import volumes from."
            (ok (delete-tool-volumes-from tool-id volumes-from-id)))
 
-  (PUT* "/:tool-id/integration-data/:integration-data-id" []
+  (PUT "/:tool-id/integration-data/:integration-data-id" []
         :path-params [tool-id :- ToolIdParam integration-data-id :- IntegrationDataIdPathParam]
         :query [params SecuredQueryParams]
         :return IntegrationData

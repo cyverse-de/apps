@@ -6,8 +6,8 @@
   (:require [apps.routes.schemas.integration-data :as schema]
             [apps.service.integration-data :as integration-data]))
 
-(defroutes* admin-integration-data
-  (GET* "/" []
+(defroutes admin-integration-data
+  (GET "/" []
     :query [params IntegrationDataSearchParams]
     :summary "List Integration Data Records"
     :return schema/IntegrationDataListing
@@ -16,7 +16,7 @@
     also be sorted by username, email address or name using the `:sort-field` query parameter."
     (ok (integration-data/list-integration-data current-user params)))
 
-  (POST* "/" []
+  (POST "/" []
     :query [params SecuredQueryParams]
     :summary "Add an Integration Data Record"
     :body [body (describe schema/IntegrationDataRequest "The integration data record to add.")]
@@ -24,7 +24,7 @@
     :description "This service allows administrators to add a new integration data record to the DE apps database."
     (ok (integration-data/add-integration-data current-user body)))
 
-  (GET* "/:integration-data-id" []
+  (GET "/:integration-data-id" []
     :path-params [integration-data-id :- IntegrationDataIdPathParam]
     :query [params SecuredQueryParams]
     :summary "Get an Integration Data Record"
@@ -32,7 +32,7 @@
     :description "This service allows administrators to retrieve information about an integration data record."
     (ok (integration-data/get-integration-data current-user integration-data-id)))
 
-  (PUT* "/:integration-data-id" []
+  (PUT "/:integration-data-id" []
     :path-params [integration-data-id :- IntegrationDataIdPathParam]
     :query [params SecuredQueryParams]
     :summary "Update an Integration Data Record"
@@ -41,7 +41,7 @@
     :description "This service allows administrators to update integration data records in the DE apps database."
     (ok (integration-data/update-integration-data current-user integration-data-id body)))
 
-  (DELETE* "/:integration-data-id" []
+  (DELETE "/:integration-data-id" []
     :path-params [integration-data-id :- IntegrationDataIdPathParam]
     :query [params SecuredQueryParams]
     :summary "Delete an Integration Data Record"
