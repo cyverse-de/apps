@@ -40,13 +40,10 @@
             [jonase/eastwood "0.2.3"]]
   :profiles {:dev {:dependencies   [[ring "1.5.0"]]
                    :plugins        [[lein-ring "0.9.7"]]
-                   :resource-paths ["conf/test"]}}
+                   :resource-paths ["conf/test"]}
+             :uberjar {:aot :all}}
   :repl-options {:timeout 120000}
-  ;; compojure-api route macros should not be AOT compiled:
-  ;; https://github.com/metosin/compojure-api/issues/135#issuecomment-121388539
-  ;; https://github.com/metosin/compojure-api/issues/102
-  :aot [#"apps.(?!routes).*"]
-  :main apps.core
+  :main ^:skip-aot apps.core
   :ring {:handler apps.routes/app
          :init apps.core/load-config-from-file
          :port 31323}
