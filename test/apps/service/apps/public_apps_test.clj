@@ -1,5 +1,5 @@
 (ns apps.service.apps.public-apps-test
-  (:use [apps.service.apps.test-utils :only [get-user]]
+  (:use [apps.service.apps.test-utils :only [get-user de-system-id permanently-delete-app]]
         [apps.service.apps.de.listings :only [my-public-apps-id trash-category-id]]
         [clojure.test])
   (:require [apps.service.apps :as apps]
@@ -30,7 +30,7 @@
     (is (:is_public listed))
     (is (empty? (filter (comp (partial = (:id app)) :id) apps)))
     (is (seq (filter (comp (partial = (:id app)) :id) public-apps)))
-    (apps/permanently-delete-apps user {:app_ids [(:id app)] :root_deletion_request true})))
+    (permanently-delete-app user de-system-id (:id app) true)))
 
 (deftest test-publishable
   (let [user (get-user :testde1)
@@ -41,7 +41,7 @@
     (let [publishable? (:publishable (apps/app-publishable? user (:id app)))]
       (is (not (nil? publishable?)))
       (is (not publishable?)))
-    (apps/permanently-delete-apps user {:app_ids [(:id app)]})))
+    (permanently-delete-app user de-system-id (:id app) true)))
 
 (deftest validate-tool-not-public
   (let [user (get-user :testde1)
@@ -50,7 +50,7 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
     (apps/make-app-public user app)
     (is (thrown-with-msg? ExceptionInfo #"in use by public apps" (v/validate-tool-not-public atf/test-tool-id)))
-    (apps/permanently-delete-apps user {:app_ids [(:id app)] :root_deletion_request true})))
+    (permanently-delete-app user de-system-id (:id app) true)))
 
 (deftest validate-app-trash
   (let [user  (get-user :testde1)
@@ -60,4 +60,4 @@
         _     (apps/admin-delete-app user (:id app))
         trash (:apps (apps/list-apps-in-category user trash-category-id {}))]
     (is (seq (filter (comp (partial = (:id app)) :id) trash)))
-    (apps/permanently-delete-apps user {:app_ids [(:id app)] :root_deletion_request true})))
+    (permanently-delete-app user de-system-id (:id app) true)))

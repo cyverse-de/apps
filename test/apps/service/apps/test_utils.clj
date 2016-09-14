@@ -26,7 +26,7 @@
 
 (defn app-deletion-request [system-id app-ids]
   (let [app-deletion-request (fn [app-id] {:system_id system-id :app_id app-id})]
-    {:app-ids (mapv app-deletion-request app-ids)}))
+    {:app_ids (mapv app-deletion-request app-ids)}))
 
 (defn delete-app [user system-id app-id]
   (apps/delete-apps user (app-deletion-request system-id [app-id])))

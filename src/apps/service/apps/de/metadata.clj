@@ -55,6 +55,7 @@
 (defn permanently-delete-apps
   "This service removes apps from the database rather than merely marking them as deleted."
   [user req]
+  (println "Permanently deleting some apps: " req)
   (transaction
     (dorun (map permanently-delete-app (app-ids-from-deletion-request req)))
     (amp/remove-workflow-map-orphans))
