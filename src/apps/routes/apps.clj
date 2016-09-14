@@ -318,7 +318,7 @@
         (ok (apps/get-app-ui current-user app-id)))
 
   (context* "/:system-id" []
-            :path-params [system-id :- SystemIdPathParam]
+            :path-params [system-id :- SystemId]
 
             (POST* "/" []
               :query [params SecuredQueryParamsRequired]

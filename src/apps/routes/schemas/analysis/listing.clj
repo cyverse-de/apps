@@ -1,6 +1,6 @@
 (ns apps.routes.schemas.analysis.listing
   (:use [common-swagger-api.schema :only [describe NonBlankString]]
-        [apps.routes.params :only [ResultsTotalParam]]
+        [apps.routes.params :only [ResultsTotalParam SystemId]]
         [schema.core :only [defschema optional-key Any Int Bool]])
   (:import [java.util UUID]))
 
@@ -23,7 +23,7 @@
    (describe String "The ID of the app used to perform the analysis.")
 
    :system_id
-   (describe NonBlankString "The app's execution system ID.")
+   SystemId
 
    (optional-key :app_name)
    (describe String "The name of the app used to perform the analysis.")
