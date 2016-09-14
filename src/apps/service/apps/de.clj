@@ -25,6 +25,7 @@
 
 (def ^:private supported-system-ids #{jp/de-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
+(def ^:private validate-system-ids (partial apps-util/validate-system-ids supported-system-ids))
 
 (deftype DeApps [user]
   apps.protocols.Apps
@@ -76,9 +77,14 @@
     (validate-system-id system-id)
     (app-metadata/preview-command-line app))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (deleteApps [_ deletion-request]
-    (app-metadata/delete-apps user deletion-request))
+  (validateDeletionRequest [_ req]
+    (let [qualified-app-ids (:app_ids req)]
+      (validate-system-ids (set (map :system_id qualified-app-ids)))
+      (app-metadata/validate-deletion-request user req)))
+
+  (deleteApps [this req]
+    (.validateDeletionRequest this req)
+    (app-metadata/delete-apps user req))
 
   (getAppJobView [_ app-id]
     (when (util/uuid? app-id)
@@ -290,9 +296,9 @@
   (categorizeApps [_ body]
     (app-categorization/categorize-apps body))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (permanentlyDeleteApps [_ body]
-    (app-metadata/permanently-delete-apps user body))
+  (permanentlyDeleteApps [this req]
+    (.validateDeletionRequest this req)
+    (app-metadata/permanently-delete-apps user req))
 
   (adminDeleteApp [_ app-id]
     (app-admin/delete-app app-id))
