@@ -34,6 +34,7 @@
 
 (def ^:private supported-system-ids #{jp/agave-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
+(def ^:private validate-system-ids (partial apps-util/validate-system-ids supported-system-ids))
 
 (deftype AgaveApps [agave user-has-access-token? user]
   apps.protocols.Apps
@@ -83,6 +84,14 @@
   (previewCommandLine [_ system-id _]
     (validate-system-id system-id)
     (reject-app-integration-request))
+
+  (validateDeletionRequest [_ deletion-request]
+    (let [qualified-app-ids (:app_ids deletion-request)]
+      (validate-system-ids (set (map :system_id qualified-app-ids)))
+      (reject-app-integration-request)))
+
+  (deleteApps [this deletion-request]
+    (.validateDeletionRequest this deletion-request))
 
   (getAppJobView [_ app-id]
     (when-not (util/uuid? app-id)

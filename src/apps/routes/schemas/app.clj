@@ -384,8 +384,12 @@
   {:app_count (describe Long "The total number of Apps in the listing")
    :apps      (describe [AppListingDetail] "A listing of App details")})
 
+(defschema QualifiedAppId
+  {:system_id SystemId
+   :app_id    StringAppIdParam})
+
 (defschema AppIdList
-  {:app_ids (describe [UUID] "A List of UUIDs used to identify Apps")})
+  {:app_ids (describe [QualifiedAppId] "A List of qualified app identifiers")})
 
 (defschema AppDeletionRequest
   (merge AppIdList

@@ -84,9 +84,16 @@
   (previewCommandLine [_ system-id app]
     (.previewCommandLine (util/get-apps-client clients system-id) system-id app))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (deleteApps [_ deletion-request]
-    (.deleteApps (util/get-apps-client clients) deletion-request))
+  (validateDeletionRequest [_ req]
+    (let [requests-for-system (group-by :system_id (:app_ids req))]
+      (doseq [[system-id qualified-app-ids] requests-for-system]
+        (.validateDeletionRequest (util/get-apps-client clients system-id) (assoc req :app-ids qualified-app-ids)))))
+
+  (deleteApps [this req]
+    (.validateDeletionRequest this req)
+    (let [requests-for-system (group-by :system_id (:app_ids req))]
+      (doseq [[system-id qualified-app-ids] requests-for-system]
+        (.deleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
   (getAppJobView [_ app-id]
     (job-view/get-app app-id clients))
@@ -205,8 +212,11 @@
   (categorizeApps [_ body]
     (.categorizeApps (util/get-apps-client clients) body))
 
-  (permanentlyDeleteApps [_ body]
-    (.permanentlyDeleteApps (util/get-apps-client clients) body))
+  (permanentlyDeleteApps [this req]
+    (.validateDeletionRequest this req)
+    (let [requests-for-system (group-by :system_id (:app_ids req))]
+      (doseq [[system-id qualified-app-ids] requests-for-system]
+        (.permanentlyDeleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
   (adminDeleteApp [_ app-id]
     (.adminDeleteApp (util/get-apps-client clients) app-id))

@@ -19,3 +19,10 @@
     (cxu/bad-request "Unsupported system ID."
                      {:system-id            system-id
                       :supported-system-ids supported-system-ids})))
+
+(defn validate-system-ids
+  [supported-system-ids system-ids]
+  (when-let [unsupported-system-ids (seq (remove supported-system-ids system-ids))]
+    (cxu/bad-request "Unsupported system IDs."
+                     {:system-ids           unsupported-system-ids
+                      :supported-system-ids supported-system-ids})))

@@ -15,6 +15,7 @@
   (canEditApps [_])
   (addApp [_ app] [_ system-id app])
   (previewCommandLine [_ app] [_ system-id app])
+  (validateDeletionRequest [_ deletion-request])
   (deleteApps [_ deletion-request])
   (getAppJobView [_ app-id] [_ system-id app-id])
   (getAppSubmissionInfo [_ app-id] [_ system-id app-id])

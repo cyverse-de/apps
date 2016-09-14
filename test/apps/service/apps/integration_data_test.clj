@@ -1,5 +1,5 @@
 (ns apps.service.apps.integration-data-test
-  (:use [apps.service.apps.test-utils :only [users get-user]]
+  (:use [apps.service.apps.test-utils :only [users get-user de-system-id permanently-delete-app]]
         [clojure.test]
         [kameleon.uuids :only [uuid]]
         [medley.core :only [remove-vals]])
@@ -79,7 +79,7 @@
     (is (not (nil? (:user_id integration-data))))
     (is (= (:integrator_email integration-data) (:email user)))
     (is (= (:integrator_name integration-data) (user-to-integration-data-name user)))
-    (apps/permanently-delete-apps user {:app_ids [app-id]})))
+    (permanently-delete-app user de-system-id app-id)))
 
 ;; Integration data should automatically be updated if the email address changes.
 (deftest test-integration-data-email-address-change
