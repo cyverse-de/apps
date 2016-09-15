@@ -338,4 +338,16 @@
               body also requires that each parameter contain a `value` field that contains the parameter
               value to include on the command line. The response body is in the same format as the
               `/arg-preview` service in the JEX. Please see the JEX documentation for more information."
-              (ok (apps/preview-command-line current-user system-id body)))))
+              (ok (apps/preview-command-line current-user system-id body)))
+
+            (context* "/:app-id" []
+                      :path-params [app-id :- AppIdJobViewPathParam]
+
+                      (GET* "/" []
+                        :query [params SecuredQueryParams]
+                        :summary "Obtain an app description."
+                        :return AppJobView
+                        :description "This service allows the Discovery Environment user interface to obtain an
+                        app description that can be used to construct a job submission form."
+                        (ok (coerce! AppJobView
+                                     (apps/get-app-job-view current-user system-id app-id)))))))
