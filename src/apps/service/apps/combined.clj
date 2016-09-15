@@ -98,9 +98,8 @@
   (getAppJobView [_ app-id]
     (job-view/get-app app-id clients))
 
-  ;; TODO: implement me
   (getAppJobView [_ system-id app-id]
-    #_(job-view/get-app system-id app-id clients))
+    (job-view/get-app system-id app-id clients))
 
   (getAppSubmissionInfo [_ app-id]
     (job-view/get-app-submission-info app-id clients))

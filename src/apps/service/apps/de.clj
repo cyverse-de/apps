@@ -1,5 +1,4 @@
 (ns apps.service.apps.de
-  (:use [kameleon.uuids :only [uuidify]])
   (:require [clojure.string :as string]
             [apps.clients.jex :as jex]
             [apps.persistence.app-metadata :as ap]
@@ -21,7 +20,7 @@
             [apps.service.apps.permissions :as app-permissions]
             [apps.service.apps.util :as apps-util]
             [apps.service.integration-data :as integration-data]
-            [apps.service.util :as util]))
+            [apps.service.util :as util :refer [uuidify]]))
 
 (def ^:private supported-system-ids #{jp/de-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))

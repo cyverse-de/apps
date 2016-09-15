@@ -1,8 +1,9 @@
 (ns apps.service.util
   (:use [apps.transformers :only [param->long]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [kameleon.uuids :only [uuidify]])
-  (:require [clojure.string :as string])
+        [apps.util.conversions :only [remove-nil-vals]])
+  (:require [clojure.string :as string]
+            [clojure-commons.exception-util :as cxu]
+            [kameleon.uuids :as uuids])
   (:import [java.util UUID]))
 
 (defn- app-sorter
@@ -40,7 +41,13 @@
 
 (defn extract-uuids
   [ids]
-  (seq (map uuidify (filter uuid? ids))))
+  (seq (map uuids/uuidify (filter uuid? ids))))
+
+(defn uuidify
+  [id]
+  (if-not (uuid? id)
+    (cxu/bad-request (str "'" id "' is not a UUID"))
+    (uuids/uuidify id)))
 
 (defn default-search-params
   [params default-sort-field default-sort-dir]
