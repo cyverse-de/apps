@@ -19,8 +19,7 @@ COPY conf/main/logback.xml /usr/src/app/
 COPY . /usr/src/app
 
 RUN lein uberjar && \
-    cp target/apps-standalone.jar . && \
-    lein clean
+    cp target/apps-standalone.jar .
 
 RUN ln -s "/usr/bin/java" "/bin/apps"
 
