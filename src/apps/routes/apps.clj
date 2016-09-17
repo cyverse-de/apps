@@ -13,10 +13,10 @@
   (:require [apps.routes.schemas.permission :as perms]
             [apps.service.apps :as apps]))
 
-(defroutes* apps
-  (GET* "/" []
+(defroutes apps
+  (GET "/" []
         :query [params AppSearchParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "Search Apps"
         :return AppListing
         :description (str
@@ -31,7 +31,7 @@
         (ok (coerce! AppListing
                  (apps/search-apps current-user params))))
 
-  (POST* "/" []
+  (POST "/" []
          :query [params SecuredQueryParamsRequired]
          :body [body (describe AppRequest "The App to add.")]
          :return App
@@ -39,7 +39,7 @@
          :description "This service adds a new App to the user's workspace."
          (ok (apps/add-app current-user body)))
 
-  (POST* "/arg-preview" []
+  (POST "/arg-preview" []
          :query [params SecuredQueryParams]
          :body [body (describe AppPreviewRequest "The App to preview.")]
          :summary "Preview Command Line Arguments"
@@ -51,7 +51,7 @@
          `/arg-preview` service in the JEX. Please see the JEX documentation for more information."
          (ok (apps/preview-command-line current-user body)))
 
-  (POST* "/shredder" []
+  (POST "/shredder" []
          :query [params SecuredQueryParams]
          :body [body (describe AppDeletionRequest "List of App IDs to delete.")]
          :summary "Logically Deleting Apps"
@@ -62,7 +62,7 @@
          condition."
          (ok (apps/delete-apps current-user body)))
 
-  (POST* "/permission-lister" []
+  (POST "/permission-lister" []
         :query [params SecuredQueryParams]
         :body [body (describe perms/AppIdList "The app permission listing request.")]
         :return perms/AppPermissionListing
@@ -72,7 +72,7 @@
         endpoint to succeed."
         (ok (apps/list-app-permissions current-user (:apps body))))
 
-  (POST* "/sharing" []
+  (POST "/sharing" []
          :query [params SecuredQueryParams]
          :body [body (describe perms/AppSharingRequest "The app sharing request.")]
          :return perms/AppSharingResponse
@@ -87,7 +87,7 @@
          may be worthwhile to repeat failed or timed out calls to this endpoint."
          (ok (apps/share-apps current-user (:sharing body))))
 
-  (POST* "/unsharing" []
+  (POST "/unsharing" []
          :query [params SecuredQueryParams]
          :body [body (describe perms/AppUnsharingRequest "The app unsharing request.")]
          :return perms/AppUnsharingResponse
@@ -98,7 +98,7 @@
          operation."
          (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (GET* "/:app-id" []
+  (GET "/:app-id" []
         :path-params [app-id :- AppIdJobViewPathParam]
         :query [params SecuredQueryParams]
         :summary "Obtain an app description."
@@ -108,7 +108,7 @@
         (ok (coerce! AppJobView
                  (apps/get-app-job-view current-user app-id))))
 
-  (DELETE* "/:app-id" []
+  (DELETE "/:app-id" []
            :path-params [app-id :- AppIdPathParam]
            :query [params SecuredQueryParams]
            :summary "Logically Deleting an App"
@@ -119,12 +119,12 @@
            condition."
            (ok (apps/delete-app current-user app-id)))
 
-  (PATCH* "/:app-id" []
+  (PATCH "/:app-id" []
           :path-params [app-id :- AppIdPathParam]
           :query [params SecuredQueryParamsEmailRequired]
           :body [body (describe App "The App to update.")]
           :return App
-          :middlewares [wrap-metadata-base-url]
+          :middleware [wrap-metadata-base-url]
           :summary "Update App Labels"
           :description (str
 "This service is capable of updating just the labels within a single-step app,
@@ -145,12 +145,12 @@
   "POST /avus/filter-targets"))
           (ok (apps/relabel-app current-user (assoc body :id app-id))))
 
-  (PUT* "/:app-id" []
+  (PUT "/:app-id" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParamsEmailRequired]
         :body [body (describe AppRequest "The App to update.")]
         :return App
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "Update an App"
         :description (str
 "This service updates a single-step App in the database,
@@ -166,7 +166,7 @@
   "POST /avus/filter-targets"))
         (ok (apps/update-app current-user (assoc body :id app-id))))
 
-  (GET* "/:app-id/integration-data" []
+  (GET "/:app-id/integration-data" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
         :return IntegrationData
@@ -174,7 +174,7 @@
         :description "This service returns the integration data associated with an app."
         (ok (apps/get-app-integration-data current-user app-id)))
 
-  (POST* "/:app-id/copy" []
+  (POST "/:app-id/copy" []
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParamsRequired]
          :return App
@@ -182,11 +182,11 @@
          :description "This service can be used to make a copy of an App in the user's workspace."
          (ok (apps/copy-app current-user app-id)))
 
-  (GET* "/:app-id/details" []
+  (GET "/:app-id/details" []
         :path-params [app-id :- AppIdJobViewPathParam]
         :query [params SecuredQueryParams]
         :return AppDetails
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "Get App Details"
         :description (str
 "This service is used by the DE to obtain high-level details about a single App."
@@ -197,7 +197,7 @@
         (ok (coerce! AppDetails
                  (apps/get-app-details current-user app-id))))
 
-  (GET* "/:app-id/documentation" []
+  (GET "/:app-id/documentation" []
         :path-params [app-id :- AppIdJobViewPathParam]
         :query [params SecuredQueryParams]
         :return AppDocumentation
@@ -206,7 +206,7 @@
         (ok (coerce! AppDocumentation
                  (apps/get-app-docs current-user app-id))))
 
-  (PATCH* "/:app-id/documentation" []
+  (PATCH "/:app-id/documentation" []
           :path-params [app-id :- AppIdPathParam]
           :query [params SecuredQueryParamsEmailRequired]
           :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
@@ -216,7 +216,7 @@
           (ok (coerce! AppDocumentation
                    (apps/owner-edit-app-docs current-user app-id body))))
 
-  (POST* "/:app-id/documentation" []
+  (POST "/:app-id/documentation" []
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParamsEmailRequired]
          :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
@@ -226,7 +226,7 @@
          (ok (coerce! AppDocumentation
                   (apps/owner-add-app-docs current-user app-id body))))
 
-  (DELETE* "/:app-id/favorite" []
+  (DELETE "/:app-id/favorite" []
            :path-params [app-id :- AppIdPathParam]
            :query [params SecuredQueryParams]
            :summary "Removing an App as a Favorite"
@@ -235,7 +235,7 @@
            list."
            (ok (apps/remove-app-favorite current-user app-id)))
 
-  (PUT* "/:app-id/favorite" []
+  (PUT "/:app-id/favorite" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
         :summary "Marking an App as a Favorite"
@@ -243,7 +243,7 @@
         having to search. This service is used to add an App to a user's favorites list."
         (ok (apps/add-app-favorite current-user app-id)))
 
-  (GET* "/:app-id/is-publishable" []
+  (GET "/:app-id/is-publishable" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
         :summary "Determine if an App Can be Made Public"
@@ -252,10 +252,10 @@
         multistep App in which all of the Tasks included in the pipeline are public."
         (ok (apps/app-publishable? current-user app-id)))
 
-  (POST* "/:app-id/publish" []
+  (POST "/:app-id/publish" []
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParamsEmailRequired]
-         :middlewares [wrap-metadata-base-url]
+         :middleware [wrap-metadata-base-url]
          :body [body (describe PublishAppRequest "The user's Publish App Request.")]
          :summary "Submit an App for Public Use"
          :description "This service can be used to submit a private App for public use. The user supplies
@@ -265,7 +265,7 @@
          proves to be useful."
          (ok (apps/make-app-public current-user (assoc body :id app-id))))
 
-  (DELETE* "/:app-id/rating" []
+  (DELETE "/:app-id/rating" []
            :path-params [app-id :- AppIdPathParam]
            :query [params SecuredQueryParams]
            :return RatingResponse
@@ -274,7 +274,7 @@
            service deletes the authenticated user's rating for the corresponding app-id."
            (ok (apps/delete-app-rating current-user app-id)))
 
-  (POST* "/:app-id/rating" []
+  (POST "/:app-id/rating" []
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParams]
          :body [body (describe RatingRequest "The user's new rating for this App.")]
@@ -286,7 +286,7 @@
          wiki. The rating is stored in the database and associated with the authenticated user."
          (ok (apps/rate-app current-user app-id body)))
 
-  (GET* "/:app-id/tasks" []
+  (GET "/:app-id/tasks" []
         :path-params [app-id :- AppIdJobViewPathParam]
         :query [params SecuredQueryParams]
         :return AppTaskListing
@@ -297,7 +297,7 @@
         (ok (coerce! AppTaskListing
                  (apps/get-app-task-listing current-user app-id))))
 
-  (GET* "/:app-id/tools" []
+  (GET "/:app-id/tools" []
         :path-params [app-id :- AppIdJobViewPathParam]
         :query [params SecuredQueryParams]
         :return NewToolListing
@@ -307,7 +307,7 @@
         (ok (coerce! NewToolListing
                  (apps/get-app-tool-listing current-user app-id))))
 
-  (GET* "/:app-id/ui" []
+  (GET "/:app-id/ui" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParamsEmailRequired]
         :return App

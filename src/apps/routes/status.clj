@@ -4,8 +4,8 @@
   (:require [clojure-commons.service :as commons-service]
             [apps.util.config :as config]))
 
-(defroutes* status
-  (GET* "/" [:as {:keys [server-name server-port]}]
+(defroutes status
+  (GET "/" [:as {:keys [server-name server-port]}]
     :query [{:keys [expecting]} StatusParams]
     :return StatusResponse
     :summary "Service Information"

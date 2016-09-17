@@ -22,8 +22,8 @@
             [apps.service.apps.de.listings :as listings]
             [apps.util.config :as config]))
 
-(defroutes* admin-tool-requests
-  (GET* "/" []
+(defroutes admin-tool-requests
+  (GET "/" []
         :query [params ToolRequestListingParams]
         :return ToolRequestListing
         :summary "List Tool Requests"
@@ -31,7 +31,7 @@
         Administrators may use this endpoint to track tool requests for all users."
         (ok (list-tool-requests params)))
 
-  (GET* "/:request-id" []
+  (GET "/:request-id" []
         :path-params [request-id :- ToolRequestIdParam]
         :query [params SecuredQueryParams]
         :return ToolRequestDetails
@@ -40,7 +40,7 @@
         that the DE support team uses to obtain the request details."
         (ok (get-tool-request request-id)))
 
-  (POST* "/:request-id/status" []
+  (POST "/:request-id/status" []
          :path-params [request-id :- ToolRequestIdParam]
          :query [params SecuredQueryParams]
          :body [body (describe ToolRequestStatusUpdate "A Tool Request status update.")]
@@ -50,8 +50,8 @@
          of a tool request."
          (ok (update-tool-request request-id (config/uid-domain) current-user body))))
 
-(defroutes* admin-apps
-  (POST* "/" []
+(defroutes admin-apps
+  (POST "/" []
          :query [params SecuredQueryParams]
          :body [body (describe AppCategorizationRequest "An App Categorization Request.")]
          :summary "Categorize Apps"
@@ -59,7 +59,7 @@
          Categories."
          (ok (apps/categorize-apps current-user body)))
 
-  (POST* "/shredder" []
+  (POST "/shredder" []
          :query [params SecuredQueryParams]
          :body [body (describe AppDeletionRequest "List of App IDs to delete.")]
          :summary "Permanently Deleting Apps"
@@ -67,7 +67,7 @@
          administrators to completely remove Apps that are causing problems."
          (ok (apps/permanently-delete-apps current-user body)))
 
-  (DELETE* "/:app-id" []
+  (DELETE "/:app-id" []
            :path-params [app-id :- AppIdPathParam]
            :query [params SecuredQueryParams]
            :summary "Logically Deleting an App"
@@ -76,12 +76,12 @@
            except an error is not returned if the user does not own the App."
            (ok (apps/admin-delete-app current-user app-id)))
 
-  (PATCH* "/:app-id" []
+  (PATCH "/:app-id" []
           :path-params [app-id :- AppIdPathParam]
           :query [params SecuredQueryParams]
           :body [body (describe AdminAppPatchRequest "The App to update.")]
           :return AppDetails
-          :middlewares [wrap-metadata-base-url]
+          :middleware [wrap-metadata-base-url]
           :summary "Update App Details and Labels"
           :description (str
 "This service is capable of updating high-level information of an App,
@@ -106,11 +106,11 @@
           (ok (coerce! AppDetails
                 (apps/admin-update-app current-user (assoc body :id app-id)))))
 
-  (GET* "/:app-id/details" []
+  (GET "/:app-id/details" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
         :return AppDetails
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "Get App Details"
         :description (str
 "This service allows administrative users to view detailed informaiton about private apps."
@@ -121,7 +121,7 @@
         (ok (coerce! AppDetails
                (apps/admin-get-app-details current-user app-id))))
 
-  (PATCH* "/:app-id/documentation" []
+  (PATCH "/:app-id/documentation" []
           :path-params [app-id :- AppIdPathParam]
           :query [params SecuredQueryParams]
           :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
@@ -132,7 +132,7 @@
           (ok (coerce! AppDocumentation
                 (apps/admin-edit-app-docs current-user app-id body))))
 
-  (POST* "/:app-id/documentation" []
+  (POST "/:app-id/documentation" []
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParams]
          :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
@@ -142,7 +142,7 @@
          (ok (coerce! AppDocumentation
                       (apps/admin-add-app-docs current-user app-id body))))
 
-  (PUT* "/:app-id/integration-data/:integration-data-id" []
+  (PUT "/:app-id/integration-data/:integration-data-id" []
         :path-params [app-id :- AppIdPathParam integration-data-id :- IntegrationDataIdPathParam]
         :query [params SecuredQueryParams]
         :return IntegrationData
@@ -151,8 +151,8 @@
         associated with an app."
         (ok (apps/update-app-integration-data current-user app-id integration-data-id))))
 
-(defroutes* admin-categories
-  (GET* "/" []
+(defroutes admin-categories
+  (GET "/" []
         :query [params SecuredQueryParams]
         :return AppCategoryListing
         :summary "List App Categories"
@@ -160,7 +160,7 @@
         with the 'Trash' virtual category."
         (ok (apps/get-admin-app-categories current-user params)))
 
-  (POST* "/" []
+  (POST "/" []
          :query [params SecuredQueryParams]
          :body [body (describe AppCategoryRequest "The details of the App Category to add.")]
          :return AppCategoryAppListing
@@ -170,7 +170,7 @@
          directly contain its own Apps."
          (ok (apps/admin-add-category current-user body)))
 
-  (POST* "/shredder" []
+  (POST "/shredder" []
          :query [params SecuredQueryParams]
          :body [body (describe AppCategoryIdList "A List of App Category IDs to delete.")]
          :return AppCategoryIdList
@@ -181,7 +181,7 @@
          of a Category already included in the request)."
          (ok (apps/admin-delete-categories current-user body)))
 
-  (DELETE* "/:category-id" []
+  (DELETE "/:category-id" []
            :path-params [category-id :- AppCategoryIdPathParam]
            :query [params SecuredQueryParams]
            :summary "Delete an App Category"
@@ -189,7 +189,7 @@
            of its child Categories, as long as none of them contain any Apps."
            (ok (apps/admin-delete-category current-user category-id)))
 
-  (PATCH* "/:category-id" []
+  (PATCH "/:category-id" []
           :path-params [category-id :- AppCategoryIdPathParam]
           :query [params SecuredQueryParams]
           :body [body (describe AppCategoryPatchRequest "Details of the App Category to update.")]
@@ -198,12 +198,12 @@
           on the fields included in the request."
           (ok (apps/admin-update-category current-user (assoc body :id category-id)))))
 
-(defroutes* admin-ontologies
+(defroutes admin-ontologies
 
-  (GET* "/" []
+  (GET "/" []
         :query [params SecuredQueryParams]
         :return ActiveOntologyDetailsList
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "List Ontology Details"
         :description (str
 "Lists Ontology details saved in the metadata service."
@@ -212,10 +212,10 @@
   "GET /ontologies"))
         (ok (admin/list-ontologies current-user)))
 
-  (DELETE* "/:ontology-version" []
+  (DELETE "/:ontology-version" []
            :path-params [ontology-version :- OntologyVersionParam]
            :query [params SecuredQueryParams]
-           :middlewares [wrap-metadata-base-url]
+           :middleware [wrap-metadata-base-url]
            :summary "Delete an Ontology"
            :description (str
 "Marks an Ontology as deleted in the metadata service.
@@ -225,7 +225,7 @@
   "DELETE /admin/ontologies/{ontology-version}"))
            (admin/delete-ontology current-user ontology-version))
 
-  (POST* "/:ontology-version" []
+  (POST "/:ontology-version" []
          :path-params [ontology-version :- OntologyVersionParam]
          :query [params SecuredQueryParams]
          :return AppCategoryOntologyVersionDetails
@@ -235,11 +235,11 @@
           endpoints of the metadata service."
          (ok (admin/set-category-ontology-version current-user ontology-version)))
 
-  (GET* "/:ontology-version/:root-iri" []
+  (GET "/:ontology-version/:root-iri" []
         :path-params [ontology-version :- OntologyVersionParam
                       root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "Get App Category Hierarchy"
         :description (str
 "Gets the list of app categories that are visible to the user for the given `ontology-version`,
@@ -250,11 +250,11 @@
 "Please see the metadata service documentation for response information.")
         (listings/get-app-hierarchy current-user ontology-version root-iri attr))
 
-  (GET* "/:ontology-version/:root-iri/apps" []
+  (GET "/:ontology-version/:root-iri/apps" []
         :path-params [ontology-version :- OntologyVersionParam
                       root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :return AppListing
         :summary "List Apps in a Category"
         :description (str
@@ -266,12 +266,12 @@
         (ok (coerce! AppListing
                      (apps/admin-list-apps-under-hierarchy current-user ontology-version root-iri attr params))))
 
-  (GET* "/:ontology-version/:root-iri/unclassified" [root-iri]
+  (GET "/:ontology-version/:root-iri/unclassified" [root-iri]
         :path-params [ontology-version :- OntologyVersionParam
                       root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
         :return AppListing
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "List Unclassified Apps"
         :description (str
 "Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
@@ -282,8 +282,8 @@
         (ok (coerce! AppListing
                      (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params)))))
 
-(defroutes* reference-genomes
-  (POST* "/" []
+(defroutes reference-genomes
+  (POST "/" []
          :query [params SecuredQueryParams]
          :body [body (describe ReferenceGenomeRequest "The Reference Genome to add.")]
          :return ReferenceGenome
@@ -291,7 +291,7 @@
          :description "This endpoint adds a Reference Genome to the Discovery Environment."
          (ok (add-reference-genome body)))
 
-  (PUT* "/" []
+  (PUT "/" []
             :query [params SecuredQueryParams]
             :body [body (describe ReferenceGenomesSetRequest "List of Reference Genomes to set.")]
             :return ReferenceGenomesList
@@ -300,7 +300,7 @@
             so if a genome is not listed in the request, it will not show up in the DE."
             (ok (replace-reference-genomes body)))
 
-  (PATCH* "/:reference-genome-id" []
+  (PATCH "/:reference-genome-id" []
           :path-params [reference-genome-id :- ReferenceGenomeIdParam]
           :query [params SecuredQueryParams]
           :body [body (describe ReferenceGenomeRequest "The Reference Genome fields to update.")]
@@ -310,7 +310,7 @@
           the Discovery Environment."
           (ok (update-reference-genome (assoc body :id reference-genome-id))))
 
-  (DELETE* "/:reference-genome-id" []
+  (DELETE "/:reference-genome-id" []
            :path-params [reference-genome-id :- ReferenceGenomeIdParam]
            :query [params SecuredQueryParams]
            :summary "Delete a Reference Genome."

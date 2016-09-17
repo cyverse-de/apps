@@ -5,15 +5,15 @@
         [apps.routes.schemas.reference-genome]
         [ring.util.http-response :only [ok]]))
 
-(defroutes* reference-genomes
-  (GET* "/" []
+(defroutes reference-genomes
+  (GET "/" []
         :query [params ReferenceGenomeListingParams]
         :return ReferenceGenomesList
         :summary "List Reference Genomes."
         :description "This endpoint may be used to obtain lists of all available Reference Genomes."
         (ok (list-reference-genomes params)))
 
-  (GET* "/:reference-genome-id" []
+  (GET "/:reference-genome-id" []
         :path-params [reference-genome-id :- ReferenceGenomeIdParam]
         :query [params SecuredQueryParams]
         :return ReferenceGenome

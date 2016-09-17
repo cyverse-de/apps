@@ -14,8 +14,8 @@
             [apps.util.service :as service]
             [compojure.route :as route]))
 
-(defroutes* app-categories
-  (GET* "/" []
+(defroutes app-categories
+  (GET "/" []
         :query [params CategoryListingParams]
         :return AppCategoryListing
         :summary "List App Categories"
@@ -23,10 +23,10 @@
          are visible to the user."
         (ok (apps/get-app-categories current-user params)))
 
-  (GET* "/:category-id" []
+  (GET "/:category-id" []
         :path-params [category-id :- AppCategoryIdPathParam]
         :query [params AppListingPagingParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :return AppCategoryAppListing
         :summary "List Apps in a Category"
         :description "This service lists all of the apps within an app category or any of its
@@ -37,13 +37,13 @@
         (ok (coerce! AppCategoryAppListing
                  (apps/list-apps-in-category current-user category-id params))))
 
-  (route/not-found (service/unrecognized-path-response)))
+  (undocumented (route/not-found (service/unrecognized-path-response))))
 
-(defroutes* app-hierarchies
+(defroutes app-hierarchies
 
-  (GET* "/" []
+  (GET "/" []
         :query [params SecuredQueryParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "List App Hierarchies"
         :description (str
 "Lists all hierarchies saved for the active ontology version."
@@ -53,10 +53,10 @@
 "Please see the metadata service documentation for response information.")
         (listings/list-hierarchies current-user))
 
-  (GET* "/:root-iri" []
+  (GET "/:root-iri" []
         :path-params [root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr]} OntologyHierarchyFilterParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "List App Category Hierarchy"
         :description (str
 "Gets the list of app categories that are visible to the user for the active ontology version,
@@ -67,10 +67,10 @@
 "Please see the metadata service documentation for response information.")
         (listings/get-app-hierarchy current-user root-iri attr))
 
-  (GET* "/:root-iri/apps" []
+  (GET "/:root-iri/apps" []
         :path-params [root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :return AppListing
         :summary "List Apps in a Category"
         :description (str
@@ -80,11 +80,11 @@
   "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
         (ok (coerce! AppListing (apps/list-apps-under-hierarchy current-user root-iri attr params))))
 
-  (GET* "/:root-iri/unclassified" []
+  (GET "/:root-iri/unclassified" []
         :path-params [root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
         :return AppListing
-        :middlewares [wrap-metadata-base-url]
+        :middleware [wrap-metadata-base-url]
         :summary "List Unclassified Apps"
         :description (str
 "Lists all of the apps that are visible to the user that are not under the given app category or any of
@@ -94,4 +94,4 @@
   "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
         (ok (coerce! AppListing (listings/get-unclassified-app-listing current-user root-iri attr params))))
 
-  (route/not-found (service/unrecognized-path-response)))
+  (undocumented (route/not-found (service/unrecognized-path-response))))

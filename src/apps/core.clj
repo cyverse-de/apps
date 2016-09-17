@@ -6,6 +6,7 @@
             [common-cli.core :as ccli]
             [me.raynes.fs :as fs]
             [clj-http.client :as http]
+            [apps.routes :as routes]
             [apps.tasks :as tasks]
             [apps.util.config :as config]
             [service-logging.thread-context :as tc]))
@@ -63,10 +64,9 @@
 
 (defn run-jetty
   []
-  (require 'apps.routes
-           'ring.adapter.jetty)
+  (require 'ring.adapter.jetty)
   (log/warn "Started listening on" (config/listen-port))
-  ((eval 'ring.adapter.jetty/run-jetty) (eval 'apps.routes/app) {:port (config/listen-port)}))
+  ((eval 'ring.adapter.jetty/run-jetty) routes/app {:port (config/listen-port)}))
 
 (defn -main
   [& args]
