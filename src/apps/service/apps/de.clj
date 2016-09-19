@@ -115,7 +115,7 @@
 
   (updateApp [_ system-id app]
     (validate-system-id system-id)
-    (edit/update-app user app))
+    (edit/update-app user (update app :id uuidify)))
 
   (copyApp [_ app-id]
     (when (util/uuid? app-id)
