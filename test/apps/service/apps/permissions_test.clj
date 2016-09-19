@@ -108,7 +108,7 @@
   true)
 
 (defn check-update-app [user]
-  (apps/update-app user test-app)
+  (apps/update-app user de-system-id test-app)
   true)
 
 (defn check-app-ui [user]
