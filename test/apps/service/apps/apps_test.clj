@@ -50,3 +50,12 @@
 
 (deftest test-de-app-job-view-with-invalid-app-id
   (test-non-uuid #(apps/get-app-job-view (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest test-app-deletion-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/delete-app (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest test-app-deletion-with-hpc-system-id
+  (test-hpc-app-modification #(apps/delete-app (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest test-de-app-deletion-with-invalid-app-id
+  (test-non-uuid #(apps/delete-app (get-user :testde1) de-system-id fake-app-id)))

@@ -101,7 +101,15 @@
     (validate-system-id system-id)
     (.getApp agave app-id))
 
-  ;; FIXME: remove the third parameter when we can.
+  (deleteApp [_ app-id]
+    (when-not (util/uuid? app-id)
+      (reject-app-integration-request)))
+
+  (deleteApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+ ;; FIXME: remove the third parameter when we can.
   (getAppDetails [_ app-id _]
     (when-not (util/uuid? app-id)
       (.getAppDetails agave app-id)))
