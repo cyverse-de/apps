@@ -126,8 +126,10 @@
    (.deleteApp (get-apps-client user) system-id app-id)))
 
 (defn relabel-app
-  [user app]
-  (.relabelApp (get-apps-client user) app))
+  ([user app]
+   (.relabelApp (get-apps-client user) app))
+  ([user system-id app]
+   (.relabelApp (get-apps-client user) system-id app)))
 
 (defn update-app
   [user app]

@@ -104,7 +104,7 @@
    true))
 
 (defn check-relabel-app [user]
-  (apps/relabel-app user test-app)
+  (apps/relabel-app user de-system-id test-app)
   true)
 
 (defn check-update-app [user]
