@@ -120,8 +120,10 @@
    (.getAppJobView (get-apps-client user) system-id app-id)))
 
 (defn delete-app
-  [user app-id]
-  (.deleteApp (get-apps-client user) app-id))
+  ([user app-id]
+   (.deleteApp (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.deleteApp (get-apps-client user) system-id app-id)))
 
 (defn relabel-app
   [user app]

@@ -100,7 +100,7 @@
   ([user]
    (check-delete-app user test-app))
   ([user app]
-   (apps/delete-app user (:id app))
+   (apps/delete-app user de-system-id (:id app))
    true))
 
 (defn check-relabel-app [user]
