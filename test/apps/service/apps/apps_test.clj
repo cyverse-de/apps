@@ -59,3 +59,12 @@
 
 (deftest test-de-app-deletion-with-invalid-app-id
   (test-non-uuid #(apps/delete-app (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest test-app-relabling-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/relabel-app (get-user :testde1) fake-system-id {:id fake-app-id})))
+
+(deftest test-app-relabling-with-hpc-system-id
+  (test-hpc-app-modification #(apps/relabel-app (get-user :testde1) hpc-system-id {:id fake-app-id})))
+
+(deftest test-de-app-relabling-with-invalid-app-id
+  (test-non-uuid #(apps/relabel-app (get-user :testde1) de-system-id {:id fake-app-id})))
