@@ -123,7 +123,7 @@
 
   (copyApp [_ system-id app-id]
     (validate-system-id system-id)
-    (edit/copy-app user app-id))
+    (edit/copy-app user (uuidify app-id)))
 
   ;; FIXME: remove the admin flag when we have a better way to do this.
   (getAppDetails [_ app-id admin?]

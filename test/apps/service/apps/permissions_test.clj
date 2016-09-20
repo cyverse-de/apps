@@ -116,7 +116,7 @@
   true)
 
 (defn check-copy-app [user]
-  (let [app-id (:id (apps/copy-app user (:id test-app)))]
+  (let [app-id (:id (apps/copy-app user de-system-id (:id test-app)))]
     (permanently-delete-app user de-system-id app-id))
   true)
 

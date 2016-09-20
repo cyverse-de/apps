@@ -73,7 +73,7 @@
 ;; In the case of an app being copied, the integration data should have a user ID associated with it.
 (deftest test-tool-integration-data-after-app-copy
   (let [user             (get-user :testde9)
-        app-id           (:id (apps/copy-app user (:id (first atf/public-apps))))
+        app-id           (:id (apps/copy-app user de-system-id (:id (first atf/public-apps))))
         integration-data (get-integration-data-for-app app-id)]
     (is (not (nil? integration-data)))
     (is (not (nil? (:user_id integration-data))))

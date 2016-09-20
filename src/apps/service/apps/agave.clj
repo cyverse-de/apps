@@ -125,6 +125,14 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (copyApp [_ app-id]
+    (when-not (util/uuid? app-id)
+      (reject-app-integration-request)))
+
+  (copyApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   ;; FIXME: remove the third parameter when we can.
   (getAppDetails [_ app-id _]
     (when-not (util/uuid? app-id)

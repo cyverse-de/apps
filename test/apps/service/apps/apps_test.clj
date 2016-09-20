@@ -89,3 +89,12 @@
 
 (deftest test-app-integration-data-with-invalid-app-id
   (test-non-uuid #(apps/get-app-integration-data (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest test-copy-app-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/copy-app (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest test-copy-app-with-hpc-system-id
+  (test-hpc-app-modification #(apps/copy-app (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest test-copy-de-app-with-invalid-app-id
+  (test-non-uuid #(apps/copy-app (get-user :testde1) de-system-id fake-app-id)))

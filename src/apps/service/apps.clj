@@ -138,8 +138,10 @@
    (.updateApp (get-apps-client user) system-id app)))
 
 (defn copy-app
-  [user app-id]
-  (.copyApp (get-apps-client user) app-id))
+  ([user app-id]
+   (.copyApp (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.copyApp (get-apps-client user) system-id app-id)))
 
 (defn get-app-details
   [user app-id]

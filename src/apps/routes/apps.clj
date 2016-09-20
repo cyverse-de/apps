@@ -410,4 +410,11 @@
         :return IntegrationData
         :summary "Return the Integration Data Record for an App"
         :description "This service returns the integration data associated with an app."
-        (ok (apps/get-app-integration-data current-user system-id app-id))))))
+        (ok (apps/get-app-integration-data current-user system-id app-id)))
+
+      (POST "/copy" []
+        :query [params SecuredQueryParamsRequired]
+        :return App
+        :summary "Make a Copy of an App Available for Editing"
+        :description "This service can be used to make a copy of an App in the user's workspace."
+        (ok (apps/copy-app current-user system-id app-id))))))
