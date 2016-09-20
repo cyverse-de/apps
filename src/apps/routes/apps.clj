@@ -417,4 +417,18 @@
         :return App
         :summary "Make a Copy of an App Available for Editing"
         :description "This service can be used to make a copy of an App in the user's workspace."
-        (ok (apps/copy-app current-user system-id app-id))))))
+        (ok (apps/copy-app current-user system-id app-id)))
+
+      (GET "/details" []
+        :query [params SecuredQueryParams]
+        :return AppDetails
+        :middleware [wrap-metadata-base-url]
+        :summary "Get App Details"
+        :description
+        (str "This service is used by the DE to obtain high-level details about a single App."
+             (get-endpoint-delegate-block
+              "metadata"
+              "POST /ontologies/{ontology-version}/filter")
+             "Please see the metadata service documentation for information about the `hierarchies` response field.")
+        (ok (coerce! AppDetails
+                     (apps/get-app-details current-user system-id app-id)))))))

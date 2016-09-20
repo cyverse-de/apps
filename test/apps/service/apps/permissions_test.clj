@@ -125,7 +125,7 @@
   true)
 
 (defn check-get-app-details [user]
-  (apps/get-app-details user (:id test-app))
+  (apps/get-app-details user de-system-id (:id test-app))
   true)
 
 (defn check-get-app-docs [user]

@@ -144,8 +144,10 @@
    (.copyApp (get-apps-client user) system-id app-id)))
 
 (defn get-app-details
-  [user app-id]
-  (.getAppDetails (get-apps-client user) app-id false))
+  ([user app-id]
+   (.getAppDetails (get-apps-client user) app-id false))
+  ([user system-id app-id]
+   (.getAppDetails (get-apps-client user) system-id app-id false)))
 
 (defn admin-get-app-details
   [user app-id]
