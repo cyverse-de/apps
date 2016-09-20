@@ -1,5 +1,11 @@
 (ns apps.service.apps.test-utils
-  (:use [apps.user :only [user-from-attributes]]))
+  (:use [apps.user :only [user-from-attributes]])
+  (:require [apps.persistence.jobs :as jp]
+            [apps.service.apps :as apps]))
+
+(def fake-system-id "notreal")
+(def hpc-system-id jp/agave-client-name)
+(def de-system-id jp/de-client-name)
 
 (defn create-user [i]
   (let [username (str "testde" i)]
@@ -17,3 +23,17 @@
 
 (defn get-user [k]
   (user-from-attributes (users k)))
+
+(defn app-deletion-request [system-id app-ids]
+  (let [app-deletion-request (fn [app-id] {:system_id system-id :app_id app-id})]
+    {:app_ids (mapv app-deletion-request app-ids)}))
+
+(defn delete-app [user system-id app-id]
+  (apps/delete-apps user (app-deletion-request system-id [app-id])))
+
+(defn permanently-delete-app
+  ([user system-id app-id]
+   (apps/permanently-delete-apps user (app-deletion-request system-id [app-id])))
+  ([user system-id app-id root-deletion-request?]
+   (->> (assoc (app-deletion-request system-id [app-id]) :root_deletion_request root-deletion-request?)
+        (apps/permanently-delete-apps user))))

@@ -98,32 +98,44 @@
   (.searchApps (get-apps-client user) search params))
 
 (defn add-app
-  [user app]
-  (.addApp (get-apps-client user) app))
+  ([user app]
+   (.addApp (get-apps-client user) app))
+  ([user system-id app]
+   (.addApp (get-apps-client user) system-id app)))
 
 (defn preview-command-line
-  [user app]
-  (.previewCommandLine (get-apps-client user) app))
+  ([user app]
+   (.previewCommandLine (get-apps-client user) app))
+  ([user system-id app]
+   (.previewCommandLine (get-apps-client user) system-id app)))
 
 (defn delete-apps
   [user deletion-request]
   (.deleteApps (get-apps-client user) deletion-request))
 
 (defn get-app-job-view
-  [user app-id]
-  (.getAppJobView (get-apps-client user) app-id))
+  ([user app-id]
+   (.getAppJobView (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.getAppJobView (get-apps-client user) system-id app-id)))
 
 (defn delete-app
-  [user app-id]
-  (.deleteApp (get-apps-client user) app-id))
+  ([user app-id]
+   (.deleteApp (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.deleteApp (get-apps-client user) system-id app-id)))
 
 (defn relabel-app
-  [user app]
-  (.relabelApp (get-apps-client user) app))
+  ([user app]
+   (.relabelApp (get-apps-client user) app))
+  ([user system-id app]
+   (.relabelApp (get-apps-client user) system-id app)))
 
 (defn update-app
-  [user app]
-  (.updateApp (get-apps-client user) app))
+  ([user app]
+   (.updateApp (get-apps-client user) app))
+  ([user system-id app]
+   (.updateApp (get-apps-client user) system-id app)))
 
 (defn copy-app
   [user app-id]
@@ -330,8 +342,10 @@
   (.getAppDocs (get-apps-client user) app-id))
 
 (defn get-app-integration-data
-  [user app-id]
-  (.getAppIntegrationData (get-apps-client user) app-id))
+  ([user app-id]
+   (.getAppIntegrationData (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.getAppIntegrationData (get-apps-client user) system-id app-id)))
 
 (defn get-tool-integration-data
   [user tool-id]

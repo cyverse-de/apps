@@ -1,5 +1,5 @@
 (ns apps.routes.schemas.app
-  (:use [common-swagger-api.schema :only [->optional-param describe NonBlankString]]
+  (:use [common-swagger-api.schema :only [->optional-param describe]]
         [apps.routes.params]
         [apps.routes.schemas.app.rating]
         [apps.routes.schemas.tool :only [Tool]]
@@ -195,7 +195,7 @@
    :description                     (describe String "The App's description")
    (optional-key :integration_date) (describe Date "The App's Date of public submission")
    (optional-key :edited_date)      (describe Date "The App's Date of its last edit")
-   (optional-key :system_id)        (describe NonBlankString "The primary execution system ID for the app.")})
+   (optional-key :system_id)        SystemId})
 
 (defschema App
   (merge AppBase
@@ -384,8 +384,12 @@
   {:app_count (describe Long "The total number of Apps in the listing")
    :apps      (describe [AppListingDetail] "A listing of App details")})
 
+(defschema QualifiedAppId
+  {:system_id SystemId
+   :app_id    StringAppIdParam})
+
 (defschema AppIdList
-  {:app_ids (describe [UUID] "A List of UUIDs used to identify Apps")})
+  {:app_ids (describe [QualifiedAppId] "A List of qualified app identifiers")})
 
 (defschema AppDeletionRequest
   (merge AppIdList

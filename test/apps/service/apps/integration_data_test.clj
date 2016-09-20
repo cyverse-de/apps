@@ -1,5 +1,5 @@
 (ns apps.service.apps.integration-data-test
-  (:use [apps.service.apps.test-utils :only [users get-user]]
+  (:use [apps.service.apps.test-utils :only [users get-user de-system-id permanently-delete-app]]
         [clojure.test]
         [kameleon.uuids :only [uuid]]
         [medley.core :only [remove-vals]])
@@ -79,7 +79,7 @@
     (is (not (nil? (:user_id integration-data))))
     (is (= (:integrator_email integration-data) (:email user)))
     (is (= (:integrator_name integration-data) (user-to-integration-data-name user)))
-    (apps/permanently-delete-apps user {:app_ids [app-id]})))
+    (permanently-delete-app user de-system-id app-id)))
 
 ;; Integration data should automatically be updated if the email address changes.
 (deftest test-integration-data-email-address-change
@@ -331,7 +331,7 @@
 
 ;; We should be able to get an integration data record for an app.
 (deftest test-app-integration-data-retrieval
-  (let [actual   (apps/get-app-integration-data (get-user :testde1) (:id atf/test-app))
+  (let [actual   (apps/get-app-integration-data (get-user :testde1) de-system-id (:id atf/test-app))
         expected (get-integration-data-for-app (:id atf/test-app))]
     (is (= (:integrator_email expected) (:email actual)))
     (is (= (:integrator_name expected) (:name actual)))))
@@ -339,7 +339,7 @@
 ;; Attempting to get the integration data for an unknown app should fail.
 (deftest test-app-integration-data-retrieval-not-found
   (is (thrown-with-msg? ExceptionInfo #"no integration data found for app"
-                        (apps/get-app-integration-data (get-user :testde1) (uuid)))))
+                        (apps/get-app-integration-data (get-user :testde1) de-system-id (uuid)))))
 
 ;; We should be able to get an integration data record for a tool.
 (deftest test-tool-integration-data-retrieval
@@ -357,13 +357,13 @@
 (deftest test-app-integration-data-update
   (let [user     (get-user :testde1)
         app-id   (:id atf/test-app)
-        original (apps/get-app-integration-data user app-id)
+        original (apps/get-app-integration-data user de-system-id app-id)
         new      (add-integration-data "foo" "foo@example.org" "Foo Bar")]
     (is (not= original new))
     (apps/update-app-integration-data user app-id (:id new))
-    (is (= new (apps/get-app-integration-data user app-id)))
+    (is (= new (apps/get-app-integration-data user de-system-id app-id)))
     (apps/update-app-integration-data user app-id (:id original))
-    (is (= original (apps/get-app-integration-data user app-id)))
+    (is (= original (apps/get-app-integration-data user de-system-id app-id)))
     (delete-integration-data new)))
 
 ;; Attempting to set the integration data record for a non-existent app should fail.

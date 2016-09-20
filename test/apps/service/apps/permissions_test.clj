@@ -1,6 +1,6 @@
 (ns apps.service.apps.permissions-test
   (:use [apps.service.apps.de.listings :only [shared-with-me-id]]
-        [apps.service.apps.test-utils :only [get-user]]
+        [apps.service.apps.test-utils :only [get-user de-system-id delete-app permanently-delete-app]]
         [clojure.test]
         [kameleon.uuids :only [uuidify uuid]])
   (:require [apps.clients.iplant-groups :as ipg]
@@ -93,22 +93,22 @@
   ([user]
    (check-delete-apps user test-app))
   ([user app]
-   (apps/delete-apps user {:app_ids [(:id app)]})
+   (delete-app user de-system-id (:id app))
    true))
 
 (defn check-delete-app
   ([user]
    (check-delete-app user test-app))
   ([user app]
-   (apps/delete-app user (:id app))
+   (apps/delete-app user de-system-id (:id app))
    true))
 
 (defn check-relabel-app [user]
-  (apps/relabel-app user test-app)
+  (apps/relabel-app user de-system-id test-app)
   true)
 
 (defn check-update-app [user]
-  (apps/update-app user test-app)
+  (apps/update-app user de-system-id test-app)
   true)
 
 (defn check-app-ui [user]
@@ -117,7 +117,7 @@
 
 (defn check-copy-app [user]
   (let [app-id (:id (apps/copy-app user (:id test-app)))]
-    (apps/permanently-delete-apps user {:app_ids [app-id]}))
+    (permanently-delete-app user de-system-id app-id))
   true)
 
 (defn check-edit-app-docs [user]
@@ -230,10 +230,10 @@
     (is (check-tools user))
     (let [app (create-test-app user "Shreddable")]
       (is (check-delete-apps user app))
-      (apps/permanently-delete-apps user {:app_ids [(:id app)]}))
+      (permanently-delete-app user de-system-id (:id app)))
     (let [app (create-test-app user "Deletable")]
       (is (check-delete-apps user app))
-      (apps/permanently-delete-apps user {:app_ids [(:id app)]}))))
+      (permanently-delete-app user de-system-id (:id app)))))
 
 (deftest test-public-app-ratings
   (let [user (get-user :testde1)]
@@ -396,7 +396,7 @@
   (let [user (get-user :testde1)
         app  (create-test-app user "To be deleted")]
     (is (seq (:resources (pc/list-resources (config/permissions-client) {:resource_name (:id app)}))))
-    (apps/permanently-delete-apps user {:app_ids [(:id app)]})
+    (permanently-delete-app user de-system-id (:id app))
     (is (empty? (:resources (pc/list-resources (config/permissions-client) {:resource_name (:id app)}))))))
 
 (defn- favorite? [user app-id]
@@ -423,7 +423,7 @@
   (let [{username :shortUsername :as user} (get-user :testde1)
         pipeline                           (create-pipeline user)]
     (is (has-permission? "app" (:id pipeline) "user" username "own"))
-    (apps/permanently-delete-apps user {:app_ids [(:id pipeline)]})))
+    (permanently-delete-app user de-system-id (:id pipeline))))
 
 (deftest test-shared-listing
   (let [testde1       (get-user :testde1)
@@ -437,4 +437,4 @@
     (let [new-listing (shared-apps testde2)]
       (is (= (inc (:app_count old-listing)) (:app_count new-listing)))
       (is (contains-app? (:id app) (:apps new-listing))))
-    (apps/permanently-delete-apps testde1 {:app_ids [(:id app)]})))
+    (permanently-delete-app testde1 de-system-id (:id app))))
