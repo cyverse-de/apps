@@ -24,13 +24,14 @@ node {
         try {
             stage "Test"
             dockerTestRunner = "test-${env.BUILD_TAG}"
-            dockerTestCleanup = "test-cleanup-${env.BUILD_TAG}"
             sh "docker run --rm --name ${dockerTestRunner} -v \$(pwd)/test2junit:/usr/src/app/test2junit --entrypoint 'lein' ${dockerRepo} test2junit"
-            junit 'test2junit/xml/*.xml'
-            sh "docker run --rm --name ${dockerTestCleanup} -v \$(pwd):/build -w /build alpine rm -r test2junit"
         } finally {
+            junit 'test2junit/xml/*.xml'
             sh returnStatus: true, script: "docker kill ${dockerTestRunner}"
             sh returnStatus: true, script: "docker rm ${dockerTestRunner}"
+
+            dockerTestCleanup = "test-cleanup-${env.BUILD_TAG}"
+            sh "docker run --rm --name ${dockerTestCleanup} -v \$(pwd):/build -w /build alpine rm -r test2junit"
             sh returnStatus: true, script: "docker kill ${dockerTestCleanup}"
             sh returnStatus: true, script: "docker rm ${dockerTestCleanup}"
         }
