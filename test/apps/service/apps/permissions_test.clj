@@ -129,7 +129,7 @@
   true)
 
 (defn check-get-app-docs [user]
-  (apps/get-app-docs user (:id test-app))
+  (apps/get-app-docs user de-system-id (:id test-app))
   true)
 
 (defn check-favorite [user]

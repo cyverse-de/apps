@@ -104,3 +104,9 @@
 
 (deftest test-de-app-details-with-invalid-app-id
   (test-non-uuid #(apps/get-app-details (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest test-app-docs-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-docs (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest test-de-app-docs-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-docs (get-user :testde1) de-system-id fake-app-id)))

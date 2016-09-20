@@ -36,6 +36,11 @@
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
 (def ^:private validate-system-ids (partial apps-util/validate-system-ids supported-system-ids))
 
+(defn- empty-doc-map [app-id]
+  {:app_id        app-id
+   :documentation ""
+   :references    []})
+
 (deftype AgaveApps [agave user-has-access-token? user]
   apps.protocols.Apps
 
@@ -231,15 +236,11 @@
 
   (getAppDocs [_ app-id]
     (when-not (util/uuid? app-id)
-      {:app_id        app-id
-       :documentation ""
-       :references    []}))
+      (empty-doc-map app-id)))
 
   (getAppDocs [_ system-id app-id]
     (validate-system-id system-id)
-    {:app_id        app-id
-     :documentation ""
-     :references    []})
+    (empty-doc-map app-id))
 
   (getAppIntegrationData [_ app-id]
     (when-not (util/uuid? app-id)

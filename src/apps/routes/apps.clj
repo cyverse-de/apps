@@ -431,4 +431,12 @@
               "POST /ontologies/{ontology-version}/filter")
              "Please see the metadata service documentation for information about the `hierarchies` response field.")
         (ok (coerce! AppDetails
-                     (apps/get-app-details current-user system-id app-id)))))))
+                     (apps/get-app-details current-user system-id app-id))))
+
+      (GET "/documentation" []
+        :query [params SecuredQueryParams]
+        :return AppDocumentation
+        :summary "Get App Documentation"
+        :description "This service is used by the DE to obtain documentation for a single App"
+        (ok (coerce! AppDocumentation
+                     (apps/get-app-docs current-user system-id app-id)))))))
