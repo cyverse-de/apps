@@ -21,6 +21,9 @@
 (defn- test-non-uuid [f]
   (is (thrown-with-msg? ExceptionInfo #"is not a UUID" (f))))
 
+(defn- test-hpc-integration-data [f]
+  (is (thrown-with-msg? ExceptionInfo #"Cannot list or modify integration data for HPC apps" (f))))
+
 (deftest test-app-addition-with-invalid-system-id
   (test-unrecognized-system-id #(apps/add-app (get-user :testde1) fake-system-id atf/app-definition)))
 
@@ -75,5 +78,14 @@
 (deftest test-app-update-with-hpc-system-id
   (test-hpc-app-modification #(apps/update-app (get-user :testde1) hpc-system-id {:id fake-app-id})))
 
-(deftest test-de-app-update-with-invali-app-id
+(deftest test-de-app-update-with-invalid-app-id
   (test-non-uuid #(apps/relabel-app (get-user :testde1) de-system-id {:id fake-app-id})))
+
+(deftest test-app-integration-data-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-integration-data (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest test-app-integration-data-with-hpc-system-id
+  (test-hpc-integration-data #(apps/get-app-integration-data (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest test-app-integration-data-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-integration-data (get-user :testde1) de-system-id fake-app-id)))

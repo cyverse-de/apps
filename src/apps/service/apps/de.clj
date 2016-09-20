@@ -355,7 +355,7 @@
 
   (getAppIntegrationData [_ system-id app-id]
     (validate-system-id system-id)
-    (integration-data/get-integration-data-for-app user app-id))
+    (integration-data/get-integration-data-for-app user (uuidify app-id)))
 
   (getToolIntegrationData [_ tool-id]
     (when (util/uuid? tool-id)
