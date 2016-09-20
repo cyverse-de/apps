@@ -403,4 +403,11 @@
              (get-endpoint-delegate-block
               "metadata"
               "POST /avus/filter-targets"))
-        (ok (apps/update-app current-user system-id (assoc body :id app-id)))))))
+        (ok (apps/update-app current-user system-id (assoc body :id app-id))))
+
+      (GET "/integration-data" []
+        :query [params SecuredQueryParams]
+        :return IntegrationData
+        :summary "Return the Integration Data Record for an App"
+        :description "This service returns the integration data associated with an app."
+        (ok (apps/get-app-integration-data current-user system-id app-id))))))

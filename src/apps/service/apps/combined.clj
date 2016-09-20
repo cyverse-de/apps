@@ -257,6 +257,9 @@
          (remove nil?)
          (first)))
 
+  (getAppIntegrationData [_ system-id app-id]
+    (.getAppIntegrationData (util/get-apps-client clients system-id) system-id app-id))
+
   (getToolIntegrationData [_ tool-id]
     (->> (map #(.getToolIntegrationData % tool-id) clients)
          (remove nil?)
