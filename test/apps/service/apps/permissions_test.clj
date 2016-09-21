@@ -133,7 +133,11 @@
   true)
 
 (defn check-favorite [user]
-  (apps/add-app-favorite user (:id test-app))
+  (apps/add-app-favorite user de-system-id (:id test-app))
+  true)
+
+(defn check-remove-favorite [user]
+  (apps/remove-app-favorite user de-system-id (:id test-app))
   true)
 
 (defn check-publishable [user]
@@ -168,6 +172,7 @@
     (is (thrown-with-msg? ExceptionInfo #"privileges" (check-get-app-details user)))
     (is (thrown-with-msg? ExceptionInfo #"privileges" (check-get-app-docs user)))
     (is (thrown-with-msg? ExceptionInfo #"privileges" (check-favorite user)))
+    (is (check-remove-favorite user))
     (is (thrown-with-msg? ExceptionInfo #"privileges" (check-publishable user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-rating user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-unrating user)))
@@ -187,6 +192,7 @@
     (is (check-get-app-details user))
     (is (check-get-app-docs user))
     (is (check-favorite user))
+    (is (check-remove-favorite user))
     (is (thrown-with-msg? ExceptionInfo #"privileges" (check-publishable user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-rating user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-unrating user)))
@@ -206,6 +212,7 @@
     (is (check-get-app-details user))
     (is (check-get-app-docs user))
     (is (check-favorite user))
+    (is (check-remove-favorite user))
     (is (thrown-with-msg? ExceptionInfo #"privileges" (check-publishable user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-rating user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-unrating user)))
@@ -223,6 +230,7 @@
     (is (check-get-app-details user))
     (is (check-get-app-docs user))
     (is (check-favorite user))
+    (is (check-remove-favorite user))
     (is (check-publishable user))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-rating user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-unrating user)))
@@ -408,7 +416,7 @@
 (deftest test-shared-favorites
   (let [{username :shortUsername :as user} (get-user :testde2)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" username "read")
-    (apps/add-app-favorite user (:id test-app))
+    (apps/add-app-favorite user de-system-id (:id test-app))
     (is (favorite? user (:id test-app)))
     (pc/revoke-permission (config/permissions-client) "app" (:id test-app) "user" username)
     (is (not (favorite? user (:id test-app))))))

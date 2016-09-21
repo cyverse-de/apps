@@ -439,4 +439,19 @@
         :summary "Get App Documentation"
         :description "This service is used by the DE to obtain documentation for a single App"
         (ok (coerce! AppDocumentation
-                     (apps/get-app-docs current-user system-id app-id)))))))
+                     (apps/get-app-docs current-user system-id app-id))))
+
+      (DELETE "/favorite" []
+        :query [params SecuredQueryParams]
+        :summary "Removing an App as a Favorite"
+        :description "Apps can be marked as favorites in the DE, which allows users to access them
+        without having to search. This service is used to remove an App from a user's favorites
+        list."
+        (ok (apps/remove-app-favorite current-user system-id app-id)))
+
+      (PUT "/favorite" []
+        :query [params SecuredQueryParams]
+        :summary "Marking an App as a Favorite"
+        :description "Apps can be marked as favorites in the DE, which allows users to access them without
+        having to search. This service is used to add an App to a user's favorites list."
+        (ok (apps/add-app-favorite current-user system-id app-id))))))

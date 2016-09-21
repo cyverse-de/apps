@@ -145,11 +145,11 @@
 
   (addAppFavorite [_ app-id]
     (when (util/uuid? app-id)
-      (app-metadata/add-app-favorite user app-id)))
+      (app-metadata/add-app-favorite user (uuidify app-id))))
 
   (addAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
-    (app-metadata/add-app-favorite user app-id))
+    (app-metadata/add-app-favorite user (uuidify app-id)))
 
   (isAppPublishable [_ app-id]
     (when (util/uuid? app-id)

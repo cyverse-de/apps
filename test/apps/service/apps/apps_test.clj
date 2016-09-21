@@ -24,6 +24,9 @@
 (defn- test-hpc-integration-data [f]
   (is (thrown-with-msg? ExceptionInfo #"Cannot list or modify integration data for HPC apps" (f))))
 
+(defn- test-hpc-app-favorite [f]
+  (is (thrown-with-msg? ExceptionInfo #"Cannot mark an HPC app as a favorite with this service" (f))))
+
 (deftest test-app-addition-with-invalid-system-id
   (test-unrecognized-system-id #(apps/add-app (get-user :testde1) fake-system-id atf/app-definition)))
 
@@ -110,3 +113,21 @@
 
 (deftest test-de-app-docs-with-invalid-app-id
   (test-non-uuid #(apps/get-app-docs (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest test-app-favorite-removal-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/remove-app-favorite (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest test-app-favorite-removal-with-hpc-system-id
+  (test-hpc-app-favorite #(apps/remove-app-favorite (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest test-de-app-favorite-removal-with-invalid-app-id
+  (test-non-uuid #(apps/remove-app-favorite (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest test-app-favorite-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/add-app-favorite (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest test-app-favorite-with-hpc-system-id
+  (test-hpc-app-favorite #(apps/add-app-favorite (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest test-de-app-favorite-with-invalid-app-id
+  (test-non-uuid #(apps/add-app-favorite (get-user :testde1) de-system-id fake-app-id)))

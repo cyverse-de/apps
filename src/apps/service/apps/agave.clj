@@ -24,6 +24,8 @@
 
 (def integration-data-rejection "Cannot list or modify integration data for HPC apps with this service")
 
+(def app-favorite-rejection "Cannot mark an HPC app as a favorite with this service.")
+
 (defn- reject-app-permission-request
   []
   (service/bad-request app-permission-rejection))
@@ -31,6 +33,10 @@
 (defn- reject-app-integration-request
   []
   (service/bad-request app-integration-rejection))
+
+(defn- reject-app-favorite-request
+  []
+  (service/bad-request app-favorite-rejection))
 
 (def ^:private supported-system-ids #{jp/agave-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -147,6 +153,22 @@
   (getAppDetails [_ system-id app-id _]
     (validate-system-id system-id)
     (.getAppDetails agave app-id))
+
+  (removeAppFavorite [_ app-id]
+    (when-not (util/uuid? app-id)
+      (reject-app-favorite-request)))
+
+  (removeAppFavorite [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-favorite-request))
+
+  (addAppFavorite [_ app-id]
+    (when-not (util/uuid? app-id)
+      (reject-app-favorite-request)))
+
+  (addAppFavorite [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-favorite-request))
 
   (isAppPublishable [_ app-id]
     (when-not (util/uuid? app-id)
