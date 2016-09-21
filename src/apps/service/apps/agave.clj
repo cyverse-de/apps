@@ -180,6 +180,14 @@
     (validate-system-id system-id)
     false)
 
+  (makeAppPublic [_ app]
+    (when-not (util/uuid? (:id app))
+      (reject-app-integration-request)))
+
+  (makeAppPublic [_ system-id app]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (getAppTaskListing [_ app-id]
     (when-not (util/uuid? app-id)
       (.listAppTasks agave app-id)))

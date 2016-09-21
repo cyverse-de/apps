@@ -134,3 +134,12 @@
 
 (deftest test-app-publishable-with-invalid-system-id
   (test-unrecognized-system-id #(apps/app-publishable? (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest publish-app-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/make-app-public (get-user :testde1) fake-system-id {:id fake-app-id})))
+
+(deftest publish-app-with-hpc-system-id
+  (test-hpc-app-modification #(apps/make-app-public (get-user :testde1) hpc-system-id {:id fake-app-id})))
+
+(deftest publish-de-app-with-invalid-app-id
+  (test-non-uuid #(apps/make-app-public (get-user :testde1) de-system-id {:id fake-app-id})))

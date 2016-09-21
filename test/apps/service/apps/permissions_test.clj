@@ -246,7 +246,7 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id test-app)}))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-rating user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-unrating user)))
-    (apps/make-app-public user test-app)
+    (apps/make-app-public user de-system-id test-app)
     (is (check-rating user))
     (is (check-unrating user))))
 
@@ -259,7 +259,7 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id test-app)}))
     (is (has-permission? "app" (:id test-app) "user" username "own"))
     (is (not (has-permission? "app" (:id test-app) "group" (ipg/grouper-user-group-id) "read")))
-    (apps/make-app-public user test-app)
+    (apps/make-app-public user de-system-id test-app)
     (is (not (has-permission? "app" (:id test-app) "user" username "own")))
     (is (has-permission? "app" (:id test-app) "group" (ipg/grouper-user-group-id) "read"))))
 
@@ -422,7 +422,7 @@
 (deftest test-public-app-labels-update
   (let [{username :shortUsername :as user} (get-user :testde1)]
     (sql/delete :app_documentation (sql/where {:app_id (:id test-app)}))
-    (apps/make-app-public user test-app)
+    (apps/make-app-public user de-system-id test-app)
     (is (check-edit-app-docs user))))
 
 (deftest test-create-pipeline

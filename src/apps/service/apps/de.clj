@@ -164,11 +164,11 @@
 
   (makeAppPublic [_ app]
     (when (util/uuid? (:id app))
-      (app-metadata/make-app-public user app)))
+      (app-metadata/make-app-public user (update app :id uuidify))))
 
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
-    (app-metadata/make-app-public user app))
+    (app-metadata/make-app-public user (update app :id uuidify)))
 
   (deleteAppRating [_ app-id]
     (when (util/uuid? app-id)
