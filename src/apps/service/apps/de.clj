@@ -1,5 +1,4 @@
 (ns apps.service.apps.de
-  (:use [kameleon.uuids :only [uuidify]])
   (:require [clojure.string :as string]
             [apps.clients.jex :as jex]
             [apps.persistence.app-metadata :as ap]
@@ -21,7 +20,11 @@
             [apps.service.apps.permissions :as app-permissions]
             [apps.service.apps.util :as apps-util]
             [apps.service.integration-data :as integration-data]
-            [apps.service.util :as util]))
+            [apps.service.util :as util :refer [uuidify]]))
+
+(def ^:private supported-system-ids #{jp/de-client-name})
+(def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
+(def ^:private validate-system-ids (partial apps-util/validate-system-ids supported-system-ids))
 
 (deftype DeApps [user]
   apps.protocols.Apps
@@ -34,6 +37,9 @@
 
   (getJobTypes [_]
     [jp/de-job-type])
+
+  (supportsSystemId [_ system-id]
+    (supported-system-ids system-id))
 
   (listAppCategories [_ params]
     (listings/get-app-groups user params))
@@ -59,95 +65,184 @@
   (addApp [_ app]
     (edit/add-app user app))
 
+  (addApp [_ system-id app]
+    (validate-system-id system-id)
+    (edit/add-app user app))
+
   (previewCommandLine [_ app]
     (app-metadata/preview-command-line app))
 
-  (deleteApps [_ deletion-request]
-    (app-metadata/delete-apps user deletion-request))
+  (previewCommandLine [_ system-id app]
+    (validate-system-id system-id)
+    (app-metadata/preview-command-line app))
+
+  (validateDeletionRequest [_ req]
+    (let [qualified-app-ids (:app_ids req)]
+      (validate-system-ids (set (map :system_id qualified-app-ids)))
+      (app-metadata/validate-deletion-request user req)))
+
+  (deleteApps [this req]
+    (.validateDeletionRequest this req)
+    (app-metadata/delete-apps user req))
 
   (getAppJobView [_ app-id]
     (when (util/uuid? app-id)
       (job-view/get-app (uuidify app-id))))
 
+  (getAppJobView [_ system-id app-id]
+    (validate-system-id system-id)
+    (job-view/get-app (uuidify app-id)))
+
   (deleteApp [_ app-id]
     (when (util/uuid? app-id)
       (app-metadata/delete-app user (uuidify app-id))))
+
+  (deleteApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-metadata/delete-app user (uuidify app-id)))
 
   (relabelApp [_ app]
     (when (util/uuid? (:id app))
       (edit/relabel-app user app)))
 
+  (relabelApp [_ system-id app]
+    (validate-system-id system-id)
+    (edit/relabel-app user (update app :id uuidify)))
+
   (updateApp [_ app]
     (when (util/uuid? (:id app))
       (edit/update-app user app)))
 
+  (updateApp [_ system-id app]
+    (validate-system-id system-id)
+    (edit/update-app user (update app :id uuidify)))
+
   (copyApp [_ app-id]
     (when (util/uuid? app-id)
       (edit/copy-app user app-id)))
+
+  (copyApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (edit/copy-app user (uuidify app-id)))
 
   ;; FIXME: remove the admin flag when we have a better way to do this.
   (getAppDetails [_ app-id admin?]
     (when (util/uuid? app-id)
       (listings/get-app-details user (uuidify app-id) admin?)))
 
+  ;; FIXME: remove the admin flag when we have a better way to do this.
+  (getAppDetails [_ system-id app-id admin?]
+    (validate-system-id system-id)
+    (listings/get-app-details user (uuidify app-id) admin?))
+
   (removeAppFavorite [_ app-id]
     (when (util/uuid? app-id)
       (app-metadata/remove-app-favorite user (uuidify app-id))))
 
+  (removeAppFavorite [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-metadata/remove-app-favorite user (uuidify app-id)))
+
   (addAppFavorite [_ app-id]
     (when (util/uuid? app-id)
-      (app-metadata/add-app-favorite user app-id)))
+      (app-metadata/add-app-favorite user (uuidify app-id))))
+
+  (addAppFavorite [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-metadata/add-app-favorite user (uuidify app-id)))
 
   (isAppPublishable [_ app-id]
     (when (util/uuid? app-id)
-      (first (app-validation/app-publishable? user app-id))))
+      (first (app-validation/app-publishable? user (uuidify app-id)))))
+
+  (isAppPublishable [_ system-id app-id]
+    (validate-system-id system-id)
+    (first (app-validation/app-publishable? user (uuidify app-id))))
 
   (makeAppPublic [_ app]
     (when (util/uuid? (:id app))
       (app-metadata/make-app-public user app)))
 
+  (makeAppPublic [_ system-id app]
+    (validate-system-id system-id)
+    (app-metadata/make-app-public user app))
+
   (deleteAppRating [_ app-id]
     (when (util/uuid? app-id)
       (app-metadata/delete-app-rating user app-id)))
+
+  (deleteAppRating [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-metadata/delete-app-rating user app-id))
 
   (rateApp [_ app-id rating]
     (when (util/uuid? app-id)
       (app-metadata/rate-app user app-id rating)))
 
+  (rateApp [_ system-id app-id rating]
+    (validate-system-id system-id)
+    (app-metadata/rate-app user app-id rating))
+
   (getAppTaskListing [_ app-id]
     (when (util/uuid? app-id)
       (listings/get-app-task-listing user (uuidify app-id))))
+
+  (getAppTaskListing [_ system-id app-id]
+    (validate-system-id system-id)
+    (listings/get-app-task-listing user (uuidify app-id)))
 
   (getAppToolListing [_ app-id]
     (when (util/uuid? app-id)
       (listings/get-app-tool-listing user (uuidify app-id))))
 
+  (getAppToolListing [_ system-id app-id]
+    (validate-system-id system-id)
+    (listings/get-app-tool-listing user (uuidify app-id)))
+
   (getAppUi [_ app-id]
     (when (util/uuid? app-id)
       (edit/get-app-ui user app-id)))
+
+  (getAppUi [_ system-id app-id]
+    (validate-system-id system-id)
+    (edit/get-app-ui user app-id))
 
   (getAppInputIds [_ app-id]
     (when (util/uuid? app-id)
       (listings/get-app-input-ids (uuidify app-id))))
 
+  (getAppInputIds [_ system-id app-id]
+    (validate-system-id system-id)
+    (listings/get-app-input-ids (uuidify app-id)))
+
   (addPipeline [_ pipeline]
+    (pipeline-edit/add-pipeline user pipeline))
+
+  (addPipeline [_ system-id pipeline]
+    (validate-system-id system-id)
     (pipeline-edit/add-pipeline user pipeline))
 
   (formatPipelineTasks [_ pipeline]
     pipeline)
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (updatePipeline [_ pipeline]
     (pipeline-edit/update-pipeline user pipeline))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (copyPipeline [_ app-id]
     (pipeline-edit/copy-pipeline user app-id))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (editPipeline [_ app-id]
     (pipeline-edit/edit-pipeline user app-id))
 
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
+  ;; TODO: Determine how this should be refactored now that we have system IDs. If I remember correctly,
+  ;; this method is used during job listings. If that's the case, we can filter apps by execution system
+  ;; easily enough.
   (loadAppTables [_ app-ids]
     (->> (filter util/uuid? app-ids)
          (ap/load-app-details)
@@ -158,6 +253,10 @@
   (submitJob [this submission]
     (when (util/uuid? (:app_id submission))
       (de-jobs/submit user (update-in submission [:app_id] uuidify))))
+
+  (submitJob [this system-id submission]
+    (validate-system-id system-id)
+    (de-jobs/submit user (update-in submission [:app_id] uuidify)))
 
   (submitJobStep [_ _ submission]
     (de-jobs/submit-step user (update-in submission [:app_id] uuidify)))
@@ -183,21 +282,35 @@
     (when (util/uuid? app-id)
       (app-metadata/get-param-definitions app-id)))
 
+  (getParamDefinitions [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-metadata/get-param-definitions app-id))
+
   (stopJobStep [self {:keys [job-type external-id]}]
     (when (and (apps-util/supports-job-type? self job-type)
                (not (string/blank? external-id)))
       (jex/stop-job external-id)))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (categorizeApps [_ body]
     (app-categorization/categorize-apps body))
 
-  (permanentlyDeleteApps [_ body]
-    (app-metadata/permanently-delete-apps user body))
+  (permanentlyDeleteApps [this req]
+    (.validateDeletionRequest this req)
+    (app-metadata/permanently-delete-apps user req))
 
   (adminDeleteApp [_ app-id]
     (app-admin/delete-app app-id))
 
+  (adminDeleteApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-admin/delete-app app-id))
+
   (adminUpdateApp [_ body]
+    (app-admin/update-app user body))
+
+  (adminUpdateApp [_ system-id body]
+    (validate-system-id system-id)
     (app-admin/update-app user body))
 
   (getAdminAppCategories [_ params]
@@ -206,61 +319,114 @@
   (adminAddCategory [_ body]
     (app-admin/add-category body))
 
+  (adminAddCategory [_ system-id body]
+    (validate-system-id system-id)
+    (app-admin/add-category body))
+
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (adminDeleteCategories [_ body]
     (app-admin/delete-categories user body))
 
   (adminDeleteCategory [_ category-id]
     (app-admin/delete-category user category-id))
 
+  (adminDeleteCategory [_ system-id category-id]
+    (validate-system-id system-id)
+    (app-admin/delete-category user category-id))
+
   (adminUpdateCategory [_ body]
+    (app-admin/update-category body))
+
+  (adminUpdateCategory [_ system-id body]
+    (validate-system-id system-id)
     (app-admin/update-category body))
 
   (getAppDocs [_ app-id]
     (when (util/uuid? app-id)
       (docs/get-app-docs user (uuidify app-id))))
 
+  (getAppDocs [_ system-id app-id]
+    (validate-system-id system-id)
+    (docs/get-app-docs user (uuidify app-id)))
+
   (getAppIntegrationData [_ app-id]
     (when (util/uuid? app-id)
       (integration-data/get-integration-data-for-app user app-id)))
+
+  (getAppIntegrationData [_ system-id app-id]
+    (validate-system-id system-id)
+    (integration-data/get-integration-data-for-app user (uuidify app-id)))
 
   (getToolIntegrationData [_ tool-id]
     (when (util/uuid? tool-id)
       (integration-data/get-integration-data-for-tool user tool-id)))
 
+  (getToolIntegrationData [_ system-id tool-id]
+    (validate-system-id system-id)
+    (integration-data/get-integration-data-for-tool user tool-id))
+
   (updateAppIntegrationData [_ app-id integration-data-id]
     (when (util/uuid? app-id)
       (integration-data/update-integration-data-for-app user app-id integration-data-id)))
+
+  (updateAppIntegrationData [_ system-id app-id integration-data-id]
+    (validate-system-id system-id)
+    (integration-data/update-integration-data-for-app user app-id integration-data-id))
 
   (updateToolIntegrationData [_ tool-id integration-data-id]
     (when (util/uuid? tool-id)
       (integration-data/update-integration-data-for-tool user tool-id integration-data-id)))
 
+  (updateToolIntegrationData [_ system-id tool-id integration-data-id]
+    (validate-system-id system-id)
+    (integration-data/update-integration-data-for-tool user tool-id integration-data-id))
+
   (ownerEditAppDocs [_ app-id body]
     (when (util/uuid? app-id)
       (docs/owner-edit-app-docs user (uuidify app-id) body)))
+
+  (ownerEditAppDocs [_ system-id app-id body]
+    (validate-system-id system-id)
+    (docs/owner-edit-app-docs user (uuidify app-id) body))
 
   (ownerAddAppDocs [_ app-id body]
     (when (util/uuid? app-id)
       (docs/owner-add-app-docs user (uuidify app-id) body)))
 
+  (ownerAddAppDocs [_ system-id app-id body]
+    (validate-system-id system-id)
+    (docs/owner-add-app-docs user (uuidify app-id) body))
+
   (adminEditAppDocs [_ app-id body]
     (when (util/uuid? app-id)
       (docs/edit-app-docs user (uuidify app-id) body)))
+
+  (adminEditAppDocs [_ system-id app-id body]
+    (validate-system-id system-id)
+    (docs/edit-app-docs user (uuidify app-id) body))
 
   (adminAddAppDocs [_ app-id body]
     (when (util/uuid? app-id)
       (docs/add-app-docs user (uuidify app-id) body)))
 
+  (adminAddAppDocs [_ system-id app-id body]
+    (validate-system-id system-id)
+    (docs/add-app-docs user (uuidify app-id) body))
+
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (listAppPermissions [_ app-ids]
     (when-let [uuids (util/extract-uuids app-ids)]
       (perms/list-app-permissions user uuids)))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
     (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareAppWithUser [_ app-names sharee app-id level]
     (when (util/uuid? app-id)
       (sharing/share-app-with-user
@@ -268,12 +434,15 @@
        (partial app-permissions/app-sharing-success app-names app-id level)
        (partial app-permissions/app-sharing-failure app-names app-id level))))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (unshareAppsWithUser [self app-names sharee app-ids]
     (app-permissions/process-user-app-unsharing-requests self app-names sharee app-ids))
 
+  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (unshareAppWithUser [self app-names sharee app-id]
     (when (util/uuid? app-id)
       (sharing/unshare-app-with-user
@@ -284,6 +453,10 @@
   (hasAppPermission [_ username app-id required-level]
     (when (util/uuid? app-id)
       (perms/has-app-permission username (uuidify app-id) required-level)))
+
+  (hasAppPermission [_ username system-id app-id required-level]
+    (validate-system-id system-id)
+    (perms/has-app-permission username (uuidify app-id) required-level))
 
   (supportsJobSharing [_ _]
     true))

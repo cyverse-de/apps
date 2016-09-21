@@ -37,6 +37,9 @@
   (getJobTypes [_]
     (mapcat #(.getJobTypes %) clients))
 
+  (supportsSystemId [_ system-id]
+    (some #(.supportsSystemId % system-id) clients))
+
   (listAppCategories [_ params]
     (mapcat #(.listAppCategories % params) clients))
 
@@ -72,14 +75,31 @@
   (addApp [_ app]
     (.addApp (util/get-apps-client clients) app))
 
+  (addApp [_ system-id app]
+    (.addApp (util/get-apps-client clients system-id) system-id app))
+
   (previewCommandLine [_ app]
     (.previewCommandLine (util/get-apps-client clients) app))
 
-  (deleteApps [_ deletion-request]
-    (.deleteApps (util/get-apps-client clients) deletion-request))
+  (previewCommandLine [_ system-id app]
+    (.previewCommandLine (util/get-apps-client clients system-id) system-id app))
+
+  (validateDeletionRequest [_ req]
+    (let [requests-for-system (group-by :system_id (:app_ids req))]
+      (doseq [[system-id qualified-app-ids] requests-for-system]
+        (.validateDeletionRequest (util/get-apps-client clients system-id) (assoc req :app-ids qualified-app-ids)))))
+
+  (deleteApps [this req]
+    (.validateDeletionRequest this req)
+    (let [requests-for-system (group-by :system_id (:app_ids req))]
+      (doseq [[system-id qualified-app-ids] requests-for-system]
+        (.deleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
   (getAppJobView [_ app-id]
     (job-view/get-app app-id clients))
+
+  (getAppJobView [_ system-id app-id]
+    (job-view/get-app system-id app-id clients))
 
   (getAppSubmissionInfo [_ app-id]
     (job-view/get-app-submission-info app-id clients))
@@ -87,14 +107,26 @@
   (deleteApp [_ app-id]
     (.deleteApp (util/get-apps-client clients) app-id))
 
+  (deleteApp [_ system-id app-id]
+    (.deleteApp (util/get-apps-client clients system-id) system-id app-id))
+
   (relabelApp [_ app]
     (.relabelApp (util/get-apps-client clients) app))
+
+  (relabelApp [_ system-id app]
+    (.relabelApp (util/get-apps-client clients system-id) system-id app))
 
   (updateApp [_ app]
     (.updateApp (util/get-apps-client clients) app))
 
+  (updateApp [_ system-id app]
+    (.updateApp (util/get-apps-client clients system-id) system-id app))
+
   (copyApp [_ app-id]
     (.copyApp (util/get-apps-client clients) app-id))
+
+  (copyApp [_ system-id app-id]
+    (.copyApp (util/get-apps-client clients system-id) system-id app-id))
 
   ;; FIXME: remove the admin flag when we have a better way to deal with administrative
   ;; privileges.
@@ -103,14 +135,28 @@
          (remove nil?)
          (first)))
 
+  ;; FIXME: remove the admin flag when we have a better way to deal with administrative
+  ;; privileges.
+  (getAppDetails [_ system-id app-id admin?]
+    (.getAppDetails (util/get-apps-client clients system-id) system-id app-id false))
+
   (removeAppFavorite [_ app-id]
     (.removeAppFavorite (util/get-apps-client clients) app-id))
+
+  (removeAppFavorite [_ system-id app-id]
+    (.removeAppFavorite (util/get-apps-client clients system-id) system-id app-id))
 
   (addAppFavorite [_ app-id]
     (.addAppFavorite (util/get-apps-client clients) app-id))
 
+  (addAppFavorite [_ system-id app-id]
+    (.addAppFavorite (util/get-apps-client clients system-id) system-id app-id))
+
   (isAppPublishable [_ app-id]
     (.isAppPublishable (util/get-apps-client clients) app-id))
+
+  (isAppPublishable [_ system-id app-id]
+    (.isAppPublishable (util/get-apps-client clients system-id) system-id app-id))
 
   (makeAppPublic [_ app]
     (.makeAppPublic (util/get-apps-client clients) app))
@@ -191,8 +237,11 @@
   (categorizeApps [_ body]
     (.categorizeApps (util/get-apps-client clients) body))
 
-  (permanentlyDeleteApps [_ body]
-    (.permanentlyDeleteApps (util/get-apps-client clients) body))
+  (permanentlyDeleteApps [this req]
+    (.validateDeletionRequest this req)
+    (let [requests-for-system (group-by :system_id (:app_ids req))]
+      (doseq [[system-id qualified-app-ids] requests-for-system]
+        (.permanentlyDeleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
   (adminDeleteApp [_ app-id]
     (.adminDeleteApp (util/get-apps-client clients) app-id))
@@ -220,10 +269,16 @@
          (remove nil?)
          (first)))
 
+  (getAppDocs [_ system-id app-id]
+    (.getAppDocs (util/get-apps-client clients system-id) system-id app-id))
+
   (getAppIntegrationData [_ app-id]
     (->> (map #(.getAppIntegrationData % app-id) clients)
          (remove nil?)
          (first)))
+
+  (getAppIntegrationData [_ system-id app-id]
+    (.getAppIntegrationData (util/get-apps-client clients system-id) system-id app-id))
 
   (getToolIntegrationData [_ tool-id]
     (->> (map #(.getToolIntegrationData % tool-id) clients)

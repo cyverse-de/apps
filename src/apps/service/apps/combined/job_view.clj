@@ -1,6 +1,8 @@
 (ns apps.service.apps.combined.job-view
   (:use [apps.util.assertions :only [assert-not-nil]])
-  (:require [apps.persistence.app-metadata :as ap]))
+  (:require [apps.persistence.app-metadata :as ap]
+            [apps.persistence.jobs :as jp]
+            [apps.service.apps.combined.util :as util]))
 
 (defn- remove-mapped-inputs
   [mapped-props group]
@@ -64,13 +66,20 @@
               steps
               (inc step-number))))))
 
+(defn- format-app-submission-info
+  [app clients current-client]
+  [(.getJobTypes current-client)
+   (if (= (.getClientName current-client) jp/de-client-name)
+     (update-in app [:groups] (partial get-combined-groups clients (:id app)))
+     app)])
+
 (defn- get-app-from-client
-  [app-id clients current-client]
-  (when-let [app (.getAppJobView current-client app-id)]
-    [(.getJobTypes current-client)
-     (if (= (.getClientName current-client) "de")
-       (update-in app [:groups] (partial get-combined-groups clients (:id app)))
-       app)]))
+  ([app-id clients current-client]
+   (when-let [app (.getAppJobView current-client app-id)]
+     (format-app-submission-info app clients current-client)))
+  ([system-id app-id clients current-client]
+   (-> (.getAppJobView current-client system-id app-id)
+       (format-app-submission-info clients current-client))))
 
 (defn- get-app*
   [app-id clients]
@@ -79,8 +88,12 @@
        (first)))
 
 (defn get-app
-  [app-id clients]
-  (second (get-app* app-id clients)))
+  ([app-id clients]
+   (second (get-app* app-id clients)))
+  ([system-id app-id clients]
+   (->> (util/get-apps-client clients system-id)
+        (get-app-from-client system-id app-id clients)
+        second)))
 
 (defn get-app-submission-info
   [app-id clients]

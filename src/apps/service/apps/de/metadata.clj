@@ -6,6 +6,7 @@
                                     decategorize-app
                                     get-app-subcategory-id
                                     remove-app-from-category]]
+        [kameleon.uuids :only [uuidify]]
         [apps.service.apps.de.validation :only [app-publishable? verify-app-permission]]
         [apps.validation :only [get-valid-user-id]]
         [apps.workspace :only [get-workspace]]
@@ -26,7 +27,12 @@
   [app-id]
   (amp/get-app app-id))
 
-(defn- validate-deletion-request
+(defn- app-ids-from-deletion-request
+  "Extracts the app IDs from a deletion request."
+  [req]
+  (mapv (comp uuidify :app_id) (:app_ids req)))
+
+(defn validate-deletion-request
   "Validates an app deletion request."
   [{username :shortUsername} req]
   (when (empty? (:app_ids req))
@@ -35,9 +41,10 @@
   (when (and (nil? username) (not (:root_deletion_request req)))
     (throw+ {:type  :clojure-commons.exception/bad-request-field
              :error "no username provided for non-root deletion request"}))
-  (dorun (map validate-app-existence (:app_ids req)))
-  (when-not (:root_deletion_request req)
-    (perms/check-app-permissions username "own" (:app_ids req))))
+  (let [app-ids (app-ids-from-deletion-request req)]
+    (dorun (map validate-app-existence app-ids))
+    (when-not (:root_deletion_request req)
+      (perms/check-app-permissions username "own" app-ids))))
 
 (defn- permanently-delete-app
   "Permanently deletes a single app from the database."
@@ -48,17 +55,16 @@
 (defn permanently-delete-apps
   "This service removes apps from the database rather than merely marking them as deleted."
   [user req]
-  (validate-deletion-request user req)
+  (println "Permanently deleting some apps: " req)
   (transaction
-    (dorun (map permanently-delete-app (:app_ids req)))
+    (dorun (map permanently-delete-app (app-ids-from-deletion-request req)))
     (amp/remove-workflow-map-orphans))
   nil)
 
 (defn delete-apps
   "This service marks existing apps as deleted in the database."
   [user req]
-  (validate-deletion-request user req)
-  (transaction (dorun (map amp/delete-app (:app_ids req))))
+  (transaction (dorun (map amp/delete-app (app-ids-from-deletion-request req))))
   {})
 
 (defn delete-app
