@@ -141,7 +141,7 @@
   true)
 
 (defn check-publishable [user]
-  (apps/app-publishable? user (:id test-app))
+  (apps/app-publishable? user de-system-id (:id test-app))
   true)
 
 (defn check-rating [user]

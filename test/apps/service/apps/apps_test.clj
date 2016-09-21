@@ -131,3 +131,6 @@
 
 (deftest test-de-app-favorite-with-invalid-app-id
   (test-non-uuid #(apps/add-app-favorite (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest test-app-publishable-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/app-publishable? (get-user :testde1) fake-system-id fake-app-id)))

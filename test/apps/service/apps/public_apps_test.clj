@@ -38,7 +38,7 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
     (apps/make-app-public user app)
     (pc/grant-permission (config/permissions-client) "app" (:id app) "user" (:shortUsername user) "own")
-    (let [publishable? (:publishable (apps/app-publishable? user (:id app)))]
+    (let [publishable? (:publishable (apps/app-publishable? user de-system-id (:id app)))]
       (is (not (nil? publishable?)))
       (is (not publishable?)))
     (permanently-delete-app user de-system-id (:id app) true)))
