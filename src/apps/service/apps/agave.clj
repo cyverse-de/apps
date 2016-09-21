@@ -175,6 +175,7 @@
       false))
 
   (isAppPublishable [_ system-id app-id]
+    (validate-system-id system-id)
     false)
 
   (getAppTaskListing [_ app-id]

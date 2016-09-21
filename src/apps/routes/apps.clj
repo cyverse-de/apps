@@ -454,4 +454,12 @@
         :summary "Marking an App as a Favorite"
         :description "Apps can be marked as favorites in the DE, which allows users to access them without
         having to search. This service is used to add an App to a user's favorites list."
-        (ok (apps/add-app-favorite current-user system-id app-id))))))
+        (ok (apps/add-app-favorite current-user system-id app-id)))
+
+      (GET "/is-publishable" []
+        :query [params SecuredQueryParams]
+        :summary "Determine if an App Can be Made Public"
+        :description "A multi-step App can't be made public if any of the Tasks that are included in it
+        are not public. This endpoint returns a true flag if the App is a single-step App or it's a
+        multistep App in which all of the Tasks included in the pipeline are public."
+        (ok (apps/app-publishable? current-user system-id app-id))))))

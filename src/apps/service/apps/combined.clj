@@ -155,6 +155,9 @@
   (isAppPublishable [_ app-id]
     (.isAppPublishable (util/get-apps-client clients) app-id))
 
+  (isAppPublishable [_ system-id app-id]
+    (.isAppPublishable (util/get-apps-client clients system-id) system-id app-id))
+
   (makeAppPublic [_ app]
     (.makeAppPublic (util/get-apps-client clients) app))
 

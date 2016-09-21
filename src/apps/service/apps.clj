@@ -166,8 +166,10 @@
    (.addAppFavorite (get-apps-client user) system-id app-id)))
 
 (defn app-publishable?
-  [user app-id]
-  {:publishable (.isAppPublishable (get-apps-client user) app-id)})
+  ([user app-id]
+   {:publishable (.isAppPublishable (get-apps-client user) app-id)})
+  ([user system-id app-id]
+   {:publishable (.isAppPublishable (get-apps-client user) system-id app-id)}))
 
 (defn make-app-public
   [user app]

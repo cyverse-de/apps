@@ -153,11 +153,11 @@
 
   (isAppPublishable [_ app-id]
     (when (util/uuid? app-id)
-      (first (app-validation/app-publishable? user app-id))))
+      (first (app-validation/app-publishable? user (uuidify app-id)))))
 
   (isAppPublishable [_ system-id app-id]
     (validate-system-id system-id)
-    (first (app-validation/app-publishable? user app-id)))
+    (first (app-validation/app-publishable? user (uuidify app-id))))
 
   (makeAppPublic [_ app]
     (when (util/uuid? (:id app))
