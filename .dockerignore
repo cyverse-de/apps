@@ -12,3 +12,4 @@ test2junit
 GIT_COMMIT
 VERSION
 Jenkinsfile
+service.properties
