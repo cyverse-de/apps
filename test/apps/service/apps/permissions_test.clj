@@ -143,7 +143,7 @@
   true)
 
 (defn check-rating [user]
-  (apps/rate-app user (:id test-app) de-system-id {:rating 5 :comment_id 27})
+  (apps/rate-app user de-system-id (:id test-app) {:rating 5 :comment_id 27})
   true)
 
 (defn check-unrating [user]
