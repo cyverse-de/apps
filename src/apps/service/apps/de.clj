@@ -172,19 +172,19 @@
 
   (deleteAppRating [_ app-id]
     (when (util/uuid? app-id)
-      (app-metadata/delete-app-rating user app-id)))
+      (app-metadata/delete-app-rating user (uuidify app-id))))
 
   (deleteAppRating [_ system-id app-id]
     (validate-system-id system-id)
-    (app-metadata/delete-app-rating user app-id))
+    (app-metadata/delete-app-rating user (uuidify app-id)))
 
   (rateApp [_ app-id rating]
     (when (util/uuid? app-id)
-      (app-metadata/rate-app user app-id rating)))
+      (app-metadata/rate-app user (uuidify app-id) rating)))
 
   (rateApp [_ system-id app-id rating]
     (validate-system-id system-id)
-    (app-metadata/rate-app user app-id rating))
+    (app-metadata/rate-app user (uuidify app-id) rating))
 
   (getAppTaskListing [_ app-id]
     (when (util/uuid? app-id)

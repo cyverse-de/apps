@@ -26,6 +26,8 @@
 
 (def app-favorite-rejection "Cannot mark an HPC app as a favorite with this service.")
 
+(def app-rating-rejection "Cannot rate an HPC app with this service.")
+
 (defn- reject-app-permission-request
   []
   (service/bad-request app-permission-rejection))
@@ -37,6 +39,10 @@
 (defn- reject-app-favorite-request
   []
   (service/bad-request app-favorite-rejection))
+
+(defn- reject-app-rating-request
+  []
+  (service/bad-request app-rating-rejection))
 
 (def ^:private supported-system-ids #{jp/agave-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -187,6 +193,22 @@
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
     (reject-app-integration-request))
+
+  (deleteAppRating [_ app-id]
+    (when-not (util/uuid? app-id)
+      (reject-app-rating-request)))
+
+  (deleteAppRating [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-rating-request))
+
+  (rateApp [_ app-id rating]
+    (when-not (util/uuid? app-id)
+      (reject-app-rating-request)))
+
+  (rateApp [_ system-id app-id rating]
+    (validate-system-id system-id)
+    (reject-app-rating-request))
 
   (getAppTaskListing [_ app-id]
     (when-not (util/uuid? app-id)

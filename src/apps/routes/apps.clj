@@ -466,4 +466,23 @@
         information and suggested location then places the App in the Beta category. A Tito
         administrator can subsequently move the App to the suggested location at a later time if it
         proves to be useful."
-        (ok (apps/make-app-public current-user system-id (assoc body :id app-id)))))))
+        (ok (apps/make-app-public current-user system-id (assoc body :id app-id))))
+
+      (DELETE "/rating" []
+        :query [params SecuredQueryParams]
+        :return RatingResponse
+        :summary "Delete an App Rating"
+        :description "The DE uses this service to remove a rating that a user has previously made. This
+        service deletes the authenticated user's rating for the corresponding app-id."
+        (ok (apps/delete-app-rating current-user system-id app-id)))
+
+      (POST "/rating" []
+        :query [params SecuredQueryParams]
+        :body [body (describe RatingRequest "The user's new rating for this App.")]
+        :return RatingResponse
+        :summary "Rate an App"
+        :description "Users have the ability to rate an App for its usefulness, and this service provides
+        the means to store the App rating. This service accepts a rating level between one and
+        five, inclusive, and a comment identifier that refers to a comment in iPlant's Confluence
+        wiki. The rating is stored in the database and associated with the authenticated user."
+        (ok (apps/rate-app current-user system-id app-id body))))))

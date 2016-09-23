@@ -12,6 +12,8 @@
 
 (def ^:private fake-app-id "fakeid")
 
+(def ^:private fake-rating {:rating 5 :comment_id 27})
+
 (defn- test-unrecognized-system-id [f]
   (is (thrown-with-msg? ExceptionInfo #"unrecognized system ID" (f))))
 
@@ -26,6 +28,9 @@
 
 (defn- test-hpc-app-favorite [f]
   (is (thrown-with-msg? ExceptionInfo #"Cannot mark an HPC app as a favorite with this service" (f))))
+
+(defn- test-hpc-app-rating [f]
+  (is (thrown-with-msg? ExceptionInfo #"Cannot rate an HPC app with this service" (f))))
 
 (deftest test-app-addition-with-invalid-system-id
   (test-unrecognized-system-id #(apps/add-app (get-user :testde1) fake-system-id atf/app-definition)))
@@ -143,3 +148,21 @@
 
 (deftest publish-de-app-with-invalid-app-id
   (test-non-uuid #(apps/make-app-public (get-user :testde1) de-system-id {:id fake-app-id})))
+
+(deftest delete-app-rating-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/delete-app-rating (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest delete-app-rating-with-hpc-system-id
+  (test-hpc-app-rating #(apps/delete-app-rating (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest delete-de-app-rating-with-invalid-app-id
+  (test-non-uuid #(apps/delete-app-rating (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest rate-app-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/rate-app (get-user :testde1) fake-system-id fake-app-id fake-rating)))
+
+(deftest rate-app-with-hpc-system-id
+  (test-hpc-app-rating #(apps/rate-app (get-user :testde1) hpc-system-id fake-app-id fake-rating)))
+
+(deftest rate-de-app-with-invalid-app-id
+  (test-non-uuid #(apps/rate-app (get-user :testde1) de-system-id fake-app-id fake-rating)))

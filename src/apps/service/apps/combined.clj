@@ -159,8 +159,14 @@
   (deleteAppRating [_ app-id]
     (.deleteAppRating (util/get-apps-client clients) app-id))
 
+  (deleteAppRating [_ system-id app-id]
+    (.deleteAppRating (util/get-apps-client clients system-id) system-id app-id))
+
   (rateApp [_ app-id rating]
     (.rateApp (util/get-apps-client clients) app-id rating))
+
+  (rateApp [_ system-id app-id rating]
+    (.rateApp (util/get-apps-client clients system-id) system-id app-id rating))
 
   (getAppTaskListing [_ app-id]
     (->> (map #(.getAppTaskListing % app-id) clients)
