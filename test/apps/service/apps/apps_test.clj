@@ -172,3 +172,9 @@
 
 (deftest de-app-task-listing-with-invalid-app-id
   (test-non-uuid #(apps/get-app-task-listing (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest app-tool-listing-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-tool-listing (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest de-app-tool-listing-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-tool-listing (get-user :testde1) de-system-id fake-app-id)))

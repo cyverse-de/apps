@@ -155,7 +155,7 @@
   true)
 
 (defn check-tools [user]
-  (apps/get-app-tool-listing user (:id test-app))
+  (apps/get-app-tool-listing user de-system-id (:id test-app))
   true)
 
 (deftest test-permission-restrictions-none

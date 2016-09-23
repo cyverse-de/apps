@@ -495,4 +495,13 @@
         consumed by and what types of files are produced by each App's task in the pipeline. This
         service provides that information."
         (ok (coerce! AppTaskListing
-                     (apps/get-app-task-listing current-user system-id app-id)))))))
+                     (apps/get-app-task-listing current-user system-id app-id))))
+
+      (GET "/tools" []
+        :query [params SecuredQueryParams]
+        :return NewToolListing
+        :summary "List Tools used by an App"
+        :description "This service lists information for all of the tools that are associated with an App.
+        This information used to be included in the results of the App listing service."
+        (ok (coerce! NewToolListing
+                     (apps/get-app-tool-listing current-user system-id app-id)))))))
