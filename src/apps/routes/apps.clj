@@ -504,4 +504,13 @@
         :description "This service lists information for all of the tools that are associated with an App.
         This information used to be included in the results of the App listing service."
         (ok (coerce! NewToolListing
-                     (apps/get-app-tool-listing current-user system-id app-id)))))))
+                     (apps/get-app-tool-listing current-user system-id app-id))))
+
+      (GET "/ui" []
+        :query [params SecuredQueryParamsEmailRequired]
+        :return App
+        :summary "Make an App Available for Editing"
+        :description "The app integration utility in the DE uses this service to obtain the App
+        description JSON so that it can be edited. The App must have been integrated by the
+        requesting user."
+        (ok (apps/get-app-ui current-user system-id app-id))))))

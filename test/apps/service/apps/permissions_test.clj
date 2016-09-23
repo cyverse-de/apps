@@ -110,7 +110,7 @@
   true)
 
 (defn check-app-ui [user]
-  (apps/get-app-ui user (:id test-app))
+  (apps/get-app-ui user de-system-id (:id test-app))
   true)
 
 (defn check-copy-app [user]

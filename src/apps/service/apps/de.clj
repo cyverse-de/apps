@@ -204,11 +204,11 @@
 
   (getAppUi [_ app-id]
     (when (util/uuid? app-id)
-      (edit/get-app-ui user app-id)))
+      (edit/get-app-ui user (uuidify app-id))))
 
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
-    (edit/get-app-ui user app-id))
+    (edit/get-app-ui user (uuidify app-id)))
 
   (getAppInputIds [_ app-id]
     (when (util/uuid? app-id)

@@ -178,3 +178,12 @@
 
 (deftest de-app-tool-listing-with-invalid-app-id
   (test-non-uuid #(apps/get-app-tool-listing (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest get-app-ui-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-ui (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest get-app-ui-with-hpc-system-id
+  (test-hpc-app-modification #(apps/get-app-ui (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest get-de-app-ui-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-ui (get-user :testde1) de-system-id fake-app-id)))

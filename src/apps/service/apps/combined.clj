@@ -187,6 +187,9 @@
   (getAppUi [_ app-id]
     (.getAppUi (util/get-apps-client clients) app-id))
 
+  (getAppUi [_ system-id app-id]
+    (.getAppUi (util/get-apps-client clients system-id) system-id app-id))
+
   (getAppInputIds [_ app-id]
     (->> (map #(.getAppInputIds % app-id) clients)
          (remove nil?)

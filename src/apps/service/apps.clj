@@ -202,8 +202,10 @@
    (.getAppToolListing (get-apps-client user) system-id app-id)))
 
 (defn get-app-ui
-  [user app-id]
-  (.getAppUi (get-apps-client user) app-id))
+  ([user app-id]
+   (.getAppUi (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.getAppUi (get-apps-client user) system-id app-id)))
 
 (defn add-pipeline
   [user pipeline]
