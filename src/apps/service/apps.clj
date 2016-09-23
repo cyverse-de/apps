@@ -190,8 +190,10 @@
    (.rateApp (get-apps-client user) system-id app-id rating)))
 
 (defn get-app-task-listing
-  [user app-id]
-  (.getAppTaskListing (get-apps-client user) app-id))
+  ([user app-id]
+   (.getAppTaskListing (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.getAppTaskListing (get-apps-client user) system-id app-id)))
 
 (defn get-app-tool-listing
   [user app-id]

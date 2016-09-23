@@ -173,6 +173,9 @@
          (remove nil?)
          (first)))
 
+  (getAppTaskListing [_ system-id app-id]
+    (.getAppTaskListing (util/get-apps-client clients system-id) system-id app-id))
+
   (getAppToolListing [_ app-id]
     (->> (map #(.getAppToolListing % app-id) clients)
          (remove nil?)

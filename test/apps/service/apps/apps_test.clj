@@ -166,3 +166,9 @@
 
 (deftest rate-de-app-with-invalid-app-id
   (test-non-uuid #(apps/rate-app (get-user :testde1) de-system-id fake-app-id fake-rating)))
+
+(deftest app-task-listing-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-task-listing (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest de-app-task-listing-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-task-listing (get-user :testde1) de-system-id fake-app-id)))

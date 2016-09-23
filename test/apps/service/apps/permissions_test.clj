@@ -151,7 +151,7 @@
   true)
 
 (defn check-tasks [user]
-  (apps/get-app-task-listing user (:id test-app))
+  (apps/get-app-task-listing user de-system-id (:id test-app))
   true)
 
 (defn check-tools [user]
