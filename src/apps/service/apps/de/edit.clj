@@ -15,6 +15,7 @@
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
+            [apps.persistence.jobs :as jp]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
             [clojure.set :as set]))
@@ -360,7 +361,7 @@
           task-id (:id app-task)
           current-param-ids (map :id (mapcat :parameters (:parameter_groups app-task)))]
       ;; Copy the App's current name, description, and tool ID to its task
-      (persistence/update-task (assoc app :id task-id :tool_id tool-id))
+      (persistence/update-task jp/de-client-name (assoc app :id task-id :tool_id tool-id))
       ;; CORE-6266 prevent duplicate key errors from reused param value IDs
       (when-not (empty? current-param-ids)
         (persistence/remove-parameter-values current-param-ids))
@@ -384,7 +385,7 @@
 (defn- add-single-step-task
   "Adds a task as a single step to the given app, using the app's name, description, and label."
   [{app-id :id :as app}]
-  (let [task (persistence/add-task app)]
+  (let [task (persistence/add-task jp/de-client-name app)]
     (persistence/add-step app-id 0 {:task_id (:id task)})
     task))
 

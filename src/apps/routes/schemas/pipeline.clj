@@ -20,6 +20,9 @@
    :description
    (describe String "The Step's description")
 
+   :system_id
+   (describe String "The ID of the execution system.")
+
    (optional-key :task_id)
    (describe String "A String referring to either an internal task or an external app. If the
                      string refers to an internal task then this must be a string representation

@@ -482,15 +482,26 @@
    (delete app_references (where {:app_id app-id}))
    (dorun (map (partial add-app-reference app-id) references))))
 
+(defn- get-job-type-id-for-system [system-id]
+  (let [job-types (:id (first (select :job_types (fields :id) (where {:system_id system-id}))))]
+    (when (nil? job-types)
+      (cxu/bad-request (str "unrecognized system ID: " system-id)))))
+
 (defn add-task
   "Adds a task to the database."
-  [task]
-  (insert tasks (values (filter-valid-task-values task))))
+  ([task]
+   (add-task (:system_id task) task))
+  ([system-id task]
+   (let [job-type-id (get-job-type-id-for-system system-id)]
+     (insert tasks (values (assoc (filter-valid-task-values task) :job_type_id job-type-id))))))
 
 (defn update-task
   "Updates a task in the database."
-  [{task-id :id :as task}]
-  (sql/update tasks (set-fields (filter-valid-task-values task)) (where {:id task-id})))
+  [system-id {task-id :id :as task}]
+  (let [job-type-id (get-job-type-id-for-system system-id)]
+    (sql/update tasks
+                (set-fields (assoc (filter-valid-task-values task) :job_type_id job-type-id))
+                (where {:id task-id}))))
 
 (defn remove-app-steps
   "Removes all steps from an App. This delete will cascade to workflow_io_maps and
@@ -579,7 +590,7 @@
 (defn get-app-parameter
   "Fetches an App parameter."
   ([parameter-id]
-   (first (select parameters (where {:id parameter-id}))))
+   (get-app-parameter ))
   ([parameter-id task-id]
    (first (select :task_param_listing (where {:id parameter-id, :task_id task-id})))))
 

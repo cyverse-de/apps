@@ -150,6 +150,7 @@
   {:name            (:name step)
    :description     (:description step)
    :label           (:name step)
+   :system_id       (:system_id step)
    :external_app_id (:external_app_id step)})
 
 (defn- add-external-app-task
