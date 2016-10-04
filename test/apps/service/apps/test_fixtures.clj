@@ -58,10 +58,12 @@
    :steps       [{:name        "DE Word Count"
                   :description "Counts the number of words in a file."
                   :app_type    "DE"
+                  :system_id   "de"
                   :task_id     (uuidify "1ac31629-231a-4090-b3b4-63ee078a0c37")}
                  {:name        "DE Word Count"
                   :description "Counts the number of words in a file."
                   :app_type    "DE"
+                  :system_id   "de"
                   :task_id     (uuidify "1ac31629-231a-4090-b3b4-63ee078a0c37")}]
    :name        "Word Count Inception"
    :description "Counts the number of words in a word count."})
