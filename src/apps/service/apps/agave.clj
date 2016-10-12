@@ -83,7 +83,11 @@
 
   (searchApps [_ search-term params]
     (when (user-has-access-token?)
-      (listings/search-apps agave search-term params)))
+      (listings/search-apps agave search-term params false)))
+
+  (adminSearchApps [_ search-term params]
+    (when (user-has-access-token?)
+      (listings/search-apps agave search-term params true)))
 
   (canEditApps [_]
     false)
@@ -144,15 +148,13 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  ;; FIXME: remove the third parameter when we can.
-  (getAppDetails [_ app-id _]
+  (getAppDetails [_ app-id admin?]
     (when-not (util/uuid? app-id)
-      (.getAppDetails agave app-id)))
+      (listings/get-app-details agave app-id admin?)))
 
-  ;; FIXME: remove the fourth parameter when we can.
-  (getAppDetails [_ system-id app-id _]
+  (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
-    (.getAppDetails agave app-id))
+    (listings/get-app-details agave app-id admin?))
 
   (removeAppFavorite [_ app-id]
     (when-not (util/uuid? app-id)

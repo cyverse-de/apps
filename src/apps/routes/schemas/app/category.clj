@@ -25,15 +25,20 @@
         private categories are returned.")}))
 
 (def AppListingValidSortFields
-  (-> (map ->required-key (keys AppListingDetail))
+  (-> (map ->required-key (concat (keys AppListingDetail) (keys AppListingJobStats)))
       (conj :average_rating :user_rating)
       set
       (sets/difference #{:app_type
                          :can_favor
                          :can_rate
                          :can_run
+                         :job_stats
                          :pipeline_eligibility
                          :rating})))
+
+(def AdminAppListingValidSortFields
+  (-> (map ->required-key (keys AdminAppListingJobStats))
+      (concat AppListingValidSortFields)))
 
 (defschema AppListingPagingParams
   (merge SecuredQueryParamsEmailRequired
@@ -107,3 +112,8 @@
 (defschema OntologyAppListingPagingParams
   (merge AppListingPagingParams
          {:attr (describe String "The metadata attribute that stores the given class IRI")}))
+
+(defschema AdminOntologyAppListingPagingParams
+  (assoc OntologyAppListingPagingParams
+    SortFieldOptionalKey
+    (describe (apply enum AdminAppListingValidSortFields) SortFieldDocs)))

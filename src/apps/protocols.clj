@@ -12,6 +12,7 @@
   (listAppsUnderHierarchy [_ root-iri attr params])
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params])
   (searchApps [_ search-term params])
+  (adminSearchApps [_ search-term params])
   (canEditApps [_])
   (addApp [_ app] [_ system-id app])
   (previewCommandLine [_ app] [_ system-id app])

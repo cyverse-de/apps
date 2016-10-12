@@ -11,8 +11,8 @@
   (partial sort-by
            (keyword sort-field)
            (if (and sort-dir (= (string/upper-case sort-dir) "DESC"))
-             #(compare (string/lower-case %2) (string/lower-case %1))
-             #(compare (string/lower-case %1) (string/lower-case %2)))))
+             #(compare (string/lower-case (str %2)) (string/lower-case (str %1)))
+             #(compare (string/lower-case (str %1)) (string/lower-case (str %2))))))
 
 (defn sort-apps
   [res {:keys [sort-field sort-dir]} & [{:keys [default-sort-field]}]]
@@ -58,3 +58,13 @@
     :sort-dir       (keyword (:sort-dir params default-sort-dir))
     :filter         (:filter params)
     :include-hidden (:include-hidden params false)}))
+
+(defn format-job-stats [app admin?]
+  (let [job-stats-keys [:job_count
+                        :job_count_completed
+                        :job_count_failed
+                        :job_last_completed
+                        :last_used]
+        stats-to-show  (if admin? job-stats-keys [:job_count_completed :job_last_completed])
+        app            (assoc app :job_stats (remove-nil-vals (select-keys app stats-to-show)))]
+    (apply dissoc app job-stats-keys)))

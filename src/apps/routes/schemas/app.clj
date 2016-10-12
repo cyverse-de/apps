@@ -33,6 +33,7 @@
 (def TreeSelectorGroupListDocs "The TreeSelector root's groups")
 (def TreeSelectorGroupParameterListDocs "The TreeSelector Group's arguments")
 (def TreeSelectorGroupGroupListDocs "The TreeSelector Group's groups")
+(def AppListingJobStatsDocs "Some launch statistics associated with the App")
 
 (defschema AppParameterListItem
   {:id                         (describe UUID "A UUID that is used to identify the List Item")
@@ -256,6 +257,24 @@
   (assoc Tool
     :id (describe String "The tool identifier.")))
 
+(defschema AppListingJobStats
+  {:job_count_completed
+   (describe Long "The number of times this app has run to `Completed` status")
+
+   (optional-key :job_last_completed)
+   (describe Date "The last date this app has run to `Completed` status")})
+
+(defschema AdminAppListingJobStats
+  (merge AppListingJobStats
+         {:job_count
+          (describe Long "The number of times this app has run")
+
+          :job_count_failed
+          (describe Long "The number of times this app has run to `Failed` status")
+
+          (optional-key :last_used)
+          (describe Date "The start date this app was last run")}))
+
 (defschema AppDetails
   (merge AppBase
          {:id
@@ -281,6 +300,9 @@
 
           :references
           AppReferencesParam
+
+          (optional-key :job_stats)
+          (describe AppListingJobStats AppListingJobStatsDocs)
 
           (optional-key :hierarchies)
           (describe Any
@@ -374,6 +396,9 @@
      :step_count
      (describe Long "The number of Tasks this App executes")
 
+     (optional-key :job_stats)
+     (describe AppListingJobStats AppListingJobStatsDocs)
+
      (optional-key :wiki_url)
      AppDocUrlParam
 
@@ -383,6 +408,20 @@
 (defschema AppListing
   {:app_count (describe Long "The total number of Apps in the listing")
    :apps      (describe [AppListingDetail] "A listing of App details")})
+
+(defschema AdminAppListingDetail
+  (merge AppListingDetail
+         {(optional-key :job_stats)
+          (describe AdminAppListingJobStats AppListingJobStatsDocs)}))
+
+(defschema AdminAppListing
+  (merge AppListing
+         {:apps (describe [AdminAppListingDetail] "A listing of App details")}))
+
+(defschema AdminAppDetails
+  (merge AppDetails
+         {(optional-key :job_stats)
+          (describe AdminAppListingJobStats AppListingJobStatsDocs)}))
 
 (defschema QualifiedAppId
   {:system_id SystemId

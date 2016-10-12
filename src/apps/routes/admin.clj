@@ -80,7 +80,7 @@
           :path-params [app-id :- AppIdPathParam]
           :query [params SecuredQueryParams]
           :body [body (describe AdminAppPatchRequest "The App to update.")]
-          :return AppDetails
+          :return AdminAppDetails
           :middleware [wrap-metadata-base-url]
           :summary "Update App Details and Labels"
           :description (str
@@ -103,13 +103,13 @@
   "metadata"
   "POST /ontologies/{ontology-version}/filter")
 "Please see the metadata service documentation for information about the `hierarchies` response field.")
-          (ok (coerce! AppDetails
+          (ok (coerce! AdminAppDetails
                 (apps/admin-update-app current-user (assoc body :id app-id)))))
 
   (GET "/:app-id/details" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :return AppDetails
+        :return AdminAppDetails
         :middleware [wrap-metadata-base-url]
         :summary "Get App Details"
         :description (str
@@ -118,7 +118,7 @@
   "metadata"
   "POST /ontologies/{ontology-version}/filter")
 "Please see the metadata service documentation for information about the `hierarchies` response field.")
-        (ok (coerce! AppDetails
+        (ok (coerce! AdminAppDetails
                (apps/admin-get-app-details current-user app-id))))
 
   (PATCH "/:app-id/documentation" []
@@ -253,9 +253,9 @@
   (GET "/:ontology-version/:root-iri/apps" []
         :path-params [ontology-version :- OntologyVersionParam
                       root-iri :- OntologyClassIRIParam]
-        :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
+        :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
         :middleware [wrap-metadata-base-url]
-        :return AppListing
+        :return AdminAppListing
         :summary "List Apps in a Category"
         :description (str
 "Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
@@ -263,14 +263,14 @@
 (get-endpoint-delegate-block
   "metadata"
   "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
-        (ok (coerce! AppListing
+        (ok (coerce! AdminAppListing
                      (apps/admin-list-apps-under-hierarchy current-user ontology-version root-iri attr params))))
 
   (GET "/:ontology-version/:root-iri/unclassified" [root-iri]
         :path-params [ontology-version :- OntologyVersionParam
                       root-iri :- OntologyClassIRIParam]
-        :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
-        :return AppListing
+        :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
+        :return AdminAppListing
         :middleware [wrap-metadata-base-url]
         :summary "List Unclassified Apps"
         :description (str
@@ -279,8 +279,8 @@
 (get-endpoint-delegate-block
   "metadata"
   "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
-        (ok (coerce! AppListing
-                     (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params)))))
+        (ok (coerce! AdminAppListing
+                     (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params true)))))
 
 (defroutes reference-genomes
   (POST "/" []

@@ -54,10 +54,13 @@
     (listings/list-apps-under-hierarchy user root-iri attr params))
 
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params]
-    (listings/list-apps-under-hierarchy user ontology-version root-iri attr params))
+    (listings/list-apps-under-hierarchy user ontology-version root-iri attr params true))
 
   (searchApps [_ _ params]
-    (listings/search-apps user params))
+    (listings/search-apps user params false))
+
+  (adminSearchApps [_ _ params]
+    (listings/search-apps user params true))
 
   (canEditApps [_]
     true)
