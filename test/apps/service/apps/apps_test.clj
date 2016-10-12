@@ -1,7 +1,8 @@
 (ns apps.service.apps.apps-test
   (:use [apps.service.apps.test-utils :only [get-user delete-app permanently-delete-app
                                              de-system-id fake-system-id hpc-system-id]]
-        [clojure.test])
+        [clojure.test]
+        [kameleon.uuids :only [uuid]])
   (:require [apps.persistence.jobs :as jp]
             [apps.service.apps :as apps]
             [apps.service.apps.test-fixtures :as atf]
@@ -187,3 +188,8 @@
 
 (deftest get-de-app-ui-with-invalid-app-id
   (test-non-uuid #(apps/get-app-ui (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest create-pipeline-with-invalid-system-id
+  (let [update-fn    #(assoc % :system_id fake-system-id :app_type "External" :task_id fake-app-id)
+        pipeline-def (update-in atf/default-pipeline-definition [:steps 0] update-fn)]
+    (test-unrecognized-system-id #(atf/create-pipeline (get-user :testde1) pipeline-def))))

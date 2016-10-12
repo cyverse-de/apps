@@ -50,7 +50,7 @@
             :type        "executable"
             :version     "0.0.1"}]})
 
-(def pipeline-definition
+(def default-pipeline-definition
   {:mappings    [{:map         {(uuidify "13914010-89cd-406d-99c3-9c4ff8b023c3")
                                 (uuidify "13914010-89cd-406d-99c3-9c4ff8b023c3")}
                   :source_step 0
@@ -99,9 +99,11 @@
     app))
 
 (defn create-pipeline
-  [user]
-  (sql/delete :apps (sql/where {:name (:name pipeline-definition)}))
-  (apps/add-pipeline user pipeline-definition))
+  ([user pipeline-def]
+   (sql/delete :apps (sql/where {:name (:name pipeline-def)}))
+   (apps/add-pipeline user pipeline-def))
+  ([user]
+   (create-pipeline user default-pipeline-definition)))
 
 (defn with-test-app [f]
   (binding [test-app-user (get-user :testde1)

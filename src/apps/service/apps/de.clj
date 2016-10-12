@@ -221,10 +221,6 @@
   (addPipeline [_ pipeline]
     (pipeline-edit/add-pipeline user pipeline))
 
-  (addPipeline [_ system-id pipeline]
-    (validate-system-id system-id)
-    (pipeline-edit/add-pipeline user pipeline))
-
   (formatPipelineTasks [_ pipeline]
     pipeline)
 

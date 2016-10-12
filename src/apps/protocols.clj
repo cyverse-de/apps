@@ -35,7 +35,7 @@
   (getAppToolListing [_ app-id] [_ system-id app-id])
   (getAppUi [_ app-id] [_ system-id app-id])
   (getAppInputIds [_ app-id] [_ system-id app-id])
-  (addPipeline [_ pipeline] [_ system-id pipeline])
+  (addPipeline [_ pipeline])
   (formatPipelineTasks [_ pipeline])
   (updatePipeline [_ pipeline])
   (copyPipeline [_ app-id])

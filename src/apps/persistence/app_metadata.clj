@@ -483,9 +483,10 @@
    (dorun (map (partial add-app-reference app-id) references))))
 
 (defn- get-job-type-id-for-system [system-id]
-  (let [job-types (:id (first (select :job_types (fields :id) (where {:system_id system-id}))))]
-    (when (nil? job-types)
-      (cxu/bad-request (str "unrecognized system ID: " system-id)))))
+  (let [job-type-id (:id (first (select :job_types (fields :id) (where {:system_id system-id}))))]
+    (when (nil? job-type-id)
+      (cxu/bad-request (str "unrecognized system ID: " system-id)))
+    job-type-id))
 
 (defn add-task
   "Adds a task to the database."
