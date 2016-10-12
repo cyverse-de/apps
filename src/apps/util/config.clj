@@ -291,6 +291,41 @@
   [props config-valid configs]
   "apps.email.app-deletion.subject" "Your \"%s\" app has been administratively deprecated.")
 
+(cc/defprop-optstr amqp-uri
+  "The URI to use for connections to a AMQP broker."
+  [props config-valid configs]
+  "apps.amqp.uri" "amqp://guest:guest@rabbit:5672/")
+
+(cc/defprop-optstr exchange-name
+  "The name of the exchange to connect to on the AMQP broker."
+  [props config-valid configs]
+  "apps.amqp.exchange.name" "de")
+
+(cc/defprop-optboolean exchange-durable?
+  "Whether or not the exchange is durable."
+  [props config-valid configs]
+  "apps.amqp.exchange.durable" true)
+
+(cc/defprop-optboolean exchange-auto-delete?
+  "Whether or not the exchange is automatically deleted."
+  [props config-valid configs]
+  "apps.amqp.exchange.auto-delete" false)
+
+(cc/defprop-optstr queue-name
+  "The name of the queue to use on the AMQP broker."
+  [props config-valid configs]
+  "apps.amqp.queue.name" "events.apps.queue")
+
+(cc/defprop-optboolean queue-durable?
+  "Whether or not the queue is durable."
+  [props config-valid configs]
+  "apps.amqp.queue.durable" true)
+
+(cc/defprop-optboolean queue-auto-delete?
+  "Whether or not the queue is automatically deleted."
+  [props config-valid configs]
+  "apps.amqp.queue.auto-delete" false)
+
 (def get-default-app-categories
   (memoize
    (fn []
