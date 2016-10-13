@@ -14,9 +14,11 @@
         [apps.workspace])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :refer [get-app get-app-tools] :as amp]
+            [apps.persistence.jobs :as jobs-db]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.permissions :as perms]
+            [apps.service.util :as svc-util]
             [cemerick.url :as curl]
             [metadata-client.core :as metadata-client]))
 
@@ -256,9 +258,10 @@
 
 (defn- format-app-listing
   "Formats certain app fields into types more suitable for the client."
-  [perms beta-ids-set public-app-ids {:keys [id] :as app}]
+  [admin? perms beta-ids-set public-app-ids {:keys [id] :as app}]
   (-> (assoc app :can_run (app-can-run? app))
       (dissoc :tool_count :task_count :external_app_count :lower_case_name)
+      (svc-util/format-job-stats admin?)
       (format-app-ratings)
       (format-app-pipeline-eligibility)
       (format-app-permissions perms)
@@ -275,7 +278,7 @@
     (set (metadata-client/filter-by-avus username ["app"] app-ids [beta-avu]))))
 
 (defn- apps-listing-with-metadata-filter
-  [{:keys [username shortUsername]} params metadata-filter]
+  [{:keys [username shortUsername]} params metadata-filter admin?]
   (let [workspace       (get-optional-workspace username)
         faves-index     (workspace-favorites-app-category-index)
         perms           (perms-client/load-app-permissions shortUsername)
@@ -285,21 +288,21 @@
         public-app-ids  (perms-client/get-public-app-ids)
         app-listing     (list-apps-by-id workspace faves-index app-listing-ids (fix-sort-params params))]
     {:app_count (count app-listing-ids)
-     :apps      (map (partial format-app-listing perms beta-ids-set public-app-ids) app-listing)}))
+     :apps      (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) app-listing)}))
 
 (defn list-apps-under-hierarchy
   ([user root-iri attr params]
-   (list-apps-under-hierarchy user (categorization/get-active-hierarchy-version) root-iri attr params))
-  ([{:keys [username] :as user} ontology-version root-iri attr params]
+   (list-apps-under-hierarchy user (categorization/get-active-hierarchy-version) root-iri attr params false))
+  ([{:keys [username] :as user} ontology-version root-iri attr params admin?]
    (let [metadata-filter (partial metadata-client/filter-hierarchy-targets username ontology-version root-iri attr ["app"])]
-     (apps-listing-with-metadata-filter user params metadata-filter))))
+     (apps-listing-with-metadata-filter user params metadata-filter admin?))))
 
 (defn get-unclassified-app-listing
   ([user root-iri attr params]
-   (get-unclassified-app-listing user (categorization/get-active-hierarchy-version) root-iri attr params))
-  ([{:keys [username] :as user} ontology-version root-iri attr params]
+   (get-unclassified-app-listing user (categorization/get-active-hierarchy-version) root-iri attr params false))
+  ([{:keys [username] :as user} ontology-version root-iri attr params admin?]
    (let [metadata-filter (partial metadata-client/filter-unclassified username ontology-version root-iri attr ["app"])]
-     (apps-listing-with-metadata-filter user params metadata-filter))))
+     (apps-listing-with-metadata-filter user params metadata-filter admin?))))
 
 (defn- list-apps-in-virtual-group
   "Formats a listing for a virtual group."
@@ -308,7 +311,7 @@
     (-> ((:format-group format-fns) user workspace params)
         (assoc :apps (let [app-listing  ((:format-listing format-fns) user workspace params)
                            beta-ids-set (app-ids->beta-ids-set shortUsername (map :id app-listing))]
-                       (map (partial format-app-listing perms beta-ids-set public-app-ids) app-listing))))))
+                       (map (partial format-app-listing false perms beta-ids-set public-app-ids) app-listing))))))
 
 (defn- count-apps-in-group
   "Counts the number of apps in an app group, including virtual app groups that may be included."
@@ -334,7 +337,7 @@
         total          (count-apps-in-group user workspace app_group params)
         apps_in_group  (get-apps-in-group user workspace app_group params)
         beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps_in_group))
-        apps_in_group  (map (partial format-app-listing perms beta-ids-set public-app-ids) apps_in_group)]
+        apps_in_group  (map (partial format-app-listing false perms beta-ids-set public-app-ids) apps_in_group)]
     (assoc app_group
       :app_count total
       :apps apps_in_group)))
@@ -358,7 +361,7 @@
 (defn search-apps
   "This service searches for apps in the user's workspace and all public app
    groups, based on a search term."
-  [{:keys [username shortUsername]} params]
+  [{:keys [username shortUsername]} params admin?]
   (let [search_term (curl/url-decode (:search params))
         workspace (get-workspace username)
         perms (perms-client/load-app-permissions shortUsername)
@@ -372,7 +375,7 @@
                         params)
         beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id search_results))
         public-app-ids (:public-app-ids params)
-        search_results (map (partial format-app-listing perms beta-ids-set public-app-ids) search_results)]
+        search_results (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) search_results)]
     {:app_count total
      :apps search_results}))
 
@@ -402,9 +405,15 @@
                            {:hierarchies []})]
     (merge app hierarchies)))
 
+(defn- format-app-details-job-stats
+  [^String app-id admin?]
+  (remove-nil-vals
+    (if admin? (jobs-db/get-job-stats app-id)
+               (jobs-db/get-public-job-stats app-id))))
+
 (defn- format-app-details
   "Formats information for the get-app-details service."
-  [username details tools]
+  [username details tools admin?]
   (let [app-id (:id details)]
     (-> details
       (select-keys [:id :integration_date :edited_date :deleted :disabled :wiki_url
@@ -413,6 +422,7 @@
              :description          (:description details "")
              :references           (map :reference_text (:app_references details))
              :tools                (map remove-nil-vals tools)
+             :job_stats            (format-app-details-job-stats (str app-id) admin?)
              :categories           (get-groups-for-app app-id)
              :suggested_categories (get-suggested-groups-for-app app-id)
              :system_id            c/system-id)
@@ -428,7 +438,7 @@
     (perms/check-app-permissions username "read" [app-id]))
   (let [details (load-app-details app-id)
         tools   (get-app-tools app-id)]
-    (->> (format-app-details username details tools)
+    (->> (format-app-details username details tools admin?)
          (remove-nil-vals))))
 
 (defn- with-task-params

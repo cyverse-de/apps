@@ -554,3 +554,57 @@
   (select (job-base-query)
           (where {:j.id       [in (map uuidify job-ids)]
                   :j.username [not= username]})))
+
+(defn- get-job-stats-fields
+  "Adds query fields with subselects similar to the app_listing view's job_count, job_count_failed,
+   and last_used columns."
+  [query]
+  (fields query
+          [(subselect :jobs
+                      (aggregate (count :id) :job_count)
+                      (where {:app_id :j.app_id}))
+           :job_count]
+          [(subselect :jobs
+                      (aggregate (count :id) :job_count_failed)
+                      (where {:app_id :j.app_id
+                              :status failed-status}))
+           :job_count_failed]
+          [(subselect :jobs
+                      (aggregate (max :start_date) :last_used)
+                      (where {:app_id :j.app_id}))
+           :last_used]))
+
+(defn- get-job-stats-base-query
+  "Fetches job stats for the given app ID, with fields via subselects similar to the app_listing view's
+   job_count_completed and job_last_completed columns."
+  [^String app-id]
+  (-> (select* [:jobs :j])
+      (fields [(subselect :jobs
+                          (aggregate (count :id) :job_count_completed)
+                          (where {:app_id :j.app_id
+                                  :status completed-status}))
+               :job_count_completed]
+              [(subselect :jobs
+                          (aggregate (max :end_date) :job_last_completed)
+                          (where {:app_id :j.app_id
+                                  :status completed-status}))
+               :job_last_completed])
+      (where {:app_id app-id})
+      (group :app_id)))
+
+(defn get-job-stats
+  [^String app-id]
+  (merge {:job_count 0
+          :job_count_failed 0
+          :job_count_completed 0}
+         (-> (get-job-stats-base-query app-id)
+             get-job-stats-fields
+             select
+             first)))
+
+(defn get-public-job-stats
+  [^String app-id]
+  (merge {:job_count_completed 0}
+         (-> (get-job-stats-base-query app-id)
+             select
+             first)))

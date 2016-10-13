@@ -1,24 +1,51 @@
 (ns apps.service.apps.agave.listings
-  (:use [apps.service.util :only [sort-apps apply-offset apply-limit uuid?]]
+  (:use [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats uuid?]]
+        [apps.util.conversions :only [remove-nil-vals]]
         [slingshot.slingshot :only [try+]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
-            [apps.persistence.app-metadata :as ap]))
+            [apps.persistence.app-metadata :as ap]
+            [apps.persistence.jobs :as jobs-db]))
+
+(defn- add-agave-job-stats
+  [{:keys [id] :as app} admin?]
+  (merge app (if admin?
+               (jobs-db/get-job-stats id)
+               (jobs-db/get-public-job-stats id))))
+
+(defn- add-app-listing-job-stats
+  [app-listing admin?]
+  (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % admin?)))))
+
+(defn- format-app-listing-job-stats
+  [app-listing admin?]
+  (update app-listing :apps (partial map #(format-job-stats % admin?))))
+
+(defn get-app-details
+  [agave app-id admin?]
+  (-> (.getAppDetails agave app-id)
+      (add-agave-job-stats admin?)
+      (format-job-stats admin?)
+      remove-nil-vals))
 
 (defn list-apps
   [agave category-id params]
   (-> (.listApps agave)
+      (add-app-listing-job-stats false)
       (sort-apps params {:default-sort-field "name"})
       (apply-offset params)
-      (apply-limit params)))
+      (apply-limit params)
+      (format-app-listing-job-stats false)))
 
 (defn list-apps-with-ontology
   [agave term params]
   (try+
     (-> (select-keys (.listAppsWithOntology agave term) [:app_count :apps])
+        (add-app-listing-job-stats false)
         (sort-apps params {:default-sort-field "name"})
         (apply-offset params)
-        (apply-limit params))
+        (apply-limit params)
+        (format-app-listing-job-stats false))
     (catch [:error_code ce/ERR_UNAVAILABLE] _
       (log/error (:throwable &throw-context) "Agave app listing timed out")
       nil)
@@ -27,12 +54,14 @@
       nil)))
 
 (defn search-apps
-  [agave search-term params]
+  [agave search-term params admin?]
   (try+
    (-> (.searchApps agave search-term)
+       (add-app-listing-job-stats admin?)
        (sort-apps params {:default-sort-field "name"})
        (apply-offset params)
-       (apply-limit params))
+       (apply-limit params)
+       (format-app-listing-job-stats admin?))
    (catch [:error_code ce/ERR_UNAVAILABLE] _
      (log/error (:throwable &throw-context) "Agave app search timed out")
      nil)

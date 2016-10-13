@@ -69,6 +69,11 @@
          (remove nil?)
          (util/combine-app-search-results params)))
 
+  (adminSearchApps [_ search-term params]
+    (->> (map #(.adminSearchApps % search-term (select-keys params [:search])) clients)
+         (remove nil?)
+         (util/combine-app-search-results params)))
+
   (canEditApps [_]
     (some #(.canEditApps %) clients))
 
