@@ -11,6 +11,8 @@
 
 (use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 
+(use-fixtures :each atf/with-test-app)
+
 (def ^:private fake-app-id "fakeid")
 
 (def ^:private fake-rating {:rating 5 :comment_id 27})
@@ -193,3 +195,7 @@
   (let [update-fn    #(assoc % :system_id fake-system-id :app_type "External" :task_id fake-app-id)
         pipeline-def (update-in atf/default-pipeline-definition [:steps 0] update-fn)]
     (test-unrecognized-system-id #(atf/create-pipeline (get-user :testde1) pipeline-def))))
+
+(deftest app-task-listing-should-contain-system-id
+  (let [task-listing (apps/get-app-task-listing (get-user :testde1) (:system_id atf/test-app) (:id atf/test-app))]
+    (is (= (:system_id atf/test-app) (:system_id (first (:tasks task-listing)))))))
