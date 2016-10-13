@@ -591,7 +591,7 @@
 (defn get-app-parameter
   "Fetches an App parameter."
   ([parameter-id]
-   (get-app-parameter ))
+   (first (select parameters (where {:id parameter-id}))))
   ([parameter-id task-id]
    (first (select :task_param_listing (where {:id parameter-id, :task_id task-id})))))
 

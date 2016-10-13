@@ -465,10 +465,12 @@
 (defn- get-tasks
   "Fetches a list of tasks for the given IDs with their inputs and outputs."
   [task-ids]
-  (select tasks
-    (fields :id
-            :name
-            :description)
+  (select [:tasks :t]
+    (join [:job_types :j] {:t.job_type_id :j.id})
+    (fields [:j.name        :system_id]
+            [:t.id          :id]
+            [:t.name        :name]
+            [:t.description :description])
     (with-task-params inputs)
     (with-task-params outputs)
     (where (in :id task-ids))))
