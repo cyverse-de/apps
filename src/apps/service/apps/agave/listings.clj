@@ -61,7 +61,7 @@
        (sort-apps params {:default-sort-field "name"})
        (apply-offset params)
        (apply-limit params)
-       (format-app-listing-job-stats false))
+       (format-app-listing-job-stats admin?))
    (catch [:error_code ce/ERR_UNAVAILABLE] _
      (log/error (:throwable &throw-context) "Agave app search timed out")
      nil)

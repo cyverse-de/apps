@@ -51,6 +51,24 @@
          (ok (update-tool-request request-id (config/uid-domain) current-user body))))
 
 (defroutes admin-apps
+  (GET "/" []
+       :query [params AppSearchParams]
+       :middleware [wrap-metadata-base-url]
+       :summary "Search Apps"
+       :return AdminAppListing
+       :description
+       (str
+"This service allows admins to search for Apps based on a part of the App name, description, integrator's
+ name, tool name, or category name the app is under."
+(get-endpoint-delegate-block
+  "metadata"
+  "POST /avus/filter-targets")
+(get-endpoint-delegate-block
+  "metadata"
+  "POST /ontologies/{ontology-version}/filter-targets"))
+       (ok (coerce! AdminAppListing
+                    (apps/admin-search-apps current-user params))))
+
   (POST "/" []
          :query [params SecuredQueryParams]
          :body [body (describe AppCategorizationRequest "An App Categorization Request.")]
