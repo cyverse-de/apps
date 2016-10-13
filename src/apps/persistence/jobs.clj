@@ -594,13 +594,17 @@
 
 (defn get-job-stats
   [^String app-id]
-  (-> (get-job-stats-base-query app-id)
-      get-job-stats-fields
-      select
-      first))
+  (merge {:job_count 0
+          :job_count_failed 0
+          :job_count_completed 0}
+         (-> (get-job-stats-base-query app-id)
+             get-job-stats-fields
+             select
+             first)))
 
 (defn get-public-job-stats
   [^String app-id]
-  (-> (get-job-stats-base-query app-id)
-      select
-      first))
+  (merge {:job_count_completed 0}
+         (-> (get-job-stats-base-query app-id)
+             select
+             first)))

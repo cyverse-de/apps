@@ -9,15 +9,9 @@
 
 (defn- add-agave-job-stats
   [{:keys [id] :as app} admin?]
-  (let [job-stats     (if admin?
-                        (jobs-db/get-job-stats id)
-                        (jobs-db/get-public-job-stats id))
-        default-stats (if admin?
-                        {:job_count 0
-                         :job_count_failed 0
-                         :job_count_completed 0}
-                        {:job_count_completed 0})]
-    (merge app default-stats job-stats)))
+  (merge app (if admin?
+               (jobs-db/get-job-stats id)
+               (jobs-db/get-public-job-stats id))))
 
 (defn- add-app-listing-job-stats
   [app-listing admin?]
