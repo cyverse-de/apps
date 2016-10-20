@@ -15,11 +15,15 @@
 
 (defn- add-app-listing-job-stats
   [app-listing admin?]
-  (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % admin?)))))
+  (if admin?
+    (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % admin?))))
+    app-listing))
 
 (defn- format-app-listing-job-stats
   [app-listing admin?]
-  (update app-listing :apps (partial map #(format-job-stats % admin?))))
+  (if admin?
+    (update app-listing :apps (partial map #(format-job-stats % admin?)))
+    app-listing))
 
 (defn get-app-details
   [agave app-id admin?]
