@@ -22,9 +22,9 @@
 
 (defn get-apps-client
   ([clients]
-     (or (first (filter #(.canEditApps %) clients))
-         (throw+ {:type  :clojure-commons.exception/bad-request-field
-                  :error "apps are not editable at this time."})))
+   (or (first (filter #(.supportsSystemId % jp/de-client-name) clients))
+       (throw+ {:type  :clojure-commons.exception/internal-system-error
+                :error "default system ID not found"})))
   ([clients system-id]
      (or (first (filter #(.supportsSystemId % system-id) clients))
          (throw+ {:type  :clojure-commons.exception/bad-request-field

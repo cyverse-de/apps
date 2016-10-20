@@ -41,12 +41,15 @@
                  :target_step))
     (join [:tasks :t]
           {:task_id :t.id})
+    (join [:job_types :jt]
+          {:t.job_type_id :jt.id})
     (join [:apps :app]
           {:app_id :app.id})
     (fields :app_steps.id
             :step
             :t.name
             :t.description
+            :jt.system_id
             :task_id
             :t.external_app_id)
     (where {:app.id app-id})
