@@ -75,11 +75,11 @@
 
   (listAppsUnderHierarchy [_ root-iri attr params]
     (when (user-has-access-token?)
-      (listings/list-apps-with-ontology agave root-iri params)))
+      (listings/list-apps-with-ontology agave root-iri params false)))
 
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params]
     (when (user-has-access-token?)
-      (listings/list-apps-with-ontology agave root-iri params)))
+      (listings/list-apps-with-ontology agave root-iri params true)))
 
   (searchApps [_ search-term params]
     (when (user-has-access-token?)
