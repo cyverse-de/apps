@@ -25,14 +25,13 @@
         private categories are returned.")}))
 
 (def AppListingValidSortFields
-  (-> (map ->required-key (concat (keys AppListingDetail) (keys AppListingJobStats)))
+  (-> (map ->required-key (keys AppListingDetail))
       (conj :average_rating :user_rating)
       set
       (sets/difference #{:app_type
                          :can_favor
                          :can_rate
                          :can_run
-                         :job_stats
                          :pipeline_eligibility
                          :rating})))
 

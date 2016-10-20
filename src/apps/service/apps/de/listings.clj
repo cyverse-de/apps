@@ -256,12 +256,18 @@
   [app perms]
   (assoc app :permission (or (perms (:id app)) "")))
 
+(defn- format-app-listing-job-stats
+  [app admin?]
+  (if admin?
+    (svc-util/format-job-stats app admin?)
+    app))
+
 (defn- format-app-listing
   "Formats certain app fields into types more suitable for the client."
   [admin? perms beta-ids-set public-app-ids {:keys [id] :as app}]
   (-> (assoc app :can_run (app-can-run? app))
       (dissoc :tool_count :task_count :external_app_count :lower_case_name)
-      (svc-util/format-job-stats admin?)
+      (format-app-listing-job-stats admin?)
       (format-app-ratings)
       (format-app-pipeline-eligibility)
       (format-app-permissions perms)
@@ -286,7 +292,8 @@
         app-listing-ids (metadata-filter app-ids)
         beta-ids-set    (app-ids->beta-ids-set shortUsername app-listing-ids)
         public-app-ids  (perms-client/get-public-app-ids)
-        app-listing     (list-apps-by-id workspace faves-index app-listing-ids (fix-sort-params params))]
+        app-listing-fn  (if admin? admin-list-apps-by-id list-apps-by-id)
+        app-listing     (app-listing-fn workspace faves-index app-listing-ids (fix-sort-params params))]
     {:app_count (count app-listing-ids)
      :apps      (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) app-listing)}))
 
@@ -368,7 +375,8 @@
         params (fix-sort-params (augment-listing-params params shortUsername perms))
         params (augment-search-params search_term params shortUsername (:app-ids params))
         total (count-search-apps-for-user search_term (:id workspace) params)
-        search_results (search-apps-for-user
+        search-fn (if admin? search-apps-for-admin search-apps-for-user)
+        search_results (search-fn
                         search_term
                         workspace
                         (workspace-favorites-app-category-index)

@@ -396,9 +396,6 @@
      :step_count
      (describe Long "The number of Tasks this App executes")
 
-     (optional-key :job_stats)
-     (describe AppListingJobStats AppListingJobStatsDocs)
-
      (optional-key :wiki_url)
      AppDocUrlParam
 
