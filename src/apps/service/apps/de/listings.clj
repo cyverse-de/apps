@@ -40,17 +40,20 @@
    (augment-listing-params params short-username (perms-client/load-app-permissions short-username))))
 
 (defn- augment-search-params
-  [search_term params short-username app-ids]
-  (let [category-attrs (set (workspace-metadata-category-attrs))]
-    (if (or (empty? app-ids) (empty? category-attrs))
-      params
-      (assoc params :pre-matched-app-ids
-                    (metadata-client/filter-targets-by-ontology-search short-username
-                                                                       (categorization/get-active-hierarchy-version)
-                                                                       category-attrs
-                                                                       search_term
-                                                                       ["app"]
-                                                                       app-ids)))))
+  [search_term {:keys [app-ids public-app-ids] :as params} short-username admin?]
+  (let [category-attrs (set (workspace-metadata-category-attrs))
+        app-ids        (if admin? public-app-ids app-ids)]
+    (-> params
+        (assoc :app-ids             app-ids
+               :pre-matched-app-ids (when-not (or (empty? app-ids) (empty? category-attrs))
+                                      (metadata-client/filter-targets-by-ontology-search
+                                        short-username
+                                        (categorization/get-active-hierarchy-version)
+                                        category-attrs
+                                        search_term
+                                        ["app"]
+                                        app-ids)))
+        remove-nil-vals)))
 
 (defn list-hierarchies
   [{:keys [username]}]
@@ -373,7 +376,7 @@
         workspace (get-workspace username)
         perms (perms-client/load-app-permissions shortUsername)
         params (fix-sort-params (augment-listing-params params shortUsername perms))
-        params (augment-search-params search_term params shortUsername (:app-ids params))
+        params (augment-search-params search_term params shortUsername admin?)
         total (count-search-apps-for-user search_term (:id workspace) params)
         search-fn (if admin? search-apps-for-admin search-apps-for-user)
         search_results (search-fn
