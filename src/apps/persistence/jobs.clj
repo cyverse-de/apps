@@ -560,14 +560,16 @@
    and last_used columns."
   [query]
   (fields query
-          [(subselect :jobs
+          [(subselect [:jobs :jc]
                       (aggregate (count :id) :job_count)
-                      (where {:app_id :j.app_id}))
+                      (where {:app_id :j.app_id})
+                      (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
            :job_count]
-          [(subselect :jobs
+          [(subselect [:jobs :jc]
                       (aggregate (count :id) :job_count_failed)
                       (where {:app_id :j.app_id
-                              :status failed-status}))
+                              :status failed-status})
+                      (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
            :job_count_failed]
           [(subselect :jobs
                       (aggregate (max :start_date) :last_used)
@@ -579,10 +581,11 @@
    job_count_completed and job_last_completed columns."
   [^String app-id]
   (-> (select* [:jobs :j])
-      (fields [(subselect :jobs
+      (fields [(subselect [:jobs :jc]
                           (aggregate (count :id) :job_count_completed)
                           (where {:app_id :j.app_id
-                                  :status completed-status}))
+                                  :status completed-status})
+                          (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
                :job_count_completed]
               [(subselect :jobs
                           (aggregate (max :end_date) :job_last_completed)

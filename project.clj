@@ -23,7 +23,7 @@
                  [metosin/compojure-api "1.1.8"]
                  [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "2.8.1"]
-                 [org.cyverse/kameleon "2.8.2-SNAPSHOT"]
+                 [org.cyverse/kameleon "2.8.2"]
                  [org.cyverse/mescal "2.8.1-SNAPSHOT"]
                  [org.cyverse/metadata-client "2.8.0"]
                  [org.cyverse/common-cli "2.8.0"]
