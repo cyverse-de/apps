@@ -120,10 +120,15 @@
     (-> (apply-standard-filter query (remove ownership-filter? query-filter))
         (apply-ownership-filter username (filter ownership-filter? query-filter)))))
 
+(defn- job-type-id-from-system-id [system-id]
+  (or ((comp :id first) (select :job_types (wheere {:system_id system-id})))
+      (cxu/bad-request (str "unrecognized system ID: " system-id))))
+
 (defn- get-job-type-id
   "Fetches the primary key for the job type with the given name."
   [job-type]
-  ((comp :id first) (select :job_types (where {:name job-type}))))
+  (or ((comp :id first) (select :job_types (where {:name job-type})))
+      (cxu/bad-request (str "unrecognized job type name: " job-type))))
 
 (defn- save-job-submission
   "Associated a job submission with a saved job in the database."
@@ -187,48 +192,50 @@
       {:status "Failed"
        :enddate (now-str)})))
 
+(def job-fields
+  [:id
+   :job_name
+   :job_description
+   :job_type_id
+   :app_id
+   :app_name
+   :app_description
+   :app_wiki_url
+   :result_folder_path
+   :start_date
+   :end_date
+   :status
+   :deleted
+   :user_id
+   :notify
+   :parent_id])
+
 (defn save-job
   "Saves information about a job in the database."
-  [{:keys [id job-name description app-id app-name app-description app-wiki-url result-folder-path
-           start-date end-date status deleted username notify parent-id]}
-   submission]
-  (let [user-id (get-user-id username)
-        job-info (remove-nil-values
-                   {:id                 id
-                    :job_name           job-name
-                    :job_description    description
-                    :app_id             app-id
-                    :app_name           app-name
-                    :app_description    app-description
-                    :app_wiki_url       app-wiki-url
-                    :result_folder_path result-folder-path
-                    :start_date         start-date
-                    :end_date           end-date
-                    :status             status
-                    :deleted            deleted
-                    :user_id            user-id
-                    :notify             notify
-                    :parent_id          parent-id})]
-    (save-job-with-submission job-info (cheshire/encode submission))))
+  [{system-id :system_id username :username :as job-info} submission]
+  (-> (select-keys job-info job-fields)
+      (assoc :job_type_id (job-type-id-from-system-id system-id)
+             :user-id     (get-user-id username))
+      remove-nil-values
+      (save-job-with-submission (cheshire/encode submission))))
+
+(def job-step-fields
+  [:job_id
+   :step_number
+   :external_id
+   :start_date
+   :end_date
+   :status
+   :job_type_id
+   :app_step_number])
 
 (defn save-job-step
   "Saves a single job step in the database."
-  [{:keys [job-id step-number external-id start-date end-date status job-type app-step-number]}]
-  (let [job-type-id     (get-job-type-id job-type)
-        job-step-values (remove-nil-values
-                          {:job_id          job-id
-                           :step_number     step-number
-                           :external_id     external-id
-                           :start_date      start-date
-                           :end_date        end-date
-                           :status          status
-                           :job_type_id     job-type-id
-                           :app_step_number app-step-number})]
-    (when (nil? job-type-id)
-      (throw+ {:type     :clojure-commons.exception/missing-request-field
-               :error    "Job type id missing"
-               :job-type job-type}))
-    (insert :job_steps (values job-step-values))))
+  [{job-type :job_type :as job-step-info}]
+  (-> (select-keys job-step-info job-step-fields)
+      (assoc :job_type_id (get-job-type-id job-type))
+      remove-nil-values
+      (#(insert :job_steps (values %1))))
 
 (defn save-multistep-job
   [job-info job-steps submission]
@@ -290,6 +297,7 @@
   []
   (-> (select* [:job_listings :j])
       (fields [:j.app_description    :app-description]
+              [:j.system_id          :system_id]
               [:j.app_id             :app-id]
               [:j.app_name           :app-name]
               [:j.job_description    :description]

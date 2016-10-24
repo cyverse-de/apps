@@ -42,7 +42,7 @@
   (editPipeline [_ app-id])
   (listJobs [_ params])
   (loadAppTables [_ app-ids])
-  (submitJob [_ submission] [_ system-id submission])
+  (submitJob [_ submission])
   (submitJobStep [_ job-id submission])
   (translateJobStatus [_ job-type status])
   (updateJobStatus [_ job-step job status end-date])

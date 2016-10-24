@@ -258,11 +258,7 @@
         [])))
 
   (submitJob [this submission]
-    (when-not (util/uuid? (:app_id submission))
-      (agave-jobs/submit agave user submission)))
-
-  (submitJob [this system-id submission]
-    (validate-system-id system-id)
+    (validate-system-id (:system_id submission))
     (agave-jobs/submit agave user submission))
 
   (submitJobStep [_ job-id submission]

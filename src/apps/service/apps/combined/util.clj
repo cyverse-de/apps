@@ -31,10 +31,8 @@
                   :error (str "unrecognized system ID " system-id)}))))
 
 (defn apps-client-for-job
-  [{app-id :app_id :as submission} clients]
-  (cond (not (uuid? app-id))                     (get-apps-client clients jp/agave-client-name)
-        (zero? (ap/count-external-steps app-id)) (get-apps-client clients jp/de-client-name)
-        :else                                    nil))
+  [{system-id :system_id} clients]
+  (get-apps-client clients system-id))
 
 (defn apps-client-for-app-step
   [clients job-step]

@@ -85,29 +85,30 @@
 (defn- store-agave-job
   [job-id job submission]
   (jp/save-job {:id                 job-id
-                :job-name           (:name job)
-                :description        (:description submission)
-                :app-id             (:app_id job)
-                :app-name           (:app_name job)
-                :app-description    (:app_details job)
-                :app-wiki-url       (:wiki_url job)
-                :result-folder-path (:resultfolderid job)
-                :start-date         (:startdate job)
+                :job_name           (:name job)
+                :job_description    (:description submission)
+                :system_id          (:system_id submission)
+                :app_id             (:app_id job)
+                :app_name           (:app_name job)
+                :app_description    (:app_details job)
+                :app_wiki_url       (:wiki_url job)
+                :result_folder_path (:resultfolderid job)
+                :start_date         (:startdate job)
                 :username           (:username job)
                 :status             (:status job)
                 :notify             (:notify job)
-                :parent-id          (:parent_id submission)}
+                :parent_id          (:parent_id submission)}
                submission))
 
 (defn- store-job-step
   [job-id job]
-  (jp/save-job-step {:job-id          job-id
-                     :step-number     1
-                     :external-id     (:id job)
-                     :start-date      (:startdate job)
+  (jp/save-job-step {:job_id          job-id
+                     :step_number     1
+                     :external_id     (:id job)
+                     :start_date      (:startdate job)
                      :status          (:status job)
-                     :job-type        jp/agave-job-type
-                     :app-step-number 1}))
+                     :job_type        jp/agave-job-type
+                     :app_step_number 1}))
 
 (defn- format-job-submission-response
   [job-id submission job]

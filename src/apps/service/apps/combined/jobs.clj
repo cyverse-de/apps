@@ -46,26 +46,26 @@
 (defn- build-job-save-info
   [user result-folder-path job-id app-info submission]
   {:id                 job-id
-   :job-name           (:name submission)
-   :description        (:description submission)
-   :app-id             (:id app-info)
-   :app-name           (:name app-info)
-   :app-description    (:description app-info)
-   :app-wiki-url       (:wiki_url app-info)
-   :result-folder-path result-folder-path
-   :start-date         (db/now)
+   :job_name           (:name submission)
+   :job_description    (:description submission)
+   :app_id             (:id app-info)
+   :app_name           (:name app-info)
+   :app_description    (:description app-info)
+   :app_wiki_url       (:wiki_url app-info)
+   :result_folder_path result-folder-path
+   :start_date         (db/now)
    :status             "Submitted"
    :username           (:username user)
    :notify             (:notify submission false)
-   :parent-id          (:parent_id submission)})
+   :parent_id          (:parent_id submission)})
 
 (defn- build-job-step-save-info
   [job-id job-step]
-  {:job-id          job-id
-   :step-number     (:step_number job-step)
+  {:job_id          job-id
+   :step_number     (:step_number job-step)
    :status          jp/pending-status
-   :job-type        (:job_type job-step)
-   :app-step-number (:app_step_number job-step)})
+   :job_type        (:job_type job-step)
+   :app_step-number (:app_step_number job-step)})
 
 (defn- build-job-step-list
   [job-id app-id]

@@ -224,15 +224,12 @@
   (formatPipelineTasks [_ pipeline]
     pipeline)
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (updatePipeline [_ pipeline]
     (pipeline-edit/update-pipeline user pipeline))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (copyPipeline [_ app-id]
     (pipeline-edit/copy-pipeline user app-id))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (editPipeline [_ app-id]
     (pipeline-edit/edit-pipeline user app-id))
 
@@ -250,11 +247,7 @@
          (vector)))
 
   (submitJob [this submission]
-    (when (util/uuid? (:app_id submission))
-      (de-jobs/submit user (update-in submission [:app_id] uuidify))))
-
-  (submitJob [this system-id submission]
-    (validate-system-id system-id)
+    (validate-system-id (:system_id submission))
     (de-jobs/submit user (update-in submission [:app_id] uuidify)))
 
   (submitJobStep [_ _ submission]
