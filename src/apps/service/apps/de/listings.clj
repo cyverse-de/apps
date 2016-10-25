@@ -45,7 +45,7 @@
         app-ids        (if admin? public-app-ids app-ids)]
     (-> params
         (assoc :app-ids             app-ids
-               :pre-matched-app-ids (when-not (or (empty? app-ids) (empty? category-attrs))
+               :pre-matched-app-ids (when-not (some empty? [search_term app-ids category-attrs])
                                       (metadata-client/filter-targets-by-ontology-search
                                         short-username
                                         (categorization/get-active-hierarchy-version)
@@ -368,27 +368,26 @@
   (or (virtual-group-ids category-id)
       (seq (select :app_categories (where {:id category-id})))))
 
-(defn search-apps
-  "This service searches for apps in the user's workspace and all public app
-   groups, based on a search term."
+(defn filter-apps
+  "This service fetches a paged list of apps in the user's workspace and all public app groups,
+   further filtering results by a search term if the `search` parameter is present."
   [{:keys [username shortUsername]} params admin?]
-  (let [search_term (curl/url-decode (:search params))
-        workspace (get-workspace username)
-        perms (perms-client/load-app-permissions shortUsername)
-        params (fix-sort-params (augment-listing-params params shortUsername perms))
-        params (augment-search-params search_term params shortUsername admin?)
-        total (count-search-apps-for-user search_term (:id workspace) params)
-        search-fn (if admin? search-apps-for-admin search-apps-for-user)
-        search_results (search-fn
-                        search_term
-                        workspace
-                        (workspace-favorites-app-category-index)
-                        params)
-        beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id search_results))
+  (let [search_term    (curl/url-decode (:search params))
+        workspace      (get-workspace username)
+        perms          (perms-client/load-app-permissions shortUsername)
+        params         (fix-sort-params (augment-listing-params params shortUsername perms))
+        params         (augment-search-params search_term params shortUsername admin?)
+        total          (count-apps-for-user search_term (:id workspace) params)
+        app-listing-fn (if admin? get-apps-for-admin get-apps-for-user)
+        apps           (app-listing-fn search_term
+                                       workspace
+                                       (workspace-favorites-app-category-index)
+                                       params)
+        beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps))
         public-app-ids (:public-app-ids params)
-        search_results (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) search_results)]
+        apps           (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) apps)]
     {:app_count total
-     :apps search_results}))
+     :apps      apps}))
 
 (defn- load-app-details
   "Retrieves the details for a single app."

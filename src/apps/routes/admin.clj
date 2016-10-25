@@ -54,12 +54,12 @@
   (GET "/" []
        :query [params AppSearchParams]
        :middleware [wrap-metadata-base-url]
-       :summary "Search Apps"
+       :summary "Filter Apps"
        :return AdminAppListing
        :description
        (str
-"This service allows admins to search for Apps based on a part of the App name, description, integrator's
- name, tool name, or category name the app is under."
+"This service allows admins to list all apps. If the `search` parameter is included, then the results are
+ filtered by the App name, description, integrator's name, tool name, or category name the app is under."
 (get-endpoint-delegate-block
   "metadata"
   "POST /avus/filter-targets")
