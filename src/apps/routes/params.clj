@@ -57,7 +57,9 @@
 
 (s/defschema AppSearchParams
   (merge SecuredPagingParams
-         {:search (describe String "The pattern to match in an App's Name or Description.")}))
+         {(s/optional-key :search)
+          (describe String
+            "The pattern to match in an App's Name, Description, Integrator Name, or Tool Name.")}))
 
 (s/defschema SecuredIncludeHiddenParams
   (merge SecuredQueryParams IncludeHiddenParams))
