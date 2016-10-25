@@ -40,14 +40,16 @@
        (.listAppsInCategory client category-id params))))
 
   (listAppsUnderHierarchy [_ root-iri attr params]
-    (let [unpaged-params (dissoc params :limit :offset)
-          listing-maps   (map #(.listAppsUnderHierarchy % root-iri attr unpaged-params) clients)]
-      (util/combine-app-listings params listing-maps)))
+    (let [unpaged-params (dissoc params :limit :offset)]
+      (->> (map #(.listAppsUnderHierarchy % root-iri attr unpaged-params) clients)
+           (remove nil?)
+           (util/combine-app-listings params))))
 
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params]
-    (let [unpaged-params (dissoc params :limit :offset)
-          listing-maps   (map #(.adminListAppsUnderHierarchy % ontology-version root-iri attr unpaged-params) clients)]
-      (util/combine-app-listings params listing-maps)))
+    (let [unpaged-params (dissoc params :limit :offset)]
+      (->> (map #(.adminListAppsUnderHierarchy % ontology-version root-iri attr unpaged-params) clients)
+           (remove nil?)
+           (util/combine-app-listings params))))
 
   (searchApps [_ search-term params]
     (->> (map #(.searchApps % search-term (select-keys params [:search])) clients)
