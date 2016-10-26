@@ -15,10 +15,6 @@
             [apps.service.apps.de.jobs.base :as jb]
             [apps.util.json :as json-util]))
 
-(defn- secured-params
-  [user]
-  {:user (:shortUsername user)})
-
 (defn- pre-process-jex-step
   "Removes the input array of a fAPI step's config."
   [{{step-type :type} :component :as step}]
@@ -46,11 +42,11 @@
   (-> (select-keys job [:app_id :app_name :app_description :notify])
       (assoc :job_name           (:name job)
              :job_description    (:description job)
-             :system_id          (:system_id job)
+             :system_id          (:system_id submission)
              :app_wiki_url       (:wiki_url job)
              :result_folder_path (:output_dir job)
              :start_date         (sqlfn now)
-             :user_id            (get-user-id (:username user))
+             :username           (:username user)
              :status             status
              :parent_id          (:parent_id submission))
       (jp/save-job (cheshire/encode submission))))

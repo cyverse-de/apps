@@ -215,7 +215,7 @@
   [{system-id :system_id username :username :as job-info} submission]
   (-> (select-keys job-info job-fields)
       (assoc :job_type_id (job-type-id-from-system-id system-id)
-             :user-id     (get-user-id username))
+             :user_id     (get-user-id username))
       remove-nil-values
       (save-job-with-submission (cheshire/encode submission))))
 

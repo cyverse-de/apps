@@ -83,7 +83,7 @@
        (throw+)))))
 
 (defn- store-agave-job
-  [job-id job submission]
+  [user job-id job submission]
   (jp/save-job {:id                 job-id
                 :job_name           (:name job)
                 :job_description    (:description submission)
@@ -94,7 +94,7 @@
                 :app_wiki_url       (:wiki_url job)
                 :result_folder_path (:resultfolderid job)
                 :start_date         (:startdate job)
-                :username           (:username job)
+                :username           (:username user)
                 :status             (:status job)
                 :notify             (:notify job)
                 :parent_id          (:parent_id submission)}
@@ -132,23 +132,23 @@
     :parent_id       (:parent_id submission)}))
 
 (defn- handle-successful-submission
-  [job-id job submission]
-  (store-agave-job job-id job submission)
+  [user job-id job submission]
+  (store-agave-job user job-id job submission)
   (store-job-step job-id job)
   (format-job-submission-response job-id submission job))
 
 (defn- handle-failed-submission
-  [job-id job submission]
+  [user job-id job submission]
   (let [job (assoc job :status jp/failed-status)]
-    (store-agave-job job-id job submission)
+    (store-agave-job user job-id job submission)
     (store-job-step job-id job)
     (format-job-submission-response job-id submission job)))
 
 (defn- send-submission
   [agave user job-id submission job]
   (if-let [submitted-job (send-submission* agave user submission job)]
-    (handle-successful-submission job-id submitted-job submission)
-    (handle-failed-submission job-id job submission)))
+    (handle-successful-submission user job-id submitted-job submission)
+    (handle-failed-submission user job-id job submission)))
 
 (defn submit
   [agave user submission]
