@@ -1,18 +1,38 @@
 (ns apps.service.util
-  (:use [apps.transformers :only [param->long]]
+  (:use [apps.routes.schemas.app :only [AdminAppListingJobStatsKeys]]
+        [apps.transformers :only [param->long]]
         [apps.util.conversions :only [remove-nil-vals]])
   (:require [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
             [kameleon.uuids :as uuids])
   (:import [java.util UUID]))
 
+(defn- app-sorter-keyfn
+  [sort-field]
+  (let [sort-field (keyword sort-field)]
+    (condp contains? sort-field
+      AdminAppListingJobStatsKeys (comp sort-field :job_stats)
+      #{:average :total}          (comp sort-field :rating)
+      sort-field)))
+
+(defn- normalize-comparable
+  [comparable]
+  (cond
+    (nil? comparable)        comparable
+    (number? comparable)     comparable
+    :else (string/lower-case (str comparable))))
+
+(defn- app-sorter-comparator
+  [sort-dir]
+  (if (and sort-dir (= (string/upper-case sort-dir) "DESC"))
+    #(compare (normalize-comparable %2) (normalize-comparable %1))
+    #(compare (normalize-comparable %1) (normalize-comparable %2))))
+
 (defn- app-sorter
   [sort-field sort-dir]
   (partial sort-by
-           (keyword sort-field)
-           (if (and sort-dir (= (string/upper-case sort-dir) "DESC"))
-             #(compare (string/lower-case (str %2)) (string/lower-case (str %1)))
-             #(compare (string/lower-case (str %1)) (string/lower-case (str %2))))))
+           (app-sorter-keyfn sort-field)
+           (app-sorter-comparator sort-dir)))
 
 (defn sort-apps
   [res {:keys [sort-field sort-dir]} & [{:keys [default-sort-field]}]]

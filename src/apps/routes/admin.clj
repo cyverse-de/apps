@@ -52,7 +52,7 @@
 
 (defroutes admin-apps
   (GET "/" []
-       :query [params AppSearchParams]
+       :query [params AdminAppSearchParams]
        :middleware [wrap-metadata-base-url]
        :summary "List Apps"
        :return AdminAppListing

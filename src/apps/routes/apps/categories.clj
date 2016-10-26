@@ -4,7 +4,8 @@
         [common-swagger-api.schema.ontologies]
         [apps.routes.middleware :only [wrap-metadata-base-url]]
         [apps.routes.params]
-        [apps.routes.schemas.app :only [AppListing]]
+        [apps.routes.schemas.app :only [AppListing
+                                        AppListingPagingParams]]
         [apps.routes.schemas.app.category]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
