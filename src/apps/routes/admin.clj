@@ -54,7 +54,7 @@
   (GET "/" []
        :query [params AppSearchParams]
        :middleware [wrap-metadata-base-url]
-       :summary "Filter Apps"
+       :summary "List Apps"
        :return AdminAppListing
        :description
        (str

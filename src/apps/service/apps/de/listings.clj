@@ -368,7 +368,7 @@
   (or (virtual-group-ids category-id)
       (seq (select :app_categories (where {:id category-id})))))
 
-(defn filter-apps
+(defn list-apps
   "This service fetches a paged list of apps in the user's workspace and all public app groups,
    further filtering results by a search term if the `search` parameter is present."
   [{:keys [username shortUsername]} params admin?]
