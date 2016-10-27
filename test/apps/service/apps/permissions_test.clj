@@ -22,13 +22,13 @@
 ;; FIXME: tmp disabled failing test
 #_(deftest test-app-search
   (let [{username :shortUsername :as user} (get-user :testde1)]
-    (is (= 1 (:app_count (apps/search-apps user {:search (:name test-app)}))))
+    (is (= 1 (:total (apps/search-apps user {:search (:name test-app)}))))
     (is (= 1 (count (:apps (apps/search-apps user {:search (:name test-app)})))))
     (perms-client/unshare-app (:id test-app) "user" username)
-    (is (= 0 (:app_count (apps/search-apps user {:search (:name test-app)}))))
+    (is (= 0 (:total (apps/search-apps user {:search (:name test-app)}))))
     (is (= 0 (count (:apps (apps/search-apps user {:search (:name test-app)})))))
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" username "own")
-    (is (= 1 (:app_count (apps/search-apps user {:search (:name test-app)}))))
+    (is (= 1 (:total (apps/search-apps user {:search (:name test-app)}))))
     (is (= 1 (count (:apps (apps/search-apps user {:search (:name test-app)})))))))
 
 ;; FIXME: tmp disabled failing test
@@ -37,39 +37,40 @@
         dev-category-id                    (:id (get-dev-category user))
         beta-category-id                   (:id (get-beta-category user))
         group-id                           (ipg/grouper-user-group-id)]
-    (is (= 1 (:app_count (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (count beta-apps) (:app_count (apps/list-apps-in-category user beta-category-id {}))))
+    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
+    (is (= (count beta-apps) (:total (apps/list-apps-in-category user beta-category-id {}))))
     (perms-client/unshare-app (:id test-app) "user" username)
-    (is (= 0 (:app_count (apps/list-apps-in-category user dev-category-id {}))))
+    (is (= 0 (:total (apps/list-apps-in-category user dev-category-id {}))))
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" username "own")
-    (is (= 1 (:app_count (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (count beta-apps) (:app_count (apps/list-apps-in-category user beta-category-id {}))))
+    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
+    (is (= (count beta-apps) (:total (apps/list-apps-in-category user beta-category-id {}))))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first beta-apps)) "group" group-id)
-    (is (= 1 (:app_count (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (dec (count beta-apps)) (:app_count (apps/list-apps-in-category user beta-category-id {}))))))
+    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
+    (is (= (dec (count beta-apps)) (:total (apps/list-apps-in-category user beta-category-id {}))))))
 
 ;; FIXME: tmp disabled failing test
 #_(deftest test-app-hierarchy-counts
   (let [{username :shortUsername :as user} (get-user :testde1)
         group-id                           (ipg/grouper-user-group-id)]
-    (is (= 1 (:app_count (get-dev-category user))))
-    (is (= (count beta-apps) (:app_count (get-beta-category user))))
+    (is (= 1 (:total (get-dev-category user))))
+    (is (= (count beta-apps) (:total (get-beta-category user))))
     (perms-client/unshare-app (:id test-app) "user" username)
-    (is (= 0 (:app_count (get-dev-category user))))
-    (is (= (count beta-apps) (:app_count (get-beta-category user))))
+    (is (= 0 (:total (get-dev-category user))))
+    (is (= (count beta-apps) (:total (get-beta-category user))))
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" username "own")
-    (is (= 1 (:app_count (get-dev-category user))))
-    (is (= (count beta-apps) (:app_count (get-beta-category user))))
+    (is (= 1 (:total (get-dev-category user))))
+    (is (= (count beta-apps) (:total (get-beta-category user))))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first beta-apps)) "group" group-id)
-    (is (= 1 (:app_count (get-dev-category user))))
-    (is (= (dec (count beta-apps)) (:app_count (get-beta-category user))))))
+    (is (= 1 (:total (get-dev-category user))))
+    (is (= (dec (count beta-apps)) (:total (get-beta-category user))))))
 
+;; FIXME the Beta category is obsolete
 (deftest test-admin-app-hierarchy-counts
   (let [{username :shortUsername :as user} (get-user :testde1)
         group-id                           (ipg/grouper-user-group-id)]
-    (is (= (count beta-apps) (:app_count (get-admin-beta-category user))))
+    (is (= (count beta-apps) (:total (get-admin-beta-category user))))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first beta-apps)) "group" group-id)
-    (is (= (dec (count beta-apps)) (:app_count (get-admin-beta-category user))))))
+    (is (= (dec (count beta-apps)) (:total (get-admin-beta-category user))))))
 
 (defn find-app [listing app-id]
   (first (filter (comp (partial = app-id) :id) (:apps listing))))
@@ -443,6 +444,6 @@
     (is (not (contains-app? (:id app) (:apps old-listing))))
     (pc/grant-permission (config/permissions-client) "app" (:id app) "user" (:shortUsername testde2) "read")
     (let [new-listing (shared-apps testde2)]
-      (is (= (inc (:app_count old-listing)) (:app_count new-listing)))
+      (is (= (inc (:total old-listing)) (:total new-listing)))
       (is (contains-app? (:id app) (:apps new-listing))))
     (permanently-delete-app testde1 de-system-id (:id app))))

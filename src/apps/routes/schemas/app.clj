@@ -409,8 +409,8 @@
      (describe String "The user's access level for the app.")}))
 
 (defschema AppListing
-  {:app_count (describe Long "The total number of Apps in the listing")
-   :apps      (describe [AppListingDetail] "A listing of App details")})
+  {:total (describe Long "The total number of Apps in the listing")
+   :apps  (describe [AppListingDetail] "A listing of App details")})
 
 (defschema AdminAppListingDetail
   (merge AppListingDetail

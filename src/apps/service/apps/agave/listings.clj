@@ -44,7 +44,7 @@
 (defn list-apps-with-ontology
   [agave term params admin?]
   (try+
-    (-> (select-keys (.listAppsWithOntology agave term) [:app_count :apps])
+    (-> (select-keys (.listAppsWithOntology agave term) [:total :apps])
         (add-app-listing-job-stats admin?)
         (sort-apps params {:default-sort-field "name"})
         (apply-offset params)

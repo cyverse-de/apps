@@ -32,7 +32,7 @@
    :name
    AppCategoryNameParam
 
-   :app_count
+   :total
    (describe Long "The number of Apps under this Category and all of its children")
 
    :is_public
