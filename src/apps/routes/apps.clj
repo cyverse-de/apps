@@ -17,7 +17,7 @@
   (GET "/" []
     :query [params AppSearchParams]
     :middleware [wrap-metadata-base-url]
-    :summary "Filter Apps"
+    :summary "List Apps"
     :return AppListing
     :description
     (str "This service allows users to get a paged listing of all Apps accessible to the user.

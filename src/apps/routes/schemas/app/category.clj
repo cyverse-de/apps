@@ -1,6 +1,5 @@
 (ns apps.routes.schemas.app.category
   (:use [common-swagger-api.schema :only [->optional-param
-                                          ->required-key
                                           describe
                                           NonBlankString
                                           PagingParams
@@ -8,9 +7,10 @@
                                           SortFieldOptionalKey]]
         [common-swagger-api.schema.ontologies]
         [apps.routes.params]
-        [apps.routes.schemas.app]
+        [apps.routes.schemas.app :only [AdminAppListingValidSortFields
+                                        AppListingDetail
+                                        AppListingPagingParams]]
         [schema.core :only [defschema optional-key recursive enum]])
-  (:require [clojure.set :as sets])
   (:import [java.util Date UUID]))
 
 (def AppCategoryNameParam (describe String "The App Category's name"))
@@ -24,27 +24,6 @@
         are in the user's workspace are returned. If not set, then both public and the user's
         private categories are returned.")}))
 
-(def AppListingValidSortFields
-  (-> (map ->required-key (keys AppListingDetail))
-      (conj :average_rating :user_rating)
-      set
-      (sets/difference #{:app_type
-                         :can_favor
-                         :can_rate
-                         :can_run
-                         :pipeline_eligibility
-                         :rating})))
-
-(def AdminAppListingValidSortFields
-  (-> (map ->required-key (keys AdminAppListingJobStats))
-      (concat AppListingValidSortFields)))
-
-(defschema AppListingPagingParams
-  (merge SecuredQueryParamsEmailRequired
-    (assoc PagingParams
-      SortFieldOptionalKey
-      (describe (apply enum AppListingValidSortFields) SortFieldDocs))))
-
 (defschema AppCategory
   {:id
    AppCategoryIdPathParam
@@ -52,7 +31,7 @@
    :name
    AppCategoryNameParam
 
-   :app_count
+   :total
    (describe Long "The number of Apps under this Category and all of its children")
 
    :is_public

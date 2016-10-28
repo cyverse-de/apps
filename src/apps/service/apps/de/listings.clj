@@ -67,12 +67,13 @@
       params)))
 
 (defn- add-subgroups
-  [group groups]
+  [{:keys [app_count] :as group} groups]
   (let [subgroups (filter #(= (:id group) (:parent_id %)) groups)
         subgroups (map #(add-subgroups % groups) subgroups)
-        result    (if (empty? subgroups) group (assoc group :categories subgroups))
-        result    (dissoc result :parent_id :workspace_id :description)]
-    result))
+        result    (if (empty? subgroups) group (assoc group :categories subgroups))]
+    (-> result
+        (assoc :total app_count)
+        (dissoc :app_count :parent_id :workspace_id :description))))
 
 (defn format-trash-category
   "Formats the virtual group for the admin's deleted and orphaned apps category."
@@ -80,7 +81,7 @@
   {:id         trash-category-id
    :name       "Trash"
    :is_public  true
-   :app_count  (count-deleted-and-orphaned-apps params)})
+   :total      (count-deleted-and-orphaned-apps params)})
 
 (defn list-trashed-apps
   "Lists the public, deleted apps and orphaned apps."
@@ -93,7 +94,7 @@
   {:id        my-public-apps-id
    :name      "My public apps"
    :is_public false
-   :app_count (count-public-apps-by-user username params)})
+   :total     (count-public-apps-by-user username params)})
 
 (defn list-my-public-apps
   "Lists the public apps belonging to the user with the given workspace."
@@ -110,7 +111,7 @@
   {:id        shared-with-me-id
    :name      "Shared with me"
    :is_public false
-   :app_count (count-shared-apps workspace (workspace-favorites-app-category-index) params)})
+   :total     (count-shared-apps workspace (workspace-favorites-app-category-index) params)})
 
 (defn list-apps-shared-with-me
   [_ workspace params]
@@ -141,7 +142,7 @@
                         params)]
     (-> group
         (update-in [:categories] concat virtual-groups)
-        (assoc :app_count actual-count))))
+        (assoc :total actual-count))))
 
 (defn- format-app-group-hierarchy
   "Formats the app group hierarchy rooted at the app group with the given
@@ -297,8 +298,8 @@
         public-app-ids  (perms-client/get-public-app-ids)
         app-listing-fn  (if admin? admin-list-apps-by-id list-apps-by-id)
         app-listing     (app-listing-fn workspace faves-index app-listing-ids (fix-sort-params params))]
-    {:app_count (count app-listing-ids)
-     :apps      (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) app-listing)}))
+    {:total (count app-listing-ids)
+     :apps  (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) app-listing)}))
 
 (defn list-apps-under-hierarchy
   ([user root-iri attr params]
@@ -349,8 +350,8 @@
         beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps_in_group))
         apps_in_group  (map (partial format-app-listing false perms beta-ids-set public-app-ids) apps_in_group)]
     (assoc app_group
-      :app_count total
-      :apps apps_in_group)))
+      :total total
+      :apps  apps_in_group)))
 
 (defn list-apps-in-group
   "This service lists all of the apps in an app group and all of its
@@ -368,7 +369,7 @@
   (or (virtual-group-ids category-id)
       (seq (select :app_categories (where {:id category-id})))))
 
-(defn filter-apps
+(defn list-apps
   "This service fetches a paged list of apps in the user's workspace and all public app groups,
    further filtering results by a search term if the `search` parameter is present."
   [{:keys [username shortUsername]} params admin?]
@@ -386,8 +387,8 @@
         beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps))
         public-app-ids (:public-app-ids params)
         apps           (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) apps)]
-    {:app_count total
-     :apps      apps}))
+    {:total total
+     :apps  apps}))
 
 (defn- load-app-details
   "Retrieves the details for a single app."
