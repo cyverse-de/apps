@@ -1,5 +1,5 @@
 (ns apps.service.apps
-  (:use [apps.service.oauth :only [authorization-uri]]
+  (:use [apps.service.oauth :only [authorization-uri has-access-token]]
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+ throw+]]
@@ -23,10 +23,6 @@
   [server-info username state-info]
   (throw+ {:type     :clojure-commons.exception/temporary-redirect
            :location (authorization-uri server-info username state-info)}))
-
-(defn- has-access-token
-  [{:keys [api-name] :as server-info} username]
-  (seq (op/get-access-token api-name username)))
 
 (defn- get-access-token
   [{:keys [api-name] :as server-info} state-info username]
