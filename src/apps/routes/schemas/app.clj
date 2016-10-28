@@ -1,6 +1,6 @@
 (ns apps.routes.schemas.app
   (:use [common-swagger-api.schema :only [->optional-param
-                                          ->required-key
+                                          optional-key->keyword
                                           describe
                                           PagingParams
                                           SortFieldDocs
@@ -422,7 +422,7 @@
          {:apps (describe [AdminAppListingDetail] "A listing of App details")}))
 
 (def AppListingValidSortFields
-  (-> (map ->required-key (keys AppListingDetail))
+  (-> (map optional-key->keyword (keys AppListingDetail))
       (conj :average_rating :user_rating)
       set
       (sets/difference #{:app_type
@@ -432,7 +432,10 @@
                          :pipeline_eligibility
                          :rating})))
 
-(def AdminAppListingJobStatsKeys (set (map ->required-key (keys AdminAppListingJobStats))))
+(def AdminAppListingJobStatsKeys (->> AdminAppListingJobStats
+                                      keys
+                                      (map optional-key->keyword)
+                                      set))
 
 (def AdminAppListingValidSortFields
   (sets/union AppListingValidSortFields AdminAppListingJobStatsKeys))

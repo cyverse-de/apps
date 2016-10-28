@@ -1,6 +1,5 @@
 (ns apps.routes.schemas.app.category
   (:use [common-swagger-api.schema :only [->optional-param
-                                          ->required-key
                                           describe
                                           NonBlankString
                                           PagingParams
