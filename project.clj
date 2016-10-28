@@ -28,7 +28,7 @@
                  [org.cyverse/metadata-client "2.8.0"]
                  [org.cyverse/common-cli "2.8.0"]
                  [org.cyverse/common-cfg "2.8.0"]
-                 [org.cyverse/common-swagger-api "2.8.1"]
+                 [org.cyverse/common-swagger-api "2.8.2"]
                  [org.cyverse/permissions-client "2.8.0"]
                  [org.cyverse/service-logging "2.8.0"]
                  [org.cyverse/event-messages "0.0.1"]
