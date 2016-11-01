@@ -44,10 +44,11 @@
   steps)
 
 (defn- build-job-save-info
-  [user result-folder-path job-id app-info submission]
+  [user result-folder-path job-id system-id app-info submission]
   {:id                 job-id
    :job_name           (:name submission)
    :job_description    (:description submission)
+   :system_id          system-id
    :app_id             (:id app-info)
    :app_name           (:name app-info)
    :app_description    (:description app-info)
@@ -65,9 +66,9 @@
    :step_number     (:step_number job-step)
    :status          jp/pending-status
    :job_type        (:job_type job-step)
-   :app_step-number (:app_step_number job-step)})
+   :app_step_number (:app_step_number job-step)})
 
-(defn- build-job-step-list
+(defn build-job-step-list
   [job-id app-id]
   (->> (load-job-steps app-id)
        (validate-job-steps app-id)
@@ -77,12 +78,12 @@
   [job-info job-step submission]
   (assoc submission
     :create_output_subdir false
-    :output_dir           (:result-folder-path job-info)
-    :starting_step        (:app-step-number job-step)
-    :step_number          (:step-number job-step)))
+    :output_dir           (:result_folder_path job-info)
+    :starting_step        (:app_step_number job-step)
+    :step_number          (:step_number job-step)))
 
 (defn- get-current-app-step
-  [{:keys [app-id]} {:keys [app-step-number]}]
+  [{app-id :app_id} {app-step-number :app_step_number}]
   (nth (ap/load-app-steps app-id) (dec app-step-number)))
 
 (defn- prepare-agave-job-step-submission
@@ -90,11 +91,11 @@
   (let [app-step (get-current-app-step job-info job-step)]
     (assoc submission
       :create_output_subdir false
-      :output_dir           (:result-folder-path job-info)
+      :output_dir           (:result_folder_path job-info)
       :app_id               (:external_app_id app-step)
       :paramPrefix          (:step_id app-step)
-      :starting_step        (:app-step-number job-step)
-      :step_number          (:step-number job-step))))
+      :starting_step        (:app_step_number job-step)
+      :step_number          (:step_number job-step))))
 
 (defn- prepare-job-step-submission
   [job-info job-step submission]
@@ -104,9 +105,9 @@
 
 (defn- record-step-submission
   [job-id step-number external-id]
-  (->>  {:external-id external-id
+  (->>  {:external_id external-id
          :status      jp/submitted-status
-         :start-date  (db/now)}
+         :start_date  (db/now)}
         (jp/update-job-step-number job-id step-number)))
 
 (defn- submit-job-step
@@ -120,12 +121,12 @@
      (when-not (boolean (:parent_id submission)) (throw+)))))
 
 (defn submit
-  [user clients {app-id :app_id :as submission}]
+  [user clients {system-id :system_id app-id :app_id :as submission}]
   (let [job-id      (uuids/uuid)
         job-steps   (build-job-step-list job-id app-id)
         app-info    (service/assert-found (ap/load-app-info app-id) "app" app-id)
         job-info    (build-job-save-info user (ft/build-result-folder-path submission)
-                                         job-id app-info submission)
+                                         job-id system-id app-info submission)
         job-step    (first job-steps)]
     (jp/save-multistep-job job-info job-steps submission)
     (submit-job-step (cu/apps-client-for-job-step clients job-step) job-info job-step submission)

@@ -31,8 +31,9 @@
                   :error (str "unrecognized system ID " system-id)}))))
 
 (defn apps-client-for-job
-  [{system-id :system_id} clients]
-  (get-apps-client clients system-id))
+  [{app-id :app_id system-id :system_id} clients]
+  (when (or (not= system-id jp/de-client-name) (zero? (ap/count-external-steps app-id)))
+    (get-apps-client clients system-id)))
 
 (defn apps-client-for-app-step
   [clients job-step]
