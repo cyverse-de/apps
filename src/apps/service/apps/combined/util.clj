@@ -43,7 +43,7 @@
 
 (defn is-de-job-step?
   [job-step]
-  (= (:job-type job-step) jp/de-job-type))
+  (= (:job_type job-step) jp/de-job-type))
 
 (defn apps-client-for-job-step
   [clients job-step]
