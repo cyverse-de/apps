@@ -240,21 +240,15 @@
     (cn/send-job-status-update username email job-info)
     (format-job-submission-response job-info)))
 
-(defn check-next-step-submission
-  [job-id external-id]
-  (let [job-step (jobs/lock-job-step job-id external-id)
-        job      (jobs/lock-job job-id)]
-    (.buildNextStepSubmission (get-apps-client-for-username (:username job)) job-step job)))
-
 (defn update-job-status
   ([external-id status end-date]
-     (let [{:keys [job-id]} (jobs/get-unique-job-step external-id)]
+     (let [{job-id :job_id} (jobs/get-unique-job-step external-id)]
        (update-job-status job-id external-id status end-date)))
   ([job-id external-id status end-date]
      (transaction
       (let [job-step (jobs/lock-job-step job-id external-id)
             job      (jobs/lock-job job-id)
-            batch    (when-let [parent-id (:parent-id job)] (jobs/lock-job parent-id))]
+            batch    (when-let [parent-id (:parent_id job)] (jobs/lock-job parent-id))]
         (-> (get-apps-client-for-username (:username job))
             (jobs/update-job-status job-step job batch status end-date))))))
 

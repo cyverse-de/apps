@@ -258,7 +258,7 @@
       status))
 
   (updateJobStatus [self job-step job status end-date]
-    (when (apps-util/supports-job-type? self (:job-type job-step))
+    (when (apps-util/supports-job-type? self (:job_type job-step))
       (de-jobs/update-job-status job-step job status end-date)))
 
   (getDefaultOutputName [_ io-map source-step]
@@ -278,10 +278,10 @@
     (validate-system-id system-id)
     (app-metadata/get-param-definitions app-id))
 
-  (stopJobStep [self {:keys [job-type external-id]}]
-    (when (and (apps-util/supports-job-type? self job-type)
-               (not (string/blank? external-id)))
-      (jex/stop-job external-id)))
+  (stopJobStep [self {:keys [job_type external_id]}]
+    (when (and (apps-util/supports-job-type? self job_type)
+               (not (string/blank? external_id)))
+      (jex/stop-job external_id)))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (categorizeApps [_ body]

@@ -296,37 +296,37 @@
   "The base query used for retrieving job information from the database."
   []
   (-> (select* [:job_listings :j])
-      (fields [:j.app_description    :app-description]
-              [:j.system_id          :system_id]
-              [:j.app_id             :app-id]
-              [:j.app_name           :app-name]
-              [:j.job_description    :description]
-              [:j.end_date           :end-date]
-              [:j.id                 :id]
-              [:j.job_name           :job-name]
-              [:j.result_folder_path :result-folder-path]
-              [:j.start_date         :start-date]
-              [:j.status             :status]
-              [:j.username           :username]
-              [:j.app_wiki_url       :app-wiki-url]
-              [:j.job_type           :job-type]
-              [:j.parent_id          :parent-id]
-              [:j.is_batch           :is-batch]
-              [:j.notify             :notify])))
+      (fields :j.app_description
+              :j.system_id
+              :j.app_id
+              :j.app_name
+              [:j.job_description :description]
+              :j.end_date
+              :j.id
+              :j.job_name
+              :j.result_folder_path
+              :j.start_date
+              :j.status
+              :j.username
+              :j.app_wiki_url
+              :j.job_type
+              :j.parent_id
+              :j.is_batch
+              :j.notify)))
 
 (defn- job-step-base-query
   "The base query used for retrieving job step information from the database."
   []
   (-> (select* [:job_steps :s])
       (join :inner [:job_types :t] {:s.job_type_id :t.id})
-      (fields [:s.job_id          :job-id]
-              [:s.step_number     :step-number]
-              [:s.external_id     :external-id]
-              [:s.start_date      :start-date]
-              [:s.end_date        :end-date]
-              [:s.status          :status]
-              [:t.name            :job-type]
-              [:s.app_step_number :app-step-number])))
+      (fields :s.job_id
+              :s.step_number
+              :s.external_id
+              :s.start_date
+              :s.end_date
+              :s.status
+              [:t.name :job_type]
+              :s.app_step_number)))
 
 (defn get-job-step
   "Retrieves a single job step from the database."
@@ -401,20 +401,20 @@
   "Retrieves a job by its internal identifier, placing a lock on the row."
   [id]
   (-> (select* [:jobs :j])
-      (fields [:j.app_description    :app-description]
-              [:j.app_id             :app-id]
-              [:j.app_name           :app-name]
-              [:j.job_description    :description]
-              [:j.end_date           :end-date]
-              [:j.id                 :id]
-              [:j.job_name           :job-name]
-              [:j.result_folder_path :result-folder-path]
-              [:j.start_date         :start-date]
-              [:j.status             :status]
-              [:j.notify             :notify]
-              [:j.app_wiki_url       :app-wiki-url]
+      (fields :j.app_description
+              :j.app_id
+              :j.app_name
+              [:j.job_description   :description]
+              :j.end_date
+              :j.id
+              :j.job_name
+              :j.result_folder_path
+              :j.start_date
+              :j.status
+              :j.notify
+              :j.app_wiki_url
               [:j.submission         :submission]
-              [:j.parent_id          :parent-id])
+              :j.parent_id)
       (where {:j.id id})
       (#(str (as-sql %) " for update"))
       (#(exec-raw [% [id]] :results))
@@ -423,9 +423,9 @@
 (defn- distinct-job-step-types
   "Obtains the list of distinct job step types associated with a job."
   [job-id]
-  (map :job-type (select [:job_steps :s]
+  (map :job_type (select [:job_steps :s]
                          (join [:job_types :t] {:s.job_type_id :t.id})
-                         (fields [:t.name :job-type])
+                         (fields [:t.name :job_type])
                          (modifier "DISTINCT")
                          (where {:s.job_id job-id}))))
 
@@ -461,7 +461,7 @@
   [id]
   (when-let [job (lock-job* id)]
     (assoc job
-      :job-type (determine-job-type id)
+      :job_type (determine-job-type id)
       :username (determine-job-username id))))
 
 (defn- lock-job-step*
@@ -469,13 +469,13 @@
    the row."
   [job-id external-id]
   (-> (select* [:job_steps :s])
-      (fields [:s.job_id          :job-id]
-              [:s.step_number     :step-number]
-              [:s.external_id     :external-id]
-              [:s.start_date      :start-date]
-              [:s.end_date        :end-date]
-              [:s.status          :status]
-              [:s.app_step_number :app-step-number])
+      (fields :s.job_id
+              :s.step_number
+              :s.external_id
+              :s.start_date
+              :s.end_date
+              :s.status
+              :s.app_step_number)
       (where (and {:s.job_id      job-id}
                   {:s.external_id external-id}))
       (#(str (as-sql %) " for update"))
@@ -485,10 +485,10 @@
 (defn- determine-job-step-type
   "Dtermines the job type associated with a job step in the database."
   [job-id external-id]
-  ((comp :job-type first)
+  ((comp :job_type first)
    (select [:job_steps :s]
            (join [:job_types :t] {:s.job_type_id :t.id})
-           (fields [:t.name :job-type])
+           (fields [:t.name :job_type])
            (where {:s.job_id      job-id
                    :s.external_id external-id}))))
 
@@ -501,32 +501,32 @@
    should be locked first."
   [job-id external-id]
   (when-let [job-step (lock-job-step* job-id external-id)]
-    (assoc job-step :job-type (determine-job-step-type job-id external-id))))
+    (assoc job-step :job_type (determine-job-step-type job-id external-id))))
 
 (defn update-job
   "Updates an existing job in the database."
-  ([id {:keys [status end-date deleted name description]}]
-     (when (or status end-date deleted name description)
+  ([id {:keys [status end_date deleted name description]}]
+     (when (or status end_date deleted name description)
        (sql/update :jobs
          (set-fields (remove-nil-values {:status          status
-                                         :end_date        end-date
+                                         :end_date        end_date
                                          :deleted         deleted
                                          :job_name        name
                                          :job_description description}))
          (where {:id id}))))
   ([id status end-date]
      (update-job id {:status   status
-                     :end-date end-date})))
+                     :end_date end-date})))
 
 (defn update-job-step-number
   "Updates an existing job step in the database using the job ID and the step number as keys."
-  [job-id step-number {:keys [external-id status end-date start-date]}]
-  (when (or external-id status end-date start-date)
+  [job-id step-number {:keys [external_id status end_date start_date]}]
+  (when (or external_id status end_date start_date)
     (sql/update :job_steps
-      (set-fields (remove-nil-values {:external_id external-id
+      (set-fields (remove-nil-values {:external_id external_id
                                       :status      status
-                                      :end_date    end-date
-                                      :start_date  start-date}))
+                                      :end_date    end_date
+                                      :start_date  start_date}))
       (where {:job_id      job-id
               :step_number step-number}))))
 
@@ -594,7 +594,7 @@
   [job-ids]
   (select (job-step-base-query)
           (join :inner [:jobs :j] {:s.job_id :j.id})
-          (fields [:j.parent_id :parent-id])
+          (fields :j.parent_id)
           (where (or {:job_id [in job-ids]}
                      {:job_id [in (child-job-subselect job-ids)]}))))
 

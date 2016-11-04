@@ -71,8 +71,8 @@
     (job-sharing-msg :not-allowed job-id)))
 
 (defn- verify-not-subjob
-  [{:keys [id parent-id]}]
-  (when parent-id
+  [{:keys [id parent_id]}]
+  (when parent_id
     (job-sharing-msg :is-subjob id)))
 
 (defn- verify-support
@@ -88,9 +88,9 @@
         (get-in response [:error :reason] "unable to share app")))))
 
 (defn- share-output-folder
-  [sharer sharee {:keys [result-folder-path]}]
+  [sharer sharee {:keys [result_folder_path]}]
   (try+
-   (data-info/share-path sharer result-folder-path sharee "read")
+   (data-info/share-path sharer result_folder_path sharee "read")
    nil
    (catch ce/clj-http-error? {:keys [body]}
      (str "unable to share result folder: " (:error_code (service/parse-json body))))))
@@ -109,7 +109,7 @@
 
 (defn- list-job-inputs
   [apps-client job]
-  (->> (mapv keyword (.getAppInputIds apps-client (:app-id job)))
+  (->> (mapv keyword (.getAppInputIds apps-client (:app_id job)))
        (select-keys (job-params/get-job-config job))
        vals
        (remove string/blank?)))
@@ -157,9 +157,9 @@
   (mapv (partial share-jobs-with-user apps-client user) sharing-requests))
 
 (defn- unshare-output-folder
-  [sharer sharee {:keys [result-folder-path]}]
+  [sharer sharee {:keys [result_folder_path]}]
   (try+
-   (data-info/unshare-path sharer result-folder-path sharee)
+   (data-info/unshare-path sharer result_folder_path sharee)
    nil
    (catch ce/clj-http-error? {:keys [body]}
      (str "unable to unshare result folder: " (:error_code (service/parse-json body))))))

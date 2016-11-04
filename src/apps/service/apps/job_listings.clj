@@ -39,33 +39,33 @@
                   :total (count children)))))
 
 (defn- job-supports-sharing?
-  [apps-client rep-steps {:keys [parent-id id]}]
-  (and (nil? parent-id) (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))))
+  [apps-client rep-steps {:keys [parent_id id]}]
+  (and (nil? parent_id) (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))))
 
 (def job-type-to-system-id string/lower-case)
 
 (defn format-job
-  [apps-client app-tables rep-steps {:keys [parent-id id] :as job}]
+  [apps-client app-tables rep-steps {:keys [parent_id id] :as job}]
   (remove-nil-vals
-   {:app_description (:app-description job)
-    :app_id          (:app-id job)
-    :app_name        (:app-name job)
+   {:app_description (:app_description job)
+    :app_id          (:app_id job)
+    :app_name        (:app_name job)
     :description     (:description job)
-    :enddate         (job-timestamp (:end-date job))
-    :system_id       (job-type-to-system-id (:job-type job))
+    :enddate         (job-timestamp (:end_date job))
+    :system_id       (job-type-to-system-id (:job_type job))
     :id              id
-    :name            (:job-name job)
-    :resultfolderid  (:result-folder-path job)
-    :startdate       (job-timestamp (:start-date job))
+    :name            (:job_name job)
+    :resultfolderid  (:result_folder_path job)
+    :startdate       (job-timestamp (:start_date job))
     :status          (:status job)
     :username        (:username job)
     :deleted         (:deleted job)
     :notify          (:notify job false)
-    :wiki_url        (:app-wiki-url job)
-    :app_disabled    (app-disabled? app-tables (:app-id job))
-    :parent_id       parent-id
-    :batch           (:is-batch job)
-    :batch_status    (when (:is-batch job) (format-batch-status id))
+    :wiki_url        (:app_wiki_url job)
+    :app_disabled    (app-disabled? app-tables (:app_id job))
+    :parent_id       parent_id
+    :batch           (:is_batch job)
+    :batch_status    (when (:is_batch job) (format-batch-status id))
     :can_share       (job-supports-sharing? apps-client rep-steps job)}))
 
 (defn- list-jobs*
@@ -83,8 +83,8 @@
         search-params    (util/default-search-params params :startdate default-sort-dir)
         types            (.getJobTypes apps-client)
         jobs             (list-jobs* user search-params types analysis-ids)
-        rep-steps        (group-by (some-fn :parent-id :job-id) (jp/list-representative-job-steps (mapv :id jobs)))
-        app-tables       (.loadAppTables apps-client (map :app-id jobs))]
+        rep-steps        (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))
+        app-tables       (.loadAppTables apps-client (map :app_id jobs))]
     {:analyses  (mapv (partial format-job apps-client app-tables rep-steps) jobs)
      :timestamp (str (System/currentTimeMillis))
      :total     (count-jobs user params types analysis-ids)}))
@@ -92,20 +92,20 @@
 (defn list-job
   [apps-client job-id]
   (let [job-info   (jp/get-job-by-id job-id)
-        app-tables (.loadAppTables apps-client [(:app-id job-info)])
-        rep-steps  (group-by :job-id (jp/list-representative-job-steps [job-id]))]
+        app-tables (.loadAppTables apps-client [(:app_id job-info)])
+        rep-steps  (group-by :job_id (jp/list-representative-job-steps [job-id]))]
     (format-job apps-client app-tables rep-steps job-info)))
 
 (defn- format-job-step
   [step]
   (remove-nil-vals
-   {:step_number     (:step-number step)
-    :external_id     (:external-id step)
-    :startdate       (job-timestamp (:start-date step))
-    :enddate         (job-timestamp (:end-date step))
+   {:step_number     (:step_number step)
+    :external_id     (:external_id step)
+    :startdate       (job-timestamp (:start_date step))
+    :enddate         (job-timestamp (:end_date step))
     :status          (:status step)
-    :app_step_number (:app-step-number step)
-    :step_type       (:job-type step)}))
+    :app_step_number (:app_step_number step)
+    :step_type       (:job_type step)}))
 
 (defn list-job-steps
   [job-id]

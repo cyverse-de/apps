@@ -79,7 +79,7 @@
   (validateDeletionRequest [_ req]
     (let [requests-for-system (group-by :system_id (:app_ids req))]
       (doseq [[system-id qualified-app-ids] requests-for-system]
-        (.validateDeletionRequest (util/get-apps-client clients system-id) (assoc req :app-ids qualified-app-ids)))))
+        (.validateDeletionRequest (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
   (deleteApps [this req]
     (.validateDeletionRequest this req)

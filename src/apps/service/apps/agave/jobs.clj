@@ -171,10 +171,10 @@
     status))
 
 (defn update-job-status
-  [agave {:keys [external-id] :as job-step} {job-id :id :as job} status end-date]
+  [agave {:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
   (let [status (translate-job-status agave status)]
     (when (and status (jp/status-follows? status (:status job-step)))
-      (jp/update-job-step job-id external-id status end-date)
+      (jp/update-job-step job-id external_id status end-date)
       (jp/update-job job-id status end-date))))
 
 (defn get-default-output-name
@@ -182,9 +182,9 @@
   (.getDefaultOutputName agave external-app-id external-output-id))
 
 (defn get-job-step-status
-  [agave {:keys [external-id]}]
+  [agave {:keys [external_id]}]
   (try+
-   (select-keys (.listJob agave external-id) [:status :enddate])
+   (select-keys (.listJob agave external_id) [:status :enddate])
    (catch [:status 404] _ nil)))
 
 (defn prepare-step-submission

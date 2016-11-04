@@ -269,7 +269,7 @@
       (or (.translateJobStatus agave status) status)))
 
   (updateJobStatus [self job-step job status end-date]
-    (when (apps-util/supports-job-type? self (:job-type job-step))
+    (when (apps-util/supports-job-type? self (:job_type job-step))
       (agave-jobs/update-job-status agave job-step job status end-date)))
 
   (getDefaultOutputName [_ io-map source-step]
@@ -288,10 +288,10 @@
     (validate-system-id system-id)
     (listings/get-param-definitions agave app-id))
 
-  (stopJobStep [self {:keys [job-type external-id]}]
-    (when (and (apps-util/supports-job-type? self job-type)
-               (not (string/blank? external-id)))
-      (.stopJob agave external-id)))
+  (stopJobStep [self {:keys [job_type external_id]}]
+    (when (and (apps-util/supports-job-type? self job_type)
+               (not (string/blank? external_id)))
+      (.stopJob agave external_id)))
 
   (getAppDocs [_ app-id]
     (when-not (util/uuid? app-id)

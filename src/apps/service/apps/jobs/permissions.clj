@@ -23,7 +23,7 @@
 
 (defn- verify-not-subjobs
   [jobs]
-  (when-let [subjob-ids (seq (map :id (filter :parent-id jobs)))]
+  (when-let [subjob-ids (seq (map :id (filter :parent_id jobs)))]
     (cxu/bad-request (str "analysis sharing not supported for members of a batch job") :jobs subjob-ids)))
 
 (defn validate-job-permissions
@@ -33,9 +33,9 @@
       (cxu/forbidden (str "insufficient privileges for analyses: " (string/join ", " forbidden-ids))))))
 
 (defn- format-job-permissions
-  [short-username perms {:keys [id job-name]}]
+  [short-username perms {:keys [id job_name]}]
   {:id          id
-   :name        job-name
+   :name        job_name
    :permissions (perms id)})
 
 (defn list-job-permissions

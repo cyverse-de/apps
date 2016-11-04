@@ -115,7 +115,7 @@
   (try+
    (->> (prepare-job-step-submission job-info job-step submission)
         (.submitJobStep client id)
-        (record-step-submission id (:step-number job-step)))
+        (record-step-submission id (:step_number job-step)))
    (catch Object _
      (log/error (:throwable (:throwable &throw-context) "job step submission failed"))
      (when-not (boolean (:parent_id submission)) (throw+)))))
@@ -141,8 +141,8 @@
       (= status jp/failed-status)))
 
 (defn- handle-pipeline-status-change
-  [job-id {:keys [step-number]} max-step-number status end-date]
-  (when (pipeline-status-changed? step-number max-step-number status)
+  [job-id {:keys [step_number]} max-step-number status end-date]
+  (when (pipeline-status-changed? step_number max-step-number status)
     (jp/update-job job-id status end-date)))
 
 (defn- ready-for-next-step?
@@ -151,7 +151,7 @@
        (= status jp/completed-status)))
 
 (defn- load-mapped-inputs
-  [app-steps {:keys [app-step-number]}]
+  [app-steps {app-step-number :app_step_number}]
   (->> (dec app-step-number)
        (nth app-steps)
        (:step_id)
@@ -175,9 +175,9 @@
        (.getDefaultOutputName combined-client io-map)))
 
 (defn- get-input-path
-  [combined-client {:keys [result-folder-path]} config app-steps io-map]
+  [combined-client {:keys [result_folder_path]} config app-steps io-map]
   (ft/path-join
-   result-folder-path
+   result_folder_path
    (->> (if-let [prop-value (get config (build-config-output-id io-map))]
           prop-value
           (get-default-output-name combined-client io-map app-steps)))))
@@ -194,27 +194,27 @@
 
 (defn- add-mapped-inputs
   [combined-client job next-step submission]
-  (let [app-steps (ap/load-app-steps (:app-id job))]
+  (let [app-steps (ap/load-app-steps (:app_id job))]
     (->> (load-mapped-inputs app-steps next-step)
          (add-mapped-inputs-to-config combined-client job submission app-steps))))
 
 (defn- submit-next-step
-  [combined-client clients job {:keys [job-id step-number] :as job-step}]
-  (let [next-step (jp/get-job-step-number job-id (inc step-number))]
+  [combined-client clients job {:keys [job_id step_number] :as job-step}]
+  (let [next-step (jp/get-job-step-number job_id (inc step_number))]
     (->> (cheshire/decode (.getValue (:submission job)) true)
          (add-mapped-inputs combined-client job next-step)
          (submit-job-step (cu/apps-client-for-job-step clients next-step) job next-step))))
 
 (defn- handle-next-step-submission
-  [combined-client clients job {:keys [step-number] :as job-step} max-step-number status]
-  (when (ready-for-next-step? step-number max-step-number status)
+  [combined-client clients job {:keys [step_number] :as job-step} max-step-number status]
+  (when (ready-for-next-step? step_number max-step-number status)
     (submit-next-step combined-client clients job job-step)))
 
 (defn- update-pipeline-status
   [combined-client clients max-step-number job-step {job-id :id :as job} status end-date]
-  (let [status (.translateJobStatus combined-client (:job-type job-step) status)]
+  (let [status (.translateJobStatus combined-client (:job_type job-step) status)]
     (when (jp/status-follows? status (:status job-step))
-      (jp/update-job-step job-id (:external-id job-step) status end-date)
+      (jp/update-job-step job-id (:external_id job-step) status end-date)
       (handle-pipeline-status-change job-id job-step max-step-number status end-date)
       (handle-next-step-submission combined-client clients job job-step max-step-number status))))
 
@@ -227,10 +227,10 @@
                               end-date))))
 
 (defn build-next-step-submission
-  [combined-client clients {:keys [job-id step-number]} job]
-  (let [next-step (jp/get-job-step-number job-id (inc step-number))
+  [combined-client clients {:keys [job_id step_number]} job]
+  (let [next-step (jp/get-job-step-number job_id (inc step_number))
         client    (cu/apps-client-for-job-step clients next-step)]
     (->> (cheshire/decode (.getValue (:submission job)) true)
          (add-mapped-inputs combined-client job next-step)
          (prepare-job-step-submission job next-step)
-         (.prepareStepSubmission client job-id))))
+         (.prepareStepSubmission client job_id))))

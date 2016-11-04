@@ -137,9 +137,9 @@
     (:uuid job-step)))
 
 (defn update-job-status
-  [{:keys [external-id] :as job-step} {job-id :id :as job} status end-date]
+  [{:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
   (when (jp/status-follows? status (:status job-step))
-    (jp/update-job-step job-id external-id status end-date)
+    (jp/update-job-step job-id external_id status end-date)
     (jp/update-job job-id status end-date)))
 
 (defn get-default-output-name
@@ -147,8 +147,8 @@
   (ap/get-default-output-name task-id output-id))
 
 (defn get-job-step-status
-  [{:keys [external-id]}]
-  (when-let [step (jp/get-job-state external-id)]
+  [{:keys [external_id]}]
+  (when-let [step (jp/get-job-state external_id)]
     {:status  (:status step)
      :enddate (:completion_date step)}))
 
