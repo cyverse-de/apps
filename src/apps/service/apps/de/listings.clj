@@ -378,7 +378,8 @@
         perms          (perms-client/load-app-permissions shortUsername)
         params         (fix-sort-params (augment-listing-params params shortUsername perms))
         params         (augment-search-params search_term params shortUsername admin?)
-        total          (count-apps-for-user search_term (:id workspace) params)
+        count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
+        total          (count-apps-fn search_term (:id workspace) params)
         app-listing-fn (if admin? get-apps-for-admin get-apps-for-user)
         apps           (app-listing-fn search_term
                                        workspace
