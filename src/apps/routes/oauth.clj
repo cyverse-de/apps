@@ -22,8 +22,8 @@
     (ok (oauth/get-token-info api-name current-user)))
 
   (GET "/redirect-uris" []
-    :query   [params SecuredQueryParams]
-    :return  (doc-only RedirectUris RedirectUrisDoc)
+    :query [params SecuredQueryParams]
+    :return RedirectUrisResponse
     :summary "Return a set of OAuth redirect URIs if the user hasn't authenticated with the remote API yet."
     (ok (oauth/get-redirect-uris current-user))))
 

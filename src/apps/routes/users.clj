@@ -25,8 +25,9 @@
   (POST "/login" []
          :query [params LoginParams]
          :return LoginResponse
-         :summary "Record a User Login"
-         :description "Terrain calls this service to record when a user logs in."
+         :summary "User Login Service"
+         :description "Terrain calls this service to record when a user logs in
+          and to fetch user session info."
          (ok (users/login current-user params)))
 
   (POST "/logout" []
