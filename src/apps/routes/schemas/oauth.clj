@@ -1,5 +1,5 @@
 (ns apps.routes.schemas.oauth
-  (:use [common-swagger-api.schema :only [describe]])
+  (:use [common-swagger-api.schema :only [describe doc-only]])
   (:require [schema.core :as s]))
 
 (s/defschema OAuthCallbackResponse
@@ -20,3 +20,5 @@
 
 (s/defschema RedirectUrisDoc
   {:api-name (describe String "The redirect URI.")})
+
+(def RedirectUrisResponse (doc-only RedirectUris RedirectUrisDoc))
