@@ -1,11 +1,10 @@
 (ns apps.service.apps.de.jobs
-  (:use [clojure-commons.file-utils :only [build-result-folder-path]]
-        [kameleon.jobs :only [get-job-type-id save-job save-job-step get-job-state]]
+  (:use [apps.util.conversions :only [remove-nil-vals]]
+        [clojure-commons.file-utils :only [build-result-folder-path]]
         [kameleon.queries :only [get-user-id]]
         [korma.core :only [sqlfn]]
         [korma.db :only [transaction]]
         [medley.core :only [dissoc-in]]
-        [apps.util.conversions :only [remove-nil-vals]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [cheshire.core :as cheshire]
             [clojure.tools.logging :as log]
@@ -54,18 +53,18 @@
                             :user_id            (get-user-id (:username user))
                             :status             status
                             :parent_id          (:parent_id submission)))]
-    (save-job job-info (cheshire/encode submission))))
+    (jp/save-job-with-submission job-info (cheshire/encode submission))))
 
 (defn- store-job-step
   "Saves a single job step in the database."
   [job-id job status]
-  (save-job-step {:job_id          job-id
-                  :step_number     1
-                  :external_id     (:uuid job)
-                  :start_date      (sqlfn now)
-                  :status          status
-                  :job_type_id     (get-job-type-id "DE")
-                  :app_step_number 1}))
+  (jp/save-job-step {:job-id          job-id
+                     :step-number     1
+                     :external-id     (:uuid job)
+                     :start-date      (sqlfn now)
+                     :status          status
+                     :job-type        "DE"
+                     :app-step-number 1}))
 
 (defn- save-job-submission
   "Saves a DE job and its job-step in the database."
@@ -144,7 +143,7 @@
 
 (defn get-job-step-status
   [{:keys [external-id]}]
-  (when-let [step (get-job-state external-id)]
+  (when-let [step (jp/get-job-state external-id)]
     {:status  (:status step)
      :enddate (:completion_date step)}))
 
