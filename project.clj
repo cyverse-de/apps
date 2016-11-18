@@ -7,7 +7,7 @@
       (string/trim (:out (sh "git" "rev-parse" "HEAD")))
       ""))
 
-(defproject org.cyverse/apps "2.8.1-SNAPSHOT"
+(defproject org.cyverse/apps "2.10.0-SNAPSHOT"
   :description "Framework for hosting DiscoveryEnvironment metadata services."
   :url "https://github.com/cyverse-de/apps"
   :license {:name "BSD"
