@@ -11,10 +11,9 @@
         [apps.util.assertions]
         [apps.util.conversions :only [remove-nil-vals]])
   (:require [clojure.set :as set]
-            [clojure.string :as string]
-            [kameleon.app-listing :as app-listing]
             [korma.core :as sql]
             [apps.clients.permissions :as perms-client]
+            [apps.persistence.app-listing :as app-listing]
             [apps.persistence.app-metadata.delete :as delete]
             [apps.persistence.app-metadata.relabel :as relabel]))
 
