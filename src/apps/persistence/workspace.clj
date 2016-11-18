@@ -1,9 +1,9 @@
 (ns apps.persistence.workspace
   (:use [korma.core :exclude [update]]
         [korma.db :only [transaction]])
-  (:require [kameleon.app-groups :as app-groups]
-            [kameleon.queries :as queries]
-            [apps.util.config :as config]))
+  (:require [apps.persistence.app-groups :as app-groups]
+            [apps.util.config :as config]
+            [kameleon.queries :as queries]))
 
 (defn get-workspace
   [username]

@@ -1,10 +1,10 @@
 (ns apps.persistence.app-listing
-  (:use [korma.core :exclude [update]]
+  (:use [apps.persistence.app-groups :only [get-visible-root-app-group-ids]]
         [kameleon.entities]
         [kameleon.queries]
         [kameleon.util :only [query-spy]]
         [kameleon.util.search]
-        [kameleon.app-groups :only [get-visible-root-app-group-ids]])
+        [korma.core :exclude [update]])
   (:require [clojure.string :as str]))
 
 (defn get-app-listing
