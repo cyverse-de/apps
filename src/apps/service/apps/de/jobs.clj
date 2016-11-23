@@ -1,7 +1,7 @@
 (ns apps.service.apps.de.jobs
-  (:use [apps.util.conversions :only [remove-nil-vals]]
+  (:use [apps.persistence.users :only [get-user-id]]
+        [apps.util.conversions :only [remove-nil-vals]]
         [clojure-commons.file-utils :only [build-result-folder-path]]
-        [kameleon.queries :only [get-user-id]]
         [korma.core :only [sqlfn]]
         [korma.db :only [transaction]]
         [medley.core :only [dissoc-in]]

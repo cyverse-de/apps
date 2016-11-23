@@ -1,8 +1,8 @@
 (ns apps.validation
-  (:use [kameleon.entities]
-        [kameleon.queries :only [get-existing-user-id]]
+  (:use [apps.persistence.users :only [get-existing-user-id]]
         [apps.user :only [current-user]]
         [clojure.string :only [blank?]]
+        [kameleon.entities]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [clojure-commons.validators :as validators]

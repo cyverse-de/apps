@@ -1,10 +1,10 @@
 (ns apps.persistence.jobs
   "Functions for storing and retrieving information about jobs that the DE has
    submitted to any excecution service."
-  (:use [clojure-commons.core :only [remove-nil-values]]
+  (:use [apps.persistence.users :only [get-user-id]]
+        [clojure-commons.core :only [remove-nil-values]]
         [kameleon.db :only [now-str]]
         [kameleon.entities]
-        [kameleon.queries :only [get-user-id]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])

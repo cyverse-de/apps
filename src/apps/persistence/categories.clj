@@ -1,5 +1,5 @@
 (ns apps.persistence.categories
-  (:use [kameleon.queries :only [get-user-id]]
+  (:use [apps.persistence.users :only [get-user-id]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]]))
 

@@ -1,10 +1,10 @@
 (ns apps.service.apps.de.jobs.common
   (:use [kameleon.core]
         [kameleon.entities]
-        [kameleon.queries :only [get-user-id]]
         [kameleon.uuids :only [uuid]]
         [korma.core :exclude [update]]
         [medley.core :only [remove-vals]]
+        [apps.persistence.users :only [get-user-id]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals]])
   (:require [clojure.string :as string]

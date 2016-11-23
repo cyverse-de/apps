@@ -1,9 +1,11 @@
 (ns apps.persistence.workspace
-  (:use [korma.core :exclude [update]]
+  (:use [kameleon.entities]
+        [korma.core :exclude [update]]
         [korma.db :only [transaction]])
   (:require [apps.persistence.app-groups :as app-groups]
+            [apps.persistence.users :as users]
             [apps.util.config :as config]
-            [kameleon.queries :as queries]))
+            [korma.core :as sql]))
 
 (defn get-workspace
   [username]
@@ -24,16 +26,34 @@
        (map-indexed (partial app-groups/add-subgroup root-category-id))
        (dorun)))
 
+(defn- set-workspace-root-app-group
+  "Sets the given root-app-group ID in the given workspace, and returns a map of
+   the workspace with its new group ID."
+  [workspace_id root_app_group_id]
+  (sql/update workspace
+              (set-fields {:root_category_id root_app_group_id})
+              (where {:id workspace_id})))
+
 (defn- add-root-app-category
   [{workspace-id :id :as workspace}]
   (let [{root-category-id :id} (create-root-app-category workspace-id)]
     (create-default-workspace-subcategories workspace-id root-category-id)
-    (queries/set-workspace-root-app-group workspace-id root-category-id)))
+    (set-workspace-root-app-group workspace-id root-category-id)))
+
+(defn fetch-workspace-by-user-id
+  "Gets the workspace for the given user_id."
+  [user_id]
+  (first (select workspace (where {:user_id user_id}))))
+
+(defn- create-workspace*
+  "Creates a workspace database entry for the given user ID."
+  [user_id]
+  (insert workspace (values {:user_id user_id})))
 
 (defn create-workspace
   [username]
   (transaction
-    (-> (queries/get-user-id username)
-        (queries/create-workspace)
+    (-> (users/get-user-id username)
+        (create-workspace*)
         (add-root-app-category)))
   (get-workspace username))

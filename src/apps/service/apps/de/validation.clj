@@ -4,8 +4,10 @@
         [korma.core :exclude [update]]
         [kameleon.core]
         [kameleon.entities]
-        [kameleon.queries :only [parameter-types-for-tool-type]]
-        [apps.persistence.app-metadata :only [get-app list-duplicate-apps list-duplicate-apps-by-id]])
+        [apps.persistence.app-metadata :only [get-app
+                                              list-duplicate-apps
+                                              list-duplicate-apps-by-id
+                                              parameter-types-for-tool-type]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.service.apps.de.permissions :as perms]
             [clojure.string :as string]))

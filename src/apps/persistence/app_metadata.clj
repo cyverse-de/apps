@@ -1,12 +1,13 @@
 (ns apps.persistence.app-metadata
   "Persistence layer for app metadata."
   (:use [kameleon.entities]
-        [kameleon.queries :only [get-user-id add-query-sorting add-query-offset add-query-limit]]
+        [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit]]
         [kameleon.util :only [normalize-string]]
         [kameleon.util.search :only [format-query-wildcards]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]]
+        [apps.persistence.users :only [get-user-id]]
         [apps.user :only [current-user]]
         [apps.util.assertions]
         [apps.util.conversions :only [remove-nil-vals]])
@@ -327,6 +328,17 @@
   "Gets the ID of the given tool type name."
   [tool-type]
   (:id (first (select tool_types (fields :id) (where {:name tool-type})))))
+
+(defn parameter-types-for-tool-type
+  "Lists the valid parameter types for the tool type with the given identifier."
+  ([tool-type-id]
+   (parameter-types-for-tool-type (select* parameter_types) tool-type-id))
+  ([base-query tool-type-id]
+   (select base-query
+           (join :tool_type_parameter_type
+                 {:tool_type_parameter_type.parameter_type_id
+                  :parameter_types.id})
+           (where {:tool_type_parameter_type.tool_type_id tool-type-id}))))
 
 (defn- get-tool-data-files
   "Fetches a tool's test data files."

@@ -1,8 +1,8 @@
 (ns apps.metadata.reference-genomes
-  (:use [clojure.string :only [blank?]]
+  (:use [apps.persistence.users :only [get-user-id]]
+        [clojure.string :only [blank?]]
         [kameleon.core]
         [kameleon.entities]
-        [kameleon.queries :only [get-user-id]]
         [korma.core :exclude [update]]
         [korma.db]
         [apps.user :only [current-user]]
