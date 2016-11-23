@@ -1,10 +1,9 @@
 (ns apps.metadata.element-listings
-  (:use [kameleon.core]
-        [kameleon.entities]
-        [korma.core :exclude [update]]
-        [apps.persistence.app-metadata :only [parameter-types-for-tool-type]]
+  (:use [apps.persistence.app-metadata :only [parameter-types-for-tool-type]]
+        [apps.persistence.entities]
         [apps.tools :only [tool-listing-base-query]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]]))
 
 (defn get-tool-type-by-name

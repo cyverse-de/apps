@@ -1,5 +1,5 @@
 (ns apps.persistence.workspace
-  (:use [kameleon.entities]
+  (:use [apps.persistence.entities :only [workspace]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
   (:require [apps.persistence.app-groups :as app-groups]

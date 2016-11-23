@@ -1,12 +1,10 @@
 (ns apps.validation
-  (:use [apps.persistence.users :only [get-existing-user-id]]
-        [apps.user :only [current-user]]
+  (:use [apps.persistence.entities :only [tools]]
+        [apps.persistence.users :only [get-existing-user-id]]
         [clojure.string :only [blank?]]
-        [kameleon.entities]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
-  (:require [clojure-commons.validators :as validators]
-            [apps.persistence.app-metadata :as persistence]))
+  (:require [apps.persistence.app-metadata :as persistence]))
 
 (defn missing-json-field-exception
   "Thrown when a required field is missing from a JSON request body."

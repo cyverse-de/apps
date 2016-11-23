@@ -1,23 +1,22 @@
 (ns apps.containers
-  (:use [kameleon.core]
-        [kameleon.entities :only [tools
-                                  container-images
-                                  container-settings
-                                  container-devices
-                                  container-volumes
-                                  container-volumes-from
-                                  data-containers]]
-        [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
-        [apps.persistence.app-metadata :only [get-public-tools-by-image-id
-                                                    get-tools-by-image-id
-                                                    update-tool]]
+  (:use [apps.persistence.app-metadata :only [get-public-tools-by-image-id
+                                              get-tools-by-image-id
+                                              update-tool]]
+        [apps.persistence.entities :only [tools
+                                          container-images
+                                          container-settings
+                                          container-devices
+                                          container-volumes
+                                          container-volumes-from
+                                          data-containers]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals remove-empty-vals]]
         [apps.validation :only [validate-image-not-public
                                 validate-image-not-used
-                                validate-tool-not-public]])
+                                validate-tool-not-public]]
+        [kameleon.uuids :only [uuidify]]
+        [korma.core :exclude [update]]
+        [korma.db :only [transaction]])
   (:require [clojure.tools.logging :as log]
             [korma.core :as sql]))
 

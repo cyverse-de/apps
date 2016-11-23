@@ -1,7 +1,7 @@
 (ns apps.persistence.app-metadata.delete
   "Functions used to remove apps from the database."
-  (:use [apps.user :only [current-user]]
-        [kameleon.entities]
+  (:use [apps.persistence.entities]
+        [apps.user :only [current-user]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
   (:require [clojure.tools.logging :as log]))

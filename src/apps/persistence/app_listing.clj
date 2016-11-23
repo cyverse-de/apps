@@ -1,6 +1,6 @@
 (ns apps.persistence.app-listing
   (:use [apps.persistence.app-groups :only [get-visible-root-app-group-ids]]
-        [kameleon.entities]
+        [apps.persistence.entities]
         [kameleon.queries]
         [kameleon.util :only [query-spy]]
         [kameleon.util.search]

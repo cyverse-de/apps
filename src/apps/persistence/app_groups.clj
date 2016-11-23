@@ -1,5 +1,5 @@
 (ns apps.persistence.app-groups
-  (:use [kameleon.entities]
+  (:use [apps.persistence.entities]
         [korma.core :exclude [update]]
         [korma.db :only [transaction *current-conn*]]
         [slingshot.slingshot :only [throw+]])

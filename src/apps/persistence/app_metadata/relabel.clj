@@ -1,12 +1,12 @@
 (ns apps.persistence.app-metadata.relabel
   "Persistence layer for app metadata."
-  (:use [kameleon.entities]
+  (:use [apps.persistence.entities]
+        [apps.routes.schemas.app :only [AppParameterListGroup]]
+        [apps.util.assertions]
+        [apps.util.conversions :only [long->timestamp
+                                      remove-nil-vals]]
         [korma.core :exclude [update]]
         [medley.core :only [remove-vals]]
-        [apps.routes.schemas.app :only [AppParameterListGroup]]
-        [apps.util.conversions :only [long->timestamp
-                                            remove-nil-vals]]
-        [apps.util.assertions]
         [slingshot.slingshot :only [throw+]])
   (:require [korma.core :as sql]))
 

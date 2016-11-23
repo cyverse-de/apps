@@ -1,6 +1,6 @@
 (ns apps.persistence.collaborators
-  (:use [apps.persistence.users :only [get-user-id]]
-        [kameleon.entities]
+  (:use [apps.persistence.entities]
+        [apps.persistence.users :only [get-user-id]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]]))
 

@@ -1,12 +1,11 @@
 (ns apps.containers-test
-  (:use [clojure.test]
-        [apps.containers]
+  (:use [apps.containers]
+        [apps.persistence.entities]
         [apps.test-fixtures :only [run-integration-tests with-test-db]]
+        [clojure.test]
         [korma.core :exclude [update]]
-        [korma.db]
-        [kameleon.entities])
-  (:require [clojure.tools.logging :as log]
-            [korma.core :as sql]))
+        [korma.db])
+  (:require [korma.core :as sql]))
 
 (def ^:dynamic image-info-map nil)
 (def ^:dynamic data-container-map nil)

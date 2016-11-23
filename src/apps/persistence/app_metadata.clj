@@ -1,22 +1,22 @@
 (ns apps.persistence.app-metadata
   "Persistence layer for app metadata."
-  (:use [kameleon.entities]
+  (:use [apps.persistence.entities]
+        [apps.persistence.users :only [get-user-id]]
+        [apps.user :only [current-user]]
+        [apps.util.assertions]
+        [apps.util.conversions :only [remove-nil-vals]]
         [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit]]
         [kameleon.util :only [normalize-string]]
         [kameleon.util.search :only [format-query-wildcards]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
-        [apps.persistence.users :only [get-user-id]]
-        [apps.user :only [current-user]]
-        [apps.util.assertions]
-        [apps.util.conversions :only [remove-nil-vals]])
-  (:require [clojure.set :as set]
-            [korma.core :as sql]
-            [apps.clients.permissions :as perms-client]
+        [korma.db :only [transaction]])
+  (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-listing :as app-listing]
             [apps.persistence.app-metadata.delete :as delete]
-            [apps.persistence.app-metadata.relabel :as relabel]))
+            [apps.persistence.app-metadata.relabel :as relabel]
+            [clojure.set :as set]
+            [korma.core :as sql]))
 
 (def param-multi-input-type "MultiFileSelector")
 (def param-flex-input-type "FileFolderInput")

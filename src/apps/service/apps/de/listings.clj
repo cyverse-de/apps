@@ -1,17 +1,16 @@
 (ns apps.service.apps.de.listings
-  (:use [slingshot.slingshot :only [try+ throw+]]
-        [korma.core :exclude [update]]
-        [kameleon.core]
-        [kameleon.entities]
-        [kameleon.uuids :only [uuidify]]
-        [apps.persistence.app-documentation :only [get-documentation]]
+  (:use [apps.persistence.app-documentation :only [get-documentation]]
         [apps.persistence.app-groups]
         [apps.persistence.app-listing]
+        [apps.persistence.entities]
         [apps.tools :only [get-tools-by-id]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.config]
         [apps.util.conversions :only [to-long remove-nil-vals]]
-        [apps.workspace])
+        [apps.workspace]
+        [kameleon.uuids :only [uuidify]]
+        [korma.core :exclude [update]]
+        [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :refer [get-app get-app-tools] :as amp]
             [apps.persistence.jobs :as jobs-db]

@@ -1,16 +1,16 @@
 (ns apps.metadata.tool-requests
-  (:use [clojure.java.io :only [reader]]
-        [kameleon.entities]
-        [korma.core :exclude [update]]
-        [korma.db]
+  (:use [apps.persistence.entities]
         [apps.user :only [load-user]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [clojure.java.io :only [reader]]
+        [korma.core :exclude [update]]
+        [korma.db]
         [slingshot.slingshot :only [throw+]])
-  (:require [clojure.string :as string]
-            [apps.clients.notifications :as cn]
+  (:require [apps.clients.notifications :as cn]
             [apps.persistence.tool-requests :as queries]
             [apps.persistence.users :as users]
-            [apps.util.params :as params])
+            [apps.util.params :as params]
+            [clojure.string :as string])
   (:import [java.util UUID]))
 
 ;; Status codes.
