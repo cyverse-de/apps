@@ -1,11 +1,12 @@
 (ns apps.service.apps.de.validation
-  (:use [clojure-commons.exception-util :only [forbidden exists]]
-        [slingshot.slingshot :only [try+ throw+]]
+  (:use [apps.persistence.app-metadata :only [get-app
+                                              list-duplicate-apps
+                                              list-duplicate-apps-by-id
+                                              parameter-types-for-tool-type]]
+        [apps.persistence.entities :only [tools tool_types]]
+        [clojure-commons.exception-util :only [forbidden exists]]
         [korma.core :exclude [update]]
-        [kameleon.core]
-        [kameleon.entities]
-        [kameleon.queries :only [parameter-types-for-tool-type]]
-        [apps.persistence.app-metadata :only [get-app list-duplicate-apps list-duplicate-apps-by-id]])
+        [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.service.apps.de.permissions :as perms]
             [clojure.string :as string]))

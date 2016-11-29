@@ -1,11 +1,10 @@
 (ns apps.tools-test
-  (:use [apps.test-fixtures :only [run-integration-tests with-test-db]]
-        [clojure.test]
+  (:use [apps.persistence.entities :only [tools]]
+        [apps.test-fixtures :only [run-integration-tests with-test-db]]
         [apps.tools]
+        [clojure.test]
         [korma.db]
-        [korma.core :exclude [update]]
-        [kameleon.entities])
-  (:require [korma.core :as sql]))
+        [korma.core :exclude [update]]))
 
 (use-fixtures :each with-test-db run-integration-tests)
 

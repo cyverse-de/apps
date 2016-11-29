@@ -1,5 +1,6 @@
 (ns apps.workspace
-  (:use [kameleon.queries]
+  (:use [apps.persistence.users :only [get-existing-user-id]]
+        [apps.persistence.workspace :only [fetch-workspace-by-user-id]]
         [korma.core :exclude [update]]
         [apps.user :only [current-user]]
         [slingshot.slingshot :only [throw+]]))

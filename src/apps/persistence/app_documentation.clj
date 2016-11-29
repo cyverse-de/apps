@@ -1,5 +1,5 @@
 (ns apps.persistence.app-documentation
-  (:use [kameleon.entities]
+  (:use [apps.persistence.entities :only [app_references]]
         [korma.core :exclude [update]])
   (:require [korma.core :as sql]))
 

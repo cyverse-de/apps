@@ -1,13 +1,12 @@
 (ns apps.metadata.reference-genomes
-  (:use [clojure.string :only [blank?]]
-        [kameleon.core]
-        [kameleon.entities]
-        [kameleon.queries :only [get-user-id]]
-        [korma.core :exclude [update]]
-        [korma.db]
+  (:use [apps.persistence.entities]
+        [apps.persistence.users :only [get-user-id]]
         [apps.user :only [current-user]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [date->timestamp]]
+        [clojure.string :only [blank?]]
+        [korma.core :exclude [update]]
+        [korma.db]
         [slingshot.slingshot :only [throw+]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]

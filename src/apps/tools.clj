@@ -1,13 +1,12 @@
 (ns apps.tools
-  (:use [kameleon.core]
-        [kameleon.entities]
-        [kameleon.queries]
-        [kameleon.util.search]
-        [apps.containers :only [add-tool-container set-tool-container tool-container-info]]
+  (:use [apps.containers :only [add-tool-container set-tool-container tool-container-info]]
+        [apps.persistence.entities :only [tools tool_types]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals]]
         [apps.validation :only [verify-tool-name-location validate-tool-not-used]]
         [clojure.string :only [upper-case]]
+        [kameleon.queries]
+        [kameleon.util.search]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
   (:require [apps.persistence.app-metadata :as persistence]

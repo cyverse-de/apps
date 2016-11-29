@@ -1,22 +1,21 @@
 (ns apps.service.apps.de.pipeline-edit
-  (:use [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
-        [kameleon.core]
-        [kameleon.entities]
-        [kameleon.uuids :only [uuidify]]
-        [medley.core :only [find-first]]
-        [apps.persistence.app-metadata :only [add-app
-                                                    add-mapping
-                                                    add-step
-                                                    add-task
-                                                    get-app
-                                                    remove-app-steps
-                                                    update-app]]
-        [apps.util.conversions :only [remove-nil-vals]]
+  (:use [apps.persistence.app-metadata :only [add-app
+                                              add-mapping
+                                              add-step
+                                              add-task
+                                              get-app
+                                              remove-app-steps
+                                              update-app]]
+        [apps.persistence.entities :only [app_steps input_mapping]]
+        [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]]
         [apps.service.apps.de.validation :only [verify-app-editable]]
+        [apps.util.conversions :only [remove-nil-vals]]
         [apps.validation :only [validate-external-app-step
-                                      validate-pipeline]]
-        [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]])
+                                validate-pipeline]]
+        [kameleon.uuids :only [uuidify]]
+        [korma.core :exclude [update]]
+        [korma.db :only [transaction]]
+        [medley.core :only [find-first]])
   (:require [apps.clients.permissions :as permissions]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.listings :as listings]))

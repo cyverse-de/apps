@@ -1,24 +1,23 @@
 (ns apps.service.apps.de.edit
-  (:use [clojure.string :only [blank?]]
-        [clojure-commons.validators :only [user-owns-app?]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
-        [kameleon.app-groups :only [add-app-to-category get-app-subcategory-id]]
-        [kameleon.core]
-        [kameleon.entities]
-        [kameleon.uuids :only [uuidify]]
-        [apps.metadata.params :only [format-reference-genome-value]]
+  (:use [apps.metadata.params :only [format-reference-genome-value]]
+        [apps.persistence.app-groups :only [add-app-to-category get-app-subcategory-id]]
+        [apps.persistence.entities]
         [apps.service.apps.de.validation :only [verify-app-editable verify-app-permission validate-app-name]]
         [apps.util.config :only [workspace-dev-app-category-index]]
         [apps.util.conversions :only [remove-nil-vals convert-rule-argument]]
         [apps.validation :only [validate-parameter]]
         [apps.workspace :only [get-workspace]]
+        [clojure.string :only [blank?]]
+        [clojure-commons.validators :only [user-owns-app?]]
+        [kameleon.uuids :only [uuidify]]
+        [korma.core :exclude [update]]
+        [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
-  (:require [clojure.set :as set]
-            [apps.clients.permissions :as permissions]
+  (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
             [apps.service.apps.de.categorization :as categorization]
-            [apps.service.apps.de.constants :as c]))
+            [apps.service.apps.de.constants :as c]
+            [clojure.set :as set]))
 
 (def ^:private copy-prefix "Copy of ")
 (def ^:private max-app-name-len 255)

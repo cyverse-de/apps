@@ -1,11 +1,25 @@
 (ns apps.metadata.element-listings
-  (:use [kameleon.core]
-        [kameleon.entities]
-        [kameleon.queries]
-        [korma.core :exclude [update]]
+  (:use [apps.persistence.app-metadata :only [parameter-types-for-tool-type]]
+        [apps.persistence.entities]
         [apps.tools :only [tool-listing-base-query]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]]))
+
+(defn get-tool-type-by-name
+  "Searches for the tool type with the given name."
+  [tool-type-name]
+  (first (select tool_types
+                 (where {:name tool-type-name}))))
+
+(defn get-tool-type-by-component-id
+  "Searches for the tool type associated with the given deployed component."
+  [component-id]
+  (first (select tools
+                 (fields :tool_types.id :tool_types.name :tool_types.label
+                         :tool_types.description)
+                 (join tool_types)
+                 (where {:tools.id component-id}))))
 
 (defn- base-parameter-type-query
   "Creates the base query used to list parameter types for the metadata element listing service."

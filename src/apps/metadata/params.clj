@@ -1,9 +1,7 @@
 (ns apps.metadata.params
-  (:use [kameleon.core]
-        [kameleon.entities]
+  (:use [apps.metadata.reference-genomes :only [get-reference-genomes-by-id]]
         [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [apps.metadata.reference-genomes :only [get-reference-genomes-by-id]])
+        [korma.core :exclude [update]])
   (:require [apps.persistence.app-metadata :as persistence]
             [apps.util.conversions :as conv]))
 

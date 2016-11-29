@@ -1,9 +1,9 @@
 (ns apps.service.apps.de.categorization
-  (:use [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
-        [kameleon.app-groups]
-        [kameleon.entities]
+  (:use [apps.persistence.app-groups]
+        [apps.persistence.entities :only [app_categories]]
         [apps.validation]
+        [korma.core :exclude [update]]
+        [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as ap]

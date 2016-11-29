@@ -2,14 +2,14 @@
   "DE app metadata services."
   (:use [clojure.java.io :only [reader]]
         [clojure-commons.client :only [build-url]]
-        [kameleon.app-groups :only [add-app-to-category
-                                    decategorize-app
-                                    get-app-subcategory-id
-                                    remove-app-from-category]]
-        [kameleon.uuids :only [uuidify]]
+        [apps.persistence.app-groups :only [add-app-to-category
+                                            decategorize-app
+                                            get-app-subcategory-id
+                                            remove-app-from-category]]
         [apps.service.apps.de.validation :only [app-publishable? verify-app-permission]]
         [apps.validation :only [get-valid-user-id]]
         [apps.workspace :only [get-workspace]]
+        [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
   (:require [cheshire.core :as cheshire]

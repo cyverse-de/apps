@@ -7,7 +7,7 @@
       (string/trim (:out (sh "git" "rev-parse" "HEAD")))
       ""))
 
-(defproject org.cyverse/apps "2.8.1-SNAPSHOT"
+(defproject org.cyverse/apps "2.10.0-SNAPSHOT"
   :description "Framework for hosting DiscoveryEnvironment metadata services."
   :url "https://github.com/cyverse-de/apps"
   :license {:name "BSD"
@@ -23,9 +23,9 @@
                  [metosin/compojure-api "1.1.8"]
                  [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "2.8.1"]
-                 [org.cyverse/kameleon "2.8.3"]
+                 [org.cyverse/kameleon "3.0.0"]
                  [org.cyverse/mescal "2.8.1"]
-                 [org.cyverse/metadata-client "2.8.0"]
+                 [org.cyverse/metadata-client "2.8.1"]
                  [org.cyverse/common-cli "2.8.0"]
                  [org.cyverse/common-cfg "2.8.0"]
                  [org.cyverse/common-swagger-api "2.8.2"]

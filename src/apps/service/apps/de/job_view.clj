@@ -1,8 +1,6 @@
 (ns apps.service.apps.de.job-view
-  (:use [korma.core :exclude [update]]
-        [kameleon.core]
-        [kameleon.entities]
-        [apps.util.conversions :only [remove-nil-vals]])
+  (:use [apps.util.conversions :only [remove-nil-vals]]
+        [korma.core :exclude [update]])
   (:require [apps.metadata.params :as mp]
             [apps.persistence.app-metadata :as amp]
             [apps.service.apps.de.constants :as c]))

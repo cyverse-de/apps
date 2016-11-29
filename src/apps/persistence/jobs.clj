@@ -1,8 +1,10 @@
 (ns apps.persistence.jobs
   "Functions for storing and retrieving information about jobs that the DE has
    submitted to any excecution service."
-  (:use [clojure-commons.core :only [remove-nil-values]]
-        [kameleon.queries :only [get-user-id]]
+  (:use [apps.persistence.entities :only [job-status-updates]]
+        [apps.persistence.users :only [get-user-id]]
+        [clojure-commons.core :only [remove-nil-values]]
+        [kameleon.db :only [now-str]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
@@ -10,7 +12,6 @@
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
-            [kameleon.jobs :as kj]
             [korma.core :as sql]))
 
 (def de-job-type "DE")
@@ -119,6 +120,73 @@
     (-> (apply-standard-filter query (remove ownership-filter? query-filter))
         (apply-ownership-filter username (filter ownership-filter? query-filter)))))
 
+(defn- get-job-type-id
+  "Fetches the primary key for the job type with the given name."
+  [job-type]
+  ((comp :id first) (select :job_types (where {:name job-type}))))
+
+(defn- save-job-submission
+  "Associated a job submission with a saved job in the database."
+  [job-id submission]
+  (exec-raw ["UPDATE jobs SET submission = CAST ( ? AS json ) WHERE id = ?"
+             [(cast Object submission) job-id]]))
+
+(defn- save-job*
+  "Saves information about a job in the database."
+  [job-info]
+  (insert :jobs
+          (values (select-keys job-info [:id
+                                         :parent_id
+                                         :job_name
+                                         :job_description
+                                         :app_id
+                                         :app_name
+                                         :app_description
+                                         :app_wiki_url
+                                         :result_folder_path
+                                         :start_date
+                                         :end_date
+                                         :status
+                                         :deleted
+                                         :notify
+                                         :user_id]))))
+
+(defn save-job-with-submission
+  "Saves information about a job in the database."
+  [job-info submission]
+  (let [job-info (save-job* job-info)]
+    (save-job-submission (:id job-info) submission)
+    job-info))
+
+(defn- job-step-updates
+  "Returns a list of all of the job update received for the job step"
+  [external-id]
+  (select job-status-updates
+          (where {:external_id external-id})
+          (order :sent_on :DESC)))
+
+(defn- update->date-completed
+  [update]
+  (let [status (clojure.string/lower-case (:status update))]
+    (cond
+      (= status "submitted") ""
+      (= status "running")   ""
+      (= status "completed") (str (:sent_on update))
+      (= status "failed")    (str (:sent_on update))
+      :else                  (str (:sent_on update)))))
+
+(defn get-job-state
+  "Returns a map in the following format:
+     {:status \"state\"
+      :enddate \"enddate\"}"
+  [external-id]
+  (let [state (first (job-step-updates external-id))]
+    (if state
+      {:status  (:state update)
+       :enddate (update->date-completed update)}
+      {:status "Failed"
+       :enddate (now-str)})))
+
 (defn save-job
   "Saves information about a job in the database."
   [{:keys [id job-name description app-id app-name app-description app-wiki-url result-folder-path
@@ -141,26 +209,26 @@
                     :user_id            user-id
                     :notify             notify
                     :parent_id          parent-id})]
-    (kj/save-job job-info (cheshire/encode submission))))
+    (save-job-with-submission job-info (cheshire/encode submission))))
 
 (defn save-job-step
   "Saves a single job step in the database."
   [{:keys [job-id step-number external-id start-date end-date status job-type app-step-number]}]
-  (let [job-type-id (kj/get-job-type-id job-type)]
+  (let [job-type-id     (get-job-type-id job-type)
+        job-step-values (remove-nil-values
+                          {:job_id          job-id
+                           :step_number     step-number
+                           :external_id     external-id
+                           :start_date      start-date
+                           :end_date        end-date
+                           :status          status
+                           :job_type_id     job-type-id
+                           :app_step_number app-step-number})]
     (when (nil? job-type-id)
       (throw+ {:type     :clojure-commons.exception/missing-request-field
                :error    "Job type id missing"
                :job-type job-type}))
-    (kj/save-job-step
-      (remove-nil-values
-        {:job_id          job-id
-         :step_number     step-number
-         :external_id     external-id
-         :start_date      start-date
-         :end_date        end-date
-         :status          status
-         :job_type_id     job-type-id
-         :app_step_number app-step-number}))))
+    (insert :job_steps (values job-step-values))))
 
 (defn save-multistep-job
   [job-info job-steps submission]
