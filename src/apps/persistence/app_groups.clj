@@ -27,15 +27,6 @@
   [workspace-id]
   (map :root_category_id (get-visible-workspaces workspace-id)))
 
-(defn load-root-app-groups-for-all-users
-  "Gets the list of all root app group ids."
-  []
-  (select workspace
-          (fields [:workspace.root_category_id :app_group_id]
-                  [:workspace.id :workspace_id]
-                  :users.username)
-          (join users)))
-
 (defn get-app-category
   "Retrieves an App category by its ID."
   [app_group_id]
@@ -77,13 +68,6 @@
                    :child_category_id subgroup-id
                    :child_index index}))))
 
-(defn is-subgroup?
-  "Determines if one group is a subgroup of another."
-  [parent-group-id subgroup-id]
-  (pos? (count (select :app_category_group
-                       (where {:parent_category_id parent-group-id
-                               :child_category_id  subgroup-id})))))
-
 (defn delete-app-category
   "Deletes an App Category and all of its subcategories from the database. Delete will cascade to
   the app_category_group table and app categorizations in app_category_app table."
@@ -100,13 +84,6 @@
   "Removes a subcategory from all parent categories in the database."
   [category-id]
   (delete :app_category_group (where {:child_category_id category-id})))
-
-(defn set-root-app-group
-  "Sets the root app group for a workspace."
-  [workspace-id root-group-id]
-  (sql/update workspace
-          (set-fields {:root_category_id root-group-id})
-          (where      {:id workspace-id})))
 
 (defn decategorize-app
   "Removes an app from all categories in the database."
