@@ -13,7 +13,7 @@ DBCONTAINER=apps-de-db
 
 if [ $(docker ps -qf "name=$DBCONTAINER" | wc -l) -eq 0 ]; then
   # Pull the build environment.
-  docker pull discoenv/buildenv || error_exit 'unable to pull the build environment image'
+  docker pull discoenv/apps:dev || error_exit 'unable to pull the build environment image'
 
   docker pull discoenv/unittest-dedb:dev
 
@@ -23,4 +23,4 @@ if [ $(docker ps -qf "name=$DBCONTAINER" | wc -l) -eq 0 ]; then
   sleep 10
 fi
 
-docker run --rm -v $(pwd):/build -w /build --link $DBCONTAINER:postgres -it discoenv/buildenv /bin/bash
+docker run --rm -v $(pwd):/build -w /build --link $DBCONTAINER:postgres -it --entrypoint /bin/bash discoenv/apps:dev
