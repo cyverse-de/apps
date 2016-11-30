@@ -121,7 +121,7 @@
         (apply-ownership-filter username (filter ownership-filter? query-filter)))))
 
 (defn- job-type-id-from-system-id [system-id]
-  (or ((comp :id first) (select :job_types (wheere {:system_id system-id})))
+  (or ((comp :id first) (select :job_types (where {:system_id system-id})))
       (cxu/bad-request (str "unrecognized system ID: " system-id))))
 
 (defn- get-job-type-id
@@ -235,7 +235,7 @@
   (-> (select-keys job-step-info job-step-fields)
       (assoc :job_type_id (get-job-type-id job-type))
       remove-nil-values
-      (#(insert :job_steps (values %1))))
+      (#(insert :job_steps (values %1)))))
 
 (defn save-multistep-job
   [job-info job-steps submission]
