@@ -1,6 +1,7 @@
 (ns apps.routes.schemas.user
   (:use [common-swagger-api.schema :only [describe]]
         [apps.routes.params :only [SecuredQueryParams]]
+        [apps.routes.schemas.oauth :only [RedirectUrisResponse]]
         [schema.core :only [defschema]])
   (:import [java.util UUID]))
 
@@ -20,7 +21,8 @@
     :user-agent (describe String "The user agent obtained from the original request.")))
 
 (defschema LoginResponse
-  {:login_time (describe Long "Login time as milliseconds since the epoch.")})
+  {:login_time    (describe Long "Login time as milliseconds since the epoch.")
+   :auth_redirect RedirectUrisResponse})
 
 (defschema LogoutParams
   (assoc SecuredQueryParams

@@ -1,15 +1,16 @@
 (ns apps.metadata.tool-requests
-  (:use [clojure.java.io :only [reader]]
-        [kameleon.entities]
-        [korma.core :exclude [update]]
-        [korma.db]
+  (:use [apps.persistence.entities]
         [apps.user :only [load-user]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [clojure.java.io :only [reader]]
+        [korma.core :exclude [update]]
+        [korma.db]
         [slingshot.slingshot :only [throw+]])
-  (:require [clojure.string :as string]
-            [kameleon.queries :as queries]
-            [apps.clients.notifications :as cn]
-            [apps.util.params :as params])
+  (:require [apps.clients.notifications :as cn]
+            [apps.persistence.tool-requests :as queries]
+            [apps.persistence.users :as users]
+            [apps.util.params :as params]
+            [clojure.string :as string])
   (:import [java.util UUID]))
 
 ;; Status codes.
@@ -44,7 +45,7 @@
   "Submits a tool request on behalf of the authenticated user."
   [username req]
   (transaction
-   (let [user-id         (queries/get-user-id username)
+   (let [user-id         (users/get-user-id username)
          architecture-id (architecture-name-to-id (required-field req :architecture))
          uuid            (UUID/randomUUID)]
 
@@ -136,7 +137,7 @@
          status-id   (:id (load-status-code status))
          username    (required-field update :username)
          username    (if (re-find #"@" username) username (str username "@" uid-domain))
-         user-id     (queries/get-user-id username)
+         user-id     (users/get-user-id username)
          comments    (:comments update)
          comments    (when-not (string/blank? comments) comments)]
      (insert tool_request_statuses

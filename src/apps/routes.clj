@@ -93,15 +93,15 @@
     (context "/apps/elements" []
       :tags ["app-element-types"]
       app-element-routes/app-elements)
-    (context "/apps" []
-      :tags ["apps"]
-      app-routes/apps)
     (context "/apps/pipelines" []
       :tags ["pipelines"]
       pipeline-routes/pipelines)
     (context "/apps/:app-id/metadata" []
       :tags ["app-metadata"]
       metadata-routes/app-metadata)
+    (context "/apps" []
+      :tags ["apps"]
+      app-routes/apps)
     (context "/analyses" []
       :tags ["analyses"]
       analysis-routes/analyses)

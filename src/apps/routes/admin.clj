@@ -52,14 +52,16 @@
 
 (defroutes admin-apps
   (GET "/" []
-       :query [params AppSearchParams]
+       :query [params AdminAppSearchParams]
        :middleware [wrap-metadata-base-url]
-       :summary "Search Apps"
+       :summary "List Apps"
        :return AdminAppListing
        :description
        (str
-"This service allows admins to search for Apps based on a part of the App name, description, integrator's
- name, tool name, or category name the app is under."
+"This service allows admins to list all public apps, including apps listed under the `Trash` category:
+ deleted public apps and private apps that are 'orphaned' (not categorized in any user's workspace).
+ If the `search` parameter is included, then the results are filtered by the App name, description,
+ integrator's name, tool name, or category name the app is under."
 (get-endpoint-delegate-block
   "metadata"
   "POST /avus/filter-targets")

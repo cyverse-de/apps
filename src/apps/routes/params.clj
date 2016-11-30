@@ -55,10 +55,6 @@
 (s/defschema SecuredPagingParams
   (merge SecuredQueryParams PagingParams))
 
-(s/defschema AppSearchParams
-  (merge SecuredPagingParams
-         {:search (describe String "The pattern to match in an App's Name or Description.")}))
-
 (s/defschema SecuredIncludeHiddenParams
   (merge SecuredQueryParams IncludeHiddenParams))
 

@@ -15,11 +15,15 @@
 
 (defn- add-app-listing-job-stats
   [app-listing admin?]
-  (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % admin?)))))
+  (if admin?
+    (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % admin?))))
+    app-listing))
 
 (defn- format-app-listing-job-stats
   [app-listing admin?]
-  (update app-listing :apps (partial map #(format-job-stats % admin?))))
+  (if admin?
+    (update app-listing :apps (partial map #(format-job-stats % admin?)))
+    app-listing))
 
 (defn get-app-details
   [agave app-id admin?]
@@ -38,14 +42,14 @@
       (format-app-listing-job-stats false)))
 
 (defn list-apps-with-ontology
-  [agave term params]
+  [agave term params admin?]
   (try+
-    (-> (select-keys (.listAppsWithOntology agave term) [:app_count :apps])
-        (add-app-listing-job-stats false)
+    (-> (select-keys (.listAppsWithOntology agave term) [:total :apps])
+        (add-app-listing-job-stats admin?)
         (sort-apps params {:default-sort-field "name"})
         (apply-offset params)
         (apply-limit params)
-        (format-app-listing-job-stats false))
+        (format-app-listing-job-stats admin?))
     (catch [:error_code ce/ERR_UNAVAILABLE] _
       (log/error (:throwable &throw-context) "Agave app listing timed out")
       nil)

@@ -1,9 +1,15 @@
 (ns apps.routes.schemas.app
-  (:use [common-swagger-api.schema :only [->optional-param describe]]
+  (:use [common-swagger-api.schema :only [->optional-param
+                                          optional-key->keyword
+                                          describe
+                                          PagingParams
+                                          SortFieldDocs
+                                          SortFieldOptionalKey]]
         [apps.routes.params]
         [apps.routes.schemas.app.rating]
         [apps.routes.schemas.tool :only [Tool]]
-        [schema.core :only [Any defschema optional-key recursive]])
+        [schema.core :only [Any defschema enum optional-key recursive]])
+  (:require [clojure.set :as sets])
   (:import [java.util UUID Date]))
 
 (def AppIdParam (describe UUID "A UUID that is used to identify the App"))
@@ -396,9 +402,6 @@
      :step_count
      (describe Long "The number of Tasks this App executes")
 
-     (optional-key :job_stats)
-     (describe AppListingJobStats AppListingJobStatsDocs)
-
      (optional-key :wiki_url)
      AppDocUrlParam
 
@@ -406,8 +409,8 @@
      (describe String "The user's access level for the app.")}))
 
 (defschema AppListing
-  {:app_count (describe Long "The total number of Apps in the listing")
-   :apps      (describe [AppListingDetail] "A listing of App details")})
+  {:total (describe Long "The total number of Apps in the listing")
+   :apps  (describe [AppListingDetail] "A listing of App details")})
 
 (defschema AdminAppListingDetail
   (merge AppListingDetail
@@ -417,6 +420,53 @@
 (defschema AdminAppListing
   (merge AppListing
          {:apps (describe [AdminAppListingDetail] "A listing of App details")}))
+
+(def AppListingValidSortFields
+  (-> (map optional-key->keyword (keys AppListingDetail))
+      (conj :average_rating :user_rating)
+      set
+      (sets/difference #{:app_type
+                         :can_favor
+                         :can_rate
+                         :can_run
+                         :pipeline_eligibility
+                         :rating})))
+
+(def AdminAppListingJobStatsKeys (->> AdminAppListingJobStats
+                                      keys
+                                      (map optional-key->keyword)
+                                      set))
+
+(def AdminAppListingValidSortFields
+  (sets/union AppListingValidSortFields AdminAppListingJobStatsKeys))
+
+(defschema AppListingPagingParams
+  (merge SecuredQueryParamsEmailRequired
+         PagingParams
+         {SortFieldOptionalKey
+          (describe (apply enum AppListingValidSortFields) SortFieldDocs)}))
+
+(def AppSearchValidSortFields
+  (-> AppListingValidSortFields
+      (sets/difference #{:average_rating :user_rating})
+      (conj :average :total)))
+
+(def AdminAppSearchValidSortFields
+  (sets/union AppSearchValidSortFields AdminAppListingJobStatsKeys))
+
+(defschema AppSearchParams
+  (merge SecuredPagingParams
+         {(optional-key :search)
+          (describe String
+            "The pattern to match in an App's Name, Description, Integrator Name, or Tool Name.")
+
+          SortFieldOptionalKey
+          (describe (apply enum AppSearchValidSortFields) SortFieldDocs)}))
+
+(defschema AdminAppSearchParams
+  (merge AppSearchParams
+         {SortFieldOptionalKey
+          (describe (apply enum AdminAppSearchValidSortFields) SortFieldDocs)}))
 
 (defschema AdminAppDetails
   (merge AppDetails

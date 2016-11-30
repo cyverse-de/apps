@@ -5,8 +5,8 @@
         [apps.util.config :only [workspace-public-id]]
         [slingshot.slingshot :only [throw+]])
   (:require [clojure.tools.logging :as log]
-            [kameleon.app-groups :as app-groups]
             [apps.clients.email :as email]
+            [apps.persistence.app-groups :as app-groups]
             [apps.persistence.app-metadata :as persistence]
             [apps.persistence.categories :as db-categories]
             [apps.service.apps.de.categorization :as categorization]

@@ -10,11 +10,12 @@
     :sort-field (or (:sort-field params) "name")
     :sort-dir   (or (:sort-dir params) "ASC")))
 
-(defn combine-app-search-results
+(defn combine-app-listings
+  "Expects results to be a list of maps in a format like {:total int, :apps []}"
   [params results]
   (let [params (apply-default-search-params params)]
-    (-> {:app_count (apply + (map :app_count results))
-         :apps      (mapcat :apps results)}
+    (-> {:total (apply + (map :total results))
+         :apps  (mapcat :apps results)}
         (sort-apps params)
         (apply-offset params)
         (apply-limit params))))

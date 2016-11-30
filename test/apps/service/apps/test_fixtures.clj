@@ -129,6 +129,7 @@
                  (sql/join [:app_categories :c] {:aca.app_category_id :c.id})
                  (sql/fields :aca.app_id)))
 
+;; FIXME the Beta category is obsolete
 (defn load-beta-apps
   "For the purposes of integration tests, any app that is integrated by either 'Default DE Tools' or 'Internal
    DE Tools' is considered to be public by default."

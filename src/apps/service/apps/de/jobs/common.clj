@@ -1,17 +1,15 @@
 (ns apps.service.apps.de.jobs.common
-  (:use [kameleon.core]
-        [kameleon.entities]
-        [kameleon.queries :only [get-user-id]]
+  (:use [apps.persistence.users :only [get-user-id]]
+        [apps.util.assertions :only [assert-not-nil]]
+        [apps.util.conversions :only [remove-nil-vals]]
         [kameleon.uuids :only [uuid]]
         [korma.core :exclude [update]]
-        [medley.core :only [remove-vals]]
-        [apps.util.assertions :only [assert-not-nil]]
-        [apps.util.conversions :only [remove-nil-vals]])
-  (:require [clojure.string :as string]
+        [medley.core :only [remove-vals]])
+  (:require [apps.clients.iplant-groups :as ipg]
             [apps.containers :as c]
-            [apps.clients.iplant-groups :as ipg]
             [apps.service.apps.de.jobs.params :as params]
-            [apps.service.apps.de.jobs.util :as util]))
+            [apps.service.apps.de.jobs.util :as util]
+            [clojure.string :as string]))
 
 (defn- format-io-map
   [mapping]

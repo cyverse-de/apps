@@ -69,15 +69,25 @@
 (defn authorization-uri
   "Generates an authorization URI for a remote API."
   [{:keys [api-name] :as server-info} username state-info]
-  (when-not (op/get-access-token api-name username)
-    (str (assoc (curl/url (:auth-uri server-info))
-                :query {:response_type "code"
-                        :client_id     (:client-key server-info)
-                        :redirect_uri  (:redirect-uri server-info)
-                        :state         (op/store-authorization-request username state-info)}))))
+  (str (assoc (curl/url (:auth-uri server-info))
+              :query {:response_type "code"
+                      :client_id     (:client-key server-info)
+                      :redirect_uri  (:redirect-uri server-info)
+                      :state         (op/store-authorization-request username state-info)})))
+
+(defn has-access-token
+  "Determines whether or not a user has an access token for an external API."
+  [{:keys [api-name] :as server-info} username]
+  (seq (op/get-access-token api-name username)))
+
+(defn- build-auth-uri
+  "Builds an authorization URI for an external API if the user doesn't have an access token already."
+  [server-info username]
+  (when-not (has-access-token server-info username)
+    (authorization-uri server-info username "")))
 
 (defn get-redirect-uris
   "Retrieves the redirect URIs that can be used for a user to authenticate to a remote API."
   [{:keys [username]}]
-  (let [build-auth-uri (fn [[_ server-info-fn]] (authorization-uri (server-info-fn) username ""))]
-    (remove-vals nil? (into {} (map (juxt key build-auth-uri) (server-info-fn-for))))))
+  (let [build-auth-uri* (fn [[_ server-info-fn]] (build-auth-uri (server-info-fn) username))]
+    (remove-vals nil? (into {} (map (juxt key build-auth-uri*) (server-info-fn-for))))))

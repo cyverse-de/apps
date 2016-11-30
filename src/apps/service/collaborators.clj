@@ -1,7 +1,7 @@
 (ns apps.service.collaborators
   (:use [apps.util.conversions :only [remove-nil-vals]])
   (:require [clojure.string :as string]
-            [kameleon.queries :as queries]
+            [apps.persistence.collaborators :as queries]
             [apps.clients.iplant-groups :as ipg]
             [apps.util.config :as config]))
 

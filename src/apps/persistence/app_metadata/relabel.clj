@@ -1,15 +1,25 @@
 (ns apps.persistence.app-metadata.relabel
   "Persistence layer for app metadata."
-  (:use [kameleon.entities]
-        [kameleon.queries :only [get-tasks-for-app]]
+  (:use [apps.persistence.entities]
+        [apps.routes.schemas.app :only [AppParameterListGroup]]
+        [apps.util.assertions]
+        [apps.util.conversions :only [long->timestamp
+                                      remove-nil-vals]]
         [korma.core :exclude [update]]
         [medley.core :only [remove-vals]]
-        [apps.routes.schemas.app :only [AppParameterListGroup]]
-        [apps.util.conversions :only [long->timestamp
-                                            remove-nil-vals]]
-        [apps.util.assertions]
         [slingshot.slingshot :only [throw+]])
   (:require [korma.core :as sql]))
+
+(defn- get-tasks-for-app
+  "Retrieves the list of tasks associated with an app."
+  [app-id]
+  (select [:apps :a]
+          (fields :t.id :t.external_app_id :t.name :t.description :t.label :t.tool_id)
+          (join [:app_steps :step]
+                {:a.id :step.app_id})
+          (join [:tasks :t]
+                {:step.task_id :t.id})
+          (where {:a.id app-id})))
 
 (defn- get-single-task-for-app
   "Retrieves the task from a single-step app. An exception will be thrown if the app doesn't have

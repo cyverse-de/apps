@@ -57,10 +57,10 @@
     (listings/list-apps-under-hierarchy user ontology-version root-iri attr params true))
 
   (searchApps [_ _ params]
-    (listings/search-apps user params false))
+    (listings/list-apps user params false))
 
   (adminSearchApps [_ _ params]
-    (listings/search-apps user params true))
+    (listings/list-apps user params true))
 
   (canEditApps [_]
     true)

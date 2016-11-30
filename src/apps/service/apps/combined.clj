@@ -3,8 +3,7 @@
   or more other implementations. This implementation expects at most one the implementations that
   it interacts with to allow users to add new apps and edit existing ones. If this is not the case
   then the first app in the list that is capable of adding or editing apps wins."
-  (:use [apps.service.util :only [apply-limit apply-offset sort-apps]]
-        [apps.util.assertions :only [assert-not-nil]])
+  (:use [apps.util.assertions :only [assert-not-nil]])
   (:require [apps.persistence.jobs :as jp]
             [apps.protocols]
             [apps.service.apps.job-listings :as job-listings]
@@ -12,18 +11,6 @@
             [apps.service.apps.combined.jobs :as combined-jobs]
             [apps.service.apps.combined.util :as util]
             [apps.service.apps.permissions :as app-permissions]))
-
-(defn- apply-app-listing-params
-  [listing-map params]
-  (-> listing-map
-      (sort-apps params {:default-sort-field "name"})
-      (apply-offset params)
-      (apply-limit params)))
-
-(defn- merge-client-app-listings
-  "Expects the client listing-maps in a format like {:app_count int, :apps []}"
-  [listing-maps]
-  (apply merge-with #(if (integer? %1) (+ %1 %2) (into %1 %2)) listing-maps))
 
 (deftype CombinedApps [clients user]
   apps.protocols.Apps
@@ -53,26 +40,26 @@
        (.listAppsInCategory client category-id params))))
 
   (listAppsUnderHierarchy [_ root-iri attr params]
-    (let [unpaged-params (dissoc params :limit :offset)
-          listing-maps   (map #(.listAppsUnderHierarchy % root-iri attr unpaged-params) clients)
-          result-map     (merge-client-app-listings listing-maps)]
-      (apply-app-listing-params result-map params)))
+    (let [unpaged-params (dissoc params :limit :offset)]
+      (->> (map #(.listAppsUnderHierarchy % root-iri attr unpaged-params) clients)
+           (remove nil?)
+           (util/combine-app-listings params))))
 
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params]
-    (let [unpaged-params (dissoc params :limit :offset)
-          listing-maps   (map #(.adminListAppsUnderHierarchy % ontology-version root-iri attr unpaged-params) clients)
-          result-map     (merge-client-app-listings listing-maps)]
-      (apply-app-listing-params result-map params)))
+    (let [unpaged-params (dissoc params :limit :offset)]
+      (->> (map #(.adminListAppsUnderHierarchy % ontology-version root-iri attr unpaged-params) clients)
+           (remove nil?)
+           (util/combine-app-listings params))))
 
   (searchApps [_ search-term params]
     (->> (map #(.searchApps % search-term (select-keys params [:search])) clients)
          (remove nil?)
-         (util/combine-app-search-results params)))
+         (util/combine-app-listings params)))
 
   (adminSearchApps [_ search-term params]
     (->> (map #(.adminSearchApps % search-term (select-keys params [:search])) clients)
          (remove nil?)
-         (util/combine-app-search-results params)))
+         (util/combine-app-listings params)))
 
   (canEditApps [_]
     (some #(.canEditApps %) clients))
