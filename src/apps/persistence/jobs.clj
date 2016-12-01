@@ -42,6 +42,34 @@
    failed-status                 4
    canceled-status               4})
 
+(def job-fields
+  [:id
+   :job_name
+   :job_description
+   :job_type_id
+   :app_id
+   :app_name
+   :app_description
+   :app_wiki_url
+   :result_folder_path
+   :start_date
+   :end_date
+   :status
+   :deleted
+   :user_id
+   :notify
+   :parent_id])
+
+(def job-step-fields
+  [:job_id
+   :step_number
+   :external_id
+   :start_date
+   :end_date
+   :status
+   :job_type_id
+   :app_step_number])
+
 (defn valid-status?
   "Determines whether or not the given status is a valid status code in the DE."
   [status]
@@ -136,30 +164,10 @@
   (exec-raw ["UPDATE jobs SET submission = CAST ( ? AS json ) WHERE id = ?"
              [(cast Object submission) job-id]]))
 
-(defn- save-job*
-  "Saves information about a job in the database."
-  [job-info]
-  (insert :jobs
-          (values (select-keys job-info [:id
-                                         :parent_id
-                                         :job_name
-                                         :job_description
-                                         :app_id
-                                         :app_name
-                                         :app_description
-                                         :app_wiki_url
-                                         :result_folder_path
-                                         :start_date
-                                         :end_date
-                                         :status
-                                         :deleted
-                                         :notify
-                                         :user_id]))))
-
-(defn save-job-with-submission
+(defn- save-job-with-submission
   "Saves information about a job in the database."
   [job-info submission]
-  (let [job-info (save-job* job-info)]
+  (let [job-info (insert :jobs (values job-info))]
     (save-job-submission (:id job-info) submission)
     job-info))
 
@@ -192,24 +200,6 @@
       {:status "Failed"
        :enddate (now-str)})))
 
-(def job-fields
-  [:id
-   :job_name
-   :job_description
-   :job_type_id
-   :app_id
-   :app_name
-   :app_description
-   :app_wiki_url
-   :result_folder_path
-   :start_date
-   :end_date
-   :status
-   :deleted
-   :user_id
-   :notify
-   :parent_id])
-
 (defn save-job
   "Saves information about a job in the database."
   [{system-id :system_id username :username :as job-info} submission]
@@ -218,16 +208,6 @@
              :user_id     (get-user-id username))
       remove-nil-values
       (save-job-with-submission (cheshire/encode submission))))
-
-(def job-step-fields
-  [:job_id
-   :step_number
-   :external_id
-   :start_date
-   :end_date
-   :status
-   :job_type_id
-   :app_step_number])
 
 (defn save-job-step
   "Saves a single job step in the database."
