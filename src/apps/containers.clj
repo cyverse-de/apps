@@ -9,6 +9,7 @@
                                           container-volumes
                                           container-volumes-from
                                           data-containers]]
+        [apps.persistence.docker-registries :only [get-registry]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals remove-empty-vals]]
         [apps.validation :only [validate-image-not-public
@@ -18,7 +19,8 @@
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
   (:require [clojure.tools.logging :as log]
-            [korma.core :as sql]))
+            [korma.core :as sql]
+            [clojure.string :as string]))
 
 (defn containerized?
   "Returns true if the tool is available in a container."
@@ -32,12 +34,22 @@
               (= :id (uuidify tool-id))
               (not= :container_images_id nil)))))))
 
+(defn auth-info [image-name]
+  (let [registry-name (string/replace image-name #"/?(?!.*/).*$" "")
+        registry (get-registry registry-name)]
+    (when registry
+      (:auth registry))))
+
 (defn image-info
   "Returns a map containing information about a container image. Info is looked up by the image UUID."
   [image-uuid]
-  (first (select container-images
-                 (fields :name :tag :url :id)
-                 (where {:id (uuidify image-uuid)}))))
+  (let [image (first (select container-images
+                             (fields :name :tag :url :id)
+                             (where {:id (uuidify image-uuid)})))
+        auth (auth-info (:name image))]
+    (if auth
+      (assoc image :auth auth)
+      image)))
 
 (defn list-images
   "Returns a list of all defined images."

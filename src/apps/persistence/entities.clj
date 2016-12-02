@@ -294,3 +294,9 @@
 
 (defentity job-status-updates
   (table :job_status_updates))
+
+;; Docker registry auth information
+(defentity docker-registries
+  (table :docker_registries)
+  (entity-fields :name :username :password [(raw "encode(concat(username, ':', password)::bytea, 'base64')") :auth])
+  (pk :name))
