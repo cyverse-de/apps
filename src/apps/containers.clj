@@ -18,9 +18,9 @@
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
-  (:require [clojure.tools.logging :as log]
-            [korma.core :as sql]
-            [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [korma.core :as sql]))
 
 (defn containerized?
   "Returns true if the tool is available in a container."
