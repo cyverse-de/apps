@@ -16,11 +16,10 @@
             [permissions-client.core :as pc])
   (:import [clojure.lang ExceptionInfo]))
 
-(use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
+(use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config tf/with-ontology atf/with-workspaces)
 (use-fixtures :each atf/with-public-apps atf/with-test-app)
 
-;; FIXME: tmp disabled failing test
-#_(deftest test-app-search
+(deftest test-app-search
   (let [{username :shortUsername :as user} (get-user :testde1)]
     (is (= 1 (:total (apps/search-apps user {:search (:name test-app)}))))
     (is (= 1 (count (:apps (apps/search-apps user {:search (:name test-app)})))))
@@ -31,8 +30,7 @@
     (is (= 1 (:total (apps/search-apps user {:search (:name test-app)}))))
     (is (= 1 (count (:apps (apps/search-apps user {:search (:name test-app)})))))))
 
-;; FIXME: tmp disabled failing test
-#_(deftest test-app-category-listing-counts
+(deftest test-app-category-listing-counts
   (let [{username :shortUsername :as user} (get-user :testde1)
         dev-category-id                    (:id (get-dev-category user))
         beta-category-id                   (:id (get-beta-category user))
@@ -48,8 +46,7 @@
     (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
     (is (= (dec (count beta-apps)) (:total (apps/list-apps-in-category user beta-category-id {}))))))
 
-;; FIXME: tmp disabled failing test
-#_(deftest test-app-hierarchy-counts
+(deftest test-app-hierarchy-counts
   (let [{username :shortUsername :as user} (get-user :testde1)
         group-id                           (ipg/grouper-user-group-id)]
     (is (= 1 (:total (get-dev-category user))))

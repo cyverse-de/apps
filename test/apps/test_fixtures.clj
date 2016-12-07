@@ -1,13 +1,21 @@
 (ns apps.test-fixtures
-  (:use [korma.db :only [create-db default-connection]])
-  (:require [apps.util.config :as config]
+  (:use [korma.db :only [create-db default-connection]]
+        [korma.core :only [delete where]]
+        [slingshot.slingshot :only [throw+]])
+  (:require [apps.persistence.categories :as cp]
             [apps.user :as user]
+            [apps.util.config :as config]
+            [apps.util.service :as service]
+            [cemerick.url :as curl]
+            [clj-http.client :as http]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
             [metadata-client.core :as metadata-client]))
 
 (def default-config-path "/etc/iplant/de/apps.properties")
 (def default-db-uri "jdbc:postgresql://dedb/de?user=de&password=notprod")
+(def default-ontology-file "EDAM_1.14.owl")
 
 (defn getenv [name default]
   (or (System/getenv name) default))
@@ -21,6 +29,37 @@
 (defn with-test-db [f]
   (default-connection (create-db {:connection-uri (or (System/getenv "DBURI") default-db-uri)}))
   (f))
+
+(defn- find-resource [resource-name]
+  (or (io/resource resource-name)
+      (throw+ {:message (str "resource " resource-name " not found")})))
+
+(defn- load-ontology [username]
+  (let [ontology-file     (getenv "APPS_ONTOLOGY_FILE" default-ontology-file)
+        ontology-location (find-resource ontology-file)]
+    (->> (http/post (str (curl/url (config/metadata-base) "admin" "ontologies"))
+                    {:query-params     {:user username}
+                     :multipart        [{:part-name "ontology-xml"
+                                         :name      ontology-file
+                                         :mime-type "application/xml"
+                                         :content   (io/file ontology-location)}]
+                     :follow-redirects false})
+         :body
+         service/parse-json
+         :version)))
+
+(defn- delete-ontology [username ontology-version]
+  (http/delete (str (curl/url (config/metadata-base) "admin" "ontologies" (curl/url-encode ontology-version)))
+               {:query-params     {:user username}
+                :follow-redirects false}))
+
+(defn with-ontology [f]
+  (let [username         "ipctest"
+        ontology-version (load-ontology username)]
+    (cp/add-hierarchy-version username ontology-version)
+    (f)
+    (delete :app_hierarchy_version (where {:version ontology-version}))
+    (delete-ontology username ontology-version)))
 
 (defn with-test-user [f]
   (user/with-user [{:user       "ipctest"
