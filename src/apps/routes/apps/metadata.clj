@@ -1,7 +1,6 @@
 (ns apps.routes.apps.metadata
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [apps.routes.middleware :only [wrap-metadata-base-url]]
         [apps.routes.params]
         [apps.user :only [current-user]])
   (:require [apps.metadata.avus :as avus]
@@ -13,7 +12,6 @@
   (GET "/" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middleware [wrap-metadata-base-url]
         :summary "View all Metadata AVUs"
         :description (str
 "Lists all AVUs associated with an app.
@@ -28,7 +26,6 @@ Please see the metadata service documentation for response information.")
   (POST "/" [:as {:keys [body]}]
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParams]
-         :middleware [wrap-metadata-base-url]
          :summary "Add/Update Metadata AVUs"
          :description (str
 "Adds or updates Metadata AVUs on the app.
@@ -48,7 +45,6 @@ Please see the metadata service documentation for request and response informati
   (PUT "/" [:as {:keys [body]}]
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middleware [wrap-metadata-base-url]
         :summary "Set Metadata AVUs"
         :description (str
 "Sets Metadata AVUs on the app.
@@ -72,7 +68,6 @@ Please see the metadata service documentation for request and response informati
   (GET "/" []
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middleware [wrap-metadata-base-url]
         :summary "View all Metadata AVUs"
         :description (str
 "Lists all AVUs associated with the app."
@@ -86,7 +81,6 @@ Please see the metadata service documentation for response information.")
   (POST "/" [:as {:keys [body]}]
          :path-params [app-id :- AppIdPathParam]
          :query [params SecuredQueryParams]
-         :middleware [wrap-metadata-base-url]
          :summary "Add/Update Metadata AVUs"
          :description (str
 "Adds or updates Metadata AVUs on the app.
@@ -105,7 +99,6 @@ Please see the metadata service documentation for request and response informati
   (PUT "/" [:as {:keys [body]}]
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
-        :middleware [wrap-metadata-base-url]
         :summary "Set Metadata AVUs"
         :description (str
 "Sets Metadata AVUs on the app.

@@ -6,13 +6,13 @@
         [slingshot.slingshot :only [throw+]])
   (:require [clojure.tools.logging :as log]
             [apps.clients.email :as email]
+            [apps.clients.metadata :as metadata-client]
             [apps.persistence.app-groups :as app-groups]
             [apps.persistence.app-metadata :as persistence]
             [apps.persistence.categories :as db-categories]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.validation :as av]
-            [clojure-commons.exception-util :as ex-util]
-            [metadata-client.core :as metadata-client]))
+            [clojure-commons.exception-util :as ex-util]))
 
 (def ^:private max-app-category-name-len 255)
 

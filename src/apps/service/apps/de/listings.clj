@@ -11,15 +11,14 @@
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.permissions :as perms-client]
+  (:require [apps.clients.metadata :as metadata-client]
+            [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :refer [get-app get-app-tools] :as amp]
             [apps.persistence.jobs :as jobs-db]
-            [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.permissions :as perms]
             [apps.service.util :as svc-util]
-            [cemerick.url :as curl]
-            [metadata-client.core :as metadata-client]))
+            [cemerick.url :as curl]))
 
 (def my-public-apps-id (uuidify "00000000-0000-0000-0000-000000000000"))
 (def shared-with-me-id (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))
@@ -47,16 +46,14 @@
                :pre-matched-app-ids (when-not (some empty? [search_term app-ids category-attrs])
                                       (metadata-client/filter-targets-by-ontology-search
                                         short-username
-                                        (categorization/get-active-hierarchy-version)
                                         category-attrs
                                         search_term
-                                        ["app"]
                                         app-ids)))
         remove-nil-vals)))
 
 (defn list-hierarchies
   [{:keys [username]}]
-  (metadata-client/list-hierarchies username (categorization/get-active-hierarchy-version)))
+  (metadata-client/list-hierarchies username))
 
 (defn- fix-sort-params
   [params]
@@ -185,11 +182,11 @@
 
 (defn get-app-hierarchy
   ([user root-iri attr]
-   (get-app-hierarchy user (categorization/get-active-hierarchy-version) root-iri attr))
+   (get-app-hierarchy user (metadata-client/get-active-hierarchy-version) root-iri attr))
   ([{:keys [username shortUsername]} ontology-version root-iri attr]
    (let [app-ids         (set (keys (perms-client/load-app-permissions shortUsername)))
          visible-app-ids (amp/filter-visible-app-ids app-ids)]
-     (metadata-client/filter-hierarchy username ontology-version root-iri attr ["app"] visible-app-ids))))
+     (metadata-client/filter-hierarchy username ontology-version root-iri attr visible-app-ids))))
 
 (defn get-admin-app-groups
   "Retrieves the list of app groups that are accessible to administrators. This includes all public
@@ -284,7 +281,7 @@
   [username app-ids]
   (let [beta-avu {:attr (workspace-metadata-beta-attr-iri)
                   :value (workspace-metadata-beta-value)}]
-    (set (metadata-client/filter-by-avus username ["app"] app-ids [beta-avu]))))
+    (set (metadata-client/filter-by-avus username app-ids [beta-avu]))))
 
 (defn- apps-listing-with-metadata-filter
   [{:keys [username shortUsername]} params metadata-filter admin?]
@@ -302,16 +299,16 @@
 
 (defn list-apps-under-hierarchy
   ([user root-iri attr params]
-   (list-apps-under-hierarchy user (categorization/get-active-hierarchy-version) root-iri attr params false))
+   (list-apps-under-hierarchy user (metadata-client/get-active-hierarchy-version) root-iri attr params false))
   ([{:keys [username] :as user} ontology-version root-iri attr params admin?]
-   (let [metadata-filter (partial metadata-client/filter-hierarchy-targets username ontology-version root-iri attr ["app"])]
+   (let [metadata-filter (partial metadata-client/filter-hierarchy-targets username ontology-version root-iri attr)]
      (apps-listing-with-metadata-filter user params metadata-filter admin?))))
 
 (defn get-unclassified-app-listing
   ([user root-iri attr params]
-   (get-unclassified-app-listing user (categorization/get-active-hierarchy-version) root-iri attr params false))
+   (get-unclassified-app-listing user (metadata-client/get-active-hierarchy-version) root-iri attr params false))
   ([{:keys [username] :as user} ontology-version root-iri attr params admin?]
-   (let [metadata-filter (partial metadata-client/filter-unclassified username ontology-version root-iri attr ["app"])]
+   (let [metadata-filter (partial metadata-client/filter-unclassified username ontology-version root-iri attr)]
      (apps-listing-with-metadata-filter user params metadata-filter admin?))))
 
 (defn- list-apps-in-virtual-group
@@ -406,12 +403,11 @@
 
 (defn- format-app-hierarchies
   [{app-id :id :as app} username]
-  (let [ontology-version (categorization/get-active-hierarchy-version :validate false)
+  (let [ontology-version (metadata-client/get-active-hierarchy-version :validate false)
         hierarchies      (if ontology-version
                            (metadata-client/filter-hierarchies username
                                                                ontology-version
                                                                (workspace-metadata-category-attrs)
-                                                               "app"
                                                                app-id)
                            {:hierarchies []})]
     (merge app hierarchies)))

@@ -2,7 +2,6 @@
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
-        [apps.routes.middleware :only [wrap-metadata-base-url]]
         [apps.routes.params]
         [apps.routes.schemas.app :only [AppListing
                                         AppListingPagingParams]]
@@ -27,7 +26,6 @@
   (GET "/:category-id" []
         :path-params [category-id :- AppCategoryIdPathParam]
         :query [params AppListingPagingParams]
-        :middleware [wrap-metadata-base-url]
         :return AppCategoryAppListing
         :summary "List Apps in a Category"
         :description "This service lists all of the apps within an app category or any of its
@@ -44,7 +42,6 @@
 
   (GET "/" []
         :query [params SecuredQueryParams]
-        :middleware [wrap-metadata-base-url]
         :summary "List App Hierarchies"
         :description (str
 "Lists all hierarchies saved for the active ontology version."
@@ -57,7 +54,6 @@
   (GET "/:root-iri" []
         :path-params [root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr]} OntologyHierarchyFilterParams]
-        :middleware [wrap-metadata-base-url]
         :summary "List App Category Hierarchy"
         :description (str
 "Gets the list of app categories that are visible to the user for the active ontology version,
@@ -71,7 +67,6 @@
   (GET "/:root-iri/apps" []
         :path-params [root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
-        :middleware [wrap-metadata-base-url]
         :return AppListing
         :summary "List Apps in a Category"
         :description (str
@@ -85,7 +80,6 @@
         :path-params [root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
         :return AppListing
-        :middleware [wrap-metadata-base-url]
         :summary "List Unclassified Apps"
         :description (str
 "Lists all of the apps that are visible to the user that are not under the given app category or any of

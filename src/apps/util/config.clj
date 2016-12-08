@@ -6,6 +6,7 @@
             [clojure-commons.config :as cc]
             [clojure.tools.logging :as log]
             [common-cfg.cfg :as cfg]
+            [metadata-client.core :as metadata-client]
             [permissions-client.core :as pc]))
 
 (def docs-uri "/docs")
@@ -354,6 +355,9 @@
 
 (def permissions-client
   (memoize #(pc/new-permissions-client (permissions-base))))
+
+(def metadata-client
+  (memoize #(metadata-client/new-metadata-client (metadata-base))))
 
 (defn app-resource-type
   "The app resource type name. This value is hard-coded for now, but placed in this namespace so that we can easily
