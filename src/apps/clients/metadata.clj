@@ -4,23 +4,25 @@
             [apps.util.config :as config]
             [metadata-client.core :as metadata-client]))
 
+(def app-target-type "app")
+
 (defn filter-by-avus
   [username app-ids avus]
-  (metadata-client/filter-by-avus (config/metadata-client) username ["app"] app-ids avus))
+  (metadata-client/filter-by-avus (config/metadata-client) username [app-target-type] app-ids avus))
 
 (defn list-avus
   ([username app-id]
-   (metadata-client/list-avus (config/metadata-client) username "app" app-id))
+   (metadata-client/list-avus (config/metadata-client) username app-target-type app-id))
   ([username app-id opts]
-   (metadata-client/list-avus (config/metadata-client) username "app" app-id opts)))
+   (metadata-client/list-avus (config/metadata-client) username app-target-type app-id opts)))
 
 (defn update-avus
   [username app-id body]
-  (metadata-client/update-avus (config/metadata-client) username "app" app-id body))
+  (metadata-client/update-avus (config/metadata-client) username app-target-type app-id body))
 
 (defn set-avus
   [username app-id body]
-  (metadata-client/set-avus (config/metadata-client) username "app" app-id body))
+  (metadata-client/set-avus (config/metadata-client) username app-target-type app-id body))
 
 (defn get-active-hierarchy-version
   [& {:keys [validate] :or {validate true}}]
@@ -48,7 +50,7 @@
                                       username
                                       ontology-version
                                       attrs
-                                      "app"
+                                      app-target-type
                                       app-id))
 
 (defn filter-targets-by-ontology-search
@@ -58,7 +60,7 @@
                                                      (get-active-hierarchy-version)
                                                      category-attrs
                                                      search-term
-                                                     ["app"]
+                                                     [app-target-type]
                                                      app-ids))
 
 (defn filter-hierarchy
@@ -68,7 +70,7 @@
                                     ontology-version
                                     root-iri
                                     attr
-                                    ["app"]
+                                    [app-target-type]
                                     app-ids))
 
 (defn filter-hierarchy-targets
@@ -78,7 +80,7 @@
                                             ontology-version
                                             root-iri
                                             attr
-                                            ["app"]
+                                            [app-target-type]
                                             app-ids))
 
 (defn filter-unclassified
@@ -88,5 +90,5 @@
                                        ontology-version
                                        root-iri
                                        attr
-                                       ["app"]
+                                       [app-target-type]
                                        app-ids))
