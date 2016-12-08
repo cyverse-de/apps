@@ -66,9 +66,11 @@
       (jp/update-job-steps (:id batch) new-status end-date))))
 
 (defn update-job-status
-  [apps-client job-step {:keys [id] :as job} batch status end-date]
+  [apps-client {external-id :external_id :as job-step} {:keys [id] :as job} batch status end-date]
   (when (jp/completed? (:status job))
     (service/bad-request (str "received a job status update for completed or canceled job, " id)))
+  (when (jp/completed? (:status job-step))
+    (service/bad-request (str "received a job status update for completed or canceled step, " external-id "/" id)))
   (let [end-date (db/timestamp-from-str end-date)]
     (.updateJobStatus apps-client job-step job status end-date)
     (when batch (update-batch-status batch end-date))
