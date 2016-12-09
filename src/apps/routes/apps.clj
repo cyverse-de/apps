@@ -1,7 +1,6 @@
 (ns apps.routes.apps
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [apps.routes.middleware :only [wrap-metadata-base-url]]
         [apps.routes.params]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.rating]
@@ -16,7 +15,6 @@
 (defroutes apps
   (GET "/" []
     :query [params AppSearchParams]
-    :middleware [wrap-metadata-base-url]
     :summary "List Apps"
     :return AppListing
     :description
@@ -125,7 +123,6 @@
     :query [params SecuredQueryParamsEmailRequired]
     :body [body (describe App "The App to update.")]
     :return App
-    :middleware [wrap-metadata-base-url]
     :summary "Update App Labels"
     :description
     (str "This service is capable of updating just the labels within a single-step app,
@@ -151,7 +148,6 @@
     :query [params SecuredQueryParamsEmailRequired]
     :body [body (describe AppRequest "The App to update.")]
     :return App
-    :middleware [wrap-metadata-base-url]
     :summary "Update an App"
     :description
     (str "This service updates a single-step App in the database, as long as the App has not been submitted
@@ -186,7 +182,6 @@
     :path-params [app-id :- AppIdJobViewPathParam]
     :query [params SecuredQueryParams]
     :return AppDetails
-    :middleware [wrap-metadata-base-url]
     :summary "Get App Details"
     :description
     (str "This service is used by the DE to obtain high-level details about a single App."
@@ -255,7 +250,6 @@
   (POST "/:app-id/publish" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParamsEmailRequired]
-    :middleware [wrap-metadata-base-url]
     :body [body (describe PublishAppRequest "The user's Publish App Request.")]
     :summary "Submit an App for Public Use"
     :description "This service can be used to submit a private App for public use. The user supplies
@@ -366,7 +360,6 @@
         :query [params SecuredQueryParamsEmailRequired]
         :body [body (describe App "The App to update.")]
         :return App
-        :middleware [wrap-metadata-base-url]
         :summary "Update App Labels"
         :description
         (str "This service is capable of updating just the labels within a single-step app,
@@ -391,7 +384,6 @@
         :query [params SecuredQueryParamsEmailRequired]
         :body [body (describe AppRequest "The App to update.")]
         :return App
-        :middleware [wrap-metadata-base-url]
         :summary "Update an App"
         :description
         (str "This service updates a single-step App in the database, as long as the App has not been submitted
@@ -423,7 +415,6 @@
       (GET "/details" []
         :query [params SecuredQueryParams]
         :return AppDetails
-        :middleware [wrap-metadata-base-url]
         :summary "Get App Details"
         :description
         (str "This service is used by the DE to obtain high-level details about a single App."

@@ -12,15 +12,15 @@
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
-  (:require [cheshire.core :as cheshire]
-            [clj-http.client :as client]
+  (:require [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
             [apps.service.apps.de.docs :as app-docs]
             [apps.service.apps.de.permissions :as perms]
             [apps.translations.app-metadata :as atx]
             [apps.util.config :as config]
-            [metadata-client.core :as metadata-client]))
+            [cheshire.core :as cheshire]
+            [clj-http.client :as client]))
 
 (defn- validate-app-existence
   "Verifies that apps exist."
@@ -155,7 +155,7 @@
 (defn- publish-app-metadata
   [username app-id avus]
   (let [body (cheshire/encode {:avus (conj avus (beta-avu))})]
-    (metadata-client/update-avus username "app" app-id body)))
+    (metadata-client/update-avus username app-id body)))
 
 (defn- publish-app
   [{:keys [shortUsername] :as user} {app-id :id :keys [references avus] :as app}]

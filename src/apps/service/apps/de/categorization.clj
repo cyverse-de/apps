@@ -5,20 +5,11 @@
         [korma.core :exclude [update]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
-  (:require [apps.clients.permissions :as perms-client]
+  (:require [apps.clients.metadata :as metadata-client]
+            [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as ap]
-            [apps.persistence.categories :as db-categories]
             [apps.service.apps.de.validation :as av]
-            [apps.util.config :as config]
-            [metadata-client.core :as metadata-client]))
-
-(defn get-active-hierarchy-version
-  [& {:keys [validate] :or {validate true}}]
-  (let [version (db-categories/get-active-hierarchy-version)]
-    (when (and validate (empty? version))
-      (throw+ {:type  :clojure-commons.exception/not-found
-               :error "An app hierarchy version has not been set."}))
-    version))
+            [apps.util.config :as config]))
 
 (defn validate-app-name-in-hierarchy-avus
   [username app-id app-name avus]
@@ -28,7 +19,7 @@
                                (map #(select-keys % [:attr :value])))
         other-app-ids     (disj (set (keys (perms-client/load-app-permissions username))) app-id)
         hierarchy-app-ids (when-not (or (empty? other-app-ids) (empty? hierarchy-avus))
-                            (metadata-client/filter-by-avus username ["app"] other-app-ids hierarchy-avus))]
+                            (metadata-client/filter-by-avus username other-app-ids hierarchy-avus))]
     (when-not (empty? hierarchy-app-ids)
       (av/validate-app-name-in-hierarchy app-name hierarchy-app-ids))))
 
@@ -38,7 +29,7 @@
     username
     app-id
     app-name
-    (-> (metadata-client/list-avus username "app" app-id :as :json)
+    (-> (metadata-client/list-avus username app-id {:as :json})
         :body
         :avus)))
 

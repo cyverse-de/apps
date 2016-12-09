@@ -8,10 +8,7 @@
             [apps.util.service :as service]
             [cemerick.url :as curl]
             [clj-http.client :as http]
-            [clojure.java.io :as io]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [metadata-client.core :as metadata-client]))
+            [clojure.java.io :as io]))
 
 (def default-config-path "/etc/iplant/de/apps.properties")
 (def default-db-uri "jdbc:postgresql://dedb/de?user=de&password=notprod")
@@ -24,7 +21,7 @@
   (let [config-path (getenv "APPS_CONFIG_PATH" default-config-path)]
     (require 'apps.util.config :reload)
     (apps.util.config/load-config-from-file config-path {:log-config? false})
-    (metadata-client/with-metadata-base (config/metadata-base) (f))))
+    (f)))
 
 (defn with-test-db [f]
   (default-connection (create-db {:connection-uri (or (System/getenv "DBURI") default-db-uri)}))

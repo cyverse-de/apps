@@ -7,7 +7,6 @@
                                                 replace-reference-genomes
                                                 update-reference-genome]]
         [apps.metadata.tool-requests]
-        [apps.routes.middleware :only [wrap-metadata-base-url]]
         [apps.routes.params]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
@@ -53,7 +52,6 @@
 (defroutes admin-apps
   (GET "/" []
        :query [params AdminAppSearchParams]
-       :middleware [wrap-metadata-base-url]
        :summary "List Apps"
        :return AdminAppListing
        :description
@@ -101,7 +99,6 @@
           :query [params SecuredQueryParams]
           :body [body (describe AdminAppPatchRequest "The App to update.")]
           :return AdminAppDetails
-          :middleware [wrap-metadata-base-url]
           :summary "Update App Details and Labels"
           :description (str
 "This service is capable of updating high-level information of an App,
@@ -130,7 +127,6 @@
         :path-params [app-id :- AppIdPathParam]
         :query [params SecuredQueryParams]
         :return AdminAppDetails
-        :middleware [wrap-metadata-base-url]
         :summary "Get App Details"
         :description (str
 "This service allows administrative users to view detailed informaiton about private apps."
@@ -223,7 +219,6 @@
   (GET "/" []
         :query [params SecuredQueryParams]
         :return ActiveOntologyDetailsList
-        :middleware [wrap-metadata-base-url]
         :summary "List Ontology Details"
         :description (str
 "Lists Ontology details saved in the metadata service."
@@ -235,7 +230,6 @@
   (DELETE "/:ontology-version" []
            :path-params [ontology-version :- OntologyVersionParam]
            :query [params SecuredQueryParams]
-           :middleware [wrap-metadata-base-url]
            :summary "Delete an Ontology"
            :description (str
 "Marks an Ontology as deleted in the metadata service.
@@ -259,7 +253,6 @@
         :path-params [ontology-version :- OntologyVersionParam
                       root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
-        :middleware [wrap-metadata-base-url]
         :summary "Get App Category Hierarchy"
         :description (str
 "Gets the list of app categories that are visible to the user for the given `ontology-version`,
@@ -274,7 +267,6 @@
         :path-params [ontology-version :- OntologyVersionParam
                       root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
-        :middleware [wrap-metadata-base-url]
         :return AdminAppListing
         :summary "List Apps in a Category"
         :description (str
@@ -291,7 +283,6 @@
                       root-iri :- OntologyClassIRIParam]
         :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
         :return AdminAppListing
-        :middleware [wrap-metadata-base-url]
         :summary "List Unclassified Apps"
         :description (str
 "Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
