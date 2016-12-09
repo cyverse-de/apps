@@ -9,6 +9,7 @@
             [apps.service.apps.job-listings :as job-listings]
             [apps.service.apps.combined.job-view :as job-view]
             [apps.service.apps.combined.jobs :as combined-jobs]
+            [apps.service.apps.combined.pipelines :as pipelines]
             [apps.service.apps.combined.util :as util]
             [apps.service.apps.permissions :as app-permissions]))
 
@@ -196,19 +197,19 @@
          (first)))
 
   (addPipeline [self pipeline]
-    (.formatPipelineTasks self (.addPipeline (util/get-apps-client clients) pipeline)))
+    (pipelines/format-pipeline self (.addPipeline (util/get-apps-client clients) pipeline)))
 
   (formatPipelineTasks [_ pipeline]
     (reduce (fn [acc client] (.formatPipelineTasks client acc)) pipeline clients))
 
   (updatePipeline [self pipeline]
-    (.formatPipelineTasks self (.updatePipeline (util/get-apps-client clients) pipeline)))
+    (pipelines/format-pipeline self (.updatePipeline (util/get-apps-client clients) pipeline)))
 
   (copyPipeline [self app-id]
-    (.formatPipelineTasks self (.copyPipeline (util/get-apps-client clients) app-id)))
+    (pipelines/format-pipeline self (.copyPipeline (util/get-apps-client clients) app-id)))
 
   (editPipeline [self app-id]
-    (.formatPipelineTasks self (.editPipeline (util/get-apps-client clients) app-id)))
+    (pipelines/format-pipeline self (.editPipeline (util/get-apps-client clients) app-id)))
 
   (listJobs [self params]
     (job-listings/list-jobs self user params))
