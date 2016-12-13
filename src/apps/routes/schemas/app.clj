@@ -219,7 +219,8 @@
    :required    (describe Boolean "Whether or not a value is required for this Parameter")})
 
 (defschema AppTask
-  {:id          (describe String "The Task's ID")
+  {:system_id   (describe String "The Task's System ID")
+   :id          (describe String "The Task's ID")
    :name        (describe String "The Task's name")
    :description (describe String "The Task's description")
    :inputs      (describe [AppFileParameterDetails] "The Task's input parameters")

@@ -41,11 +41,11 @@
   (service/assert-found (jp/lock-job job-id) "job" job-id))
 
 (defn- send-job-status-update
-  [apps-client {job-id :id prev-status :status app-id :app-id}]
+  [apps-client {job-id :id prev-status :status app-id :app_id}]
   (let [{curr-status :status :as job} (jp/get-job-by-id job-id)
         app-tables                    (.loadAppTables apps-client [app-id])
         rep-steps                     (jp/list-representative-job-steps [job-id])
-        rep-steps                     (group-by (some-fn :parent-id :job-id) rep-steps)]
+        rep-steps                     (group-by (some-fn :parent_id :job_id) rep-steps)]
     (when-not (= prev-status curr-status)
       (cn/send-job-status-update
        (.getUser apps-client)
@@ -62,13 +62,15 @@
   [batch end-date]
   (let [new-status (determine-batch-status batch)]
     (when-not (= (:status batch) new-status)
-      (jp/update-job (:id batch) {:status new-status :end-date end-date})
+      (jp/update-job (:id batch) {:status new-status :end_date end-date})
       (jp/update-job-steps (:id batch) new-status end-date))))
 
 (defn update-job-status
-  [apps-client job-step {:keys [id] :as job} batch status end-date]
+  [apps-client {external-id :external_id :as job-step} {:keys [id] :as job} batch status end-date]
   (when (jp/completed? (:status job))
     (service/bad-request (str "received a job status update for completed or canceled job, " id)))
+  (when (jp/completed? (:status job-step))
+    (service/bad-request (str "received a job status update for completed or canceled step, " external-id "/" id)))
   (let [end-date (db/timestamp-from-str end-date)]
     (.updateJobStatus apps-client job-step job status end-date)
     (when batch (update-batch-status batch end-date))
@@ -81,15 +83,15 @@
 (defn- sync-incomplete-job-status
   [apps-client {:keys [id] :as job} step]
   (if-let [step-status (.getJobStepStatus apps-client step)]
-    (let [step     (lock-job-step id (:external-id step))
+    (let [step     (lock-job-step id (:external_id step))
           job      (lock-job id)
-          batch    (when-let [parent-id (:parent-id job)] (lock-job parent-id))
+          batch    (when-let [parent-id (:parent_id job)] (lock-job parent-id))
           status   (:status step-status)
           end-date (:enddate step-status)]
       (update-job-status apps-client step job batch status end-date))
-    (let [step  (lock-job-step id (:external-id step))
+    (let [step  (lock-job-step id (:external_id step))
           job   (lock-job id)
-          batch (when-let [parent-id (:parent-id job)] (lock-job parent-id))]
+          batch (when-let [parent-id (:parent_id job)] (lock-job parent-id))]
       (update-job-status apps-client step job batch jp/failed-status (db/now-str)))))
 
 (defn- determine-job-status
@@ -107,7 +109,7 @@
   [{:keys [id]}]
   (let [{:keys [status]} (jp/lock-job id)]
     (when-not (jp/completed? status)
-      (jp/update-job id {:status (determine-job-status id) :end-date (db/now)}))))
+      (jp/update-job id {:status (determine-job-status id) :end_date (db/now)}))))
 
 (defn sync-job-status
   [apps-client {:keys [id] :as job}]
@@ -125,7 +127,7 @@
   (validate-jobs-for-user user [job-id] "write")
   (jp/update-job job-id body)
   (->> (jp/get-job-by-id job-id)
-       ((juxt :id :job-name :description))
+       ((juxt :id :job_name :description))
        (zipmap [:id :name :description])))
 
 (defn delete-job
@@ -142,8 +144,8 @@
   [apps-client user job-id]
   (validate-jobs-for-user user [job-id] "read")
   (let [job (jp/get-job-by-id job-id)]
-    {:app_id     (:app-id job)
-     :system_id  (listings/job-type-to-system-id (:job-type job))
+    {:app_id     (:app_id job)
+     :system_id  (listings/job-type-to-system-id (:job_type job))
      :parameters (job-params/get-parameter-values apps-client job)}))
 
 (defn get-job-relaunch-info
@@ -155,7 +157,7 @@
   "Stops an individual step in a job."
   [apps-client {:keys [id] :as job} steps]
   (.stopJobStep apps-client (first steps))
-  (jp/cancel-job-step-numbers id (mapv :step-number steps))
+  (jp/cancel-job-step-numbers id (mapv :step_number steps))
   (send-job-status-update apps-client job))
 
 (defn stop-job

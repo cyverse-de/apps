@@ -57,7 +57,10 @@
   {(describe Keyword "The step-ID_param-ID") (describe Any "The param-value")})
 
 (defschema AnalysisSubmission
-  {:app_id
+  {:system_id
+   SystemId
+
+   :app_id
    (describe String "The ID of the app used to perform the analysis.")
 
    (optional-key :job_id)

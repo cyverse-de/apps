@@ -24,11 +24,6 @@
   [step]
   (assoc step :app_type (if (:external_app_id step) "External" "DE")))
 
-(defn- fix-task-id
-  [step]
-  (assoc step
-    :task_id (first (remove nil? ((juxt :task_id :external_app_id) step)))))
-
 (defn- get-steps
   "Fetches the steps for the given app ID, including their task ID and
    source/target mapping IDs and step names."
@@ -41,12 +36,15 @@
                  :target_step))
     (join [:tasks :t]
           {:task_id :t.id})
+    (join [:job_types :jt]
+          {:t.job_type_id :jt.id})
     (join [:apps :app]
           {:app_id :app.id})
     (fields :app_steps.id
             :step
             :t.name
             :t.description
+            :jt.system_id
             :task_id
             :t.external_app_id)
     (where {:app.id app-id})
@@ -57,7 +55,6 @@
   [step]
   (-> step
       add-app-type
-      fix-task-id
       (dissoc :id :step :input_mapping)
       remove-nil-vals))
 
@@ -150,6 +147,7 @@
   {:name            (:name step)
    :description     (:description step)
    :label           (:name step)
+   :system_id       (:system_id step)
    :external_app_id (:external_app_id step)})
 
 (defn- add-external-app-task

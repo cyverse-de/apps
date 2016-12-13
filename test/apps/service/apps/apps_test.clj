@@ -1,7 +1,8 @@
 (ns apps.service.apps.apps-test
   (:use [apps.service.apps.test-utils :only [get-user delete-app permanently-delete-app
                                              de-system-id fake-system-id hpc-system-id]]
-        [clojure.test])
+        [clojure.test]
+        [kameleon.uuids :only [uuid]])
   (:require [apps.persistence.jobs :as jp]
             [apps.service.apps :as apps]
             [apps.service.apps.test-fixtures :as atf]
@@ -10,7 +11,11 @@
 
 (use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 
+(use-fixtures :each atf/with-test-app)
+
 (def ^:private fake-app-id "fakeid")
+
+(def ^:private fake-rating {:rating 5 :comment_id 27})
 
 (defn- test-unrecognized-system-id [f]
   (is (thrown-with-msg? ExceptionInfo #"unrecognized system ID" (f))))
@@ -26,6 +31,9 @@
 
 (defn- test-hpc-app-favorite [f]
   (is (thrown-with-msg? ExceptionInfo #"Cannot mark an HPC app as a favorite with this service" (f))))
+
+(defn- test-hpc-app-rating [f]
+  (is (thrown-with-msg? ExceptionInfo #"Cannot rate an HPC app with this service" (f))))
 
 (deftest test-app-addition-with-invalid-system-id
   (test-unrecognized-system-id #(apps/add-app (get-user :testde1) fake-system-id atf/app-definition)))
@@ -134,3 +142,60 @@
 
 (deftest test-app-publishable-with-invalid-system-id
   (test-unrecognized-system-id #(apps/app-publishable? (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest publish-app-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/make-app-public (get-user :testde1) fake-system-id {:id fake-app-id})))
+
+(deftest publish-app-with-hpc-system-id
+  (test-hpc-app-modification #(apps/make-app-public (get-user :testde1) hpc-system-id {:id fake-app-id})))
+
+(deftest publish-de-app-with-invalid-app-id
+  (test-non-uuid #(apps/make-app-public (get-user :testde1) de-system-id {:id fake-app-id})))
+
+(deftest delete-app-rating-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/delete-app-rating (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest delete-app-rating-with-hpc-system-id
+  (test-hpc-app-rating #(apps/delete-app-rating (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest delete-de-app-rating-with-invalid-app-id
+  (test-non-uuid #(apps/delete-app-rating (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest rate-app-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/rate-app (get-user :testde1) fake-system-id fake-app-id fake-rating)))
+
+(deftest rate-app-with-hpc-system-id
+  (test-hpc-app-rating #(apps/rate-app (get-user :testde1) hpc-system-id fake-app-id fake-rating)))
+
+(deftest rate-de-app-with-invalid-app-id
+  (test-non-uuid #(apps/rate-app (get-user :testde1) de-system-id fake-app-id fake-rating)))
+
+(deftest app-task-listing-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-task-listing (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest de-app-task-listing-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-task-listing (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest app-tool-listing-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-tool-listing (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest de-app-tool-listing-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-tool-listing (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest get-app-ui-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/get-app-ui (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest get-app-ui-with-hpc-system-id
+  (test-hpc-app-modification #(apps/get-app-ui (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest get-de-app-ui-with-invalid-app-id
+  (test-non-uuid #(apps/get-app-ui (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest create-pipeline-with-invalid-system-id
+  (let [update-fn    #(assoc % :system_id fake-system-id :app_type "External" :task_id fake-app-id)
+        pipeline-def (update-in atf/default-pipeline-definition [:steps 0] update-fn)]
+    (test-unrecognized-system-id #(atf/create-pipeline (get-user :testde1) pipeline-def))))
+
+(deftest app-task-listing-should-contain-system-id
+  (let [task-listing (apps/get-app-task-listing (get-user :testde1) (:system_id atf/test-app) (:id atf/test-app))]
+    (is (= (:system_id atf/test-app) (:system_id (first (:tasks task-listing)))))))

@@ -96,12 +96,12 @@
     (context "/apps/pipelines" []
       :tags ["pipelines"]
       pipeline-routes/pipelines)
-    (context "/apps/:app-id/metadata" []
-      :tags ["app-metadata"]
-      metadata-routes/app-metadata)
     (context "/apps" []
       :tags ["apps"]
       app-routes/apps)
+    (context "/apps/:app-id/metadata" []
+      :tags ["app-metadata"]
+      metadata-routes/app-metadata)
     (context "/analyses" []
       :tags ["analyses"]
       analysis-routes/analyses)

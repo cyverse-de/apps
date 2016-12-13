@@ -2,7 +2,7 @@
   (:use [korma.core :exclude [update]]))
 
 (declare users collaborator requestor workspace app_categories apps app_references integration_data
-         tools tool_test_data_files output_mapping input_mapping tasks inputs outputs
+         tools tool_test_data_files output_mapping input_mapping tasks job_types inputs outputs
          task_parameters info_type data_formats multiplicity parameter_groups parameters
          parameter_values parameter_types value_type validation_rules validation_rule_arguments
          rule_type rule_subtype app_category_listing app_listing tool_listing ratings collaborators
@@ -115,12 +115,17 @@
 ;; composite primary keys.  In the meantime, we'll have to deal with this table
 ;; in code.
 
+;; A job type indicates primarily where a job will be executed.
+(defentity job_types
+  (table :job_types))
+
 ;; A task defines an interface to a tool that can be called.
 (defentity tasks
   (has-many parameter_groups {:fk :task_id})
   (has-many inputs {:fk :task_id})
   (has-many outputs {:fk :task_id})
-  (has-many task_parameters {:fk :task_id}))
+  (has-many task_parameters {:fk :task_id})
+  (belongs-to job_types {:fk :job_type_id}))
 
 ;; Input and output definitions. Once again, multiple entities are associated
 ;; with the same table to allow us to define multiple relationships between

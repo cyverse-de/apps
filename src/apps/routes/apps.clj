@@ -454,4 +454,62 @@
         :description "A multi-step App can't be made public if any of the Tasks that are included in it
         are not public. This endpoint returns a true flag if the App is a single-step App or it's a
         multistep App in which all of the Tasks included in the pipeline are public."
-        (ok (apps/app-publishable? current-user system-id app-id))))))
+        (ok (apps/app-publishable? current-user system-id app-id)))
+
+      (POST "/publish" []
+        :query [params SecuredQueryParamsEmailRequired]
+        :body [body (describe PublishAppRequest "The user's Publish App Request.")]
+        :summary "Submit an App for Public Use"
+        :description "This service can be used to submit a private App for public use. The user supplies
+        basic information about the App and a suggested location for it. The service records the
+        information and suggested location then places the App in the Beta category. A Tito
+        administrator can subsequently move the App to the suggested location at a later time if it
+        proves to be useful."
+        (ok (apps/make-app-public current-user system-id (assoc body :id app-id))))
+
+      (DELETE "/rating" []
+        :query [params SecuredQueryParams]
+        :return RatingResponse
+        :summary "Delete an App Rating"
+        :description "The DE uses this service to remove a rating that a user has previously made. This
+        service deletes the authenticated user's rating for the corresponding app-id."
+        (ok (apps/delete-app-rating current-user system-id app-id)))
+
+      (POST "/rating" []
+        :query [params SecuredQueryParams]
+        :body [body (describe RatingRequest "The user's new rating for this App.")]
+        :return RatingResponse
+        :summary "Rate an App"
+        :description "Users have the ability to rate an App for its usefulness, and this service provides
+        the means to store the App rating. This service accepts a rating level between one and
+        five, inclusive, and a comment identifier that refers to a comment in iPlant's Confluence
+        wiki. The rating is stored in the database and associated with the authenticated user."
+        (ok (apps/rate-app current-user system-id app-id body)))
+
+      (GET "/tasks" []
+        :query [params SecuredQueryParams]
+        :return AppTaskListing
+        :summary "List Tasks with File Parameters in an App"
+        :description "When a pipeline is being created, the UI needs to know what types of files are
+        consumed by and what types of files are produced by each App's task in the pipeline. This
+        service provides that information."
+        (ok (coerce! AppTaskListing
+                     (apps/get-app-task-listing current-user system-id app-id))))
+
+      (GET "/tools" []
+        :query [params SecuredQueryParams]
+        :return NewToolListing
+        :summary "List Tools used by an App"
+        :description "This service lists information for all of the tools that are associated with an App.
+        This information used to be included in the results of the App listing service."
+        (ok (coerce! NewToolListing
+                     (apps/get-app-tool-listing current-user system-id app-id))))
+
+      (GET "/ui" []
+        :query [params SecuredQueryParamsEmailRequired]
+        :return App
+        :summary "Make an App Available for Editing"
+        :description "The app integration utility in the DE uses this service to obtain the App
+        description JSON so that it can be edited. The App must have been integrated by the
+        requesting user."
+        (ok (apps/get-app-ui current-user system-id app-id))))))

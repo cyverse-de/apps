@@ -16,6 +16,7 @@
             [apps.persistence.app-metadata.delete :as delete]
             [apps.persistence.app-metadata.relabel :as relabel]
             [clojure.set :as set]
+            [clojure-commons.exception-util :as cxu]
             [korma.core :as sql]))
 
 (def param-multi-input-type "MultiFileSelector")
@@ -482,15 +483,27 @@
    (delete app_references (where {:app_id app-id}))
    (dorun (map (partial add-app-reference app-id) references))))
 
+(defn- get-job-type-id-for-system [system-id]
+  (let [job-type-id (:id (first (select :job_types (fields :id) (where {:system_id system-id}))))]
+    (when (nil? job-type-id)
+      (cxu/bad-request (str "unrecognized system ID: " system-id)))
+    job-type-id))
+
 (defn add-task
   "Adds a task to the database."
-  [task]
-  (insert tasks (values (filter-valid-task-values task))))
+  ([task]
+   (add-task (:system_id task) task))
+  ([system-id task]
+   (let [job-type-id (get-job-type-id-for-system system-id)]
+     (insert tasks (values (assoc (filter-valid-task-values task) :job_type_id job-type-id))))))
 
 (defn update-task
   "Updates a task in the database."
-  [{task-id :id :as task}]
-  (sql/update tasks (set-fields (filter-valid-task-values task)) (where {:id task-id})))
+  [system-id {task-id :id :as task}]
+  (let [job-type-id (get-job-type-id-for-system system-id)]
+    (sql/update tasks
+                (set-fields (assoc (filter-valid-task-values task) :job_type_id job-type-id))
+                (where {:id task-id}))))
 
 (defn remove-app-steps
   "Removes all steps from an App. This delete will cascade to workflow_io_maps and

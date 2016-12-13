@@ -30,3 +30,4 @@ build.xml
 *.class
 GIT_COMMIT
 VERSION
+Dockerfile.local

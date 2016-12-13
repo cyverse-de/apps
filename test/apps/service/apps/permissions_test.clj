@@ -110,7 +110,7 @@
   true)
 
 (defn check-app-ui [user]
-  (apps/get-app-ui user (:id test-app))
+  (apps/get-app-ui user de-system-id (:id test-app))
   true)
 
 (defn check-copy-app [user]
@@ -143,19 +143,19 @@
   true)
 
 (defn check-rating [user]
-  (apps/rate-app user (:id test-app) {:rating 5 :comment_id 27})
+  (apps/rate-app user de-system-id (:id test-app) {:rating 5 :comment_id 27})
   true)
 
 (defn check-unrating [user]
-  (apps/delete-app-rating user (:id test-app))
+  (apps/delete-app-rating user de-system-id (:id test-app))
   true)
 
 (defn check-tasks [user]
-  (apps/get-app-task-listing user (:id test-app))
+  (apps/get-app-task-listing user de-system-id (:id test-app))
   true)
 
 (defn check-tools [user]
-  (apps/get-app-tool-listing user (:id test-app))
+  (apps/get-app-tool-listing user de-system-id (:id test-app))
   true)
 
 (deftest test-permission-restrictions-none
@@ -246,7 +246,7 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id test-app)}))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-rating user)))
     (is (thrown-with-msg? ExceptionInfo #"private app" (check-unrating user)))
-    (apps/make-app-public user test-app)
+    (apps/make-app-public user de-system-id test-app)
     (is (check-rating user))
     (is (check-unrating user))))
 
@@ -259,7 +259,7 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id test-app)}))
     (is (has-permission? "app" (:id test-app) "user" username "own"))
     (is (not (has-permission? "app" (:id test-app) "group" (ipg/grouper-user-group-id) "read")))
-    (apps/make-app-public user test-app)
+    (apps/make-app-public user de-system-id test-app)
     (is (not (has-permission? "app" (:id test-app) "user" username "own")))
     (is (has-permission? "app" (:id test-app) "group" (ipg/grouper-user-group-id) "read"))))
 
@@ -422,7 +422,7 @@
 (deftest test-public-app-labels-update
   (let [{username :shortUsername :as user} (get-user :testde1)]
     (sql/delete :app_documentation (sql/where {:app_id (:id test-app)}))
-    (apps/make-app-public user test-app)
+    (apps/make-app-public user de-system-id test-app)
     (is (check-edit-app-docs user))))
 
 (deftest test-create-pipeline

@@ -155,13 +155,14 @@
 
 (defn- save-batch*
   [user app submission output-dir]
-  (:id (jp/save-job {:job-name           (:name submission)
-                     :description        (:description submission)
-                     :app-id             (:app_id submission)
-                     :app-name           (:name app)
-                     :app-description    (:description app)
-                     :result-folder-path output-dir
-                     :start-date         (db/now)
+  (:id (jp/save-job {:job_name           (:name submission)
+                     :job_description    (:description submission)
+                     :system_id          (:system_id submission)
+                     :app_id             (:app_id submission)
+                     :app_name           (:name app)
+                     :app_description    (:description app)
+                     :result_folder_path output-dir
+                     :start_date         (db/now)
                      :status             jp/submitted-status
                      :username           (:username user)
                      :notify             (:notify submission)}
@@ -169,11 +170,11 @@
 
 (defn- save-batch-step
   [batch-id job-type]
-  (jp/save-job-step {:job-id          batch-id
-                     :step-number     1
+  (jp/save-job-step {:job_id          batch-id
+                     :step_number     1
                      :status          jp/submitted-status
-                     :app-step-number 1
-                     :job-type        job-type}))
+                     :app_step_number 1
+                     :job_type        job-type}))
 
 (defn- save-batch
   [user job-types app submission output-dir]

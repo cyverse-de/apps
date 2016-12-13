@@ -9,7 +9,8 @@
 (defn- format-task
   [agave external-app-ids {:keys [id] :as task}]
   (if-let [external-app-id (external-app-ids id)]
-    (merge task (select-keys (get-agave-task agave external-app-id) [:inputs :outputs]))
+    (assoc (merge task (select-keys (get-agave-task agave external-app-id) [:inputs :outputs]))
+           :id external-app-id)
     task))
 
 (defn format-pipeline-tasks

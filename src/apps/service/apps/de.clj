@@ -164,27 +164,27 @@
 
   (makeAppPublic [_ app]
     (when (util/uuid? (:id app))
-      (app-metadata/make-app-public user app)))
+      (app-metadata/make-app-public user (update app :id uuidify))))
 
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
-    (app-metadata/make-app-public user app))
+    (app-metadata/make-app-public user (update app :id uuidify)))
 
   (deleteAppRating [_ app-id]
     (when (util/uuid? app-id)
-      (app-metadata/delete-app-rating user app-id)))
+      (app-metadata/delete-app-rating user (uuidify app-id))))
 
   (deleteAppRating [_ system-id app-id]
     (validate-system-id system-id)
-    (app-metadata/delete-app-rating user app-id))
+    (app-metadata/delete-app-rating user (uuidify app-id)))
 
   (rateApp [_ app-id rating]
     (when (util/uuid? app-id)
-      (app-metadata/rate-app user app-id rating)))
+      (app-metadata/rate-app user (uuidify app-id) rating)))
 
   (rateApp [_ system-id app-id rating]
     (validate-system-id system-id)
-    (app-metadata/rate-app user app-id rating))
+    (app-metadata/rate-app user (uuidify app-id) rating))
 
   (getAppTaskListing [_ app-id]
     (when (util/uuid? app-id)
@@ -204,11 +204,11 @@
 
   (getAppUi [_ app-id]
     (when (util/uuid? app-id)
-      (edit/get-app-ui user app-id)))
+      (edit/get-app-ui user (uuidify app-id))))
 
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
-    (edit/get-app-ui user app-id))
+    (edit/get-app-ui user (uuidify app-id)))
 
   (getAppInputIds [_ app-id]
     (when (util/uuid? app-id)
@@ -221,22 +221,15 @@
   (addPipeline [_ pipeline]
     (pipeline-edit/add-pipeline user pipeline))
 
-  (addPipeline [_ system-id pipeline]
-    (validate-system-id system-id)
-    (pipeline-edit/add-pipeline user pipeline))
-
   (formatPipelineTasks [_ pipeline]
     pipeline)
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (updatePipeline [_ pipeline]
     (pipeline-edit/update-pipeline user pipeline))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (copyPipeline [_ app-id]
     (pipeline-edit/copy-pipeline user app-id))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (editPipeline [_ app-id]
     (pipeline-edit/edit-pipeline user app-id))
 
@@ -254,11 +247,7 @@
          (vector)))
 
   (submitJob [this submission]
-    (when (util/uuid? (:app_id submission))
-      (de-jobs/submit user (update-in submission [:app_id] uuidify))))
-
-  (submitJob [this system-id submission]
-    (validate-system-id system-id)
+    (validate-system-id (:system_id submission))
     (de-jobs/submit user (update-in submission [:app_id] uuidify)))
 
   (submitJobStep [_ _ submission]
@@ -269,7 +258,7 @@
       status))
 
   (updateJobStatus [self job-step job status end-date]
-    (when (apps-util/supports-job-type? self (:job-type job-step))
+    (when (apps-util/supports-job-type? self (:job_type job-step))
       (de-jobs/update-job-status job-step job status end-date)))
 
   (getDefaultOutputName [_ io-map source-step]
@@ -289,10 +278,10 @@
     (validate-system-id system-id)
     (app-metadata/get-param-definitions app-id))
 
-  (stopJobStep [self {:keys [job-type external-id]}]
-    (when (and (apps-util/supports-job-type? self job-type)
-               (not (string/blank? external-id)))
-      (jex/stop-job external-id)))
+  (stopJobStep [self {:keys [job_type external_id]}]
+    (when (and (apps-util/supports-job-type? self job_type)
+               (not (string/blank? external_id)))
+      (jex/stop-job external_id)))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (categorizeApps [_ body]

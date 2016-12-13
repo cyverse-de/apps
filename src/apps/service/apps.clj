@@ -172,28 +172,40 @@
    {:publishable (.isAppPublishable (get-apps-client user) system-id app-id)}))
 
 (defn make-app-public
-  [user app]
-  (.makeAppPublic (get-apps-client user) app))
+  ([user app]
+   (.makeAppPublic (get-apps-client user) app))
+  ([user system-id app]
+   (.makeAppPublic (get-apps-client user) system-id app)))
 
 (defn delete-app-rating
-  [user app-id]
-  (.deleteAppRating (get-apps-client user) app-id))
+  ([user app-id]
+   (.deleteAppRating (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.deleteAppRating (get-apps-client user) system-id app-id)))
 
 (defn rate-app
-  [user app-id rating]
-  (.rateApp (get-apps-client user) app-id rating))
+  ([user app-id rating]
+   (.rateApp (get-apps-client user) app-id rating))
+  ([user system-id app-id rating]
+   (.rateApp (get-apps-client user) system-id app-id rating)))
 
 (defn get-app-task-listing
-  [user app-id]
-  (.getAppTaskListing (get-apps-client user) app-id))
+  ([user app-id]
+   (.getAppTaskListing (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.getAppTaskListing (get-apps-client user) system-id app-id)))
 
 (defn get-app-tool-listing
-  [user app-id]
-  (.getAppToolListing (get-apps-client user) app-id))
+  ([user app-id]
+   (.getAppToolListing (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.getAppToolListing (get-apps-client user) system-id app-id)))
 
 (defn get-app-ui
-  [user app-id]
-  (.getAppUi (get-apps-client user) app-id))
+  ([user app-id]
+   (.getAppUi (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.getAppUi (get-apps-client user) system-id app-id)))
 
 (defn add-pipeline
   [user pipeline]
@@ -228,21 +240,15 @@
     (cn/send-job-status-update username email job-info)
     (format-job-submission-response job-info)))
 
-(defn check-next-step-submission
-  [job-id external-id]
-  (let [job-step (jobs/lock-job-step job-id external-id)
-        job      (jobs/lock-job job-id)]
-    (.buildNextStepSubmission (get-apps-client-for-username (:username job)) job-step job)))
-
 (defn update-job-status
   ([external-id status end-date]
-     (let [{:keys [job-id]} (jobs/get-unique-job-step external-id)]
+     (let [{job-id :job_id} (jobs/get-unique-job-step external-id)]
        (update-job-status job-id external-id status end-date)))
   ([job-id external-id status end-date]
      (transaction
       (let [job-step (jobs/lock-job-step job-id external-id)
             job      (jobs/lock-job job-id)
-            batch    (when-let [parent-id (:parent-id job)] (jobs/lock-job parent-id))]
+            batch    (when-let [parent-id (:parent_id job)] (jobs/lock-job parent-id))]
         (-> (get-apps-client-for-username (:username job))
             (jobs/update-job-status job-step job batch status end-date))))))
 

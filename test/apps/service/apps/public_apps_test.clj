@@ -44,7 +44,7 @@
   (let [user (get-user :testde1)
         app  (atf/create-test-app user "To be published")]
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
-    (apps/make-app-public user app)
+    (apps/make-app-public user de-system-id app)
     (pc/grant-permission (config/permissions-client) "app" (:id app) "user" (:shortUsername user) "own")
     (let [publishable? (:publishable (apps/app-publishable? user de-system-id (:id app)))]
       (is (not (nil? publishable?)))
@@ -56,7 +56,7 @@
         app  (atf/create-test-tool-app user "To be published")]
     (is (nil? (v/validate-tool-not-public atf/test-tool-id)))
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
-    (apps/make-app-public user app)
+    (apps/make-app-public user de-system-id app)
     (is (thrown-with-msg? ExceptionInfo #"in use by public apps" (v/validate-tool-not-public atf/test-tool-id)))
     (permanently-delete-app user de-system-id (:id app) true)))
 
@@ -64,7 +64,7 @@
   (let [user (get-user :testde1)
         app (atf/create-test-app user "To be published")]
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
-    (apps/make-app-public user app)
+    (apps/make-app-public user de-system-id app)
     (is (empty? (find-app app (list-apps user trash-category-id))))
     (apps/admin-delete-app user (:id app))
     (is (seq (find-app app (list-apps user trash-category-id))))

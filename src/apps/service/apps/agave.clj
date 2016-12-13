@@ -26,6 +26,8 @@
 
 (def app-favorite-rejection "Cannot mark an HPC app as a favorite with this service.")
 
+(def app-rating-rejection "Cannot rate an HPC app with this service.")
+
 (defn- reject-app-permission-request
   []
   (service/bad-request app-permission-rejection))
@@ -37,6 +39,10 @@
 (defn- reject-app-favorite-request
   []
   (service/bad-request app-favorite-rejection))
+
+(defn- reject-app-rating-request
+  []
+  (service/bad-request app-rating-rejection))
 
 (def ^:private supported-system-ids #{jp/agave-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -180,6 +186,30 @@
     (validate-system-id system-id)
     false)
 
+  (makeAppPublic [_ app]
+    (when-not (util/uuid? (:id app))
+      (reject-app-integration-request)))
+
+  (makeAppPublic [_ system-id app]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+  (deleteAppRating [_ app-id]
+    (when-not (util/uuid? app-id)
+      (reject-app-rating-request)))
+
+  (deleteAppRating [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-rating-request))
+
+  (rateApp [_ app-id rating]
+    (when-not (util/uuid? app-id)
+      (reject-app-rating-request)))
+
+  (rateApp [_ system-id app-id rating]
+    (validate-system-id system-id)
+    (reject-app-rating-request))
+
   (getAppTaskListing [_ app-id]
     (when-not (util/uuid? app-id)
       (.listAppTasks agave app-id)))
@@ -195,6 +225,14 @@
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (.getAppToolListing agave app-id))
+
+  (getAppUi [_ app-id]
+    (when-not (util/uuid? app-id)
+      (reject-app-integration-request)))
+
+  (getAppUi [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
 
   (getAppInputIds [_ app-id]
     (when-not (util/uuid? app-id)
@@ -220,11 +258,7 @@
         [])))
 
   (submitJob [this submission]
-    (when-not (util/uuid? (:app_id submission))
-      (agave-jobs/submit agave user submission)))
-
-  (submitJob [this system-id submission]
-    (validate-system-id system-id)
+    (validate-system-id (:system_id submission))
     (agave-jobs/submit agave user submission))
 
   (submitJobStep [_ job-id submission]
@@ -235,7 +269,7 @@
       (or (.translateJobStatus agave status) status)))
 
   (updateJobStatus [self job-step job status end-date]
-    (when (apps-util/supports-job-type? self (:job-type job-step))
+    (when (apps-util/supports-job-type? self (:job_type job-step))
       (agave-jobs/update-job-status agave job-step job status end-date)))
 
   (getDefaultOutputName [_ io-map source-step]
@@ -254,10 +288,10 @@
     (validate-system-id system-id)
     (listings/get-param-definitions agave app-id))
 
-  (stopJobStep [self {:keys [job-type external-id]}]
-    (when (and (apps-util/supports-job-type? self job-type)
-               (not (string/blank? external-id)))
-      (.stopJob agave external-id)))
+  (stopJobStep [self {:keys [job_type external_id]}]
+    (when (and (apps-util/supports-job-type? self job_type)
+               (not (string/blank? external_id)))
+      (.stopJob agave external_id)))
 
   (getAppDocs [_ app-id]
     (when-not (util/uuid? app-id)

@@ -22,19 +22,18 @@
 
 (defn get-apps-client
   ([clients]
-     (or (first (filter #(.canEditApps %) clients))
-         (throw+ {:type  :clojure-commons.exception/bad-request-field
-                  :error "apps are not editable at this time."})))
+   (or (first (filter #(.supportsSystemId % jp/de-client-name) clients))
+       (throw+ {:type  :clojure-commons.exception/internal-system-error
+                :error "default system ID not found"})))
   ([clients system-id]
      (or (first (filter #(.supportsSystemId % system-id) clients))
          (throw+ {:type  :clojure-commons.exception/bad-request-field
                   :error (str "unrecognized system ID " system-id)}))))
 
 (defn apps-client-for-job
-  [{app-id :app_id :as submission} clients]
-  (cond (not (uuid? app-id))                     (get-apps-client clients jp/agave-client-name)
-        (zero? (ap/count-external-steps app-id)) (get-apps-client clients jp/de-client-name)
-        :else                                    nil))
+  [{app-id :app_id system-id :system_id} clients]
+  (when (or (not= system-id jp/de-client-name) (zero? (ap/count-external-steps app-id)))
+    (get-apps-client clients system-id)))
 
 (defn apps-client-for-app-step
   [clients job-step]
@@ -44,7 +43,7 @@
 
 (defn is-de-job-step?
   [job-step]
-  (= (:job-type job-step) jp/de-job-type))
+  (= (:job_type job-step) jp/de-job-type))
 
 (defn apps-client-for-job-step
   [clients job-step]

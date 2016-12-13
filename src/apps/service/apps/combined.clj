@@ -9,6 +9,7 @@
             [apps.service.apps.job-listings :as job-listings]
             [apps.service.apps.combined.job-view :as job-view]
             [apps.service.apps.combined.jobs :as combined-jobs]
+            [apps.service.apps.combined.pipelines :as pipelines]
             [apps.service.apps.combined.util :as util]
             [apps.service.apps.permissions :as app-permissions]))
 
@@ -79,7 +80,7 @@
   (validateDeletionRequest [_ req]
     (let [requests-for-system (group-by :system_id (:app_ids req))]
       (doseq [[system-id qualified-app-ids] requests-for-system]
-        (.validateDeletionRequest (util/get-apps-client clients system-id) (assoc req :app-ids qualified-app-ids)))))
+        (.validateDeletionRequest (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
   (deleteApps [this req]
     (.validateDeletionRequest this req)
@@ -153,24 +154,42 @@
   (makeAppPublic [_ app]
     (.makeAppPublic (util/get-apps-client clients) app))
 
+  (makeAppPublic [_ system-id app]
+    (.makeAppPublic (util/get-apps-client clients system-id) system-id app))
+
   (deleteAppRating [_ app-id]
     (.deleteAppRating (util/get-apps-client clients) app-id))
 
+  (deleteAppRating [_ system-id app-id]
+    (.deleteAppRating (util/get-apps-client clients system-id) system-id app-id))
+
   (rateApp [_ app-id rating]
     (.rateApp (util/get-apps-client clients) app-id rating))
+
+  (rateApp [_ system-id app-id rating]
+    (.rateApp (util/get-apps-client clients system-id) system-id app-id rating))
 
   (getAppTaskListing [_ app-id]
     (->> (map #(.getAppTaskListing % app-id) clients)
          (remove nil?)
          (first)))
 
+  (getAppTaskListing [_ system-id app-id]
+    (.getAppTaskListing (util/get-apps-client clients system-id) system-id app-id))
+
   (getAppToolListing [_ app-id]
     (->> (map #(.getAppToolListing % app-id) clients)
          (remove nil?)
          (first)))
 
+  (getAppToolListing [_ system-id app-id]
+    (.getAppToolListing (util/get-apps-client clients system-id) system-id app-id))
+
   (getAppUi [_ app-id]
     (.getAppUi (util/get-apps-client clients) app-id))
+
+  (getAppUi [_ system-id app-id]
+    (.getAppUi (util/get-apps-client clients system-id) system-id app-id))
 
   (getAppInputIds [_ app-id]
     (->> (map #(.getAppInputIds % app-id) clients)
@@ -178,19 +197,19 @@
          (first)))
 
   (addPipeline [self pipeline]
-    (.formatPipelineTasks self (.addPipeline (util/get-apps-client clients) pipeline)))
+    (pipelines/format-pipeline self (.addPipeline (util/get-apps-client clients) pipeline)))
 
   (formatPipelineTasks [_ pipeline]
     (reduce (fn [acc client] (.formatPipelineTasks client acc)) pipeline clients))
 
   (updatePipeline [self pipeline]
-    (.formatPipelineTasks self (.updatePipeline (util/get-apps-client clients) pipeline)))
+    (pipelines/format-pipeline self (.updatePipeline (util/get-apps-client clients) pipeline)))
 
   (copyPipeline [self app-id]
-    (.formatPipelineTasks self (.copyPipeline (util/get-apps-client clients) app-id)))
+    (pipelines/format-pipeline self (.copyPipeline (util/get-apps-client clients) app-id)))
 
   (editPipeline [self app-id]
-    (.formatPipelineTasks self (.editPipeline (util/get-apps-client clients) app-id)))
+    (pipelines/format-pipeline self (.editPipeline (util/get-apps-client clients) app-id)))
 
   (listJobs [self params]
     (job-listings/list-jobs self user params))

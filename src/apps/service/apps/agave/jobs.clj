@@ -83,31 +83,32 @@
        (throw+)))))
 
 (defn- store-agave-job
-  [job-id job submission]
+  [user job-id job submission]
   (jp/save-job {:id                 job-id
-                :job-name           (:name job)
-                :description        (:description submission)
-                :app-id             (:app_id job)
-                :app-name           (:app_name job)
-                :app-description    (:app_details job)
-                :app-wiki-url       (:wiki_url job)
-                :result-folder-path (:resultfolderid job)
-                :start-date         (:startdate job)
-                :username           (:username job)
+                :job_name           (:name job)
+                :job_description    (:description submission)
+                :system_id          (:system_id submission)
+                :app_id             (:app_id job)
+                :app_name           (:app_name job)
+                :app_description    (:app_details job)
+                :app_wiki_url       (:wiki_url job)
+                :result_folder_path (:resultfolderid job)
+                :start_date         (:startdate job)
+                :username           (:username user)
                 :status             (:status job)
                 :notify             (:notify job)
-                :parent-id          (:parent_id submission)}
+                :parent_id          (:parent_id submission)}
                submission))
 
 (defn- store-job-step
   [job-id job]
-  (jp/save-job-step {:job-id          job-id
-                     :step-number     1
-                     :external-id     (:id job)
-                     :start-date      (:startdate job)
+  (jp/save-job-step {:job_id          job-id
+                     :step_number     1
+                     :external_id     (:id job)
+                     :start_date      (:startdate job)
                      :status          (:status job)
-                     :job-type        jp/agave-job-type
-                     :app-step-number 1}))
+                     :job_type        jp/agave-job-type
+                     :app_step_number 1}))
 
 (defn- format-job-submission-response
   [job-id submission job]
@@ -131,23 +132,23 @@
     :parent_id       (:parent_id submission)}))
 
 (defn- handle-successful-submission
-  [job-id job submission]
-  (store-agave-job job-id job submission)
+  [user job-id job submission]
+  (store-agave-job user job-id job submission)
   (store-job-step job-id job)
   (format-job-submission-response job-id submission job))
 
 (defn- handle-failed-submission
-  [job-id job submission]
+  [user job-id job submission]
   (let [job (assoc job :status jp/failed-status)]
-    (store-agave-job job-id job submission)
+    (store-agave-job user job-id job submission)
     (store-job-step job-id job)
     (format-job-submission-response job-id submission job)))
 
 (defn- send-submission
   [agave user job-id submission job]
   (if-let [submitted-job (send-submission* agave user submission job)]
-    (handle-successful-submission job-id submitted-job submission)
-    (handle-failed-submission job-id job submission)))
+    (handle-successful-submission user job-id submitted-job submission)
+    (handle-failed-submission user job-id job submission)))
 
 (defn submit
   [agave user submission]
@@ -170,10 +171,10 @@
     status))
 
 (defn update-job-status
-  [agave {:keys [external-id] :as job-step} {job-id :id :as job} status end-date]
+  [agave {:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
   (let [status (translate-job-status agave status)]
     (when (and status (jp/status-follows? status (:status job-step)))
-      (jp/update-job-step job-id external-id status end-date)
+      (jp/update-job-step job-id external_id status end-date)
       (jp/update-job job-id status end-date))))
 
 (defn get-default-output-name
@@ -181,9 +182,9 @@
   (.getDefaultOutputName agave external-app-id external-output-id))
 
 (defn get-job-step-status
-  [agave {:keys [external-id]}]
+  [agave {:keys [external_id]}]
   (try+
-   (select-keys (.listJob agave external-id) [:status :enddate])
+   (select-keys (.listJob agave external_id) [:status :enddate])
    (catch [:status 404] _ nil)))
 
 (defn prepare-step-submission
