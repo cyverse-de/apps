@@ -458,7 +458,6 @@
 
       (POST "/publish" []
         :query [params SecuredQueryParamsEmailRequired]
-        :middleware [wrap-metadata-base-url]
         :body [body (describe PublishAppRequest "The user's Publish App Request.")]
         :summary "Submit an App for Public Use"
         :description "This service can be used to submit a private App for public use. The user supplies

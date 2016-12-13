@@ -64,7 +64,7 @@
 
 (defn- save-job-submission
   "Saves a DE job and its job-step in the database."
-  ([user  job submission]
+  ([user job submission]
      (save-job-submission user job submission "Submitted"))
   ([user job submission status]
      (transaction
@@ -99,8 +99,8 @@
         (catch Object _
           (save-job-submission user job submission "Failed")))
        (format-job-submission-response user job true)))
-(defn- submit-standalone-job
 
+(defn- submit-standalone-job
   [user submission job]
   (do-jex-submission job)
   (->> (save-job-submission user job submission)
