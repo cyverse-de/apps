@@ -150,8 +150,10 @@
    (.getAppDetails (get-apps-client user) system-id app-id false)))
 
 (defn admin-get-app-details
-  [user app-id]
-  (.getAppDetails (get-apps-client user) app-id true))
+  ([user app-id]
+   (.getAppDetails (get-apps-client user) app-id true))
+  ([user system-id app-id]
+   (.getAppDetails (get-apps-client user) system-id app-id true)))
 
 (defn remove-app-favorite
   ([user app-id]
@@ -321,14 +323,20 @@
   (.permanentlyDeleteApps (get-apps-client user) body))
 
 (defn admin-delete-app
-  [user app-id]
-  (.adminDeleteApp (get-apps-client user) app-id))
+  ([user app-id]
+   (.adminDeleteApp (get-apps-client user) app-id))
+  ([user system-id app-id]
+   (.adminDeleteApp (get-apps-client user) system-id app-id)))
 
 (defn admin-update-app
-  [user body]
-  (let [apps-client (get-apps-client user)]
-    (.adminUpdateApp apps-client body)
-    (.getAppDetails apps-client (:id body) true)))
+  ([user body]
+   (let [apps-client (get-apps-client user)]
+     (.adminUpdateApp apps-client body)
+     (.getAppDetails apps-client (:id body) true)))
+  ([user system-id body]
+   (let [apps-client (get-apps-client user)]
+     (.adminUpdateApp apps-client system-id body)
+     (.getAppDetails apps-client system-id (:id body) true))))
 
 (defn get-admin-app-categories
   [user params]
@@ -370,8 +378,10 @@
   (.getToolIntegrationData (get-apps-client user) tool-id))
 
 (defn update-app-integration-data
-  [user app-id integration-data-id]
-  (.updateAppIntegrationData (get-apps-client user) app-id integration-data-id))
+  ([user app-id integration-data-id]
+   (.updateAppIntegrationData (get-apps-client user) app-id integration-data-id))
+  ([user system-id app-id integration-data-id]
+   (.updateAppIntegrationData (get-apps-client user) system-id app-id integration-data-id)))
 
 (defn update-tool-integration-data
   [user tool-id integration-data-id]
@@ -386,12 +396,16 @@
   (.ownerAddAppDocs (get-apps-client user) app-id body))
 
 (defn admin-edit-app-docs
-  [user app-id body]
-  (.adminEditAppDocs (get-apps-client user) app-id body))
+  ([user app-id body]
+   (.adminEditAppDocs (get-apps-client user) app-id body))
+  ([user system-id app-id body]
+   (.adminEditAppDocs (get-apps-client user) system-id app-id body)))
 
 (defn admin-add-app-docs
-  [user app-id body]
-  (.adminAddAppDocs (get-apps-client user) app-id body))
+  ([user app-id body]
+   (.adminAddAppDocs (get-apps-client user) app-id body))
+  ([user system-id app-id body]
+   (.adminAddAppDocs (get-apps-client user) system-id app-id body)))
 
 (defn list-app-permissions
   [user app-ids]

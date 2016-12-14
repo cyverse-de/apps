@@ -131,7 +131,7 @@
   ;; FIXME: remove the admin flag when we have a better way to deal with administrative
   ;; privileges.
   (getAppDetails [_ system-id app-id admin?]
-    (.getAppDetails (util/get-apps-client clients system-id) system-id app-id false))
+    (.getAppDetails (util/get-apps-client clients system-id) system-id app-id admin?))
 
   (removeAppFavorite [_ app-id]
     (.removeAppFavorite (util/get-apps-client clients) app-id))
@@ -257,8 +257,14 @@
   (adminDeleteApp [_ app-id]
     (.adminDeleteApp (util/get-apps-client clients) app-id))
 
+  (adminDeleteApp [_ system-id app-id]
+    (.adminDeleteApp (util/get-apps-client clients system-id) app-id))
+
   (adminUpdateApp [_ body]
     (.adminUpdateApp (util/get-apps-client clients) body))
+
+  (adminUpdateApp [_ system-id body]
+    (.adminUpdateApp (util/get-apps-client clients system-id) body))
 
   (getAdminAppCategories [_ params]
     (.getAdminAppCategories (util/get-apps-client clients) params))
@@ -301,6 +307,9 @@
          (remove nil?)
          (first)))
 
+  (updateAppIntegrationData [_ system-id app-id integration-data-id]
+    (.updateAppIntegrationData (util/get-apps-client clients system-id) app-id integration-data-id))
+
   (updateToolIntegrationData [_ tool-id integration-data-id]
     (->> (map #(.updateToolIntegrationData % tool-id integration-data-id) clients)
          (remove nil?)
@@ -321,10 +330,16 @@
          (remove nil?)
          (first)))
 
+  (adminEditAppDocs [_ system-id app-id body]
+    (.adminEditAppDocs (util/get-apps-client clients system-id) app-id body))
+
   (adminAddAppDocs [_ app-id body]
     (->> (map #(.adminAddAppDocs % app-id body) clients)
          (remove nil?)
          (first)))
+
+  (adminAddAppDocs [_ system-id app-id body]
+    (.adminAddAppDocs (util/get-apps-client clients system-id) app-id body))
 
   (listAppPermissions [_ app-ids]
     (mapcat #(.listAppPermissions % app-ids) clients))

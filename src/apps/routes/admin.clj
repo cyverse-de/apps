@@ -74,7 +74,8 @@
          :body [body (describe AppCategorizationRequest "An App Categorization Request.")]
          :summary "Categorize Apps"
          :description "This endpoint is used by the Admin interface to add or move Apps to into multiple
-         Categories."
+         Categories. This endpoint may only be used to categorize DE apps, so the system ID will not been
+         included in the URI path."
          (ok (apps/categorize-apps current-user body)))
 
   (POST "/shredder" []
@@ -85,17 +86,19 @@
          administrators to completely remove Apps that are causing problems."
          (ok (apps/permanently-delete-apps current-user body)))
 
-  (DELETE "/:app-id" []
-           :path-params [app-id :- AppIdPathParam]
-           :query [params SecuredQueryParams]
-           :summary "Logically Deleting an App"
-           :description "An app can be marked as deleted in the DE without being completely removed from
-           the database using this service. This endpoint is the same as the non-admin endpoint,
-           except an error is not returned if the user does not own the App."
-           (ok (apps/admin-delete-app current-user app-id)))
+  (context "/:system-id/:app-id" []
+      :path-params [system-id :- SystemId
+                    app-id    :- AppIdJobViewPathParam]
 
-  (PATCH "/:app-id" []
-          :path-params [app-id :- AppIdPathParam]
+      (DELETE "/" []
+          :query [params SecuredQueryParams]
+          :summary "Logically Deleting an App"
+          :description "An app can be marked as deleted in the DE without being completely removed from
+          the database using this service. This endpoint is the same as the non-admin endpoint,
+          except an error is not returned if the user does not own the App."
+          (ok (apps/admin-delete-app current-user system-id app-id)))
+
+      (PATCH "/" []
           :query [params SecuredQueryParams]
           :body [body (describe AdminAppPatchRequest "The App to update.")]
           :return AdminAppDetails
@@ -121,24 +124,22 @@
   "POST /ontologies/{ontology-version}/filter")
 "Please see the metadata service documentation for information about the `hierarchies` response field.")
           (ok (coerce! AdminAppDetails
-                (apps/admin-update-app current-user (assoc body :id app-id)))))
+                (apps/admin-update-app current-user system-id (assoc body :id app-id)))))
 
-  (GET "/:app-id/details" []
-        :path-params [app-id :- AppIdPathParam]
-        :query [params SecuredQueryParams]
-        :return AdminAppDetails
-        :summary "Get App Details"
-        :description (str
+      (GET "/details" []
+          :query [params SecuredQueryParams]
+          :return AdminAppDetails
+          :summary "Get App Details"
+          :description (str
 "This service allows administrative users to view detailed informaiton about private apps."
 (get-endpoint-delegate-block
   "metadata"
   "POST /ontologies/{ontology-version}/filter")
 "Please see the metadata service documentation for information about the `hierarchies` response field.")
-        (ok (coerce! AdminAppDetails
-               (apps/admin-get-app-details current-user app-id))))
+          (ok (coerce! AdminAppDetails
+                (apps/admin-get-app-details current-user system-id app-id))))
 
-  (PATCH "/:app-id/documentation" []
-          :path-params [app-id :- AppIdPathParam]
+      (PATCH "/documentation" []
           :query [params SecuredQueryParams]
           :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
           :return AppDocumentation
@@ -146,26 +147,25 @@
           :description "This service is used by DE administrators to update documentation for a single
           App"
           (ok (coerce! AppDocumentation
-                (apps/admin-edit-app-docs current-user app-id body))))
+                (apps/admin-edit-app-docs current-user system-id app-id body))))
 
-  (POST "/:app-id/documentation" []
-         :path-params [app-id :- AppIdPathParam]
-         :query [params SecuredQueryParams]
-         :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
-         :return AppDocumentation
-         :summary "Add App Documentation"
-         :description "This service is used by DE administrators to add documentation for a single App"
-         (ok (coerce! AppDocumentation
-                      (apps/admin-add-app-docs current-user app-id body))))
+      (POST "/documentation" []
+          :query [params SecuredQueryParams]
+          :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
+          :return AppDocumentation
+          :summary "Add App Documentation"
+          :description "This service is used by DE administrators to add documentation for a single App"
+          (ok (coerce! AppDocumentation
+                (apps/admin-add-app-docs current-user system-id app-id body))))
 
-  (PUT "/:app-id/integration-data/:integration-data-id" []
-        :path-params [app-id :- AppIdPathParam integration-data-id :- IntegrationDataIdPathParam]
-        :query [params SecuredQueryParams]
-        :return IntegrationData
-        :summary "Update the Integration Data Record for an App"
-        :description "This service allows administrators to change the integration data record
-        associated with an app."
-        (ok (apps/update-app-integration-data current-user app-id integration-data-id))))
+      (PUT "/integration-data/:integration-data-id" []
+          :path-params [integration-data-id :- IntegrationDataIdPathParam]
+          :query [params SecuredQueryParams]
+          :return IntegrationData
+          :summary "Update the Integration Data Record for an App"
+          :description "This service allows administrators to change the integration data record
+          associated with an app."
+          (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))))
 
 (defroutes admin-categories
   (GET "/" []
