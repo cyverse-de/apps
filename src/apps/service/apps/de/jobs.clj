@@ -6,8 +6,7 @@
         [korma.db :only [transaction]]
         [medley.core :only [dissoc-in]]
         [slingshot.slingshot :only [try+ throw+]])
-  (:require [cheshire.core :as cheshire]
-            [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
             [kameleon.db :as db]
             [apps.clients.jex :as jex]
             [apps.persistence.app-metadata :as ap]
@@ -49,7 +48,7 @@
              :username           (:username user)
              :status             status
              :parent_id          (:parent_id submission))
-      (jp/save-job (cheshire/encode submission))))
+      (jp/save-job submission)))
 
 (defn- store-job-step
   "Saves a single job step in the database."
