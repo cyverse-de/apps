@@ -18,9 +18,11 @@
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
-  (:require [clojure.string :as string]
+  (:require [cheshire.core :as json]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [korma.core :as sql]))
+            [korma.core :as sql])
+  (:import java.util.Base64))
 
 (defn containerized?
   "Returns true if the tool is available in a container."
@@ -34,11 +36,16 @@
               (= :id (uuidify tool-id))
               (not= :container_images_id nil)))))))
 
+(defn encode-auth [registry]
+  (.encodeToString (Base64/getEncoder)
+                   (.getBytes
+                     (json/encode (select-keys registry [:username :password])))))
+
 (defn auth-info [image-name]
   (let [registry-name (string/replace image-name #"/?(?!.*/).*$" "")
         registry (get-registry registry-name)]
     (when registry
-      (:auth registry))))
+      (encode-auth registry))))
 
 (defn image-info
   "Returns a map containing information about a container image. Info is looked up by the image UUID."

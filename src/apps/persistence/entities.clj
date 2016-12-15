@@ -303,5 +303,5 @@
 ;; Docker registry auth information
 (defentity docker-registries
   (table :docker_registries)
-  (entity-fields :name :username :password [(raw "encode(concat('{\"username\":\"', username, '\",\"password\":\"', password, '\"}')::bytea, 'base64')") :auth])
+  (entity-fields :name :username :password)
   (pk :name))
