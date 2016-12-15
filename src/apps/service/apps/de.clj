@@ -292,18 +292,18 @@
     (app-metadata/permanently-delete-apps user req))
 
   (adminDeleteApp [_ app-id]
-    (app-admin/delete-app app-id))
+    (app-admin/delete-app (uuidify app-id)))
 
   (adminDeleteApp [_ system-id app-id]
     (validate-system-id system-id)
-    (app-admin/delete-app app-id))
+    (app-admin/delete-app (uuidify app-id)))
 
   (adminUpdateApp [_ body]
-    (app-admin/update-app user body))
+    (app-admin/update-app user (update-in body [:id] uuidify)))
 
   (adminUpdateApp [_ system-id body]
     (validate-system-id system-id)
-    (app-admin/update-app user body))
+    (app-admin/update-app user (update-in body [:id] uuidify)))
 
   (getAdminAppCategories [_ params]
     (listings/get-admin-app-groups user params))
@@ -359,11 +359,11 @@
 
   (updateAppIntegrationData [_ app-id integration-data-id]
     (when (util/uuid? app-id)
-      (integration-data/update-integration-data-for-app user app-id integration-data-id)))
+      (integration-data/update-integration-data-for-app user (uuidify app-id) integration-data-id)))
 
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
     (validate-system-id system-id)
-    (integration-data/update-integration-data-for-app user app-id integration-data-id))
+    (integration-data/update-integration-data-for-app user (uuidify app-id) integration-data-id))
 
   (updateToolIntegrationData [_ tool-id integration-data-id]
     (when (util/uuid? tool-id)

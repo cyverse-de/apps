@@ -258,13 +258,13 @@
     (.adminDeleteApp (util/get-apps-client clients) app-id))
 
   (adminDeleteApp [_ system-id app-id]
-    (.adminDeleteApp (util/get-apps-client clients system-id) app-id))
+    (.adminDeleteApp (util/get-apps-client clients system-id) system-id app-id))
 
   (adminUpdateApp [_ body]
     (.adminUpdateApp (util/get-apps-client clients) body))
 
   (adminUpdateApp [_ system-id body]
-    (.adminUpdateApp (util/get-apps-client clients system-id) body))
+    (.adminUpdateApp (util/get-apps-client clients system-id) system-id body))
 
   (getAdminAppCategories [_ params]
     (.getAdminAppCategories (util/get-apps-client clients) params))
@@ -308,7 +308,7 @@
          (first)))
 
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
-    (.updateAppIntegrationData (util/get-apps-client clients system-id) app-id integration-data-id))
+    (.updateAppIntegrationData (util/get-apps-client clients system-id) system-id app-id integration-data-id))
 
   (updateToolIntegrationData [_ tool-id integration-data-id]
     (->> (map #(.updateToolIntegrationData % tool-id integration-data-id) clients)
@@ -331,7 +331,7 @@
          (first)))
 
   (adminEditAppDocs [_ system-id app-id body]
-    (.adminEditAppDocs (util/get-apps-client clients system-id) app-id body))
+    (.adminEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
   (adminAddAppDocs [_ app-id body]
     (->> (map #(.adminAddAppDocs % app-id body) clients)

@@ -23,6 +23,9 @@
 (defn- test-hpc-app-modification [f]
   (is (thrown-with-msg? ExceptionInfo #"Cannot add or modify HPC apps" (f))))
 
+(defn- test-hpc-app-documentation-update [f]
+  (is (thrown-with-msg? ExceptionInfo #"Cannot edit documentation for HPC apps" (f))))
+
 (defn- test-non-uuid [f]
   (is (thrown-with-msg? ExceptionInfo #"is not a UUID" (f))))
 
@@ -199,3 +202,48 @@
 (deftest app-task-listing-should-contain-system-id
   (let [task-listing (apps/get-app-task-listing (get-user :testde1) (:system_id atf/test-app) (:id atf/test-app))]
     (is (= (:system_id atf/test-app) (:system_id (first (:tasks task-listing)))))))
+
+(deftest admin-delete-app-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/admin-delete-app (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest admin-delete-app-with-hpc-system-id
+  (test-hpc-app-modification #(apps/admin-delete-app (get-user :testde1) hpc-system-id fake-app-id)))
+
+(deftest admin-delete-app-with-invalid-app-id
+  (test-non-uuid #(apps/admin-delete-app (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest admin-update-app-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/admin-update-app (get-user :testde1) fake-system-id {:id fake-app-id})))
+
+(deftest admin-update-app-with-hpc-system-id
+  (test-hpc-app-modification #(apps/admin-update-app (get-user :testde1) hpc-system-id {:id fake-app-id})))
+
+(deftest admin-update-app-with-invalid-app-id
+  (test-non-uuid #(apps/admin-update-app (get-user :testde1) de-system-id {:id fake-app-id})))
+
+(deftest admin-get-app-details-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/admin-get-app-details (get-user :testde1) fake-system-id fake-app-id)))
+
+(deftest admin-get-app-details-with-invalid-app-id
+  (test-non-uuid #(apps/admin-get-app-details (get-user :testde1) de-system-id fake-app-id)))
+
+(deftest admin-edit-app-docs-with-invalid-system-id
+  (test-unrecognized-system-id #(apps/admin-edit-app-docs (get-user :testde1) fake-system-id fake-app-id {})))
+
+(deftest admin-edit-app-docs-with-hpc-system-id
+  (test-hpc-app-documentation-update #(apps/admin-edit-app-docs (get-user :testde1) hpc-system-id fake-app-id {})))
+
+(deftest admin-edit-app-docs-with-invalid-app-id
+  (test-non-uuid #(apps/admin-edit-app-docs (get-user :testde1) de-system-id fake-app-id {})))
+
+(deftest admin-edit-integration-data-with-invalid-system-id
+  (test-unrecognized-system-id
+   #(apps/update-app-integration-data (get-user :testde1) fake-system-id fake-app-id fake-app-id)))
+
+(deftest admin-edit-integration-data-with-invalid-system-id
+  (test-hpc-integration-data
+   #(apps/update-app-integration-data (get-user :testde1) hpc-system-id fake-app-id fake-app-id)))
+
+(deftest admin-edit-app-docs-with-invalid-app-id
+  (test-non-uuid
+   #(apps/update-app-integration-data (get-user :testde1) de-system-id fake-app-id fake-app-id)))
