@@ -68,9 +68,6 @@
   (addApp [_ system-id app]
     (.addApp (util/get-apps-client clients system-id) system-id app))
 
-  (previewCommandLine [_ app]
-    (.previewCommandLine (util/get-apps-client clients) app))
-
   (previewCommandLine [_ system-id app]
     (.previewCommandLine (util/get-apps-client clients system-id) system-id app))
 

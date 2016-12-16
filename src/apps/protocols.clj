@@ -15,7 +15,7 @@
   (adminSearchApps [_ search-term params])
   (canEditApps [_])
   (addApp [_ system-id app])
-  (previewCommandLine [_ app] [_ system-id app])
+  (previewCommandLine [_ system-id app])
   (validateDeletionRequest [_ deletion-request])
   (deleteApps [_ deletion-request])
   (getAppJobView [_ app-id] [_ system-id app-id])

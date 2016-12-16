@@ -69,9 +69,6 @@
     (validate-system-id system-id)
     (edit/add-app user app))
 
-  (previewCommandLine [_ app]
-    (app-metadata/preview-command-line app))
-
   (previewCommandLine [_ system-id app]
     (validate-system-id system-id)
     (app-metadata/preview-command-line app))
