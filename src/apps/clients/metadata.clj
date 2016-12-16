@@ -27,10 +27,11 @@
 (defn get-active-hierarchy-version
   [& {:keys [validate] :or {validate true}}]
   (let [version (db-categories/get-active-hierarchy-version)]
-    (when (and validate (empty? version))
-      (throw+ {:type  :clojure-commons.exception/not-found
-               :error "An app hierarchy version has not been set."}))
-    version))
+    (if (empty? version)
+      (when validate
+        (throw+ {:type  :clojure-commons.exception/not-found
+                 :error "An app hierarchy version has not been set."}))
+      version)))
 
 (defn delete-ontology
   [username ontology-version]
@@ -54,14 +55,16 @@
                                       app-id))
 
 (defn filter-targets-by-ontology-search
-  [username category-attrs search-term app-ids]
-  (metadata-client/filter-targets-by-ontology-search (config/metadata-client)
-                                                     username
-                                                     (get-active-hierarchy-version)
-                                                     category-attrs
-                                                     search-term
-                                                     [app-target-type]
-                                                     app-ids))
+  [username category-attrs search-term app-ids & {:keys [validate :or {validate true}]}]
+  (if-let [active-hierarchy-version (get-active-hierarchy-version :validate validate)]
+    (metadata-client/filter-targets-by-ontology-search (config/metadata-client)
+                                                       username
+                                                       active-hierarchy-version
+                                                       category-attrs
+                                                       search-term
+                                                       [app-target-type]
+                                                       app-ids)
+    []))
 
 (defn filter-hierarchy
   [username ontology-version root-iri attr app-ids]

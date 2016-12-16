@@ -48,7 +48,8 @@
                                         short-username
                                         category-attrs
                                         search_term
-                                        app-ids)))
+                                        app-ids
+                                        :validate false)))
         remove-nil-vals)))
 
 (defn list-hierarchies

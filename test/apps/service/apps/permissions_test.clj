@@ -16,7 +16,7 @@
             [permissions-client.core :as pc])
   (:import [clojure.lang ExceptionInfo]))
 
-(use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config tf/with-ontology atf/with-workspaces)
+(use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 (use-fixtures :each atf/with-public-apps atf/with-test-app)
 
 (deftest test-app-search
