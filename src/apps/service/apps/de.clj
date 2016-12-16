@@ -65,9 +65,6 @@
   (canEditApps [_]
     true)
 
-  (addApp [_ app]
-    (edit/add-app user app))
-
   (addApp [_ system-id app]
     (validate-system-id system-id)
     (edit/add-app user app))

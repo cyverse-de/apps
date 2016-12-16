@@ -30,14 +30,6 @@
     (ok (coerce! AppListing
                  (apps/search-apps current-user params))))
 
-  (POST "/" []
-    :query [params SecuredQueryParamsRequired]
-    :body [body (describe AppRequest "The App to add.")]
-    :return App
-    :summary "Add a new App."
-    :description "This service adds a new App to the user's workspace."
-    (ok (apps/add-app current-user body)))
-
   (POST "/arg-preview" []
     :query [params SecuredQueryParams]
     :body [body (describe AppPreviewRequest "The App to preview.")]

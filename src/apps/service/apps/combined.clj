@@ -65,9 +65,6 @@
   (canEditApps [_]
     (some #(.canEditApps %) clients))
 
-  (addApp [_ app]
-    (.addApp (util/get-apps-client clients) app))
-
   (addApp [_ system-id app]
     (.addApp (util/get-apps-client clients system-id) system-id app))
 

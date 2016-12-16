@@ -98,10 +98,8 @@
   (.adminSearchApps (get-apps-client user) search params))
 
 (defn add-app
-  ([user app]
-   (.addApp (get-apps-client user) app))
-  ([user system-id app]
-   (.addApp (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.addApp (get-apps-client user) system-id app))
 
 (defn preview-command-line
   ([user app]
