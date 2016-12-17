@@ -760,9 +760,11 @@
   (select [:apps :a]
           (join [:app_steps :s] {:a.id :s.app_id})
           (join [:tasks :t] {:s.task_id :t.id})
+          (join [:job_types :jt] {:t.job_type_id :jt.id})
           (fields [:s.id              :step_id]
                   [:t.id              :task_id]
                   [:t.tool_id         :tool_id]
+                  [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
           (where {:a.id (uuidify app-id)})))
 

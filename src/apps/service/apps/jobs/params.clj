@@ -126,9 +126,9 @@
   (map (partial update-app-group config) groups))
 
 (defn get-job-relaunch-info
-  [apps-client job]
+  [apps-client {system-id :system_id app-id :app_id :as job}]
   (let [submission (get-job-submission job)]
-    (update-in (assoc (.getAppJobView apps-client (:app_id job)) :debug (:debug submission false))
+    (update-in (assoc (.getAppJobView apps-client system-id app-id) :debug (:debug submission false))
                [:groups]
                (partial update-app-groups (:config submission)))))
 

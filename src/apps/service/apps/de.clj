@@ -82,10 +82,6 @@
     (.validateDeletionRequest this req)
     (app-metadata/delete-apps user req))
 
-  (getAppJobView [_ app-id]
-    (when (util/uuid? app-id)
-      (job-view/get-app (uuidify app-id))))
-
   (getAppJobView [_ system-id app-id]
     (validate-system-id system-id)
     (job-view/get-app (uuidify app-id)))

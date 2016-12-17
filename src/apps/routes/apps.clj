@@ -77,16 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (GET "/:app-id" []
-    :path-params [app-id :- AppIdJobViewPathParam]
-    :query [params SecuredQueryParams]
-    :summary "Obtain an app description."
-    :return AppJobView
-    :description "This service allows the Discovery Environment user interface to obtain an
-    app description that can be used to construct a job submission form."
-    (ok (coerce! AppJobView
-                 (apps/get-app-job-view current-user app-id))))
-
   (DELETE "/:app-id" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParams]

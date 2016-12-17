@@ -239,8 +239,8 @@
         remove-nil-values)))
 
 (defn submit
-  [apps-client user submission]
-  (let [[job-types app]    (.getAppSubmissionInfo apps-client (:app_id submission))
+  [apps-client user {app-id :app_id system-id :system_id :as submission}]
+  (let [[job-types app]    (.getAppSubmissionInfo apps-client system-id app-id)
         input-params-by-id (get-app-params app ap/param-ds-input-types)
         input-paths-by-id  (select-keys (:config submission) (keys input-params-by-id))]
     (if-let [path-list-stats (seq (load-path-list-stats user input-paths-by-id))]

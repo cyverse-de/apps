@@ -107,10 +107,6 @@
   (deleteApps [this deletion-request]
     (.validateDeletionRequest this deletion-request))
 
-  (getAppJobView [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.getApp agave app-id)))
-
   (getAppJobView [_ system-id app-id]
     (validate-system-id system-id)
     (.getApp agave app-id))
