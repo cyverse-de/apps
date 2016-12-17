@@ -90,10 +90,6 @@
     (validate-system-id system-id)
     (app-metadata/delete-app user (uuidify app-id)))
 
-  (relabelApp [_ app]
-    (when (util/uuid? (:id app))
-      (edit/relabel-app user app)))
-
   (relabelApp [_ system-id app]
     (validate-system-id system-id)
     (edit/relabel-app user (update app :id uuidify)))

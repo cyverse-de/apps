@@ -91,9 +91,6 @@
   (deleteApp [_ system-id app-id]
     (.deleteApp (util/get-apps-client clients system-id) system-id app-id))
 
-  (relabelApp [_ app]
-    (.relabelApp (util/get-apps-client clients) app))
-
   (relabelApp [_ system-id app]
     (.relabelApp (util/get-apps-client clients system-id) system-id app))
 
