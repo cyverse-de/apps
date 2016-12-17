@@ -20,7 +20,7 @@
   (deleteApps [_ deletion-request])
   (getAppJobView [_ system-id app-id])
   (getAppSubmissionInfo [_ system-id app-id])
-  (deleteApp [_ app-id] [_ system-id app-id])
+  (deleteApp [_ system-id app-id])
   (relabelApp [_ app] [_ system-id app])
   (updateApp [_ app] [_ system-id app])
   (copyApp [_ app-id] [_ system-id app-id])

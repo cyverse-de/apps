@@ -86,10 +86,6 @@
     (validate-system-id system-id)
     (job-view/get-app (uuidify app-id)))
 
-  (deleteApp [_ app-id]
-    (when (util/uuid? app-id)
-      (app-metadata/delete-app user (uuidify app-id))))
-
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
     (app-metadata/delete-app user (uuidify app-id)))

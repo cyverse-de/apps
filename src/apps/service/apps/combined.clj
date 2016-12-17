@@ -88,9 +88,6 @@
   (getAppSubmissionInfo [_ system-id app-id]
     (job-view/get-app-submission-info system-id app-id clients))
 
-  (deleteApp [_ app-id]
-    (.deleteApp (util/get-apps-client clients) app-id))
-
   (deleteApp [_ system-id app-id]
     (.deleteApp (util/get-apps-client clients system-id) system-id app-id))
 

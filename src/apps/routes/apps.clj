@@ -77,17 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (DELETE "/:app-id" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParams]
-    :summary "Logically Deleting an App"
-    :description "An app can be marked as deleted in the DE without being completely removed from
-    the database using this service. <b>Note</b>: an attempt to delete an App that is already
-    marked as deleted is treated as a no-op rather than an error condition. If the App
-    doesn't exist in the database at all, however, then that is treated as an error
-    condition."
-    (ok (apps/delete-app current-user app-id)))
-
   (PATCH "/:app-id" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParamsEmailRequired]
