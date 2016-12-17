@@ -94,10 +94,6 @@
     (validate-system-id system-id)
     (edit/relabel-app user (update app :id uuidify)))
 
-  (updateApp [_ app]
-    (when (util/uuid? (:id app))
-      (edit/update-app user app)))
-
   (updateApp [_ system-id app]
     (validate-system-id system-id)
     (edit/update-app user (update app :id uuidify)))

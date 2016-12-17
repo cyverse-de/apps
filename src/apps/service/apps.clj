@@ -122,10 +122,8 @@
   (.relabelApp (get-apps-client user) system-id app))
 
 (defn update-app
-  ([user app]
-   (.updateApp (get-apps-client user) app))
-  ([user system-id app]
-   (.updateApp (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.updateApp (get-apps-client user) system-id app))
 
 (defn copy-app
   ([user app-id]

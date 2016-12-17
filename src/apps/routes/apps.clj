@@ -77,25 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (PUT "/:app-id" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParamsEmailRequired]
-    :body [body (describe AppRequest "The App to update.")]
-    :return App
-    :summary "Update an App"
-    :description
-    (str "This service updates a single-step App in the database, as long as the App has not been submitted
-          for public use, and the app's name must not duplicate the name of any other app (visible to the
-          requesting user) under the same categories as this app."
-         (get-endpoint-delegate-block
-          "metadata"
-          "GET /avus/{target-type}/{target-id}")
-         "Where `{target-type}` is `app`."
-         (get-endpoint-delegate-block
-          "metadata"
-          "POST /avus/filter-targets"))
-    (ok (apps/update-app current-user (assoc body :id app-id))))
-
   (GET "/:app-id/integration-data" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParams]

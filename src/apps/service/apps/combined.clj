@@ -94,9 +94,6 @@
   (relabelApp [_ system-id app]
     (.relabelApp (util/get-apps-client clients system-id) system-id app))
 
-  (updateApp [_ app]
-    (.updateApp (util/get-apps-client clients) app))
-
   (updateApp [_ system-id app]
     (.updateApp (util/get-apps-client clients system-id) system-id app))
 

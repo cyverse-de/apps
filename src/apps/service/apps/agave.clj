@@ -119,10 +119,6 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (updateApp [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
-
   (updateApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
