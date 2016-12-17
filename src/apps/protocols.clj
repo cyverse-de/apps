@@ -62,7 +62,7 @@
   (adminDeleteCategory [_ category-id] [_ system-id category-id])
   (adminUpdateCategory [_ body] [_ system-id body])
   (getAppDocs [_ app-id] [_ system-id app-id])
-  (getAppIntegrationData [_ app-id] [_ system-id app-id])
+  (getAppIntegrationData [_ system-id app-id])
   (getToolIntegrationData [_ tool-id] [_ system-id tool-id])
   (updateAppIntegrationData [_ app-id integration-data-id] [_ system-id app-id integration-data-id])
   (updateToolIntegrationData [_ tool-id integration-data-id] [_ system-id tool-id integration-data-id])

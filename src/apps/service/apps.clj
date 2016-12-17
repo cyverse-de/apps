@@ -356,10 +356,8 @@
    (.getAppDocs (get-apps-client user) system-id app-id)))
 
 (defn get-app-integration-data
-  ([user app-id]
-   (.getAppIntegrationData (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppIntegrationData (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppIntegrationData (get-apps-client user) system-id app-id))
 
 (defn get-tool-integration-data
   [user tool-id]

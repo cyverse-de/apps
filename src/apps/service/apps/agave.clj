@@ -297,10 +297,6 @@
     (validate-system-id system-id)
     (empty-doc-map app-id))
 
-  (getAppIntegrationData [_ app-id]
-    (when-not (util/uuid? app-id)
-      (service/bad-request integration-data-rejection)))
-
   (getAppIntegrationData [_ system-id app-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))

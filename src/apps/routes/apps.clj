@@ -77,14 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (GET "/:app-id/integration-data" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParams]
-    :return IntegrationData
-    :summary "Return the Integration Data Record for an App"
-    :description "This service returns the integration data associated with an app."
-    (ok (apps/get-app-integration-data current-user app-id)))
-
   (POST "/:app-id/copy" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParamsRequired]
