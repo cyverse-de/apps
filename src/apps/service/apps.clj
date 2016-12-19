@@ -134,10 +134,8 @@
   (.getAppDetails (get-apps-client user) system-id app-id false))
 
 (defn admin-get-app-details
-  ([user app-id]
-   (.getAppDetails (get-apps-client user) app-id true))
-  ([user system-id app-id]
-   (.getAppDetails (get-apps-client user) system-id app-id true)))
+  [user system-id app-id]
+  (.getAppDetails (get-apps-client user) system-id app-id true))
 
 (defn remove-app-favorite
   ([user app-id]
