@@ -127,10 +127,6 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (getAppDetails [_ app-id admin?]
-    (when-not (util/uuid? app-id)
-      (listings/get-app-details agave app-id admin?)))
-
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
     (listings/get-app-details agave app-id admin?))

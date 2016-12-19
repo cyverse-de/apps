@@ -102,13 +102,6 @@
 
   ;; FIXME: remove the admin flag when we have a better way to deal with administrative
   ;; privileges.
-  (getAppDetails [_ app-id admin?]
-    (->> (map #(.getAppDetails % app-id admin?) clients)
-         (remove nil?)
-         (first)))
-
-  ;; FIXME: remove the admin flag when we have a better way to deal with administrative
-  ;; privileges.
   (getAppDetails [_ system-id app-id admin?]
     (.getAppDetails (util/get-apps-client clients system-id) system-id app-id admin?))
 

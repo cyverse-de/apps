@@ -103,11 +103,6 @@
     (edit/copy-app user (uuidify app-id)))
 
   ;; FIXME: remove the admin flag when we have a better way to do this.
-  (getAppDetails [_ app-id admin?]
-    (when (util/uuid? app-id)
-      (listings/get-app-details user (uuidify app-id) admin?)))
-
-  ;; FIXME: remove the admin flag when we have a better way to do this.
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
     (listings/get-app-details user (uuidify app-id) admin?))

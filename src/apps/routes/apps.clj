@@ -77,20 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (GET "/:app-id/details" []
-    :path-params [app-id :- AppIdJobViewPathParam]
-    :query [params SecuredQueryParams]
-    :return AppDetails
-    :summary "Get App Details"
-    :description
-    (str "This service is used by the DE to obtain high-level details about a single App."
-         (get-endpoint-delegate-block
-          "metadata"
-          "POST /ontologies/{ontology-version}/filter")
-         "Please see the metadata service documentation for information about the `hierarchies` response field.")
-    (ok (coerce! AppDetails
-                 (apps/get-app-details current-user app-id))))
-
   (GET "/:app-id/documentation" []
     :path-params [app-id :- AppIdJobViewPathParam]
     :query [params SecuredQueryParams]
