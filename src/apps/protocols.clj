@@ -33,7 +33,7 @@
   (rateApp [_ system-id app-id rating])
   (getAppTaskListing [_ system-id app-id])
   (getAppToolListing [_ system-id app-id])
-  (getAppUi [_ app-id] [_ system-id app-id])
+  (getAppUi [_ system-id app-id])
   (getAppInputIds [_ app-id] [_ system-id app-id])
   (addPipeline [_ pipeline])
   (formatPipelineTasks [_ pipeline])

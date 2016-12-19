@@ -139,10 +139,6 @@
     (validate-system-id system-id)
     (listings/get-app-tool-listing user (uuidify app-id)))
 
-  (getAppUi [_ app-id]
-    (when (util/uuid? app-id)
-      (edit/get-app-ui user (uuidify app-id))))
-
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
     (edit/get-app-ui user (uuidify app-id)))

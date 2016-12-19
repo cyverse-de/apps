@@ -163,10 +163,6 @@
     (validate-system-id system-id)
     (.getAppToolListing agave app-id))
 
-  (getAppUi [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
-
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))

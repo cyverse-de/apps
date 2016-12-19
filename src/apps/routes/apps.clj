@@ -97,16 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (GET "/:app-id/ui" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParamsEmailRequired]
-    :return App
-    :summary "Make an App Available for Editing"
-    :description "The app integration utility in the DE uses this service to obtain the App
-    description JSON so that it can be edited. The App must have been integrated by the
-    requesting user."
-    (ok (apps/get-app-ui current-user app-id)))
-
   (context "/:system-id" []
     :path-params [system-id :- SystemId]
 
