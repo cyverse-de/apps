@@ -127,10 +127,6 @@
     (validate-system-id system-id)
     (app-metadata/delete-app-rating user (uuidify app-id)))
 
-  (rateApp [_ app-id rating]
-    (when (util/uuid? app-id)
-      (app-metadata/rate-app user (uuidify app-id) rating)))
-
   (rateApp [_ system-id app-id rating]
     (validate-system-id system-id)
     (app-metadata/rate-app user (uuidify app-id) rating))

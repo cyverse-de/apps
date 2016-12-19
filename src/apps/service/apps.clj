@@ -158,10 +158,8 @@
   (.deleteAppRating (get-apps-client user) system-id app-id))
 
 (defn rate-app
-  ([user app-id rating]
-   (.rateApp (get-apps-client user) app-id rating))
-  ([user system-id app-id rating]
-   (.rateApp (get-apps-client user) system-id app-id rating)))
+  [user system-id app-id rating]
+  (.rateApp (get-apps-client user) system-id app-id rating))
 
 (defn get-app-task-listing
   ([user app-id]

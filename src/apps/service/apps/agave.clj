@@ -151,10 +151,6 @@
     (validate-system-id system-id)
     (reject-app-rating-request))
 
-  (rateApp [_ app-id rating]
-    (when-not (util/uuid? app-id)
-      (reject-app-rating-request)))
-
   (rateApp [_ system-id app-id rating]
     (validate-system-id system-id)
     (reject-app-rating-request))
