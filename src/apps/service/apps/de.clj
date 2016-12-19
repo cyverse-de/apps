@@ -135,10 +135,6 @@
     (validate-system-id system-id)
     (listings/get-app-task-listing user (uuidify app-id)))
 
-  (getAppToolListing [_ app-id]
-    (when (util/uuid? app-id)
-      (listings/get-app-tool-listing user (uuidify app-id))))
-
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (listings/get-app-tool-listing user (uuidify app-id)))

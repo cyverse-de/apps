@@ -159,10 +159,6 @@
     (validate-system-id system-id)
     (.listAppTasks agave app-id))
 
-  (getAppToolListing [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.getAppToolListing agave app-id)))
-
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (.getAppToolListing agave app-id))

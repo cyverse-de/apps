@@ -166,10 +166,8 @@
   (.getAppTaskListing (get-apps-client user) system-id app-id))
 
 (defn get-app-tool-listing
-  ([user app-id]
-   (.getAppToolListing (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppToolListing (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppToolListing (get-apps-client user) system-id app-id))
 
 (defn get-app-ui
   ([user app-id]

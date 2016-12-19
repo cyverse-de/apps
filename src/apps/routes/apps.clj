@@ -97,16 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (GET "/:app-id/tools" []
-    :path-params [app-id :- AppIdJobViewPathParam]
-    :query [params SecuredQueryParams]
-    :return NewToolListing
-    :summary "List Tools used by an App"
-    :description "This service lists information for all of the tools that are associated with an App.
-    This information used to be included in the results of the App listing service."
-    (ok (coerce! NewToolListing
-                 (apps/get-app-tool-listing current-user app-id))))
-
   (GET "/:app-id/ui" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParamsEmailRequired]
