@@ -97,17 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (GET "/:app-id/tasks" []
-    :path-params [app-id :- AppIdJobViewPathParam]
-    :query [params SecuredQueryParams]
-    :return AppTaskListing
-    :summary "List Tasks with File Parameters in an App"
-    :description "When a pipeline is being created, the UI needs to know what types of files are
-    consumed by and what types of files are produced by each App's task in the pipeline. This
-    service provides that information."
-    (ok (coerce! AppTaskListing
-                 (apps/get-app-task-listing current-user app-id))))
-
   (GET "/:app-id/tools" []
     :path-params [app-id :- AppIdJobViewPathParam]
     :query [params SecuredQueryParams]

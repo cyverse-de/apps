@@ -131,10 +131,6 @@
     (validate-system-id system-id)
     (app-metadata/rate-app user (uuidify app-id) rating))
 
-  (getAppTaskListing [_ app-id]
-    (when (util/uuid? app-id)
-      (listings/get-app-task-listing user (uuidify app-id))))
-
   (getAppTaskListing [_ system-id app-id]
     (validate-system-id system-id)
     (listings/get-app-task-listing user (uuidify app-id)))

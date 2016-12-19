@@ -155,10 +155,6 @@
     (validate-system-id system-id)
     (reject-app-rating-request))
 
-  (getAppTaskListing [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.listAppTasks agave app-id)))
-
   (getAppTaskListing [_ system-id app-id]
     (validate-system-id system-id)
     (.listAppTasks agave app-id))

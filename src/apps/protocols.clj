@@ -31,7 +31,7 @@
   (makeAppPublic [_ system-id app])
   (deleteAppRating [_ system-id app-id])
   (rateApp [_ system-id app-id rating])
-  (getAppTaskListing [_ app-id] [_ system-id app-id])
+  (getAppTaskListing [_ system-id app-id])
   (getAppToolListing [_ app-id] [_ system-id app-id])
   (getAppUi [_ app-id] [_ system-id app-id])
   (getAppInputIds [_ app-id] [_ system-id app-id])
