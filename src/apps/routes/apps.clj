@@ -97,15 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (DELETE "/:app-id/rating" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParams]
-    :return RatingResponse
-    :summary "Delete an App Rating"
-    :description "The DE uses this service to remove a rating that a user has previously made. This
-    service deletes the authenticated user's rating for the corresponding app-id."
-    (ok (apps/delete-app-rating current-user app-id)))
-
   (POST "/:app-id/rating" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParams]

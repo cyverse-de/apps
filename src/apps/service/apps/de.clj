@@ -123,10 +123,6 @@
     (validate-system-id system-id)
     (app-metadata/make-app-public user (update app :id uuidify)))
 
-  (deleteAppRating [_ app-id]
-    (when (util/uuid? app-id)
-      (app-metadata/delete-app-rating user (uuidify app-id))))
-
   (deleteAppRating [_ system-id app-id]
     (validate-system-id system-id)
     (app-metadata/delete-app-rating user (uuidify app-id)))

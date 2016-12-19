@@ -147,10 +147,6 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (deleteAppRating [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-rating-request)))
-
   (deleteAppRating [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-rating-request))

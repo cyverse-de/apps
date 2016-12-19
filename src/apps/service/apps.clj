@@ -154,10 +154,8 @@
   (.makeAppPublic (get-apps-client user) system-id app))
 
 (defn delete-app-rating
-  ([user app-id]
-   (.deleteAppRating (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.deleteAppRating (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.deleteAppRating (get-apps-client user) system-id app-id))
 
 (defn rate-app
   ([user app-id rating]

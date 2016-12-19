@@ -117,9 +117,6 @@
   (makeAppPublic [_ system-id app]
     (.makeAppPublic (util/get-apps-client clients system-id) system-id app))
 
-  (deleteAppRating [_ app-id]
-    (.deleteAppRating (util/get-apps-client clients) app-id))
-
   (deleteAppRating [_ system-id app-id]
     (.deleteAppRating (util/get-apps-client clients system-id) system-id app-id))
 
