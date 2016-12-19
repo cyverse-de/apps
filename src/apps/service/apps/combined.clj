@@ -253,11 +253,6 @@
   (adminUpdateCategory [_ body]
     (.adminUpdateCategory (util/get-apps-client clients) body))
 
-  (getAppDocs [_ app-id]
-    (->> (map #(.getAppDocs % app-id) clients)
-         (remove nil?)
-         (first)))
-
   (getAppDocs [_ system-id app-id]
     (.getAppDocs (util/get-apps-client clients system-id) system-id app-id))
 

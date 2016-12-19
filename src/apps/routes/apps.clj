@@ -77,15 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (GET "/:app-id/documentation" []
-    :path-params [app-id :- AppIdJobViewPathParam]
-    :query [params SecuredQueryParams]
-    :return AppDocumentation
-    :summary "Get App Documentation"
-    :description "This service is used by the DE to obtain documentation for a single App"
-    (ok (coerce! AppDocumentation
-                 (apps/get-app-docs current-user app-id))))
-
   (PATCH "/:app-id/documentation" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParamsEmailRequired]

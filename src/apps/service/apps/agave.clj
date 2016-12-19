@@ -281,10 +281,6 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (getAppDocs [_ app-id]
-    (when-not (util/uuid? app-id)
-      (empty-doc-map app-id)))
-
   (getAppDocs [_ system-id app-id]
     (validate-system-id system-id)
     (empty-doc-map app-id))

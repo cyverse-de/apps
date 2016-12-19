@@ -302,10 +302,6 @@
     (validate-system-id system-id)
     (app-admin/update-category body))
 
-  (getAppDocs [_ app-id]
-    (when (util/uuid? app-id)
-      (docs/get-app-docs user (uuidify app-id))))
-
   (getAppDocs [_ system-id app-id]
     (validate-system-id system-id)
     (docs/get-app-docs user (uuidify app-id)))

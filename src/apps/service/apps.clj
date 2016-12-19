@@ -344,10 +344,8 @@
     (.listAppsInCategory apps-client id {})))
 
 (defn get-app-docs
-  ([user app-id]
-   (.getAppDocs (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppDocs (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppDocs (get-apps-client user) system-id app-id))
 
 (defn get-app-integration-data
   [user system-id app-id]
