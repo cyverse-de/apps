@@ -143,10 +143,6 @@
     (validate-system-id system-id)
     false)
 
-  (makeAppPublic [_ app]
-    (when-not (util/uuid? (:id app))
-      (reject-app-integration-request)))
-
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
     (reject-app-integration-request))

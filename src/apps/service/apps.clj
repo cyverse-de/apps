@@ -150,10 +150,8 @@
   {:publishable (.isAppPublishable (get-apps-client user) system-id app-id)})
 
 (defn make-app-public
-  ([user app]
-   (.makeAppPublic (get-apps-client user) app))
-  ([user system-id app]
-   (.makeAppPublic (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.makeAppPublic (get-apps-client user) system-id app))
 
 (defn delete-app-rating
   ([user app-id]

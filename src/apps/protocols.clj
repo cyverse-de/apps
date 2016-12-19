@@ -28,7 +28,7 @@
   (removeAppFavorite [_ system-id app-id])
   (addAppFavorite [_ system-id app-id])
   (isAppPublishable [_ system-id app-id])
-  (makeAppPublic [_ app] [_ system-id app])
+  (makeAppPublic [_ system-id app])
   (deleteAppRating [_ app-id] [_ system-id app-id])
   (rateApp [_ app-id rating] [_ system-id app-id rating])
   (getAppTaskListing [_ app-id] [_ system-id app-id])

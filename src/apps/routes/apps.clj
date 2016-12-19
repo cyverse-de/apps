@@ -97,18 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (POST "/:app-id/publish" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParamsEmailRequired]
-    :body [body (describe PublishAppRequest "The user's Publish App Request.")]
-    :summary "Submit an App for Public Use"
-    :description "This service can be used to submit a private App for public use. The user supplies
-    basic information about the App and a suggested location for it. The service records the
-    information and suggested location then places the App in the Beta category. A Tito
-    administrator can subsequently move the App to the suggested location at a later time if it
-    proves to be useful."
-    (ok (apps/make-app-public current-user (assoc body :id app-id))))
-
   (DELETE "/:app-id/rating" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParams]
