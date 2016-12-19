@@ -97,15 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (GET "/:app-id/is-publishable" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParams]
-    :summary "Determine if an App Can be Made Public"
-    :description "A multi-step App can't be made public if any of the Tasks that are included in it
-    are not public. This endpoint returns a true flag if the App is a single-step App or it's a
-    multistep App in which all of the Tasks included in the pipeline are public."
-    (ok (apps/app-publishable? current-user app-id)))
-
   (POST "/:app-id/publish" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParamsEmailRequired]

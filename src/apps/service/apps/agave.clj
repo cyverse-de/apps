@@ -139,10 +139,6 @@
     (validate-system-id system-id)
     (reject-app-favorite-request))
 
-  (isAppPublishable [_ app-id]
-    (when-not (util/uuid? app-id)
-      false))
-
   (isAppPublishable [_ system-id app-id]
     (validate-system-id system-id)
     false)
