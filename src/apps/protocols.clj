@@ -23,7 +23,7 @@
   (deleteApp [_ system-id app-id])
   (relabelApp [_ system-id app])
   (updateApp [_ system-id app])
-  (copyApp [_ app-id] [_ system-id app-id])
+  (copyApp [_ system-id app-id])
   (getAppDetails [_ app-id admin?] [_ system-id app-id admin?])
   (removeAppFavorite [_ app-id] [_ system-id app-id])
   (addAppFavorite [_ app-id] [_ system-id app-id])

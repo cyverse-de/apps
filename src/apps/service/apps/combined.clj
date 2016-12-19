@@ -97,9 +97,6 @@
   (updateApp [_ system-id app]
     (.updateApp (util/get-apps-client clients system-id) system-id app))
 
-  (copyApp [_ app-id]
-    (.copyApp (util/get-apps-client clients) app-id))
-
   (copyApp [_ system-id app-id]
     (.copyApp (util/get-apps-client clients system-id) system-id app-id))
 

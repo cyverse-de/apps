@@ -98,10 +98,6 @@
     (validate-system-id system-id)
     (edit/update-app user (update app :id uuidify)))
 
-  (copyApp [_ app-id]
-    (when (util/uuid? app-id)
-      (edit/copy-app user app-id)))
-
   (copyApp [_ system-id app-id]
     (validate-system-id system-id)
     (edit/copy-app user (uuidify app-id)))

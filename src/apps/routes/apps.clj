@@ -77,14 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (POST "/:app-id/copy" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParamsRequired]
-    :return App
-    :summary "Make a Copy of an App Available for Editing"
-    :description "This service can be used to make a copy of an App in the user's workspace."
-    (ok (apps/copy-app current-user app-id)))
-
   (GET "/:app-id/details" []
     :path-params [app-id :- AppIdJobViewPathParam]
     :query [params SecuredQueryParams]
