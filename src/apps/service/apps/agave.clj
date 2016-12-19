@@ -131,10 +131,6 @@
     (validate-system-id system-id)
     (listings/get-app-details agave app-id admin?))
 
-  (removeAppFavorite [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-favorite-request)))
-
   (removeAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-favorite-request))

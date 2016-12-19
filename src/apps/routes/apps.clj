@@ -97,15 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (DELETE "/:app-id/favorite" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParams]
-    :summary "Removing an App as a Favorite"
-    :description "Apps can be marked as favorites in the DE, which allows users to access them
-    without having to search. This service is used to remove an App from a user's favorites
-    list."
-    (ok (apps/remove-app-favorite current-user app-id)))
-
   (PUT "/:app-id/favorite" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParams]

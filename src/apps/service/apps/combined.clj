@@ -105,9 +105,6 @@
   (getAppDetails [_ system-id app-id admin?]
     (.getAppDetails (util/get-apps-client clients system-id) system-id app-id admin?))
 
-  (removeAppFavorite [_ app-id]
-    (.removeAppFavorite (util/get-apps-client clients) app-id))
-
   (removeAppFavorite [_ system-id app-id]
     (.removeAppFavorite (util/get-apps-client clients system-id) system-id app-id))
 

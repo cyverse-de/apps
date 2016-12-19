@@ -107,10 +107,6 @@
     (validate-system-id system-id)
     (listings/get-app-details user (uuidify app-id) admin?))
 
-  (removeAppFavorite [_ app-id]
-    (when (util/uuid? app-id)
-      (app-metadata/remove-app-favorite user (uuidify app-id))))
-
   (removeAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
     (app-metadata/remove-app-favorite user (uuidify app-id)))

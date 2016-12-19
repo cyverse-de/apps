@@ -25,7 +25,7 @@
   (updateApp [_ system-id app])
   (copyApp [_ system-id app-id])
   (getAppDetails [_ system-id app-id admin?])
-  (removeAppFavorite [_ app-id] [_ system-id app-id])
+  (removeAppFavorite [_ system-id app-id])
   (addAppFavorite [_ app-id] [_ system-id app-id])
   (isAppPublishable [_ app-id] [_ system-id app-id])
   (makeAppPublic [_ app] [_ system-id app])
