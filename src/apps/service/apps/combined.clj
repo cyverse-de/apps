@@ -108,9 +108,6 @@
   (removeAppFavorite [_ system-id app-id]
     (.removeAppFavorite (util/get-apps-client clients system-id) system-id app-id))
 
-  (addAppFavorite [_ app-id]
-    (.addAppFavorite (util/get-apps-client clients) app-id))
-
   (addAppFavorite [_ system-id app-id]
     (.addAppFavorite (util/get-apps-client clients system-id) system-id app-id))
 

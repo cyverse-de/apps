@@ -135,10 +135,6 @@
     (validate-system-id system-id)
     (reject-app-favorite-request))
 
-  (addAppFavorite [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-favorite-request)))
-
   (addAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-favorite-request))

@@ -142,10 +142,8 @@
   (.removeAppFavorite (get-apps-client user) system-id app-id))
 
 (defn add-app-favorite
-  ([user app-id]
-   (.addAppFavorite (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.addAppFavorite (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.addAppFavorite (get-apps-client user) system-id app-id))
 
 (defn app-publishable?
   ([user app-id]

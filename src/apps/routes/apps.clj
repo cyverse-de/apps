@@ -97,14 +97,6 @@
     (ok (coerce! AppDocumentation
                  (apps/owner-add-app-docs current-user app-id body))))
 
-  (PUT "/:app-id/favorite" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParams]
-    :summary "Marking an App as a Favorite"
-    :description "Apps can be marked as favorites in the DE, which allows users to access them without
-    having to search. This service is used to add an App to a user's favorites list."
-    (ok (apps/add-app-favorite current-user app-id)))
-
   (GET "/:app-id/is-publishable" []
     :path-params [app-id :- AppIdPathParam]
     :query [params SecuredQueryParams]
