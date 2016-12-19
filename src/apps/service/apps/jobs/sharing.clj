@@ -112,8 +112,8 @@
   (first (remove nil? (map f (jp/list-child-jobs job-id)))))
 
 (defn- list-job-inputs
-  [apps-client job]
-  (->> (mapv keyword (.getAppInputIds apps-client (:app_id job)))
+  [apps-client {system-id :system_id app-id :app_id :as job}]
+  (->> (mapv keyword (.getAppInputIds apps-client system-id app-id))
        (select-keys (job-params/get-job-config job))
        vals
        flatten

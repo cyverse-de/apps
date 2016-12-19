@@ -167,10 +167,6 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (getAppInputIds [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.getAppInputIds agave app-id)))
-
   (getAppInputIds [_ system-id app-id]
     (validate-system-id system-id)
     (.getAppInputIds agave app-id))
