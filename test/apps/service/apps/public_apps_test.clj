@@ -28,12 +28,11 @@
   (let [user        (get-user :testde1)
         app         (atf/create-test-app user "To be published")
         _           (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
-        _           (apps/make-app-public user app)
-        ;FIXME listed      (first (:apps (apps/search-apps user {:search (:name app)})))
+        _           (apps/make-app-public user de-system-id app)
+        listed      (first (:apps (apps/search-apps user {:search (:name app)})))
         beta-id     (:id (atf/get-beta-category user))
         apps        (list-apps user beta-id)
-        public-apps (list-apps user my-public-apps-id)
-        listed      (first (find-app app public-apps))]
+        public-apps (list-apps user my-public-apps-id)]
     (is (not (nil? listed)))
     (is (:is_public listed))
     (is (empty? (find-app app apps)))
