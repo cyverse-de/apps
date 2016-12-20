@@ -7,7 +7,11 @@
 (def AppPermissionEnum (enum "read" "write" "own" ""))
 (def AnalysisPermissionEnum (enum "read" "own" ""))
 
-(defschema AppIdList
+(defschema QualifiedAppId
+  {:system_id SystemId
+   :app_id    (describe NonBlankString "The app ID")})
+
+(defschema QualifiedAppIdList
   {:apps (describe [NonBlankString] "A List of app IDs")})
 
 (defschema UserPermissionListElement
@@ -23,9 +27,8 @@
   {:apps (describe [AppPermissionListElement] "The list of app permissions")})
 
 (defschema AppSharingRequestElement
-  {:system_id  SystemId
-   :app_id     (describe NonBlankString "The app ID")
-   :permission (describe AppPermissionEnum "The requested permission level")})
+  (assoc QualifiedAppId
+    :permission (describe AppPermissionEnum "The requested permission level")))
 
 (defschema AppSharingResponseElement
   (assoc AppSharingRequestElement
@@ -47,12 +50,8 @@
 (defschema AppSharingResponse
   {:sharing (describe [UserAppSharingResponseElement] "The list of app sharing responses")})
 
-(defschema AppUnsharingRequestElement
-  {:system_id            SystemId
-   :app_id               (describe NonBlankString "The app ID")})
-
 (defschema AppUnsharingResponseElement
-  (assoc AppUnsharingRequestElement
+  (assoc QualifiedAppId
     :app_id               (describe NonBlankString "The app ID")
     :app_name             (describe NonBlankString "The app name")
     :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
@@ -60,7 +59,7 @@
 
 (defschema UserAppUnsharingRequestElement
   {:user (describe NonBlankString "The user ID")
-   :apps (describe [AppUnsharingRequestElement] "The list of app unsharing requests for the user.")})
+   :apps (describe [QualifiedAppId] "The list of app unsharing requests for the user.")})
 
 (defschema UserAppUnsharingResponseElement
   (assoc UserAppUnsharingRequestElement

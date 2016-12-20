@@ -305,8 +305,9 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
-  (listAppPermissions [_ app-ids]
-    (.listAppPermissions agave app-ids))
+  (listAppPermissions [_ qualified-app-ids]
+    (validate-system-ids (set (map :system_id qualified-app-ids)))
+    (.listAppPermissions agave (map :app_id qualified-app-ids)))
 
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))

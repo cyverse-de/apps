@@ -270,8 +270,12 @@
   (adminAddAppDocs [_ system-id app-id body]
     (.adminAddAppDocs (util/get-apps-client clients system-id) app-id body))
 
-  (listAppPermissions [_ app-ids]
-    (mapcat #(.listAppPermissions % app-ids) clients))
+  (listAppPermissions [_ qualified-app-ids]
+    (->> (group-by :system_id qualified-app-ids)
+         (mapcat (fn [[system-id qualified-app-ids-for-system]]
+                   (let [client (util/get-apps-client clients system-id)]
+                     (.listAppPermissions client qualified-app-ids-for-system))))
+         doall))
 
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))

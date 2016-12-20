@@ -326,9 +326,9 @@
     (validate-system-id system-id)
     (docs/add-app-docs user (uuidify app-id) body))
 
-  (listAppPermissions [_ app-ids]
-    (when-let [uuids (util/extract-uuids app-ids)]
-      (perms/list-app-permissions user uuids)))
+  (listAppPermissions [_ qualified-app-ids]
+    (validate-system-ids (set (map :system_id qualified-app-ids)))
+    (perms/list-app-permissions user (mapv (comp uuidify :app_id) qualified-app-ids)))
 
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))

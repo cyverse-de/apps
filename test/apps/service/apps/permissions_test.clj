@@ -19,6 +19,9 @@
 (use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 (use-fixtures :each atf/with-public-apps atf/with-test-app)
 
+(defn list-app-permissions [user & app-ids]
+  (apps/list-app-permissions user (mapv #(hash-map :system_id de-system-id :app_id %) app-ids)))
+
 (deftest test-app-search
   (let [{username :shortUsername :as user} (get-user :testde1)]
     (is (= 1 (:total (apps/search-apps user {:search (:name test-app)}))))
@@ -325,9 +328,9 @@
 (deftest test-permission-listings
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
-    (is (empty? (-> (apps/list-app-permissions testde1 [(:id test-app)]) :apps first :permissions)))
+    (is (empty? (-> (list-app-permissions testde1 (:id test-app)) :apps first :permissions)))
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "write")
-    (let [perms (-> (apps/list-app-permissions testde1 [(:id test-app)]) :apps first :permissions)]
+    (let [perms (-> (list-app-permissions testde1 (:id test-app)) :apps first :permissions)]
       (is (= 1 (count perms)))
       (is (= testde2-username (-> perms first :user)))
       (is (= "write" (-> perms first :permission))))
@@ -335,13 +338,13 @@
 
 (deftest test-permission-listings-no-privs
   (let [{username :shortUsername :as user} (get-user :testde2)]
-    (is (thrown-with-msg? ExceptionInfo #"insufficient privileges" (apps/list-app-permissions user [(:id test-app)])))))
+    (is (thrown-with-msg? ExceptionInfo #"insufficient privileges" (list-app-permissions user (:id test-app))))))
 
 (deftest test-permission-listings-read-privs
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "read")
-    (let [perms (-> (apps/list-app-permissions testde2 [(:id test-app)]) :apps first :permissions)]
+    (let [perms (-> (list-app-permissions testde2 (:id test-app)) :apps first :permissions)]
       (is (= 1 (count perms)))
       (is (= testde1-username (-> perms first :user)))
       (is (= "own" (-> perms first :permission))))))

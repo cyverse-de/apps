@@ -43,7 +43,7 @@
 
   (POST "/permission-lister" []
     :query [params SecuredQueryParams]
-    :body [body (describe perms/AppIdList "The app permission listing request.")]
+    :body [body (describe perms/QualifiedAppIdList "The app permission listing request.")]
     :return perms/AppPermissionListing
     :summary "List App Permissions"
     :description "This endpoint allows the caller to list the permissions for one or more apps. The
