@@ -1,5 +1,6 @@
 (ns apps.routes.schemas.permission
-  (:use [common-swagger-api.schema :only [describe ErrorResponse NonBlankString]]
+  (:use [apps.routes.params :only [SystemId]]
+        [common-swagger-api.schema :only [describe ErrorResponse NonBlankString]]
         [schema.core :only [defschema optional-key enum]])
   (:import [java.util UUID]))
 
@@ -22,7 +23,8 @@
   {:apps (describe [AppPermissionListElement] "The list of app permissions")})
 
 (defschema AppSharingRequestElement
-  {:app_id     (describe NonBlankString "The app ID")
+  {:system_id  SystemId
+   :app_id     (describe NonBlankString "The app ID")
    :permission (describe AppPermissionEnum "The requested permission level")})
 
 (defschema AppSharingResponseElement
@@ -45,15 +47,20 @@
 (defschema AppSharingResponse
   {:sharing (describe [UserAppSharingResponseElement] "The list of app sharing responses")})
 
+(defschema AppUnsharingRequestElement
+  {:system_id            SystemId
+   :app_id               (describe NonBlankString "The app ID")})
+
 (defschema AppUnsharingResponseElement
-  {:app_id               (describe NonBlankString "The app ID")
-   :app_name             (describe NonBlankString "The app name")
-   :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
-   (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")})
+  (assoc AppUnsharingRequestElement
+    :app_id               (describe NonBlankString "The app ID")
+    :app_name             (describe NonBlankString "The app name")
+    :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
+    (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")))
 
 (defschema UserAppUnsharingRequestElement
   {:user (describe NonBlankString "The user ID")
-   :apps (describe [NonBlankString] "The list of app IDs")})
+   :apps (describe [AppUnsharingRequestElement] "The list of app unsharing requests for the user.")})
 
 (defschema UserAppUnsharingResponseElement
   (assoc UserAppUnsharingRequestElement

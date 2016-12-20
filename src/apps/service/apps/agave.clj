@@ -305,39 +305,28 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
-  ;; TODO: this will have to be changed when the corresponding endpoint is changed.
   (listAppPermissions [_ app-ids]
-    (when (and (user-has-access-token?)
-               (some (complement util/uuid?) app-ids))
-      (.listAppPermissions agave app-ids)))
+    (.listAppPermissions agave app-ids))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
     (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (shareAppWithUser [_ app-names sharee app-id level]
-    (when (and (user-has-access-token?)
-               (not (util/uuid? app-id)))
-      (sharing/share-app-with-user agave app-names sharee app-id level)))
+  (shareAppWithUser [_ app-names sharee system-id app-id level]
+    (validate-system-id system-id)
+    (sharing/share-app-with-user agave app-names sharee app-id level))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (unshareAppsWithUser [self app-names sharee app-ids]
-    (app-permissions/process-user-app-unsharing-requests self app-names sharee app-ids))
+  (unshareAppsWithUser [self app-names sharee user-app-unsharing-requests]
+    (app-permissions/process-user-app-unsharing-requests self app-names sharee user-app-unsharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (unshareAppWithUser [_ app-names sharee app-id]
-    (when (and (user-has-access-token?)
-               (not (util/uuid? app-id)))
-      (sharing/unshare-app-with-user agave app-names sharee app-id)))
+  (unshareAppWithUser [_ app-names sharee system-id app-id]
+    (validate-system-id system-id)
+    (sharing/unshare-app-with-user agave app-names sharee app-id))
 
   (hasAppPermission [_ username app-id required-level]
     (when (and (user-has-access-token?)

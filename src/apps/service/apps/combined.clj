@@ -279,19 +279,17 @@
   (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
     (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
-  (shareAppWithUser [_ app-names sharee app-id level]
-    (or (first (remove nil? (map #(.shareAppWithUser % app-names sharee app-id level) clients)))
-        (app-permissions/app-sharing-failure app-names app-id level nil nil (str "app ID " app-id " does not exist"))))
+  (shareAppWithUser [_ app-names sharee system-id app-id level]
+    (.shareAppWithUser (util/get-apps-client clients system-id) app-names sharee system-id app-id level))
 
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
-  (unshareAppsWithUser [self app-names sharee app-ids]
-    (app-permissions/process-user-app-unsharing-requests self app-names sharee app-ids))
+  (unshareAppsWithUser [self app-names sharee app-unsharing-requests]
+    (app-permissions/process-user-app-unsharing-requests self app-names sharee app-unsharing-requests))
 
-  (unshareAppWithUser [self app-names sharee app-id]
-    (or (first (remove nil? (map #(.unshareAppWithUser % app-names sharee app-id) clients)))
-        (app-permissions/app-unsharing-failure app-names app-id nil (str "app ID " app-id " does not exist"))))
+  (unshareAppWithUser [self app-names sharee system-id app-id]
+    (.unshareAppWithUser (util/get-apps-client clients system-id) app-names sharee system-id app-id))
 
   (hasAppPermission [_ username app-id required-level]
     (first (remove nil? (map #(.hasAppPermission % username app-id required-level) clients))))

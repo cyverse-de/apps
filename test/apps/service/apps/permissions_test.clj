@@ -265,7 +265,8 @@
 
 (defn share-app [sharer sharee app-id level]
   (apps/share-apps sharer [{:user (:shortUsername sharee)
-                            :apps [{:app_id     app-id
+                            :apps [{:system_id  de-system-id
+                                    :app_id     app-id
                                     :permission level}]}]))
 
 (deftest test-sharing
@@ -349,7 +350,8 @@
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "read")
-    (let [responses (:unsharing (apps/unshare-apps testde1 [{:user testde2-username :apps [(:id test-app)]}]))
+    (let [requests  [{:user testde2-username :apps [{:system_id de-system-id :app_id (:id test-app)}]}]
+          responses (:unsharing (apps/unshare-apps testde1 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
@@ -362,7 +364,8 @@
   (let [{testde2-username :shortUsername :as testde2} (get-user :testde2)
         {testde3-username :shortUsername :as testde3} (get-user :testde3)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "read")
-    (let [responses (:unsharing (apps/unshare-apps testde2 [{:user testde3-username :apps [(:id test-app)]}]))
+    (let [requests  [{:user testde3-username :apps [{:system_id de-system-id :app_id (:id test-app)}]}]
+          responses (:unsharing (apps/unshare-apps testde2 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
@@ -376,7 +379,8 @@
   (let [{testde2-username :shortUsername :as testde2} (get-user :testde2)
         {testde3-username :shortUsername :as testde3} (get-user :testde3)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "write")
-    (let [responses (:unsharing (apps/unshare-apps testde2 [{:user testde3-username :apps [(:id test-app)]}]))
+    (let [requests  [{:user testde3-username :apps [{:system_id de-system-id :app_id (:id test-app)}]}]
+          responses (:unsharing (apps/unshare-apps testde2 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
@@ -389,7 +393,8 @@
 (deftest test-unsharing-non-existent-app
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
-    (let [responses (:unsharing (apps/unshare-apps testde1 [{:user testde2-username :apps [(uuid)]}]))
+    (let [requests  [{:user testde2-username :apps [{:system_id de-system-id :app_id (uuid)}]}]
+          responses (:unsharing (apps/unshare-apps testde1 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
