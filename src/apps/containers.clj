@@ -47,13 +47,18 @@
     (when registry
       (encode-auth registry))))
 
+(defn public-image-info
+  "Returns a map containing only publicly-permissible image info (no auth)"
+  [image-uuid]
+  (first (select container-images
+                (fields :name :tag :url :id)
+                (where {:id (uuidify image-uuid)}))))
+
 (defn image-info
   "Returns a map containing information about a container image. Info is looked up by the image UUID."
-  [image-uuid]
-  (let [image (first (select container-images
-                             (fields :name :tag :url :id)
-                             (where {:id (uuidify image-uuid)})))
-        auth (auth-info (:name image))]
+  [image-uuid & {:keys [auth?] :or {auth? false}}]
+  (let [image (public-image-info image-uuid)
+        auth (and auth? (auth-info (:name image)))]
     (if auth
       (assoc image :auth auth)
       image)))
@@ -72,12 +77,12 @@
 
 (defn tool-image-info
   "Returns a map containing information about a container image. Info is looked up by the tool UUID"
-  [tool-uuid]
+  [tool-uuid & {:keys [auth?] :or {auth? false}}]
   (let [image-id (:container_images_id
                   (first (select tools
                                  (fields :container_images_id)
                                  (where {:id (uuidify tool-uuid)}))))]
-    (image-info image-id)))
+    (image-info image-id :auth? auth?)))
 
 (defn- get-tag
   [image-map]
@@ -438,7 +443,7 @@
   the JSON map that is passed down to the JEX. If you make changes to the
   container-related parts of the DE database schema, you'll likely need to make
   changes here."
-  [tool-uuid]
+  [tool-uuid & {:keys [auth?] :or {auth? false}}]
   (let [id (uuidify tool-uuid)]
     (when (tool-has-settings? id)
       (->  (select container-settings
@@ -455,7 +460,7 @@
                          (fields :name :tag :url))))
                    (where {:tools_id id}))
            first
-           (merge {:image (tool-image-info tool-uuid)})
+           (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
 
 (defn get-settings-field

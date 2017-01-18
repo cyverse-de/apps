@@ -55,7 +55,7 @@
   [{tool-id :id :as component}]
   (dissoc
    (if (c/tool-has-settings? tool-id)
-     (assoc component :container (c/tool-container-info tool-id))
+     (assoc component :container (c/tool-container-info tool-id :auth? true))
      component)
    :id))
 
