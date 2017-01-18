@@ -5,10 +5,11 @@
 
 (s/defschema Image
   (describe
-   {:name                 s/Str
-    :id                   s/Uuid
-    (s/optional-key :tag) s/Str
-    (s/optional-key :url) (s/maybe s/Str)}
+   {:name                  s/Str
+    :id                    s/Uuid
+    (s/optional-key :tag)  s/Str
+    (s/optional-key :url)  (s/maybe s/Str)
+    (s/optional-key :auth) (s/maybe s/Str)}
    "A map describing a container image."))
 
 (s/defschema Images
