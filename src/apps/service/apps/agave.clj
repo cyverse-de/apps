@@ -400,11 +400,11 @@
   (hasAppPermission [_ username app-id required-level]
     (when (and (user-has-access-token?)
                (not (util/uuid? app-id)))
-      false))
+      (.hasAppPermission agave username app-id required-level)))
 
   (hasAppPermission [_ username system-id app-id required-level]
     (validate-system-id system-id)
-    false)
+    (.hasAppPermission agave username app-id required-level))
 
   (supportsJobSharing [_ _]
     false))
