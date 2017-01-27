@@ -14,9 +14,9 @@
    :permission (describe AppPermissionEnum "The permission level assigned to the user")})
 
 (defschema AppPermissionListElement
-  {:id          (describe NonBlankString "The app ID")
-   :name        (describe NonBlankString "The app name")
-   :permissions (describe [UserPermissionListElement] "The list of user permissions for the app")})
+  {:id                  (describe NonBlankString "The app ID")
+   (optional-key :name) (describe NonBlankString "The app name")
+   :permissions         (describe [UserPermissionListElement] "The list of user permissions for the app")})
 
 (defschema AppPermissionListing
   {:apps (describe [AppPermissionListElement] "The list of app permissions")})

@@ -28,10 +28,6 @@
 
 (def app-rating-rejection "Cannot rate an HPC app with this service.")
 
-(defn- reject-app-permission-request
-  []
-  (service/bad-request app-permission-rejection))
-
 (defn- reject-app-integration-request
   []
   (service/bad-request app-integration-rejection))
@@ -369,7 +365,7 @@
   (listAppPermissions [_ app-ids]
     (when (and (user-has-access-token?)
                (some (complement util/uuid?) app-ids))
-      (reject-app-permission-request)))
+      (.listAppPermissions agave app-ids)))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareApps [self sharing-requests]

@@ -67,7 +67,7 @@
     :return perms/AppPermissionListing
     :summary "List App Permissions"
     :description "This endpoint allows the caller to list the permissions for one or more apps. The
-    authenticated user must have ownership permission on every app in the request body for this
+    authenticated user must have read permission on every app in the request body for this
     endpoint to succeed."
     (ok (apps/list-app-permissions current-user (:apps body))))
 
