@@ -193,9 +193,6 @@
   (adminDeleteApp [_ system-id app-id]
     (.adminDeleteApp (util/get-apps-client clients system-id) system-id app-id))
 
-  (adminUpdateApp [_ body]
-    (.adminUpdateApp (util/get-apps-client clients) body))
-
   (adminUpdateApp [_ system-id body]
     (.adminUpdateApp (util/get-apps-client clients system-id) system-id body))
 

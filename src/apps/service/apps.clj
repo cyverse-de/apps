@@ -291,14 +291,10 @@
   (.adminDeleteApp (get-apps-client user) system-id app-id))
 
 (defn admin-update-app
-  ([user body]
-   (let [apps-client (get-apps-client user)]
-     (.adminUpdateApp apps-client body)
-     (.getAppDetails apps-client (:id body) true)))
-  ([user system-id body]
-   (let [apps-client (get-apps-client user)]
-     (.adminUpdateApp apps-client system-id body)
-     (.getAppDetails apps-client system-id (:id body) true))))
+  [user system-id body]
+  (let [apps-client (get-apps-client user)]
+    (.adminUpdateApp apps-client system-id body)
+    (.getAppDetails apps-client system-id (:id body) true)))
 
 (defn get-admin-app-categories
   [user params]

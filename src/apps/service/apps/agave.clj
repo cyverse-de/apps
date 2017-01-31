@@ -226,10 +226,6 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (adminUpdateApp [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
-
   (adminUpdateApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))

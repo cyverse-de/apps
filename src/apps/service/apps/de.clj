@@ -220,9 +220,6 @@
     (validate-system-id system-id)
     (app-admin/delete-app (uuidify app-id)))
 
-  (adminUpdateApp [_ body]
-    (app-admin/update-app user (update-in body [:id] uuidify)))
-
   (adminUpdateApp [_ system-id body]
     (validate-system-id system-id)
     (app-admin/update-app user (update-in body [:id] uuidify)))
