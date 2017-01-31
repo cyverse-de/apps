@@ -25,6 +25,8 @@
 
 (def app-rating-rejection "Cannot rate an HPC app with this service.")
 
+(def app-categorization-rejection "HPC apps cannot be placed in DE app categories.")
+
 (defn- reject-app-integration-request
   []
   (service/bad-request app-integration-rejection))
@@ -36,6 +38,10 @@
 (defn- reject-app-rating-request
   []
   (service/bad-request app-rating-rejection))
+
+(defn- reject-categorization-request
+  []
+  (service/bad-request app-categorization-rejection))
 
 (def ^:private supported-system-ids #{jp/agave-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -229,6 +235,10 @@
   (adminUpdateApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
+
+  (adminAddCategory [_ system-id _]
+    (validate-system-id system-id)
+    (reject-categorization-request))
 
   (getAppDocs [_ system-id app-id]
     (validate-system-id system-id)

@@ -227,9 +227,6 @@
   (getAdminAppCategories [_ params]
     (listings/get-admin-app-groups user params))
 
-  (adminAddCategory [_ body]
-    (app-admin/add-category body))
-
   (adminAddCategory [_ system-id body]
     (validate-system-id system-id)
     (app-admin/add-category body))

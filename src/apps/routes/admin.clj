@@ -1,5 +1,6 @@
 (ns apps.routes.admin
-  (:use [common-swagger-api.routes]
+  (:use [apps.constants :only [de-system-id]]
+        [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
         [apps.metadata.reference-genomes :only [add-reference-genome
@@ -184,7 +185,7 @@
          :description "This endpoint adds an App Category under the given parent App Category, as long as
          that parent Category doesn't already have a subcategory with the given name and it doesn't
          directly contain its own Apps."
-         (ok (apps/admin-add-category current-user body)))
+         (ok (apps/admin-add-category current-user de-system-id body)))
 
   (POST "/shredder" []
          :query [params SecuredQueryParams]

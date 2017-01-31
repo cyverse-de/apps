@@ -301,9 +301,9 @@
   {:categories (.getAdminAppCategories (get-apps-client user) params)})
 
 (defn admin-add-category
-  [user body]
+  [user system-id body]
   (let [apps-client (get-apps-client user)]
-    (.listAppsInCategory apps-client (.adminAddCategory apps-client body) {})))
+    (.listAppsInCategory apps-client (.adminAddCategory apps-client system-id body) {})))
 
 (defn admin-delete-categories
   [user body]
