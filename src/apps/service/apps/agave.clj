@@ -210,9 +210,6 @@
   (prepareStepSubmission [_ job-id submission]
     (agave-jobs/prepare-step-submission agave job-id submission))
 
-  (getParamDefinitions [_ app-id]
-    (listings/get-param-definitions agave app-id))
-
   (getParamDefinitions [_ system-id app-id]
     (validate-system-id system-id)
     (listings/get-param-definitions agave app-id))

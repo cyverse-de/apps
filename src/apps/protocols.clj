@@ -50,7 +50,7 @@
   (getJobStepStatus [_ job-step])
   (buildNextStepSubmission [_ job-step job])
   (prepareStepSubmission [_ job-id submission])
-  (getParamDefinitions [_ app-id] [_ system-id app-id])
+  (getParamDefinitions [_ system-id app-id])
   (stopJobStep [_ job-step])
   (categorizeApps [_ body])
   (permanentlyDeleteApps [_ body])

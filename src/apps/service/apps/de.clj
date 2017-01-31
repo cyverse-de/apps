@@ -199,10 +199,6 @@
   (prepareStepSubmission [_ _ submission]
     (de-jobs/prepare-step user (update-in submission [:app_id] uuidify)))
 
-  (getParamDefinitions [_ app-id]
-    (when (util/uuid? app-id)
-      (app-metadata/get-param-definitions app-id)))
-
   (getParamDefinitions [_ system-id app-id]
     (validate-system-id system-id)
     (app-metadata/get-param-definitions app-id))

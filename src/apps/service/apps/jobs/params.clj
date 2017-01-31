@@ -97,9 +97,9 @@
     (map (partial format-job-param-for-value full-param-id default-value param) values)))
 
 (defn get-parameter-values
-  [apps-client {app-id :app_id :as job}]
+  [apps-client {system-id :system_id app-id :app_id :as job}]
   (let [config (:config (get-job-submission job))]
-    (->> (.getParamDefinitions apps-client app-id)
+    (->> (.getParamDefinitions apps-client system-id app-id)
          (remove-mapped-params app-id)
          (remove omit-param?)
          (mapcat (partial format-job-param config)))))
