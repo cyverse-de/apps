@@ -1,5 +1,6 @@
 (ns apps.service.apps.test-fixtures
-  (:use [apps.service.apps.test-utils :only [users get-user de-system-id permanently-delete-app]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.apps.test-utils :only [users get-user permanently-delete-app]]
         [kameleon.uuids :only [uuidify uuid]])
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.persistence.jobs :as jp]

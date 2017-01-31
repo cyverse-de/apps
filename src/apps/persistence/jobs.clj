@@ -8,7 +8,8 @@
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
-  (:require [cheshire.core :as cheshire]
+  (:require [apps.constants :as c]
+            [cheshire.core :as cheshire]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
@@ -17,8 +18,8 @@
 (def de-job-type "DE")
 (def agave-job-type "Agave")
 
-(def de-client-name "de")
-(def agave-client-name "agave")
+(def de-client-name c/de-system-id)
+(def agave-client-name c/hpc-system-id)
 (def combined-client-name "combined")
 
 (def pending-status "Pending")

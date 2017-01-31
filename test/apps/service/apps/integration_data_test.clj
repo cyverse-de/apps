@@ -1,5 +1,6 @@
 (ns apps.service.apps.integration-data-test
-  (:use [apps.service.apps.test-utils :only [users get-user de-system-id permanently-delete-app]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.apps.test-utils :only [users get-user permanently-delete-app]]
         [clojure.test]
         [kameleon.uuids :only [uuid]]
         [medley.core :only [remove-vals]])

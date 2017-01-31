@@ -1,6 +1,6 @@
 (ns apps.service.apps.apps-test
-  (:use [apps.service.apps.test-utils :only [get-user delete-app permanently-delete-app
-                                             de-system-id fake-system-id hpc-system-id]]
+  (:use [apps.constants :only [de-system-id hpc-system-id]]
+        [apps.service.apps.test-utils :only [get-user delete-app permanently-delete-app fake-system-id]]
         [clojure.test]
         [kameleon.uuids :only [uuid]])
   (:require [apps.persistence.jobs :as jp]

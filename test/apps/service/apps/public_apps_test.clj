@@ -1,5 +1,6 @@
 (ns apps.service.apps.public-apps-test
-  (:use [apps.service.apps.test-utils :only [get-user de-system-id permanently-delete-app]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.apps.test-utils :only [get-user permanently-delete-app]]
         [apps.service.apps.de.listings :only [my-public-apps-id trash-category-id]]
         [clojure.test])
   (:require [apps.service.apps :as apps]
@@ -65,6 +66,6 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
     (apps/make-app-public user de-system-id app)
     (is (empty? (find-app app (list-apps user trash-category-id))))
-    (apps/admin-delete-app user (:id app))
+    (apps/admin-delete-app user de-system-id (:id app))
     (is (seq (find-app app (list-apps user trash-category-id))))
     (permanently-delete-app user de-system-id (:id app) true)))

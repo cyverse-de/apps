@@ -1,6 +1,7 @@
 (ns apps.service.apps.permissions-test
-  (:use [apps.service.apps.de.listings :only [shared-with-me-id]]
-        [apps.service.apps.test-utils :only [get-user de-system-id delete-app permanently-delete-app]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.apps.de.listings :only [shared-with-me-id]]
+        [apps.service.apps.test-utils :only [get-user delete-app permanently-delete-app]]
         [clojure.test]
         [kameleon.uuids :only [uuidify uuid]])
   (:require [apps.clients.iplant-groups :as ipg]
