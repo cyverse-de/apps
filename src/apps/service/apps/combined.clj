@@ -202,9 +202,6 @@
   (adminAddCategory [_ system-id body]
     (.adminAddCategory (util/get-apps-client clients system-id) system-id body))
 
-  (adminDeleteCategories [_ body]
-    (.adminDeleteCategories (util/get-apps-client clients) body))
-
   (adminDeleteCategory [_ category-id]
     (.adminDeleteCategory (util/get-apps-client clients) category-id))
 

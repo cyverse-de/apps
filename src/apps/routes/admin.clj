@@ -187,17 +187,6 @@
          directly contain its own Apps."
          (ok (apps/admin-add-category current-user de-system-id body)))
 
-  (POST "/shredder" []
-         :query [params SecuredQueryParams]
-         :body [body (describe AppCategoryIdList "A List of App Category IDs to delete.")]
-         :return AppCategoryIdList
-         :summary "Delete App Categories"
-         :description "App Categories can be deleted using this endpoint. The App Category and all of its
-         subcategories will be deleted by this service, but no Apps will be removed. The response
-         contains a list of Category IDs for which the deletion failed (including any subcategories
-         of a Category already included in the request)."
-         (ok (apps/admin-delete-categories current-user body)))
-
   (DELETE "/:category-id" []
            :path-params [category-id :- AppCategoryIdPathParam]
            :query [params SecuredQueryParams]

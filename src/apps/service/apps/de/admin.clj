@@ -126,22 +126,6 @@
   (log/warnf "%s deleting category \"%s\" (%s) and all of its subcategories" username name id)
   (app-groups/delete-app-category id))
 
-(defn- attempt-deletion
-  "Attempts to delete the category with the given ID. Returns a Boolean value indicating whether
-   or not the deletion was successful."
-  [user category-id]
-  (let [category (app-groups/get-app-category category-id)]
-    (if (and category (not (app-groups/category-hierarchy-contains-apps? category-id)))
-      (do (delete-category* user category) true)
-      false)))
-
-(defn delete-categories
-  "Deletes App Categories and all of their subcategories. Returns a list of category IDs that could
-   not (or no longer) be found in the database, including subcategories of a category already
-   deleted earlier in the list."
-  [user {category-ids :category_ids}]
-  (transaction (remove (partial attempt-deletion user) category-ids)))
-
 (defn delete-category
   "Deletes a single app category."
   [user category-id]

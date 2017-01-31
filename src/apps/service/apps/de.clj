@@ -231,10 +231,6 @@
     (validate-system-id system-id)
     (app-admin/add-category body))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (adminDeleteCategories [_ body]
-    (app-admin/delete-categories user body))
-
   (adminDeleteCategory [_ category-id]
     (app-admin/delete-category user category-id))
 
