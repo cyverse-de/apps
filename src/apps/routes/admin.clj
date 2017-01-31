@@ -202,7 +202,7 @@
           :summary "Update an App Category"
           :description "This service renames or moves an App Category to a new parent Category, depending
           on the fields included in the request."
-          (ok (apps/admin-update-category current-user (assoc body :id category-id)))))
+          (ok (apps/admin-update-category current-user de-system-id (assoc body :id category-id)))))
 
 (defroutes admin-ontologies
 
