@@ -193,7 +193,7 @@
            :summary "Delete an App Category"
            :description "This service physically removes an App Category from the database, along with all
            of its child Categories, as long as none of them contain any Apps."
-           (ok (apps/admin-delete-category current-user category-id)))
+           (ok (apps/admin-delete-category current-user de-system-id category-id)))
 
   (PATCH "/:category-id" []
           :path-params [category-id :- AppCategoryIdPathParam]

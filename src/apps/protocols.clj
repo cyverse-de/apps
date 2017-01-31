@@ -58,7 +58,7 @@
   (adminUpdateApp [_ system-id body])
   (getAdminAppCategories [_ params])
   (adminAddCategory [_ system-id body])
-  (adminDeleteCategory [_ category-id] [_ system-id category-id])
+  (adminDeleteCategory [_ system-id category-id])
   (adminUpdateCategory [_ body] [_ system-id body])
   (getAppDocs [_ system-id app-id])
   (getAppIntegrationData [_ system-id app-id])

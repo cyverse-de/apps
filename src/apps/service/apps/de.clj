@@ -231,9 +231,6 @@
     (validate-system-id system-id)
     (app-admin/add-category body))
 
-  (adminDeleteCategory [_ category-id]
-    (app-admin/delete-category user category-id))
-
   (adminDeleteCategory [_ system-id category-id]
     (validate-system-id system-id)
     (app-admin/delete-category user category-id))

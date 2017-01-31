@@ -240,6 +240,10 @@
     (validate-system-id system-id)
     (reject-categorization-request))
 
+  (adminDeleteCategory [_ system-id _]
+    (validate-system-id system-id)
+    (reject-categorization-request))
+
   (getAppDocs [_ system-id app-id]
     (validate-system-id system-id)
     (empty-doc-map app-id))
