@@ -287,10 +287,8 @@
   (.permanentlyDeleteApps (get-apps-client user) body))
 
 (defn admin-delete-app
-  ([user app-id]
-   (.adminDeleteApp (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.adminDeleteApp (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.adminDeleteApp (get-apps-client user) system-id app-id))
 
 (defn admin-update-app
   ([user body]

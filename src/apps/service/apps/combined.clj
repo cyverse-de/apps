@@ -190,9 +190,6 @@
       (doseq [[system-id qualified-app-ids] requests-for-system]
         (.permanentlyDeleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
-  (adminDeleteApp [_ app-id]
-    (.adminDeleteApp (util/get-apps-client clients) app-id))
-
   (adminDeleteApp [_ system-id app-id]
     (.adminDeleteApp (util/get-apps-client clients system-id) system-id app-id))
 

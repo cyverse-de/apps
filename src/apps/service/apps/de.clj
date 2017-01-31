@@ -216,9 +216,6 @@
     (.validateDeletionRequest this req)
     (app-metadata/permanently-delete-apps user req))
 
-  (adminDeleteApp [_ app-id]
-    (app-admin/delete-app (uuidify app-id)))
-
   (adminDeleteApp [_ system-id app-id]
     (validate-system-id system-id)
     (app-admin/delete-app (uuidify app-id)))
