@@ -328,10 +328,8 @@
   (.getToolIntegrationData (get-apps-client user) system-id tool-id))
 
 (defn update-app-integration-data
-  ([user app-id integration-data-id]
-   (.updateAppIntegrationData (get-apps-client user) app-id integration-data-id))
-  ([user system-id app-id integration-data-id]
-   (.updateAppIntegrationData (get-apps-client user) system-id app-id integration-data-id)))
+  [user system-id app-id integration-data-id]
+  (.updateAppIntegrationData (get-apps-client user) system-id app-id integration-data-id))
 
 (defn update-tool-integration-data
   [user tool-id integration-data-id]

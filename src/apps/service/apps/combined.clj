@@ -220,11 +220,6 @@
   (getToolIntegrationData [_ system-id tool-id]
     (.getToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id))
 
-  (updateAppIntegrationData [_ app-id integration-data-id]
-    (->> (map #(.updateAppIntegrationData % app-id integration-data-id) clients)
-         (remove nil?)
-         (first)))
-
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
     (.updateAppIntegrationData (util/get-apps-client clients system-id) system-id app-id integration-data-id))
 

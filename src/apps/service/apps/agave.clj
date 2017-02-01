@@ -268,10 +268,6 @@
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (updateAppIntegrationData [_ app-id integration-data-id]
-    (when-not (util/uuid? app-id)
-      (service/bad-request integration-data-rejection)))
-
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))

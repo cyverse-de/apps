@@ -361,9 +361,9 @@
         original (apps/get-app-integration-data user de-system-id app-id)
         new      (add-integration-data "foo" "foo@example.org" "Foo Bar")]
     (is (not= original new))
-    (apps/update-app-integration-data user app-id (:id new))
+    (apps/update-app-integration-data user de-system-id app-id (:id new))
     (is (= new (apps/get-app-integration-data user de-system-id app-id)))
-    (apps/update-app-integration-data user app-id (:id original))
+    (apps/update-app-integration-data user de-system-id app-id (:id original))
     (is (= original (apps/get-app-integration-data user de-system-id app-id)))
     (delete-integration-data new)))
 
@@ -371,13 +371,13 @@
 (deftest test-app-integration-data-update-missing-app
   (let [new (add-integration-data "foo" "foo@example.org" "Foo Bar")]
     (is (thrown-with-msg? ExceptionInfo #"could not be found"
-                          (apps/update-app-integration-data (get-user :testde1) (uuid) (:id new))))
+                          (apps/update-app-integration-data (get-user :testde1) de-system-id (uuid) (:id new))))
     (delete-integration-data new)))
 
 ;; Attempting to assign a non-existent integration data record to an app should fail.
 (deftest test-app-integration-data-update-missing-integration-data
   (is (thrown-with-msg? ExceptionInfo #"does not exist"
-                        (apps/update-app-integration-data (get-user :testde1) (:id atf/test-app) (uuid)))))
+                        (apps/update-app-integration-data (get-user :testde1) de-system-id (:id atf/test-app) (uuid)))))
 
 ;; We should be able to change the integration data record associated with a tool.
 (deftest test-tool-integration-data-update
