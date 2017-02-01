@@ -248,10 +248,6 @@
     (validate-system-id system-id)
     (integration-data/get-integration-data-for-app user (uuidify app-id)))
 
-  (getToolIntegrationData [_ tool-id]
-    (when (util/uuid? tool-id)
-      (integration-data/get-integration-data-for-tool user tool-id)))
-
   (getToolIntegrationData [_ system-id tool-id]
     (validate-system-id system-id)
     (integration-data/get-integration-data-for-tool user tool-id))

@@ -264,10 +264,6 @@
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (getToolIntegrationData [_ tool-id]
-    (when-not (util/uuid? tool-id)
-      (service/bad-request integration-data-rejection)))
-
   (getToolIntegrationData [_ system-id tool-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))

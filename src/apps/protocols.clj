@@ -62,7 +62,7 @@
   (adminUpdateCategory [_ system-id body])
   (getAppDocs [_ system-id app-id])
   (getAppIntegrationData [_ system-id app-id])
-  (getToolIntegrationData [_ tool-id] [_ system-id tool-id])
+  (getToolIntegrationData [_ system-id tool-id])
   (updateAppIntegrationData [_ app-id integration-data-id] [_ system-id app-id integration-data-id])
   (updateToolIntegrationData [_ tool-id integration-data-id] [_ system-id tool-id integration-data-id])
   (ownerEditAppDocs [_ app-id body] [_ system-id app-id body])

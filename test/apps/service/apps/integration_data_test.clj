@@ -344,7 +344,7 @@
 
 ;; We should be able to get an integration data record for a tool.
 (deftest test-tool-integration-data-retrieval
-  (let [actual   (apps/get-tool-integration-data (get-user :testde1) atf/test-tool-id)
+  (let [actual   (apps/get-tool-integration-data (get-user :testde1) de-system-id atf/test-tool-id)
         expected (get-integration-data-for-tool atf/test-tool-id)]
     (is (= (:integrator_email expected) (:email actual)))
     (is (= (:integrator_name expected) (:name actual)))))
@@ -352,7 +352,7 @@
 ;; Attempting to get the integration data for an unknown tool should fail.
 (deftest test-tool-integration-data-retrieval-not-found
   (is (thrown-with-msg? ExceptionInfo #"no integration data found for tool"
-                        (apps/get-tool-integration-data (get-user :testde1) (uuid)))))
+                        (apps/get-tool-integration-data (get-user :testde1) de-system-id (uuid)))))
 
 ;; We should be able to change the integration data record associated with an app.
 (deftest test-app-integration-data-update
@@ -382,13 +382,13 @@
 ;; We should be able to change the integration data record associated with a tool.
 (deftest test-tool-integration-data-update
   (let [user     (get-user :testde1)
-        original (apps/get-tool-integration-data user atf/test-tool-id)
+        original (apps/get-tool-integration-data user de-system-id atf/test-tool-id)
         new      (add-integration-data "foo" "foo@example.org" "Foo Bar")]
     (is (not= original new))
     (apps/update-tool-integration-data user atf/test-tool-id (:id new))
-    (is (= new (apps/get-tool-integration-data user atf/test-tool-id)))
+    (is (= new (apps/get-tool-integration-data user de-system-id atf/test-tool-id)))
     (apps/update-tool-integration-data user atf/test-tool-id (:id original))
-    (is (= original (apps/get-tool-integration-data user atf/test-tool-id)))
+    (is (= original (apps/get-tool-integration-data user de-system-id atf/test-tool-id)))
     (delete-integration-data new)))
 
 ;; Attempting to set the integration data record for a non-existent tool should fail.
