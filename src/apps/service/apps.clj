@@ -332,8 +332,8 @@
   (.updateAppIntegrationData (get-apps-client user) system-id app-id integration-data-id))
 
 (defn update-tool-integration-data
-  [user tool-id integration-data-id]
-  (.updateToolIntegrationData (get-apps-client user) tool-id integration-data-id))
+  [user system-id tool-id integration-data-id]
+  (.updateToolIntegrationData (get-apps-client user) system-id tool-id integration-data-id))
 
 (defn owner-edit-app-docs
   [user app-id body]

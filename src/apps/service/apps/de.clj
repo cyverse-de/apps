@@ -256,10 +256,6 @@
     (validate-system-id system-id)
     (integration-data/update-integration-data-for-app user (uuidify app-id) integration-data-id))
 
-  (updateToolIntegrationData [_ tool-id integration-data-id]
-    (when (util/uuid? tool-id)
-      (integration-data/update-integration-data-for-tool user tool-id integration-data-id)))
-
   (updateToolIntegrationData [_ system-id tool-id integration-data-id]
     (validate-system-id system-id)
     (integration-data/update-integration-data-for-tool user tool-id integration-data-id))

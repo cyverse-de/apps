@@ -509,4 +509,4 @@ included in it. Any existing settings not included in the request's `container` 
         :summary "Update the Integration Data Record for a Tool"
         :description "This service allows administrators to change the integration data record
         associated with a tool."
-        (ok (apps/update-tool-integration-data current-user tool-id integration-data-id))))
+        (ok (apps/update-tool-integration-data current-user de-system-id tool-id integration-data-id))))

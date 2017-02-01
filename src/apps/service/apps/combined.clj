@@ -223,10 +223,8 @@
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
     (.updateAppIntegrationData (util/get-apps-client clients system-id) system-id app-id integration-data-id))
 
-  (updateToolIntegrationData [_ tool-id integration-data-id]
-    (->> (map #(.updateToolIntegrationData % tool-id integration-data-id) clients)
-         (remove nil?)
-         (first)))
+  (updateToolIntegrationData [_ system-id tool-id integration-data-id]
+    (.updateToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id integration-data-id))
 
   (ownerEditAppDocs [_ app-id body]
     (->> (map #(.ownerEditAppDocs % app-id body) clients)
