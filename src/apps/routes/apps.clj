@@ -77,16 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (POST "/:app-id/documentation" []
-    :path-params [app-id :- AppIdPathParam]
-    :query [params SecuredQueryParamsEmailRequired]
-    :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
-    :return AppDocumentation
-    :summary "Add App Documentation"
-    :description "This service is used by the DE to add documentation for a single App"
-    (ok (coerce! AppDocumentation
-                 (apps/owner-add-app-docs current-user app-id body))))
-
   (context "/:system-id" []
     :path-params [system-id :- SystemId]
 
@@ -217,6 +207,15 @@
         :description "This service is used by the DE to update documentation for a single App"
         (ok (coerce! AppDocumentation
                      (apps/owner-edit-app-docs current-user system-id app-id body))))
+
+      (POST "/documentation" []
+        :query [params SecuredQueryParamsEmailRequired]
+        :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
+        :return AppDocumentation
+        :summary "Add App Documentation"
+        :description "This service is used by the DE to add documentation for a single App"
+        (ok (coerce! AppDocumentation
+                     (apps/owner-add-app-docs current-user system-id app-id body))))
 
       (DELETE "/favorite" []
         :query [params SecuredQueryParams]

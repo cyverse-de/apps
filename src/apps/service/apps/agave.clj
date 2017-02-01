@@ -280,10 +280,6 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
-  (ownerAddAppDocs [_ app-id _]
-    (when-not (util/uuid? app-id)
-      (reject-app-documentation-edit-request)))
-
   (ownerAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))

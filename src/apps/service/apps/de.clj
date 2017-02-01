@@ -264,10 +264,6 @@
     (validate-system-id system-id)
     (docs/owner-edit-app-docs user (uuidify app-id) body))
 
-  (ownerAddAppDocs [_ app-id body]
-    (when (util/uuid? app-id)
-      (docs/owner-add-app-docs user (uuidify app-id) body)))
-
   (ownerAddAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/owner-add-app-docs user (uuidify app-id) body))

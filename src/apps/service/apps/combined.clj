@@ -229,10 +229,8 @@
   (ownerEditAppDocs [_ system-id app-id body]
     (.ownerEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
-  (ownerAddAppDocs [_ app-id body]
-    (->> (map #(.ownerAddAppDocs % app-id body) clients)
-         (remove nil?)
-         (first)))
+  (ownerAddAppDocs [_ system-id app-id body]
+    (.ownerAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
   (adminEditAppDocs [_ app-id body]
     (->> (map #(.adminEditAppDocs % app-id body) clients)
