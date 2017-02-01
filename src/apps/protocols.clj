@@ -67,7 +67,7 @@
   (updateToolIntegrationData [_ system-id tool-id integration-data-id])
   (ownerEditAppDocs [_ system-id app-id body])
   (ownerAddAppDocs [_ system-id app-id body])
-  (adminEditAppDocs [_ app-id body] [_ system-id app-id body])
+  (adminEditAppDocs [_ system-id app-id body])
   (adminAddAppDocs [_ app-id body] [_ system-id app-id body])
   (listAppPermissions [_ qualified-app-ids])
   (shareApps [_ sharing-requests])

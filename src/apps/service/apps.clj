@@ -344,10 +344,8 @@
   (.ownerAddAppDocs (get-apps-client user) system-id app-id body))
 
 (defn admin-edit-app-docs
-  ([user app-id body]
-   (.adminEditAppDocs (get-apps-client user) app-id body))
-  ([user system-id app-id body]
-   (.adminEditAppDocs (get-apps-client user) system-id app-id body)))
+  [user system-id app-id body]
+  (.adminEditAppDocs (get-apps-client user) system-id app-id body))
 
 (defn admin-add-app-docs
   ([user app-id body]
