@@ -208,9 +208,9 @@
                (not (string/blank? external_id)))
       (jex/stop-job external_id)))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (categorizeApps [_ body]
-    (app-categorization/categorize-apps body))
+  (categorizeApps [_ {:keys [categories]}]
+    (validate-system-ids (set (map :system_id categories)))
+    (app-categorization/categorize-apps categories))
 
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req)

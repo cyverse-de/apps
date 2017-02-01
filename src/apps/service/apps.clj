@@ -280,7 +280,7 @@
 
 (defn categorize-apps
   [user body]
-  (.categorizeApps (get-apps-client user) body))
+  (transaction (.categorizeApps (get-apps-client user) body)))
 
 (defn permanently-delete-apps
   [user body]

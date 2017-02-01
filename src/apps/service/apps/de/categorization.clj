@@ -88,15 +88,7 @@
   (validate-category-ids category-ids path)
   (validate-app-name app-id category-ids path))
 
-(defn- validate-request-body
-  "Validates the request body."
-  [body]
-  (validate-json-object body "" #(validate-json-object-array-field
-                                  % :categories %2 validate-category)))
-
 (defn categorize-apps
   "A service that categorizes one or more apps in the database."
-  [{:keys [categories] :as body}]
-  (transaction
-   (validate-request-body body)
-   (dorun (map categorize-app categories))))
+  [categories]
+  (dorun (map categorize-app categories)))

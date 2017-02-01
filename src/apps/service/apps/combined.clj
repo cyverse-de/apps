@@ -181,8 +181,11 @@
   (stopJobStep [_ job-step]
     (dorun (map #(.stopJobStep % job-step) clients)))
 
-  (categorizeApps [_ body]
-    (.categorizeApps (util/get-apps-client clients) body))
+  (categorizeApps [_ {:keys [categories]}]
+    (let [requests-by-system-id (group-by :system_id categories)]
+      (dorun (map (fn [[system-id categories]]
+                    (.categorizeApps (util/get-apps-client clients system-id) {:categories categories}))
+                  requests-by-system-id))))
 
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req)

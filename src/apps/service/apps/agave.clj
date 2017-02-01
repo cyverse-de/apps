@@ -225,6 +225,10 @@
                (not (string/blank? external_id)))
       (.stopJob agave external_id)))
 
+  (categorizeApps [_ {:keys [categories]}]
+    (validate-system-ids (set (map :system_id categories)))
+    (reject-categorization-request))
+
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req))
 
