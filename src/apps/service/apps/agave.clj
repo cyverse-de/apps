@@ -276,10 +276,6 @@
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (ownerEditAppDocs [_ app-id _]
-    (when-not (util/uuid? app-id)
-      (reject-app-documentation-edit-request)))
-
   (ownerEditAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))

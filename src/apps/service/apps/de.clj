@@ -260,10 +260,6 @@
     (validate-system-id system-id)
     (integration-data/update-integration-data-for-tool user tool-id integration-data-id))
 
-  (ownerEditAppDocs [_ app-id body]
-    (when (util/uuid? app-id)
-      (docs/owner-edit-app-docs user (uuidify app-id) body)))
-
   (ownerEditAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/owner-edit-app-docs user (uuidify app-id) body))

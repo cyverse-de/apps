@@ -123,7 +123,7 @@
   true)
 
 (defn check-edit-app-docs [user]
-  (apps/owner-edit-app-docs user (:id test-app) {:documentation ""})
+  (apps/owner-edit-app-docs user de-system-id (:id test-app) {:documentation ""})
   true)
 
 (defn check-get-app-details [user]
