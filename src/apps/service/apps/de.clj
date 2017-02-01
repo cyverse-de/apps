@@ -272,10 +272,6 @@
     (validate-system-id system-id)
     (docs/edit-app-docs user (uuidify app-id) body))
 
-  (adminAddAppDocs [_ app-id body]
-    (when (util/uuid? app-id)
-      (docs/add-app-docs user (uuidify app-id) body)))
-
   (adminAddAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/add-app-docs user (uuidify app-id) body))

@@ -288,10 +288,6 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
-  (adminAddAppDocs [_ app-id _]
-    (when-not (util/uuid? app-id)
-      (reject-app-documentation-edit-request)))
-
   (adminAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
