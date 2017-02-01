@@ -306,10 +306,6 @@
      (partial app-permissions/app-unsharing-success app-names system-id app-id)
      (partial app-permissions/app-unsharing-failure app-names system-id app-id)))
 
-  (hasAppPermission [_ username app-id required-level]
-    (when (util/uuid? app-id)
-      (perms/has-app-permission username (uuidify app-id) required-level)))
-
   (hasAppPermission [_ username system-id app-id required-level]
     (validate-system-id system-id)
     (perms/has-app-permission username (uuidify app-id) required-level))

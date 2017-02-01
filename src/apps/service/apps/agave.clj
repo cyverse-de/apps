@@ -316,11 +316,6 @@
     (validate-system-id system-id)
     (sharing/unshare-app-with-user agave app-names sharee app-id))
 
-  (hasAppPermission [_ username app-id required-level]
-    (when (and (user-has-access-token?)
-               (not (util/uuid? app-id)))
-      (.hasAppPermission agave username app-id required-level)))
-
   (hasAppPermission [_ username system-id app-id required-level]
     (validate-system-id system-id)
     (.hasAppPermission agave username app-id required-level))

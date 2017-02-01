@@ -76,5 +76,5 @@
   (unshareApps [_ unsharing-requests])
   (unshareAppsWithUser [_ app-names sharee app-unsharing-requests])
   (unshareAppWithUser [_ app-names sharee system-id app-id])
-  (hasAppPermission [_ username app-id required-level] [_ username system-id app-id required-level])
+  (hasAppPermission [_ username system-id app-id required-level])
   (supportsJobSharing [_ _]))

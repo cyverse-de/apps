@@ -263,8 +263,8 @@
   (unshareAppWithUser [self app-names sharee system-id app-id]
     (.unshareAppWithUser (util/get-apps-client clients system-id) app-names sharee system-id app-id))
 
-  (hasAppPermission [_ username app-id required-level]
-    (first (remove nil? (map #(.hasAppPermission % username app-id required-level) clients))))
+  (hasAppPermission [_ username system-id app-id required-level]
+    (.hasAppPermission (util/get-apps-client clients system-id) username system-id app-id required-level))
 
   (supportsJobSharing [_ job-step]
     (.supportsJobSharing (util/apps-client-for-job-step clients job-step) job-step)))
