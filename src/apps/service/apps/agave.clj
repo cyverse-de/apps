@@ -240,6 +240,10 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (getAdminAppCategories [_ system-id _]
+    (validate-system-id system-id)
+    (reject-categorization-request))
+
   (adminAddCategory [_ system-id _]
     (validate-system-id system-id)
     (reject-categorization-request))

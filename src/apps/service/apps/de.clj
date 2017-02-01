@@ -224,7 +224,8 @@
     (validate-system-id system-id)
     (app-admin/update-app user (update-in body [:id] uuidify)))
 
-  (getAdminAppCategories [_ params]
+  (getAdminAppCategories [_ system-id params]
+    (validate-system-id system-id)
     (listings/get-admin-app-groups user params))
 
   (adminAddCategory [_ system-id body]

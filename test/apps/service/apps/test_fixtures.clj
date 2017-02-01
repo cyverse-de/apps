@@ -190,7 +190,7 @@
   (get-category user "Beta"))
 
 (defn get-admin-category [user category-name]
-  (find-category category-name (:categories (apps/get-admin-app-categories user {}))))
+  (find-category category-name (:categories (apps/get-admin-app-categories user de-system-id {}))))
 
 (defn get-admin-beta-category [user]
   (get-admin-category user "Beta"))
