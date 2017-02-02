@@ -1,5 +1,6 @@
 (ns apps.service.apps.de.listings
-  (:use [apps.persistence.app-documentation :only [get-documentation]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.persistence.app-documentation :only [get-documentation]]
         [apps.persistence.app-groups]
         [apps.persistence.app-listing]
         [apps.persistence.entities]
@@ -65,7 +66,8 @@
 
 (defn- add-subgroups
   [{:keys [app_count] :as group} groups]
-  (let [subgroups (filter #(= (:id group) (:parent_id %)) groups)
+  (let [group     (assoc group :system_id de-system-id)
+        subgroups (filter #(= (:id group) (:parent_id %)) groups)
         subgroups (map #(add-subgroups % groups) subgroups)
         result    (if (empty? subgroups) group (assoc group :categories subgroups))]
     (-> result
@@ -75,7 +77,8 @@
 (defn format-trash-category
   "Formats the virtual group for the admin's deleted and orphaned apps category."
   [_ _ params]
-  {:id         trash-category-id
+  {:system_id  de-system-id
+   :id         trash-category-id
    :name       "Trash"
    :is_public  true
    :total      (count-deleted-and-orphaned-apps params)})
@@ -88,7 +91,8 @@
 (defn- format-my-public-apps-group
   "Formats the virtual group for the user's public apps."
   [{:keys [username]} _ params]
-  {:id        my-public-apps-id
+  {:system_id de-system-id
+   :id        my-public-apps-id
    :name      "My public apps"
    :is_public false
    :total     (count-public-apps-by-user username params)})
@@ -105,7 +109,8 @@
 (defn format-shared-with-me-category
   "Formats the virtual group for apps that have been shared with the user."
   [_ workspace params]
-  {:id        shared-with-me-id
+  {:system_id de-system-id
+   :id        shared-with-me-id
    :name      "Shared with me"
    :is_public false
    :total     (count-shared-apps workspace (workspace-favorites-app-category-index) params)})

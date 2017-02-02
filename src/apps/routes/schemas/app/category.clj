@@ -25,7 +25,10 @@
         private categories are returned.")}))
 
 (defschema AppCategory
-  {:id
+  {(optional-key :system_id)
+   SystemId
+
+   :id
    AppCategoryIdPathParam
 
    :name
