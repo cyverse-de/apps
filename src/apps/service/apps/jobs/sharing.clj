@@ -112,6 +112,7 @@
   (->> (mapv keyword (.getAppInputIds apps-client (:app_id job)))
        (select-keys (job-params/get-job-config job))
        vals
+       flatten
        (remove string/blank?)))
 
 (defn- process-job-inputs
