@@ -211,6 +211,7 @@
 
   (categorizeApps [_ {:keys [categories]}]
     (validate-system-ids (set (map :system_id categories)))
+    (validate-system-ids (set (mapcat (fn [m] (map :system_id (:category_ids m))) categories)))
     (app-categorization/categorize-apps categories))
 
   (permanentlyDeleteApps [this req]

@@ -37,7 +37,7 @@
   "Associates an app with an app category."
   [{app-id :app_id category-ids :category_ids}]
   (decategorize-app app-id)
-  (dorun (map (partial add-app-to-category app-id) category-ids)))
+  (dorun (map (comp (partial add-app-to-category app-id) :id) category-ids)))
 
 (defn- validate-app-info
   "Validates the app information in a categorized app.  At this time, we only

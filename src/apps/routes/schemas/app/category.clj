@@ -24,33 +24,35 @@
         are in the user's workspace are returned. If not set, then both public and the user's
         private categories are returned.")}))
 
-(defschema AppCategory
-  {(optional-key :system_id)
+(defschema AppCategoryId
+  {:system_id
    SystemId
 
    :id
-   AppCategoryIdPathParam
+   AppCategoryIdPathParam})
 
-   :name
-   AppCategoryNameParam
+(defschema AppCategory
+  (merge AppCategoryId
+         {:name
+          AppCategoryNameParam
 
-   :total
-   (describe Long "The number of Apps under this Category and all of its children")
+          :total
+          (describe Long "The number of Apps under this Category and all of its children")
 
-   :is_public
-   (describe Boolean
-     "Whether this App Category is viewable to all users or private to only the user that owns its
-      Workspace")
+          :is_public
+          (describe Boolean
+                    (str "Whether this App Category is viewable to all users or private to only the user that owns its"
+                         " Workspace"))
 
-   (optional-key :categories)
-   (describe [(recursive #'AppCategory)]
-     "A listing of child App Categories under this App Category")})
+          (optional-key :categories)
+          (describe [(recursive #'AppCategory)]
+                    "A listing of child App Categories under this App Category")}))
 
 (defschema AppCategoryListing
   {:categories (describe [AppCategory] "A listing of App Categories visisble to the requesting user")})
 
 (defschema AppCategoryIdList
-  {:category_ids (describe [UUID] "A List of UUIDs used to identify App Categories")})
+  {:category_ids (describe [AppCategoryId] "A List of App Category identifiers")})
 
 (defschema AppCategoryAppListing
   (merge (dissoc AppCategory :categories)
@@ -58,7 +60,8 @@
 
 (defschema AppCategorization
   (merge AppCategoryIdList
-    {:app_id (describe UUID "The UUID of the App to be Categorized")}))
+         {:system_id SystemId
+          :app_id    (describe String "The ID of the App to be Categorized")}))
 
 (defschema AppCategorizationRequest
   {:categories (describe [AppCategorization] "Apps and the Categories they should be listed under")})

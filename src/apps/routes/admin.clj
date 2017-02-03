@@ -75,11 +75,8 @@
          :body [body (describe AppCategorizationRequest "An App Categorization Request.")]
          :summary "Categorize Apps"
          :description "This endpoint is used by the Admin interface to add or move Apps to into multiple
-         Categories. This endpoint may only be used to categorize DE apps, so the system ID will not been
-         included in the URI path."
-         (let [add-system-id  (fn [m] (assoc m :system_id de-system-id))
-               add-system-ids (fn [ms] (mapv add-system-id ms))]
-           (ok (apps/categorize-apps current-user (update-in body [:categories] add-system-ids)))))
+         Categories."
+         (ok (apps/categorize-apps current-user body)))
 
   (POST "/shredder" []
          :query [params SecuredQueryParams]
