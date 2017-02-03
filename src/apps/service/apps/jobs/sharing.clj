@@ -1,5 +1,6 @@
 (ns apps.service.apps.jobs.sharing
-  (:use [clostache.parser :only [render]]
+  (:use [clojure-commons.core :only [remove-nil-values]]
+        [clostache.parser :only [render]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.data-info :as data-info]
             [apps.clients.permissions :as perms-client]
@@ -9,7 +10,6 @@
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.util.service :as service]
             [clojure.string :as string]
-            [clojure.tools.logging :as log]
             [clojure-commons.error-codes :as ce]))
 
 (defn- get-job-name
@@ -24,11 +24,13 @@
    :not-supported "analysis sharing is not supported for jobs of this type"})
 
 (defn- job-sharing-success
-  [job-id job level]
-  {:analysis_id   job-id
-   :analysis_name (get-job-name job-id job)
-   :permission    level
-   :success       true})
+  [job-id job level output-share-err-msg]
+  (remove-nil-values
+    {:analysis_id   job-id
+     :analysis_name (get-job-name job-id job)
+     :permission    level
+     :outputs_error output-share-err-msg
+     :success       true}))
 
 (defn- job-sharing-failure
   [job-id job level reason]
@@ -40,10 +42,12 @@
                    :reason     reason}})
 
 (defn- job-unsharing-success
-  [job-id job]
-  {:analysis_id   job-id
-   :analysis_name (get-job-name job-id job)
-   :success       true})
+  [job-id job output-unshare-err-msg]
+  (remove-nil-values
+    {:analysis_id   job-id
+     :analysis_name (get-job-name job-id job)
+     :outputs_error output-unshare-err-msg
+     :success       true}))
 
 (defn- job-unsharing-failure
   [job-id job reason]
@@ -130,7 +134,6 @@
       (verify-accessible sharer job-id)
       (verify-support apps-client job-id)
       (share-app-for-job apps-client sharer sharee job-id job)
-      (share-output-folder sharer sharee job)
       (perms-client/share-analysis job-id "user" sharee level)
       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
       (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)))
@@ -141,7 +144,7 @@
     (try+
      (if-let [failure-reason (share-job* apps-client sharer sharee job-id job level)]
        (job-sharing-failure job-id job level failure-reason)
-       (job-sharing-success job-id job level))
+       (job-sharing-success job-id job level (share-output-folder sharer sharee job)))
      (catch [:type ::permission-load-failure] {:keys [reason]}
        (job-sharing-failure job-id job level (job-sharing-msg :load-failure job-id reason))))
     (job-sharing-failure job-id nil level (job-sharing-msg :not-found job-id))))
@@ -183,7 +186,6 @@
   (or (verify-not-subjob job)
       (verify-accessible sharer job-id)
       (verify-support apps-client job-id)
-      (unshare-output-folder sharer sharee job)
       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
       (perms-client/unshare-analysis job-id "user" sharee)
       (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)))
@@ -194,7 +196,7 @@
     (try+
      (if-let [failure-reason (unshare-job* apps-client sharer sharee job-id job)]
        (job-unsharing-failure job-id job failure-reason)
-       (job-unsharing-success job-id job))
+       (job-unsharing-success job-id job (unshare-output-folder sharer sharee job)))
      (catch [:type ::permission-load-failure] {:keys [reason]}
        (job-unsharing-failure job-id job (job-sharing-msg :load-failure job-id reason))))
     (job-unsharing-failure job-id nil (job-sharing-msg :not-found job-id))))

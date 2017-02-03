@@ -82,9 +82,10 @@
 
 (defschema AnalysisSharingResponseElement
   (assoc AnalysisSharingRequestElement
-    :analysis_name        (describe NonBlankString "The analysis name")
-    :success              (describe Boolean "A Boolean flag indicating whether the sharing request succeeded")
-    (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")))
+    :analysis_name                (describe NonBlankString "The analysis name")
+    :success                      (describe Boolean "A Boolean flag indicating whether the sharing request succeeded")
+    (optional-key :outputs_error) (describe NonBlankString "A brief reason for the result folder sharing error")
+    (optional-key :error)         (describe ErrorResponse "Information about any error that may have occurred")))
 
 (defschema UserAnalysisSharingRequestElement
   {:user     (describe NonBlankString "The user ID")
@@ -100,15 +101,12 @@
 (defschema AnalysisSharingResponse
   {:sharing (describe [UserAnalysisSharingResponseElement] "The list of sharing responses for individual users")})
 
-(defschema AnalysisUnsharingRequestElement
-  {:analysis_id (describe UUID "The analysis ID")
-   :permission  (describe AnalysisPermissionEnum "The requested permission level")})
-
 (defschema AnalysisUnsharingResponseElement
-  {:analysis_id          (describe UUID "The analysis ID")
-   :analysis_name        (describe NonBlankString "The analysis name")
-   :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
-   (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")})
+  {:analysis_id                  (describe UUID "The analysis ID")
+   :analysis_name                (describe NonBlankString "The analysis name")
+   :success                      (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
+   (optional-key :outputs_error) (describe NonBlankString "A brief reason for the result folder unsharing error")
+   (optional-key :error)         (describe ErrorResponse "Information about any error that may have occurred")})
 
 (defschema UserAnalysisUnsharingRequestElement
   {:user     (describe NonBlankString "The user ID")
