@@ -6,11 +6,20 @@
   [apps-client job-type]
   (contains? (set (.getJobTypes apps-client)) job-type))
 
+(defn qualified-app-id
+  [system-id app-id]
+  {:system_id system-id
+   :app_id    (str app-id)})
+
+(defn to-qualified-app-id
+  [{system-id :system_id app-id :id}]
+  (qualified-app-id system-id app-id))
+
 (defn get-app-name
-  [app-names app-id]
-  (let [app-name (app-names (str app-id))]
+  [app-names system-id app-id]
+  (let [app-name (app-names (qualified-app-id system-id app-id))]
     (if (string/blank? app-name)
-      (str "app ID " app-id)
+      (str system-id "/" app-id)
       app-name)))
 
 (defn validate-system-id

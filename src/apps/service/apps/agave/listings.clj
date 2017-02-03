@@ -1,5 +1,6 @@
 (ns apps.service.apps.agave.listings
-  (:use [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats uuid?]]
+  (:use [apps.service.apps.util :only [to-qualified-app-id]]
+        [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats uuid?]]
         [apps.util.conversions :only [remove-nil-vals]]
         [slingshot.slingshot :only [try+]])
   (:require [clojure.tools.logging :as log]
@@ -78,7 +79,7 @@
   (try+
    (->> (.listApps agave app-ids)
         (:apps)
-        (map (juxt :id identity))
+        (map (juxt to-qualified-app-id identity))
         (into {})
         (vector))
    (catch [:type :clojure-commons.exception/unavailable] _

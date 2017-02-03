@@ -152,8 +152,10 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
-  (loadAppTables [_ app-ids]
-    (mapcat  #(.loadAppTables % app-ids) clients))
+  (loadAppTables [_ qualified-app-ids]
+    (doall (mapcat (fn [[system-id qual-ids]]
+                     (.loadAppTables (util/get-apps-client clients system-id) qual-ids))
+                   (group-by :system_id qualified-app-ids))))
 
   (submitJob [self submission]
     (if-let [apps-client (util/apps-client-for-job submission clients)]

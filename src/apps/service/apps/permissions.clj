@@ -4,13 +4,10 @@
             [apps.service.apps.util :as apps-util]
             [clojure-commons.error-codes :as ce]))
 
-;; TODO: this will have to change to account for the possibility of duplicate app IDs
-;; if more apps clients are ever added, which will require a larger refactoring than
-;; just this function, anyway.
 (defn- load-app-names
   [apps-client requests]
   (->> (mapcat :apps requests)
-       (map #(if (map? %) (:app_id %) %))
+       (map (fn [req] (select-keys req [:system_id :app_id])))
        set
        (#(.loadAppTables apps-client %))
        (apply merge)
@@ -38,7 +35,7 @@
   [app-names system-id app-id level sharer-category sharee-category]
   {:system_id       system-id
    :app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :sharee_category sharee-category
    :permission      level
@@ -48,7 +45,7 @@
   [app-names system-id app-id level sharer-category sharee-category reason]
   {:system_id       system-id
    :app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :sharee_category sharee-category
    :permission      level
@@ -78,7 +75,7 @@
   [app-names system-id app-id sharer-category]
   {:system_id       system-id
    :app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :success         true})
 
@@ -86,7 +83,7 @@
   [app-names system-id app-id sharer-category reason]
   {:system_id       system-id
    :app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :success         false
    :error           {:error_code ce/ERR_BAD_REQUEST

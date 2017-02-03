@@ -183,14 +183,9 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
-  ;; TODO: Determine how this should be refactored now that we have system IDs. If I remember correctly,
-  ;; this method is used during job listings. If that's the case, we can filter apps by execution system
-  ;; easily enough.
-  (loadAppTables [_ app-ids]
-    (let [agave-app-ids (remove util/uuid? app-ids)]
-      (if (and (seq agave-app-ids) (user-has-access-token?))
-        (listings/load-app-tables agave agave-app-ids)
-        [])))
+  (loadAppTables [_ qualified-app-ids]
+    (validate-system-ids (set (map :system_id qualified-app-ids)))
+    (listings/load-app-tables agave (set (map :app_id qualified-app-ids))))
 
   (submitJob [this submission]
     (validate-system-id (:system_id submission))

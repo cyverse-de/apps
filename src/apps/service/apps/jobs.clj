@@ -41,9 +41,9 @@
   (service/assert-found (jp/lock-job job-id) "job" job-id))
 
 (defn- send-job-status-update
-  [apps-client {job-id :id prev-status :status app-id :app_id}]
+  [apps-client {job-id :id prev-status :status :as job}]
   (let [{curr-status :status :as job} (jp/get-job-by-id job-id)
-        app-tables                    (.loadAppTables apps-client [app-id])
+        app-tables                    (.loadAppTables apps-client [job])
         rep-steps                     (jp/list-representative-job-steps [job-id])
         rep-steps                     (group-by (some-fn :parent_id :job_id) rep-steps)]
     (when-not (= prev-status curr-status)
@@ -145,7 +145,7 @@
   (validate-jobs-for-user user [job-id] "read")
   (let [job (jp/get-job-by-id job-id)]
     {:app_id     (:app_id job)
-     :system_id  (listings/job-type-to-system-id (:job_type job))
+     :system_id  (:system_id job)
      :parameters (job-params/get-parameter-values apps-client job)}))
 
 (defn get-job-relaunch-info

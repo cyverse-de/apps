@@ -843,11 +843,9 @@
 
 (defn get-app-names
   [app-ids]
-  (->> (select :apps
-               (fields :id :name)
-               (where {:id [in (map uuidify app-ids)]}))
-       (map (juxt :id :name))
-       (into {})))
+  (select :apps
+          (fields :id :name)
+          (where {:id [in (map uuidify app-ids)]})))
 
 (defn get-app-name
   [app-id]

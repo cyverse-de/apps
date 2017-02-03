@@ -41,7 +41,7 @@
   (copyPipeline [_ app-id])
   (editPipeline [_ app-id])
   (listJobs [_ params])
-  (loadAppTables [_ app-ids])
+  (loadAppTables [_ qualified-app-ids])
   (submitJob [_ submission])
   (submitJobStep [_ job-id submission])
   (translateJobStatus [_ job-type status])

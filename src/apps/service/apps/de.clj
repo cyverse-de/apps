@@ -1,4 +1,5 @@
 (ns apps.service.apps.de
+  (:use [apps.constants :only [de-system-id]])
   (:require [clojure.string :as string]
             [apps.clients.jex :as jex]
             [apps.persistence.app-metadata :as ap]
@@ -166,13 +167,12 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
-  ;; TODO: Determine how this should be refactored now that we have system IDs. If I remember correctly,
-  ;; this method is used during job listings. If that's the case, we can filter apps by execution system
-  ;; easily enough.
-  (loadAppTables [_ app-ids]
-    (->> (filter util/uuid? app-ids)
+  (loadAppTables [_ qualified-app-ids]
+    (validate-system-ids (set (map :system_id qualified-app-ids)))
+    (->> (map :app_id qualified-app-ids)
          (ap/load-app-details)
-         (map (juxt (comp str :id) identity))
+         (map (fn [m] (assoc m :system_id de-system-id)))
+         (map (juxt apps-util/to-qualified-app-id identity))
          (into {})
          (vector)))
 
