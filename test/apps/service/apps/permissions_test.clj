@@ -39,16 +39,16 @@
         dev-category-id                    (:id (get-dev-category user))
         beta-category-id                   (:id (get-beta-category user))
         group-id                           (ipg/grouper-user-group-id)]
-    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (count beta-apps) (:total (apps/list-apps-in-category user beta-category-id {}))))
+    (is (= 1 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
+    (is (= (count beta-apps) (:total (apps/list-apps-in-category user de-system-id beta-category-id {}))))
     (perms-client/unshare-app (:id test-app) "user" username)
-    (is (= 0 (:total (apps/list-apps-in-category user dev-category-id {}))))
+    (is (= 0 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" username "own")
-    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (count beta-apps) (:total (apps/list-apps-in-category user beta-category-id {}))))
+    (is (= 1 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
+    (is (= (count beta-apps) (:total (apps/list-apps-in-category user de-system-id beta-category-id {}))))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first beta-apps)) "group" group-id)
-    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (dec (count beta-apps)) (:total (apps/list-apps-in-category user beta-category-id {}))))))
+    (is (= 1 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
+    (is (= (dec (count beta-apps)) (:total (apps/list-apps-in-category user de-system-id beta-category-id {}))))))
 
 (deftest test-app-hierarchy-counts
   (let [{username :shortUsername :as user} (get-user :testde1)
@@ -82,14 +82,14 @@
         beta-category-id                   (:id (get-beta-category user))
         group-id                           (ipg/grouper-user-group-id)
         app-id                             (:id (first beta-apps))]
-    (is (find-app (apps/list-apps-in-category user beta-category-id {}) app-id))
+    (is (find-app (apps/list-apps-in-category user de-system-id beta-category-id {}) app-id))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first beta-apps)) "group" group-id)
-    (is (nil? (find-app (apps/list-apps-in-category user beta-category-id {}) app-id)))))
+    (is (nil? (find-app (apps/list-apps-in-category user de-system-id beta-category-id {}) app-id)))))
 
 (deftest check-initial-ownership-permission
   (let [{username :shortUsername :as user} (get-user :testde1)
         dev-category-id                    (:id (get-dev-category user))]
-    (is (= "own" (:permission (first (:apps (apps/list-apps-in-category user dev-category-id {}))))))))
+    (is (= "own" (:permission (first (:apps (apps/list-apps-in-category user de-system-id dev-category-id {}))))))))
 
 (defn check-delete-apps
   ([user]
@@ -416,7 +416,7 @@
 
 (defn- favorite? [user app-id]
   (let [faves-id (:id (get-category user "Favorite Apps"))]
-    (->> (:apps (apps/list-apps-in-category user faves-id {}))
+    (->> (:apps (apps/list-apps-in-category user de-system-id faves-id {}))
          (filter (comp (partial = app-id) :id))
          seq)))
 
@@ -444,7 +444,7 @@
   (let [testde1       (get-user :testde1)
         testde2       (get-user :testde2)
         app           (create-test-app testde1 "To be shared")
-        shared-apps   (fn [user] (apps/list-apps-in-category user shared-with-me-id {}))
+        shared-apps   (fn [user] (apps/list-apps-in-category user de-system-id shared-with-me-id {}))
         contains-app? (fn [app-id apps] (seq (filter (comp (partial = app-id) :id) apps)))
         old-listing   (shared-apps testde2)]
     (is (not (contains-app? (:id app) (:apps old-listing))))

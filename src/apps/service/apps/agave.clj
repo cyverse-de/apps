@@ -74,9 +74,9 @@
   (hasCategory [_ category-id]
     (= category-id (uuidify (:id (.hpcAppGroup agave)))))
 
-  (listAppsInCategory [_ category-id params]
-    (when (= category-id (uuidify (:id (.hpcAppGroup agave))))
-      (listings/list-apps agave category-id params)))
+  (listAppsInCategory [_ system-id category-id params]
+    (validate-system-id system-id)
+    (listings/list-apps agave category-id params))
 
   (listAppsUnderHierarchy [_ root-iri attr params]
     (when (user-has-access-token?)

@@ -34,11 +34,10 @@
   (hasCategory [_ category-id]
     (some #(.hasCategory % category-id) clients))
 
-  (listAppsInCategory [_ category-id params]
+  (listAppsInCategory [_ system-id category-id params]
     (assert-not-nil
      [:category-id category-id]
-     (when-let [client (first (filter #(.hasCategory % category-id) clients))]
-       (.listAppsInCategory client category-id params))))
+     (.listAppsInCategory (util/get-apps-client clients system-id) system-id category-id params)))
 
   (listAppsUnderHierarchy [_ root-iri attr params]
     (let [unpaged-params (dissoc params :limit :offset)]

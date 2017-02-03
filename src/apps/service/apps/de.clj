@@ -47,7 +47,8 @@
   (hasCategory [_ category-id]
     (listings/has-category category-id))
 
-  (listAppsInCategory [_ category-id params]
+  (listAppsInCategory [_ system-id category-id params]
+    (validate-system-id system-id)
     (listings/list-apps-in-group user category-id params))
 
   (listAppsUnderHierarchy [_ root-iri attr params]

@@ -76,10 +76,10 @@
     {:categories (transaction (.listAppCategories client params))}))
 
 (defn list-apps-in-category
-  [user category-id params]
-  (let [state-info (str "type=apps&app-category=" category-id)
+  [user system-id category-id params]
+  (let [state-info (str "type=apps&system-id=" system-id "&category-id=" category-id)
         client     (get-apps-client user state-info)]
-    (.listAppsInCategory client category-id params)))
+    (.listAppsInCategory client system-id category-id params)))
 
 (defn list-apps-under-hierarchy
   [user root-iri attr params]

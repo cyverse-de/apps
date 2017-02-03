@@ -18,7 +18,7 @@
 
 (defn- list-apps
   [user category-id]
-  (:apps (apps/list-apps-in-category user category-id {})))
+  (:apps (apps/list-apps-in-category user de-system-id category-id {})))
 
 (defn- find-app
   [{app-id :id} apps]

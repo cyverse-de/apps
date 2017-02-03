@@ -8,7 +8,7 @@
   (supportsSystemId [_ system-id])
   (listAppCategories [_ params])
   (hasCategory [_ category-id])
-  (listAppsInCategory [_ category-id params])
+  (listAppsInCategory [_ system-id category-id params])
   (listAppsUnderHierarchy [_ root-iri attr params])
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params])
   (searchApps [_ search-term params])
