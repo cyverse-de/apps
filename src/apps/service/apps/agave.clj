@@ -6,6 +6,7 @@
             [apps.service.apps.agave.listings :as listings]
             [apps.service.apps.agave.pipelines :as pipelines]
             [apps.service.apps.agave.jobs :as agave-jobs]
+            [apps.service.apps.agave.sharing :as sharing]
             [apps.service.apps.job-listings :as job-listings]
             [apps.service.apps.permissions :as app-permissions]
             [apps.service.apps.util :as apps-util]
@@ -18,19 +19,11 @@
 
 (def app-integration-rejection "Cannot add or modify HPC apps with this service")
 
-(def app-permission-rejection "Cannot list or modify the permissions of HPC apps with this service")
-
-(def analysis-permission-rejection "Cannot list or modify the permissions of HPC analyses with this service")
-
 (def integration-data-rejection "Cannot list or modify integration data for HPC apps with this service")
 
 (def app-favorite-rejection "Cannot mark an HPC app as a favorite with this service.")
 
 (def app-rating-rejection "Cannot rate an HPC app with this service.")
-
-(defn- reject-app-permission-request
-  []
-  (service/bad-request app-permission-rejection))
 
 (defn- reject-app-integration-request
   []
@@ -369,7 +362,7 @@
   (listAppPermissions [_ app-ids]
     (when (and (user-has-access-token?)
                (some (complement util/uuid?) app-ids))
-      (reject-app-permission-request)))
+      (.listAppPermissions agave app-ids)))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareApps [self sharing-requests]
@@ -380,11 +373,10 @@
     (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (shareAppWithUser [_ app-names _ app-id level]
+  (shareAppWithUser [_ app-names sharee app-id level]
     (when (and (user-has-access-token?)
                (not (util/uuid? app-id)))
-      (let [category (.hpcAppGroup agave)]
-        (app-permissions/app-sharing-failure app-names app-id level category category app-permission-rejection))))
+      (sharing/share-app-with-user agave app-names sharee app-id level)))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (unshareApps [self unsharing-requests]
@@ -395,20 +387,19 @@
     (app-permissions/process-user-app-unsharing-requests self app-names sharee app-ids))
 
   ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (unshareAppWithUser [_ app-names _ app-id]
+  (unshareAppWithUser [_ app-names sharee app-id]
     (when (and (user-has-access-token?)
                (not (util/uuid? app-id)))
-      (let [category (.hpcAppGroup agave)]
-        (app-permissions/app-unsharing-failure app-names app-id category app-permission-rejection))))
+      (sharing/unshare-app-with-user agave app-names sharee app-id)))
 
   (hasAppPermission [_ username app-id required-level]
     (when (and (user-has-access-token?)
                (not (util/uuid? app-id)))
-      false))
+      (.hasAppPermission agave username app-id required-level)))
 
   (hasAppPermission [_ username system-id app-id required-level]
     (validate-system-id system-id)
-    false)
+    (.hasAppPermission agave username app-id required-level))
 
   (supportsJobSharing [_ _]
-    false))
+    true))
