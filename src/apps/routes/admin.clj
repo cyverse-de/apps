@@ -1,6 +1,5 @@
 (ns apps.routes.admin
-  (:use [apps.constants :only [de-system-id]]
-        [common-swagger-api.routes]
+  (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
         [apps.metadata.reference-genomes :only [add-reference-genome
@@ -176,32 +175,35 @@
         with the 'Trash' virtual category."
         (ok (apps/get-admin-app-categories current-user params)))
 
-  (POST "/" []
-         :query [params SecuredQueryParams]
-         :body [body (describe AppCategoryRequest "The details of the App Category to add.")]
-         :return AppCategoryAppListing
-         :summary "Add an App Category"
-         :description "This endpoint adds an App Category under the given parent App Category, as long as
-         that parent Category doesn't already have a subcategory with the given name and it doesn't
-         directly contain its own Apps."
-         (ok (apps/admin-add-category current-user de-system-id body)))
+  (context "/:system-id" []
+    :path-params [system-id :- SystemId]
 
-  (DELETE "/:category-id" []
-           :path-params [category-id :- AppCategoryIdPathParam]
-           :query [params SecuredQueryParams]
-           :summary "Delete an App Category"
-           :description "This service physically removes an App Category from the database, along with all
-           of its child Categories, as long as none of them contain any Apps."
-           (ok (apps/admin-delete-category current-user de-system-id category-id)))
+    (POST "/" []
+      :query [params SecuredQueryParams]
+      :body [body (describe AppCategoryRequest "The details of the App Category to add.")]
+      :return AppCategoryAppListing
+      :summary "Add an App Category"
+      :description "This endpoint adds an App Category under the given parent App Category, as long as
+      that parent Category doesn't already have a subcategory with the given name and it doesn't
+      directly contain its own Apps."
+      (ok (apps/admin-add-category current-user system-id body)))
 
-  (PATCH "/:category-id" []
-          :path-params [category-id :- AppCategoryIdPathParam]
-          :query [params SecuredQueryParams]
-          :body [body (describe AppCategoryPatchRequest "Details of the App Category to update.")]
-          :summary "Update an App Category"
-          :description "This service renames or moves an App Category to a new parent Category, depending
-          on the fields included in the request."
-          (ok (apps/admin-update-category current-user de-system-id (assoc body :id category-id)))))
+    (DELETE "/:category-id" []
+      :path-params [category-id :- AppCategoryIdPathParam]
+      :query [params SecuredQueryParams]
+      :summary "Delete an App Category"
+      :description "This service physically removes an App Category from the database, along with all
+      of its child Categories, as long as none of them contain any Apps."
+      (ok (apps/admin-delete-category current-user system-id category-id)))
+
+    (PATCH "/:category-id" []
+      :path-params [category-id :- AppCategoryIdPathParam]
+      :query [params SecuredQueryParams]
+      :body [body (describe AppCategoryPatchRequest "Details of the App Category to update.")]
+      :summary "Update an App Category"
+      :description "This service renames or moves an App Category to a new parent Category, depending
+      on the fields included in the request."
+      (ok (apps/admin-update-category current-user system-id (assoc body :id category-id))))))
 
 (defroutes admin-ontologies
 
