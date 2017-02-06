@@ -35,3 +35,10 @@
     (cxu/bad-request "Unsupported system IDs."
                      {:system-ids           unsupported-system-ids
                       :supported-system-ids supported-system-ids})))
+
+(defn reject-mixed-system-ids
+  [original-system-id system-id]
+  (when-not (= original-system-id system-id)
+    (cxu/bad-request "System IDs may not be mixed for this request."
+                     {:original-system-id   original-system-id
+                      :associated-system-id system-id})))

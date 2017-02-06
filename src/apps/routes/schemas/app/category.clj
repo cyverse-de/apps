@@ -68,11 +68,13 @@
 
 (defschema AppCategoryRequest
   {:name      AppCategoryNameParam
+   :system_id (describe String "The system ID of the App Category's parent Category.")
    :parent_id (describe UUID "The UUID of the App Category's parent Category.")})
 
 (defschema AppCategoryPatchRequest
   (-> AppCategoryRequest
       (->optional-param :name)
+      (->optional-param :system_id)
       (->optional-param :parent_id)))
 
 (defschema AppCategoryOntologyVersionDetails

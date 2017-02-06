@@ -226,16 +226,19 @@
   (getAdminAppCategories [_ params]
     (listings/get-admin-app-groups user params))
 
-  (adminAddCategory [_ system-id body]
+  (adminAddCategory [_ system-id {parent-system-id :system_id :as body}]
     (validate-system-id system-id)
+    (apps-util/reject-mixed-system-ids system-id parent-system-id)
     (app-admin/add-category body))
 
   (adminDeleteCategory [_ system-id category-id]
     (validate-system-id system-id)
     (app-admin/delete-category user category-id))
 
-  (adminUpdateCategory [_ system-id body]
+  (adminUpdateCategory [_ system-id {parent-system-id :system_id parent-id :parent_id :as body}]
     (validate-system-id system-id)
+    (when-not (and (string/blank? parent-system-id) (string/blank? parent-id))
+      (apps-util/reject-mixed-system-ids system-id parent-system-id))
     (app-admin/update-category body))
 
   (getAppDocs [_ system-id app-id]
