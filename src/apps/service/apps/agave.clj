@@ -71,9 +71,6 @@
     (when-not (and hpc (.equalsIgnoreCase hpc "false"))
       [(.hpcAppGroup agave)]))
 
-  (hasCategory [_ category-id]
-    (= category-id (uuidify (:id (.hpcAppGroup agave)))))
-
   (listAppsInCategory [_ system-id category-id params]
     (validate-system-id system-id)
     (listings/list-apps agave category-id params))

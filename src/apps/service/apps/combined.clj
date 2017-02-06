@@ -31,9 +31,6 @@
   (listAppCategories [_ params]
     (mapcat #(.listAppCategories % params) clients))
 
-  (hasCategory [_ category-id]
-    (some #(.hasCategory % category-id) clients))
-
   (listAppsInCategory [_ system-id category-id params]
     (assert-not-nil
      [:category-id category-id]

@@ -45,9 +45,6 @@
   (listAppCategories [_ params]
     (listings/get-app-groups user params))
 
-  (hasCategory [_ category-id]
-    (listings/has-category category-id))
-
   (listAppsInCategory [_ system-id category-id params]
     (validate-system-id system-id)
     (listings/list-apps-in-group user category-id params))
