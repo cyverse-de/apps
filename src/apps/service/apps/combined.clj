@@ -197,8 +197,8 @@
   (adminUpdateApp [_ system-id body]
     (.adminUpdateApp (util/get-apps-client clients system-id) system-id body))
 
-  (getAdminAppCategories [_ system-id params]
-    (.getAdminAppCategories (util/get-apps-client clients system-id) system-id params))
+  (getAdminAppCategories [_ params]
+    (mapcat #(.getAdminAppCategories % params) clients))
 
   (adminAddCategory [_ system-id body]
     (.adminAddCategory (util/get-apps-client clients system-id) system-id body))

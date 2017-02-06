@@ -297,8 +297,8 @@
     (.getAppDetails apps-client system-id (:id body) true)))
 
 (defn get-admin-app-categories
-  [user system-id params]
-  {:categories (.getAdminAppCategories (get-apps-client user) system-id params)})
+  [user params]
+  {:categories (.getAdminAppCategories (get-apps-client user) params)})
 
 (defn admin-add-category
   [user system-id body]

@@ -233,9 +233,8 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (getAdminAppCategories [_ system-id _]
-    (validate-system-id system-id)
-    (reject-categorization-request))
+  (getAdminAppCategories [_ _]
+    [])
 
   (adminAddCategory [_ system-id _]
     (validate-system-id system-id)

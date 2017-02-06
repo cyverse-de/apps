@@ -174,7 +174,7 @@
         :summary "List App Categories"
         :description "This service is used by DE admins to obtain a list of public app categories along
         with the 'Trash' virtual category."
-        (ok (apps/get-admin-app-categories current-user de-system-id params)))
+        (ok (apps/get-admin-app-categories current-user params)))
 
   (POST "/" []
          :query [params SecuredQueryParams]
