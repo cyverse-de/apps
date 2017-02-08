@@ -39,13 +39,15 @@
                   :total (count children)))))
 
 (defn- job-supports-sharing?
-  [apps-client rep-steps {:keys [parent_id id]}]
-  (and (nil? parent_id) (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))))
+  [apps-client perms rep-steps {:keys [parent_id id]}]
+  (and (nil? parent_id)
+       (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))
+       (= (get perms id) "own")))
 
 (def job-type-to-system-id string/lower-case)
 
 (defn format-job
-  [apps-client app-tables rep-steps {:keys [parent_id id] :as job}]
+  [apps-client perms app-tables rep-steps {:keys [parent_id id] :as job}]
   (remove-nil-vals
    {:app_description (:app_description job)
     :app_id          (:app_id job)
@@ -66,7 +68,7 @@
     :parent_id       parent_id
     :batch           (:is_batch job)
     :batch_status    (when (:is_batch job) (format-batch-status id))
-    :can_share       (job-supports-sharing? apps-client rep-steps job)}))
+    :can_share       (job-supports-sharing? apps-client perms rep-steps job)}))
 
 (defn- list-jobs*
   [{:keys [username]} search-params types analysis-ids]
@@ -78,14 +80,15 @@
 
 (defn list-jobs
   [apps-client user {:keys [sort-field] :as params}]
-  (let [analysis-ids     (set (keys (perms-client/load-analysis-permissions (:shortUsername user))))
+  (let [perms            (perms-client/load-analysis-permissions (:shortUsername user))
+        analysis-ids     (set (keys perms))
         default-sort-dir (if (nil? sort-field) :desc :asc)
         search-params    (util/default-search-params params :startdate default-sort-dir)
         types            (.getJobTypes apps-client)
         jobs             (list-jobs* user search-params types analysis-ids)
         rep-steps        (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))
         app-tables       (.loadAppTables apps-client (map :app_id jobs))]
-    {:analyses  (mapv (partial format-job apps-client app-tables rep-steps) jobs)
+    {:analyses  (mapv (partial format-job apps-client perms app-tables rep-steps) jobs)
      :timestamp (str (System/currentTimeMillis))
      :total     (count-jobs user params types analysis-ids)}))
 
@@ -94,7 +97,7 @@
   (let [job-info   (jp/get-job-by-id job-id)
         app-tables (.loadAppTables apps-client [(:app_id job-info)])
         rep-steps  (group-by :job_id (jp/list-representative-job-steps [job-id]))]
-    (format-job apps-client app-tables rep-steps job-info)))
+    (format-job apps-client nil app-tables rep-steps job-info)))
 
 (defn- format-job-step
   [step]
