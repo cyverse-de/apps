@@ -12,16 +12,16 @@
    :app_id    (describe NonBlankString "The app ID")})
 
 (defschema QualifiedAppIdList
-  {:apps (describe [NonBlankString] "A List of app IDs")})
+  {:apps (describe [QualifiedAppId] "A List of app IDs")})
 
 (defschema UserPermissionListElement
   {:user       (describe NonBlankString "The user ID")
    :permission (describe AppPermissionEnum "The permission level assigned to the user")})
 
 (defschema AppPermissionListElement
-  {:id                  (describe NonBlankString "The app ID")
-   (optional-key :name) (describe NonBlankString "The app name")
-   :permissions         (describe [UserPermissionListElement] "The list of user permissions for the app")})
+  (assoc QualifiedAppId
+    (optional-key :name) (describe NonBlankString "The app name")
+    :permissions         (describe [UserPermissionListElement] "The list of user permissions for the app")))
 
 (defschema AppPermissionListing
   {:apps (describe [AppPermissionListElement] "The list of app permissions")})

@@ -16,7 +16,8 @@
 
 (defn- format-app-permissions
   [app-names [app-id app-perms]]
-  {:id          (str app-id)
+  {:system_id   de-system-id
+   :app_id      (str app-id)
    :name        (apps-util/get-app-name app-names de-system-id app-id)
    :permissions app-perms})
 

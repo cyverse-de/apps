@@ -352,9 +352,9 @@
         beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps_in_group))
         apps_in_group  (map (partial format-app-listing false perms beta-ids-set public-app-ids) apps_in_group)]
     (assoc app_group
-      :system__id de-system-id
-      :total      total
-      :apps       apps_in_group)))
+      :system_id de-system-id
+      :total     total
+      :apps      apps_in_group)))
 
 (defn list-apps-in-group
   "This service lists all of the apps in an app group and all of its
