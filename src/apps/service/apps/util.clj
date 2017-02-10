@@ -26,19 +26,19 @@
   [supported-system-ids system-id]
   (when-not (supported-system-ids system-id)
     (cxu/bad-request "Unsupported system ID."
-                     {:system-id            system-id
-                      :supported-system-ids supported-system-ids})))
+                     :system-id            system-id
+                     :supported-system-ids supported-system-ids)))
 
 (defn validate-system-ids
   [supported-system-ids system-ids]
   (when-let [unsupported-system-ids (seq (remove supported-system-ids system-ids))]
     (cxu/bad-request "Unsupported system IDs."
-                     {:system-ids           unsupported-system-ids
-                      :supported-system-ids supported-system-ids})))
+                     :system-ids           unsupported-system-ids
+                     :supported-system-ids supported-system-ids)))
 
 (defn reject-mixed-system-ids
   [original-system-id system-id]
   (when-not (= original-system-id system-id)
     (cxu/bad-request "System IDs may not be mixed for this request."
-                     {:original-system-id   original-system-id
-                      :associated-system-id system-id})))
+                     :original-system-id   original-system-id
+                     :associated-system-id system-id)))
