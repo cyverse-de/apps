@@ -303,7 +303,7 @@
 (defn admin-add-category
   [user system-id body]
   (let [apps-client (get-apps-client user)]
-    (.listAppsInCategory apps-client (.adminAddCategory apps-client system-id body) {})))
+    (.listAppsInCategory apps-client system-id (.adminAddCategory apps-client system-id body) {})))
 
 (defn admin-delete-category
   [user system-id category-id]
@@ -313,7 +313,7 @@
   [user system-id {:keys [id] :as body}]
   (let [apps-client (get-apps-client user)]
     (.adminUpdateCategory apps-client system-id body)
-    (.listAppsInCategory apps-client id {})))
+    (.listAppsInCategory apps-client system-id id {})))
 
 (defn get-app-docs
   [user system-id app-id]
