@@ -49,7 +49,7 @@
     (when-not (= prev-status curr-status)
       (cn/send-job-status-update
        (.getUser apps-client)
-       (listings/format-job apps-client app-tables rep-steps job)))))
+       (listings/format-job apps-client nil app-tables rep-steps job)))))
 
 (defn- determine-batch-status
   [{:keys [id]}]
