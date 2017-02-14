@@ -438,6 +438,15 @@
   [retval]
   (-> retval remove-nil-vals remove-empty-vals))
 
+(defn- add-data-container-auth
+  "Adds authentication information to a list of data containers."
+  [containers & {:keys [auth?] :or {auth? false}}]
+  (if auth?
+    (mapv (fn [{registry-name :name :as container}]
+            (filter-returns (assoc container :auth (auth-info registry-name))))
+          containers)
+    containers))
+
 (defn tool-container-info
   "Returns container info associated with a tool or nil. This is used to build
   the JSON map that is passed down to the JEX. If you make changes to the
@@ -460,6 +469,7 @@
                          (fields :name :tag :url))))
                    (where {:tools_id id}))
            first
+           (update :container_volumes_from add-data-container-auth :auth? auth?)
            (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
 
