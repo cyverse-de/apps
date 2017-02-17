@@ -24,14 +24,14 @@
        (set)))
 
 (defn- get-external-app
-  [clients external-app-id]
+  [clients system-id external-app-id]
   (assert-not-nil
-   [:app-id external-app-id]
-   (first (remove nil? (map #(.getAppJobView % external-app-id) clients)))))
+   [:app-id (str system-id "/" external-app-id)]
+   (.getAppJobView (util/get-apps-client clients system-id) system-id external-app-id)))
 
 (defn- get-external-groups
-  [clients step external-app-id]
-  (let [app          (get-external-app clients external-app-id)
+  [clients step system-id external-app-id]
+  (let [app          (get-external-app clients system-id external-app-id)
         mapped-props (get-mapped-props (:step_id step))]
     (->> (:groups app)
          (map (partial remove-mapped-inputs mapped-props))
@@ -46,6 +46,7 @@
          [step & steps] (ap/load-app-steps app-id)
          step-number    1]
     (let [before-current-step #(<= (:step_number %) step-number)
+          system-id           (:system_id step)
           external-app-id     (:external_app_id step)]
       (cond
        ;; We're out of steps.
@@ -54,7 +55,7 @@
 
        ;; The current step is an external step.
        external-app-id
-       (recur (concat acc (get-external-groups clients step external-app-id))
+       (recur (concat acc (get-external-groups clients step system-id external-app-id))
               groups
               steps
               (inc step-number))
@@ -74,27 +75,17 @@
      app)])
 
 (defn- get-app-from-client
-  ([app-id clients current-client]
-   (when-let [app (.getAppJobView current-client app-id)]
-     (format-app-submission-info app clients current-client)))
-  ([system-id app-id clients current-client]
-   (-> (.getAppJobView current-client system-id app-id)
-       (format-app-submission-info clients current-client))))
-
-(defn- get-app*
-  [app-id clients]
-  (->> (map (partial get-app-from-client app-id clients) clients)
-       (remove nil?)
-       (first)))
+  [system-id app-id clients current-client]
+  (-> (.getAppJobView current-client system-id app-id)
+      (format-app-submission-info clients current-client)))
 
 (defn get-app
-  ([app-id clients]
-   (second (get-app* app-id clients)))
-  ([system-id app-id clients]
-   (->> (util/get-apps-client clients system-id)
-        (get-app-from-client system-id app-id clients)
-        second)))
+  [system-id app-id clients]
+  (->> (util/get-apps-client clients system-id)
+       (get-app-from-client system-id app-id clients)
+       second))
 
 (defn get-app-submission-info
-  [app-id clients]
-  (get-app* app-id clients))
+  [system-id app-id clients]
+  (->> (util/get-apps-client clients system-id)
+       (get-app-from-client system-id app-id clients)))

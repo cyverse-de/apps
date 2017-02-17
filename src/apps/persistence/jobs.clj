@@ -8,7 +8,8 @@
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
-  (:require [cheshire.core :as cheshire]
+  (:require [apps.constants :as c]
+            [cheshire.core :as cheshire]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
@@ -17,8 +18,8 @@
 (def de-job-type "DE")
 (def agave-job-type "Agave")
 
-(def de-client-name "de")
-(def agave-client-name "agave")
+(def de-client-name c/de-system-id)
+(def agave-client-name c/hpc-system-id)
 (def combined-client-name "combined")
 
 (def pending-status "Pending")
@@ -400,29 +401,21 @@
       (#(exec-raw [% [id]] :results))
       (first)))
 
-(defn- distinct-job-step-types
-  "Obtains the list of distinct job step types associated with a job."
-  [job-id]
-  (map :job_type (select [:job_steps :s]
-                         (join [:job_types :t] {:s.job_type_id :t.id})
-                         (fields [:t.name :job_type])
-                         (modifier "DISTINCT")
-                         (where {:s.job_id job-id}))))
+(defn- add-job-type-info
+  "Adds job type information to a job."
+  [{:keys [id] :as job}]
+  (merge job (first (select [:jobs :j]
+                            (join [:job_types :t] {:j.job_type_id :t.id})
+                            (fields [:t.name :job_type] :t.system_id)
+                            (where {:j.id id})))))
 
-(defn- determine-job-type
-  "Determines the type of a job in the database."
-  [job-id]
-  (let [job-step-types (distinct-job-step-types job-id)]
-    (if (<= (count job-step-types) 1) (first job-step-types) de-job-type)))
-
-(defn- determine-job-username
+(defn- add-job-username
   "Determines the username of the user who submitted a job."
-  [job-id]
-  ((comp :username first)
-   (select [:jobs :j]
-           (join [:users :u] {:j.user_id :u.id})
-           (fields [:u.username :username])
-           (where {:j.id job-id}))))
+  [{job-id :id :as job}]
+  (merge job (first (select [:jobs :j]
+                            (join [:users :u] {:j.user_id :u.id})
+                            (fields :u.username)
+                            (where {:j.id job-id})))))
 
 (defn lock-job
   "Retrieves a job by its internal identifier, placing a lock on the row. For-update queries
@@ -439,10 +432,9 @@
    Important note: in cases where both the job and the job step need to be locked, the job step
    should be locked first."
   [id]
-  (when-let [job (lock-job* id)]
-    (assoc job
-      :job_type (determine-job-type id)
-      :username (determine-job-username id))))
+  (some-> (lock-job* id)
+          add-job-type-info
+          add-job-username))
 
 (defn- lock-job-step*
   "Retrieves a job step from the database by its job ID and external job ID, placing a lock on

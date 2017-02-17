@@ -31,14 +31,10 @@
   (listAppCategories [_ params]
     (mapcat #(.listAppCategories % params) clients))
 
-  (hasCategory [_ category-id]
-    (some #(.hasCategory % category-id) clients))
-
-  (listAppsInCategory [_ category-id params]
+  (listAppsInCategory [_ system-id category-id params]
     (assert-not-nil
      [:category-id category-id]
-     (when-let [client (first (filter #(.hasCategory % category-id) clients))]
-       (.listAppsInCategory client category-id params))))
+     (.listAppsInCategory (util/get-apps-client clients system-id) system-id category-id params)))
 
   (listAppsUnderHierarchy [_ root-iri attr params]
     (let [unpaged-params (dissoc params :limit :offset)]
@@ -65,14 +61,8 @@
   (canEditApps [_]
     (some #(.canEditApps %) clients))
 
-  (addApp [_ app]
-    (.addApp (util/get-apps-client clients) app))
-
   (addApp [_ system-id app]
     (.addApp (util/get-apps-client clients system-id) system-id app))
-
-  (previewCommandLine [_ app]
-    (.previewCommandLine (util/get-apps-client clients) app))
 
   (previewCommandLine [_ system-id app]
     (.previewCommandLine (util/get-apps-client clients system-id) system-id app))
@@ -88,113 +78,58 @@
       (doseq [[system-id qualified-app-ids] requests-for-system]
         (.deleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
-  (getAppJobView [_ app-id]
-    (job-view/get-app app-id clients))
-
   (getAppJobView [_ system-id app-id]
     (job-view/get-app system-id app-id clients))
 
-  (getAppSubmissionInfo [_ app-id]
-    (job-view/get-app-submission-info app-id clients))
-
-  (deleteApp [_ app-id]
-    (.deleteApp (util/get-apps-client clients) app-id))
+  (getAppSubmissionInfo [_ system-id app-id]
+    (job-view/get-app-submission-info system-id app-id clients))
 
   (deleteApp [_ system-id app-id]
     (.deleteApp (util/get-apps-client clients system-id) system-id app-id))
 
-  (relabelApp [_ app]
-    (.relabelApp (util/get-apps-client clients) app))
-
   (relabelApp [_ system-id app]
     (.relabelApp (util/get-apps-client clients system-id) system-id app))
 
-  (updateApp [_ app]
-    (.updateApp (util/get-apps-client clients) app))
-
   (updateApp [_ system-id app]
     (.updateApp (util/get-apps-client clients system-id) system-id app))
-
-  (copyApp [_ app-id]
-    (.copyApp (util/get-apps-client clients) app-id))
 
   (copyApp [_ system-id app-id]
     (.copyApp (util/get-apps-client clients system-id) system-id app-id))
 
   ;; FIXME: remove the admin flag when we have a better way to deal with administrative
   ;; privileges.
-  (getAppDetails [_ app-id admin?]
-    (->> (map #(.getAppDetails % app-id admin?) clients)
-         (remove nil?)
-         (first)))
-
-  ;; FIXME: remove the admin flag when we have a better way to deal with administrative
-  ;; privileges.
   (getAppDetails [_ system-id app-id admin?]
-    (.getAppDetails (util/get-apps-client clients system-id) system-id app-id false))
-
-  (removeAppFavorite [_ app-id]
-    (.removeAppFavorite (util/get-apps-client clients) app-id))
+    (.getAppDetails (util/get-apps-client clients system-id) system-id app-id admin?))
 
   (removeAppFavorite [_ system-id app-id]
     (.removeAppFavorite (util/get-apps-client clients system-id) system-id app-id))
 
-  (addAppFavorite [_ app-id]
-    (.addAppFavorite (util/get-apps-client clients) app-id))
-
   (addAppFavorite [_ system-id app-id]
     (.addAppFavorite (util/get-apps-client clients system-id) system-id app-id))
-
-  (isAppPublishable [_ app-id]
-    (.isAppPublishable (util/get-apps-client clients) app-id))
 
   (isAppPublishable [_ system-id app-id]
     (.isAppPublishable (util/get-apps-client clients system-id) system-id app-id))
 
-  (makeAppPublic [_ app]
-    (.makeAppPublic (util/get-apps-client clients) app))
-
   (makeAppPublic [_ system-id app]
     (.makeAppPublic (util/get-apps-client clients system-id) system-id app))
-
-  (deleteAppRating [_ app-id]
-    (.deleteAppRating (util/get-apps-client clients) app-id))
 
   (deleteAppRating [_ system-id app-id]
     (.deleteAppRating (util/get-apps-client clients system-id) system-id app-id))
 
-  (rateApp [_ app-id rating]
-    (.rateApp (util/get-apps-client clients) app-id rating))
-
   (rateApp [_ system-id app-id rating]
     (.rateApp (util/get-apps-client clients system-id) system-id app-id rating))
-
-  (getAppTaskListing [_ app-id]
-    (->> (map #(.getAppTaskListing % app-id) clients)
-         (remove nil?)
-         (first)))
 
   (getAppTaskListing [_ system-id app-id]
     (.getAppTaskListing (util/get-apps-client clients system-id) system-id app-id))
 
-  (getAppToolListing [_ app-id]
-    (->> (map #(.getAppToolListing % app-id) clients)
-         (remove nil?)
-         (first)))
-
   (getAppToolListing [_ system-id app-id]
     (.getAppToolListing (util/get-apps-client clients system-id) system-id app-id))
-
-  (getAppUi [_ app-id]
-    (.getAppUi (util/get-apps-client clients) app-id))
 
   (getAppUi [_ system-id app-id]
     (.getAppUi (util/get-apps-client clients system-id) system-id app-id))
 
-  (getAppInputIds [_ app-id]
-    (->> (map #(.getAppInputIds % app-id) clients)
-         (remove nil?)
-         (first)))
+  (getAppInputIds [_ system-id app-id]
+    (.getAppInputIds (util/get-apps-client clients system-id) system-id app-id))
 
   (addPipeline [self pipeline]
     (pipelines/format-pipeline self (.addPipeline (util/get-apps-client clients) pipeline)))
@@ -214,8 +149,10 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
-  (loadAppTables [_ app-ids]
-    (mapcat  #(.loadAppTables % app-ids) clients))
+  (loadAppTables [_ qualified-app-ids]
+    (doall (mapcat (fn [[system-id qual-ids]]
+                     (.loadAppTables (util/get-apps-client clients system-id) qual-ids))
+                   (group-by :system_id qualified-app-ids))))
 
   (submitJob [self submission]
     (if-let [apps-client (util/apps-client-for-job submission clients)]
@@ -239,14 +176,14 @@
   (buildNextStepSubmission [self job-step job]
     (combined-jobs/build-next-step-submission self clients job-step job))
 
-  (getParamDefinitions [_ app-id]
-    (mapcat #(.getParamDefinitions % app-id) clients))
-
   (stopJobStep [_ job-step]
     (dorun (map #(.stopJobStep % job-step) clients)))
 
-  (categorizeApps [_ body]
-    (.categorizeApps (util/get-apps-client clients) body))
+  (categorizeApps [_ {:keys [categories]}]
+    (let [requests-by-system-id (group-by :system_id categories)]
+      (dorun (map (fn [[system-id categories]]
+                    (.categorizeApps (util/get-apps-client clients system-id) {:categories categories}))
+                  requests-by-system-id))))
 
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req)
@@ -254,80 +191,57 @@
       (doseq [[system-id qualified-app-ids] requests-for-system]
         (.permanentlyDeleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
-  (adminDeleteApp [_ app-id]
-    (.adminDeleteApp (util/get-apps-client clients) app-id))
+  (adminDeleteApp [_ system-id app-id]
+    (.adminDeleteApp (util/get-apps-client clients system-id) system-id app-id))
 
-  (adminUpdateApp [_ body]
-    (.adminUpdateApp (util/get-apps-client clients) body))
+  (adminUpdateApp [_ system-id body]
+    (.adminUpdateApp (util/get-apps-client clients system-id) system-id body))
 
   (getAdminAppCategories [_ params]
-    (.getAdminAppCategories (util/get-apps-client clients) params))
+    (mapcat #(.getAdminAppCategories % params) clients))
 
-  (adminAddCategory [_ body]
-    (.adminAddCategory (util/get-apps-client clients) body))
+  (adminAddCategory [_ system-id body]
+    (.adminAddCategory (util/get-apps-client clients system-id) system-id body))
 
-  (adminDeleteCategories [_ body]
-    (.adminDeleteCategories (util/get-apps-client clients) body))
+  (adminDeleteCategory [_ system-id category-id]
+    (.adminDeleteCategory (util/get-apps-client clients system-id) system-id category-id))
 
-  (adminDeleteCategory [_ category-id]
-    (.adminDeleteCategory (util/get-apps-client clients) category-id))
-
-  (adminUpdateCategory [_ body]
-    (.adminUpdateCategory (util/get-apps-client clients) body))
-
-  (getAppDocs [_ app-id]
-    (->> (map #(.getAppDocs % app-id) clients)
-         (remove nil?)
-         (first)))
+  (adminUpdateCategory [_ system-id body]
+    (.adminUpdateCategory (util/get-apps-client clients) system-id body))
 
   (getAppDocs [_ system-id app-id]
     (.getAppDocs (util/get-apps-client clients system-id) system-id app-id))
 
-  (getAppIntegrationData [_ app-id]
-    (->> (map #(.getAppIntegrationData % app-id) clients)
-         (remove nil?)
-         (first)))
-
   (getAppIntegrationData [_ system-id app-id]
     (.getAppIntegrationData (util/get-apps-client clients system-id) system-id app-id))
 
-  (getToolIntegrationData [_ tool-id]
-    (->> (map #(.getToolIntegrationData % tool-id) clients)
-         (remove nil?)
-         (first)))
+  (getToolIntegrationData [_ system-id tool-id]
+    (.getToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id))
 
-  (updateAppIntegrationData [_ app-id integration-data-id]
-    (->> (map #(.updateAppIntegrationData % app-id integration-data-id) clients)
-         (remove nil?)
-         (first)))
+  (updateAppIntegrationData [_ system-id app-id integration-data-id]
+    (.updateAppIntegrationData (util/get-apps-client clients system-id) system-id app-id integration-data-id))
 
-  (updateToolIntegrationData [_ tool-id integration-data-id]
-    (->> (map #(.updateToolIntegrationData % tool-id integration-data-id) clients)
-         (remove nil?)
-         (first)))
+  (updateToolIntegrationData [_ system-id tool-id integration-data-id]
+    (.updateToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id integration-data-id))
 
-  (ownerEditAppDocs [_ app-id body]
-    (->> (map #(.ownerEditAppDocs % app-id body) clients)
-         (remove nil?)
-         (first)))
+  (ownerEditAppDocs [_ system-id app-id body]
+    (.ownerEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
-  (ownerAddAppDocs [_ app-id body]
-    (->> (map #(.ownerAddAppDocs % app-id body) clients)
-         (remove nil?)
-         (first)))
+  (ownerAddAppDocs [_ system-id app-id body]
+    (.ownerAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
-  (adminEditAppDocs [_ app-id body]
-    (->> (map #(.adminEditAppDocs % app-id body) clients)
-         (remove nil?)
-         (first)))
+  (adminEditAppDocs [_ system-id app-id body]
+    (.adminEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
-  (adminAddAppDocs [_ app-id body]
-    (->> (map #(.adminAddAppDocs % app-id body) clients)
-         (remove nil?)
-         (first)))
+  (adminAddAppDocs [_ system-id app-id body]
+    (.adminAddAppDocs (util/get-apps-client clients system-id) app-id body))
 
-  (listAppPermissions [_ app-ids]
-    (mapcat #(.listAppPermissions % app-ids) clients))
+  (listAppPermissions [_ qualified-app-ids]
+    (->> (group-by :system_id qualified-app-ids)
+         (mapcat (fn [[system-id qualified-app-ids-for-system]]
+                   (let [client (util/get-apps-client clients system-id)]
+                     (.listAppPermissions client qualified-app-ids-for-system))))
+         doall))
 
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))
@@ -335,22 +249,20 @@
   (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
     (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
-  (shareAppWithUser [_ app-names sharee app-id level]
-    (or (first (remove nil? (map #(.shareAppWithUser % app-names sharee app-id level) clients)))
-        (app-permissions/app-sharing-failure app-names app-id level nil nil (str "app ID " app-id " does not exist"))))
+  (shareAppWithUser [_ app-names sharee system-id app-id level]
+    (.shareAppWithUser (util/get-apps-client clients system-id) app-names sharee system-id app-id level))
 
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
-  (unshareAppsWithUser [self app-names sharee app-ids]
-    (app-permissions/process-user-app-unsharing-requests self app-names sharee app-ids))
+  (unshareAppsWithUser [self app-names sharee app-unsharing-requests]
+    (app-permissions/process-user-app-unsharing-requests self app-names sharee app-unsharing-requests))
 
-  (unshareAppWithUser [self app-names sharee app-id]
-    (or (first (remove nil? (map #(.unshareAppWithUser % app-names sharee app-id) clients)))
-        (app-permissions/app-unsharing-failure app-names app-id nil (str "app ID " app-id " does not exist"))))
+  (unshareAppWithUser [self app-names sharee system-id app-id]
+    (.unshareAppWithUser (util/get-apps-client clients system-id) app-names sharee system-id app-id))
 
-  (hasAppPermission [_ username app-id required-level]
-    (first (remove nil? (map #(.hasAppPermission % username app-id required-level) clients))))
+  (hasAppPermission [_ username system-id app-id required-level]
+    (.hasAppPermission (util/get-apps-client clients system-id) username system-id app-id required-level))
 
   (supportsJobSharing [_ job-step]
     (.supportsJobSharing (util/apps-client-for-job-step clients job-step) job-step)))

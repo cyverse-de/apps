@@ -1,6 +1,7 @@
 (ns apps.service.apps.permissions-test
-  (:use [apps.service.apps.de.listings :only [shared-with-me-id]]
-        [apps.service.apps.test-utils :only [get-user de-system-id delete-app permanently-delete-app]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.apps.de.listings :only [shared-with-me-id]]
+        [apps.service.apps.test-utils :only [get-user delete-app permanently-delete-app]]
         [clojure.test]
         [kameleon.uuids :only [uuidify uuid]])
   (:require [apps.clients.iplant-groups :as ipg]
@@ -16,8 +17,11 @@
             [permissions-client.core :as pc])
   (:import [clojure.lang ExceptionInfo]))
 
-(use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config tf/with-ontology atf/with-workspaces)
+(use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 (use-fixtures :each atf/with-public-apps atf/with-test-app)
+
+(defn list-app-permissions [user & app-ids]
+  (apps/list-app-permissions user (mapv #(hash-map :system_id de-system-id :app_id %) app-ids)))
 
 (deftest test-app-search
   (let [{username :shortUsername :as user} (get-user :testde1)]
@@ -35,16 +39,16 @@
         dev-category-id                    (:id (get-dev-category user))
         beta-category-id                   (:id (get-beta-category user))
         group-id                           (ipg/grouper-user-group-id)]
-    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (count beta-apps) (:total (apps/list-apps-in-category user beta-category-id {}))))
+    (is (= 1 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
+    (is (= (count beta-apps) (:total (apps/list-apps-in-category user de-system-id beta-category-id {}))))
     (perms-client/unshare-app (:id test-app) "user" username)
-    (is (= 0 (:total (apps/list-apps-in-category user dev-category-id {}))))
+    (is (= 0 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" username "own")
-    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (count beta-apps) (:total (apps/list-apps-in-category user beta-category-id {}))))
+    (is (= 1 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
+    (is (= (count beta-apps) (:total (apps/list-apps-in-category user de-system-id beta-category-id {}))))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first beta-apps)) "group" group-id)
-    (is (= 1 (:total (apps/list-apps-in-category user dev-category-id {}))))
-    (is (= (dec (count beta-apps)) (:total (apps/list-apps-in-category user beta-category-id {}))))))
+    (is (= 1 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
+    (is (= (dec (count beta-apps)) (:total (apps/list-apps-in-category user de-system-id beta-category-id {}))))))
 
 (deftest test-app-hierarchy-counts
   (let [{username :shortUsername :as user} (get-user :testde1)
@@ -78,14 +82,14 @@
         beta-category-id                   (:id (get-beta-category user))
         group-id                           (ipg/grouper-user-group-id)
         app-id                             (:id (first beta-apps))]
-    (is (find-app (apps/list-apps-in-category user beta-category-id {}) app-id))
+    (is (find-app (apps/list-apps-in-category user de-system-id beta-category-id {}) app-id))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first beta-apps)) "group" group-id)
-    (is (nil? (find-app (apps/list-apps-in-category user beta-category-id {}) app-id)))))
+    (is (nil? (find-app (apps/list-apps-in-category user de-system-id beta-category-id {}) app-id)))))
 
 (deftest check-initial-ownership-permission
   (let [{username :shortUsername :as user} (get-user :testde1)
         dev-category-id                    (:id (get-dev-category user))]
-    (is (= "own" (:permission (first (:apps (apps/list-apps-in-category user dev-category-id {}))))))))
+    (is (= "own" (:permission (first (:apps (apps/list-apps-in-category user de-system-id dev-category-id {}))))))))
 
 (defn check-delete-apps
   ([user]
@@ -119,7 +123,7 @@
   true)
 
 (defn check-edit-app-docs [user]
-  (apps/owner-edit-app-docs user (:id test-app) {:documentation ""})
+  (apps/owner-edit-app-docs user de-system-id (:id test-app) {:documentation ""})
   true)
 
 (defn check-get-app-details [user]
@@ -265,7 +269,8 @@
 
 (defn share-app [sharer sharee app-id level]
   (apps/share-apps sharer [{:user (:shortUsername sharee)
-                            :apps [{:app_id     app-id
+                            :apps [{:system_id  de-system-id
+                                    :app_id     app-id
                                     :permission level}]}]))
 
 (deftest test-sharing
@@ -324,9 +329,9 @@
 (deftest test-permission-listings
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
-    (is (empty? (-> (apps/list-app-permissions testde1 [(:id test-app)]) :apps first :permissions)))
+    (is (empty? (-> (list-app-permissions testde1 (:id test-app)) :apps first :permissions)))
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "write")
-    (let [perms (-> (apps/list-app-permissions testde1 [(:id test-app)]) :apps first :permissions)]
+    (let [perms (-> (list-app-permissions testde1 (:id test-app)) :apps first :permissions)]
       (is (= 1 (count perms)))
       (is (= testde2-username (-> perms first :user)))
       (is (= "write" (-> perms first :permission))))
@@ -334,13 +339,13 @@
 
 (deftest test-permission-listings-no-privs
   (let [{username :shortUsername :as user} (get-user :testde2)]
-    (is (thrown-with-msg? ExceptionInfo #"insufficient privileges" (apps/list-app-permissions user [(:id test-app)])))))
+    (is (thrown-with-msg? ExceptionInfo #"insufficient privileges" (list-app-permissions user (:id test-app))))))
 
 (deftest test-permission-listings-read-privs
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "read")
-    (let [perms (-> (apps/list-app-permissions testde2 [(:id test-app)]) :apps first :permissions)]
+    (let [perms (-> (list-app-permissions testde2 (:id test-app)) :apps first :permissions)]
       (is (= 1 (count perms)))
       (is (= testde1-username (-> perms first :user)))
       (is (= "own" (-> perms first :permission))))))
@@ -349,7 +354,8 @@
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "read")
-    (let [responses (:unsharing (apps/unshare-apps testde1 [{:user testde2-username :apps [(:id test-app)]}]))
+    (let [requests  [{:user testde2-username :apps [{:system_id de-system-id :app_id (:id test-app)}]}]
+          responses (:unsharing (apps/unshare-apps testde1 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
@@ -362,7 +368,8 @@
   (let [{testde2-username :shortUsername :as testde2} (get-user :testde2)
         {testde3-username :shortUsername :as testde3} (get-user :testde3)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "read")
-    (let [responses (:unsharing (apps/unshare-apps testde2 [{:user testde3-username :apps [(:id test-app)]}]))
+    (let [requests  [{:user testde3-username :apps [{:system_id de-system-id :app_id (:id test-app)}]}]
+          responses (:unsharing (apps/unshare-apps testde2 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
@@ -376,7 +383,8 @@
   (let [{testde2-username :shortUsername :as testde2} (get-user :testde2)
         {testde3-username :shortUsername :as testde3} (get-user :testde3)]
     (pc/grant-permission (config/permissions-client) "app" (:id test-app) "user" testde2-username "write")
-    (let [responses (:unsharing (apps/unshare-apps testde2 [{:user testde3-username :apps [(:id test-app)]}]))
+    (let [requests  [{:user testde3-username :apps [{:system_id de-system-id :app_id (:id test-app)}]}]
+          responses (:unsharing (apps/unshare-apps testde2 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
@@ -389,7 +397,8 @@
 (deftest test-unsharing-non-existent-app
   (let [{testde1-username :shortUsername :as testde1} (get-user :testde1)
         {testde2-username :shortUsername :as testde2} (get-user :testde2)]
-    (let [responses (:unsharing (apps/unshare-apps testde1 [{:user testde2-username :apps [(uuid)]}]))
+    (let [requests  [{:user testde2-username :apps [{:system_id de-system-id :app_id (uuid)}]}]
+          responses (:unsharing (apps/unshare-apps testde1 requests))
           user-resp (first responses)
           app-resp  (first (:apps user-resp))]
       (is (= 1 (count responses)))
@@ -407,7 +416,7 @@
 
 (defn- favorite? [user app-id]
   (let [faves-id (:id (get-category user "Favorite Apps"))]
-    (->> (:apps (apps/list-apps-in-category user faves-id {}))
+    (->> (:apps (apps/list-apps-in-category user de-system-id faves-id {}))
          (filter (comp (partial = app-id) :id))
          seq)))
 
@@ -435,7 +444,7 @@
   (let [testde1       (get-user :testde1)
         testde2       (get-user :testde2)
         app           (create-test-app testde1 "To be shared")
-        shared-apps   (fn [user] (apps/list-apps-in-category user shared-with-me-id {}))
+        shared-apps   (fn [user] (apps/list-apps-in-category user de-system-id shared-with-me-id {}))
         contains-app? (fn [app-id apps] (seq (filter (comp (partial = app-id) :id) apps)))
         old-listing   (shared-apps testde2)]
     (is (not (contains-app? (:id app) (:apps old-listing))))

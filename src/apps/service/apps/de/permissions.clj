@@ -1,5 +1,6 @@
 (ns apps.service.apps.de.permissions
-  (:use [clojure-commons.error-codes :only [clj-http-error?]]
+  (:use [apps.constants :only [de-system-id]]
+        [clojure-commons.error-codes :only [clj-http-error?]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
@@ -15,14 +16,21 @@
 
 (defn- format-app-permissions
   [app-names [app-id app-perms]]
-  {:id          (str app-id)
-   :name        (apps-util/get-app-name app-names app-id)
+  {:system_id   de-system-id
+   :app_id      (str app-id)
+   :name        (apps-util/get-app-name app-names de-system-id app-id)
    :permissions app-perms})
+
+(defn- build-app-name-table
+  [app-ids]
+  (->> (amp/get-app-names app-ids)
+       (map (juxt (fn [{:keys [id]}] (apps-util/qualified-app-id de-system-id id)) :name))
+       (into {})))
 
 (defn list-app-permissions
   [{user :shortUsername} app-ids]
   (check-app-permissions user "read" app-ids)
-  (map (partial format-app-permissions (amp/get-app-names app-ids))
+  (map (partial format-app-permissions (build-app-name-table app-ids))
        (perms-client/list-app-permissions user app-ids)))
 
 (defn has-app-permission

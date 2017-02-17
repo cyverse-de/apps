@@ -4,6 +4,7 @@
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.permissions :as job-permissions]
+            [apps.service.apps.util :as apps-util]
             [apps.service.util :as util]
             [clojure.string :as string]
             [kameleon.db :as db]))
@@ -13,8 +14,9 @@
   (str (or (db/millis-from-timestamp timestamp) 0)))
 
 (defn- app-disabled?
-  [app-tables app-id]
-  (let [disabled-flag (:disabled (first (remove nil? (map #(% app-id) app-tables))))]
+  [app-tables system-id app-id]
+  (let [qualified-id  (apps-util/qualified-app-id system-id app-id)
+        disabled-flag (:disabled (first (remove nil? (map #(% qualified-id) app-tables))))]
     (if (nil? disabled-flag) true disabled-flag)))
 
 (defn- batch-child-status
@@ -44,8 +46,6 @@
        (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))
        (= (get perms id) "own")))
 
-(def job-type-to-system-id string/lower-case)
-
 (defn format-job
   [apps-client perms app-tables rep-steps {:keys [parent_id id] :as job}]
   (remove-nil-vals
@@ -54,7 +54,7 @@
     :app_name        (:app_name job)
     :description     (:description job)
     :enddate         (job-timestamp (:end_date job))
-    :system_id       (job-type-to-system-id (:job_type job))
+    :system_id       (:system_id job)
     :id              id
     :name            (:job_name job)
     :resultfolderid  (:result_folder_path job)
@@ -64,7 +64,7 @@
     :deleted         (:deleted job)
     :notify          (:notify job false)
     :wiki_url        (:app_wiki_url job)
-    :app_disabled    (app-disabled? app-tables (:app_id job))
+    :app_disabled    (app-disabled? app-tables (:system_id job) (:app_id job))
     :parent_id       parent_id
     :batch           (:is_batch job)
     :batch_status    (when (:is_batch job) (format-batch-status id))
@@ -87,7 +87,7 @@
         types            (.getJobTypes apps-client)
         jobs             (list-jobs* user search-params types analysis-ids)
         rep-steps        (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))
-        app-tables       (.loadAppTables apps-client (map :app_id jobs))]
+        app-tables       (.loadAppTables apps-client jobs)]
     {:analyses  (mapv (partial format-job apps-client perms app-tables rep-steps) jobs)
      :timestamp (str (System/currentTimeMillis))
      :total     (count-jobs user params types analysis-ids)}))
@@ -95,7 +95,7 @@
 (defn list-job
   [apps-client job-id]
   (let [job-info   (jp/get-job-by-id job-id)
-        app-tables (.loadAppTables apps-client [(:app_id job-info)])
+        app-tables (.loadAppTables apps-client [job-info])
         rep-steps  (group-by :job_id (jp/list-representative-job-steps [job-id]))]
     (format-job apps-client nil app-tables rep-steps job-info)))
 

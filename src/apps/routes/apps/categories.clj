@@ -23,8 +23,9 @@
          are visible to the user."
         (ok (apps/get-app-categories current-user params)))
 
-  (GET "/:category-id" []
-        :path-params [category-id :- AppCategoryIdPathParam]
+  (GET "/:system-id/:category-id" []
+        :path-params [system-id :- SystemId
+                      category-id :- AppCategoryIdPathParam]
         :query [params AppListingPagingParams]
         :return AppCategoryAppListing
         :summary "List Apps in a Category"
@@ -34,7 +35,7 @@
          This endpoint accepts optional URL query parameters to limit and sort Apps,
          which will allow pagination of results."
         (ok (coerce! AppCategoryAppListing
-                 (apps/list-apps-in-category current-user category-id params))))
+                 (apps/list-apps-in-category current-user system-id category-id params))))
 
   (undocumented (route/not-found (service/unrecognized-path-response))))
 

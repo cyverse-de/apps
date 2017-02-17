@@ -1,5 +1,6 @@
 (ns apps.service.apps.test-fixtures
-  (:use [apps.service.apps.test-utils :only [users get-user de-system-id permanently-delete-app]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.apps.test-utils :only [users get-user permanently-delete-app]]
         [kameleon.uuids :only [uuidify uuid]])
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.persistence.jobs :as jp]
@@ -88,14 +89,14 @@
   ([user name]
    (sql/delete :apps (sql/where {:name name}))
    (let [app (apps/add-app user jp/de-client-name (assoc app-definition :name name))]
-     (apps/owner-add-app-docs user (:id app) {:documentation "This is a test."})
+     (apps/owner-add-app-docs user de-system-id (:id app) {:documentation "This is a test."})
      app)))
 
 (defn create-test-tool-app [user name]
   (sql/delete :apps (sql/where {:name name}))
   (let [tool (tools/get-tool test-tool-id)
         app  (apps/add-app user jp/de-client-name (assoc app-definition :name name :tools [tool]))]
-    (apps/owner-add-app-docs user (:id app) {:documentation "This is a test."})
+    (apps/owner-add-app-docs user de-system-id (:id app) {:documentation "This is a test."})
     app))
 
 (defn create-pipeline

@@ -4,13 +4,10 @@
             [apps.service.apps.util :as apps-util]
             [clojure-commons.error-codes :as ce]))
 
-;; TODO: this will have to change to account for the possibility of duplicate app IDs
-;; if more apps clients are ever added, which will require a larger refactoring than
-;; just this function, anyway.
 (defn- load-app-names
   [apps-client requests]
   (->> (mapcat :apps requests)
-       (map #(if (map? %) (:app_id %) %))
+       (map (fn [req] (select-keys req [:system_id :app_id])))
        set
        (#(.loadAppTables apps-client %))
        (apply merge)
@@ -25,8 +22,8 @@
 
 (defn- share-apps-with-user
   [apps-client app-names sharee user-app-sharing-requests]
-  (for [{app-id :app_id level :permission} user-app-sharing-requests]
-    (.shareAppWithUser apps-client app-names sharee app-id level)))
+  (for [{system-id :system_id app-id :app_id level :permission} user-app-sharing-requests]
+    (.shareAppWithUser apps-client app-names sharee system-id app-id level)))
 
 (defn process-user-app-sharing-requests
   [apps-client app-names sharee user-app-sharing-requests]
@@ -35,18 +32,20 @@
     (mapv #(dissoc % :sharer_category :sharee_category) responses)))
 
 (defn app-sharing-success
-  [app-names app-id level sharer-category sharee-category]
-  {:app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+  [app-names system-id app-id level sharer-category sharee-category]
+  {:system_id       system-id
+   :app_id          (str app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :sharee_category sharee-category
    :permission      level
    :success         true})
 
 (defn app-sharing-failure
-  [app-names app-id level sharer-category sharee-category reason]
-  {:app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+  [app-names system-id app-id level sharer-category sharee-category reason]
+  {:system_id       system-id
+   :app_id          (str app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :sharee_category sharee-category
    :permission      level
@@ -62,9 +61,9 @@
        :apps (.unshareAppsWithUser apps-client app-names sharee app-ids)})))
 
 (defn- unshare-apps-with-user
-  [apps-client app-names sharee app-ids]
-  (for [app-id app-ids]
-    (.unshareAppWithUser apps-client app-names sharee app-id)))
+  [apps-client app-names sharee user-app-unsharing-requests]
+  (for [{system-id :system_id app-id :app_id} user-app-unsharing-requests]
+    (.unshareAppWithUser apps-client app-names sharee system-id app-id)))
 
 (defn process-user-app-unsharing-requests
   [apps-client app-names sharee app-ids]
@@ -73,16 +72,18 @@
     (mapv #(dissoc % :sharer_category) responses)))
 
 (defn app-unsharing-success
-  [app-names app-id sharer-category]
-  {:app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+  [app-names system-id app-id sharer-category]
+  {:system_id       system-id
+   :app_id          (str app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :success         true})
 
 (defn app-unsharing-failure
-  [app-names app-id sharer-category reason]
-  {:app_id          (str app-id)
-   :app_name        (apps-util/get-app-name app-names app-id)
+  [app-names system-id app-id sharer-category reason]
+  {:system_id       system-id
+   :app_id          (str app-id)
+   :app_name        (apps-util/get-app-name app-names system-id app-id)
    :sharer_category sharer-category
    :success         false
    :error           {:error_code ce/ERR_BAD_REQUEST

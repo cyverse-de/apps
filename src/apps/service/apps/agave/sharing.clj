@@ -1,6 +1,7 @@
 (ns apps.service.apps.agave.sharing
   (:use [slingshot.slingshot :only [try+]])
-  (:require [apps.service.apps.permissions :as app-permissions]
+  (:require [apps.persistence.jobs :as jp]
+            [apps.service.apps.permissions :as app-permissions]
             [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
             [clojure.tools.logging :as log]))
 
@@ -24,15 +25,15 @@
   (let [category-id (:id (.hpcAppGroup agave))]
     (try-share-app-with-user
       agave sharee app-id level
-      #(app-permissions/app-sharing-success app-names app-id level category-id category-id)
+      #(app-permissions/app-sharing-success app-names jp/agave-client-name app-id level category-id category-id)
       (partial
-        app-permissions/app-sharing-failure app-names app-id level category-id category-id))))
+        app-permissions/app-sharing-failure app-names jp/agave-client-name app-id level category-id category-id))))
 
 (defn unshare-app-with-user
   [agave app-names sharee app-id]
   (let [category-id (:id (.hpcAppGroup agave))]
     (try-share-app-with-user
       agave sharee app-id nil
-      #(app-permissions/app-unsharing-success app-names app-id category-id)
+      #(app-permissions/app-unsharing-success app-names jp/agave-client-name app-id category-id)
       (partial
-        app-permissions/app-unsharing-failure app-names app-id category-id))))
+        app-permissions/app-unsharing-failure app-names jp/agave-client-name app-id category-id))))

@@ -1,29 +1,34 @@
 (ns apps.routes.schemas.permission
-  (:use [common-swagger-api.schema :only [describe ErrorResponse NonBlankString]]
+  (:use [apps.routes.params :only [SystemId]]
+        [common-swagger-api.schema :only [describe ErrorResponse NonBlankString]]
         [schema.core :only [defschema optional-key enum]])
   (:import [java.util UUID]))
 
 (def AppPermissionEnum (enum "read" "write" "own" ""))
 (def AnalysisPermissionEnum (enum "read" "own" ""))
 
-(defschema AppIdList
-  {:apps (describe [NonBlankString] "A List of app IDs")})
+(defschema QualifiedAppId
+  {:system_id SystemId
+   :app_id    (describe NonBlankString "The app ID")})
+
+(defschema QualifiedAppIdList
+  {:apps (describe [QualifiedAppId] "A List of app IDs")})
 
 (defschema UserPermissionListElement
   {:user       (describe NonBlankString "The user ID")
    :permission (describe AppPermissionEnum "The permission level assigned to the user")})
 
 (defschema AppPermissionListElement
-  {:id                  (describe NonBlankString "The app ID")
-   (optional-key :name) (describe NonBlankString "The app name")
-   :permissions         (describe [UserPermissionListElement] "The list of user permissions for the app")})
+  (assoc QualifiedAppId
+    (optional-key :name) (describe NonBlankString "The app name")
+    :permissions         (describe [UserPermissionListElement] "The list of user permissions for the app")))
 
 (defschema AppPermissionListing
   {:apps (describe [AppPermissionListElement] "The list of app permissions")})
 
 (defschema AppSharingRequestElement
-  {:app_id     (describe NonBlankString "The app ID")
-   :permission (describe AppPermissionEnum "The requested permission level")})
+  (assoc QualifiedAppId
+    :permission (describe AppPermissionEnum "The requested permission level")))
 
 (defschema AppSharingResponseElement
   (assoc AppSharingRequestElement
@@ -46,14 +51,14 @@
   {:sharing (describe [UserAppSharingResponseElement] "The list of app sharing responses")})
 
 (defschema AppUnsharingResponseElement
-  {:app_id               (describe NonBlankString "The app ID")
-   :app_name             (describe NonBlankString "The app name")
-   :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
-   (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")})
+  (assoc QualifiedAppId
+    :app_name             (describe NonBlankString "The app name")
+    :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
+    (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")))
 
 (defschema UserAppUnsharingRequestElement
   {:user (describe NonBlankString "The user ID")
-   :apps (describe [NonBlankString] "The list of app IDs")})
+   :apps (describe [QualifiedAppId] "The list of app unsharing requests for the user.")})
 
 (defschema UserAppUnsharingResponseElement
   (assoc UserAppUnsharingRequestElement

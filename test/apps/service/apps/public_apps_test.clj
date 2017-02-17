@@ -1,5 +1,6 @@
 (ns apps.service.apps.public-apps-test
-  (:use [apps.service.apps.test-utils :only [get-user de-system-id permanently-delete-app]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.apps.test-utils :only [get-user permanently-delete-app]]
         [apps.service.apps.de.listings :only [my-public-apps-id trash-category-id]]
         [clojure.test])
   (:require [apps.service.apps :as apps]
@@ -17,7 +18,7 @@
 
 (defn- list-apps
   [user category-id]
-  (:apps (apps/list-apps-in-category user category-id {})))
+  (:apps (apps/list-apps-in-category user de-system-id category-id {})))
 
 (defn- find-app
   [{app-id :id} apps]
@@ -28,12 +29,11 @@
   (let [user        (get-user :testde1)
         app         (atf/create-test-app user "To be published")
         _           (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
-        _           (apps/make-app-public user app)
-        ;FIXME listed      (first (:apps (apps/search-apps user {:search (:name app)})))
+        _           (apps/make-app-public user de-system-id app)
+        listed      (first (:apps (apps/search-apps user {:search (:name app)})))
         beta-id     (:id (atf/get-beta-category user))
         apps        (list-apps user beta-id)
-        public-apps (list-apps user my-public-apps-id)
-        listed      (first (find-app app public-apps))]
+        public-apps (list-apps user my-public-apps-id)]
     (is (not (nil? listed)))
     (is (:is_public listed))
     (is (empty? (find-app app apps)))
@@ -66,6 +66,6 @@
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
     (apps/make-app-public user de-system-id app)
     (is (empty? (find-app app (list-apps user trash-category-id))))
-    (apps/admin-delete-app user (:id app))
+    (apps/admin-delete-app user de-system-id (:id app))
     (is (seq (find-app app (list-apps user trash-category-id))))
     (permanently-delete-app user de-system-id (:id app) true)))

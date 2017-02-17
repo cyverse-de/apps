@@ -25,6 +25,8 @@
 
 (def app-rating-rejection "Cannot rate an HPC app with this service.")
 
+(def app-categorization-rejection "HPC apps cannot be placed in DE app categories.")
+
 (defn- reject-app-integration-request
   []
   (service/bad-request app-integration-rejection))
@@ -36,6 +38,10 @@
 (defn- reject-app-rating-request
   []
   (service/bad-request app-rating-rejection))
+
+(defn- reject-categorization-request
+  []
+  (service/bad-request app-categorization-rejection))
 
 (def ^:private supported-system-ids #{jp/agave-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -65,12 +71,9 @@
     (when-not (and hpc (.equalsIgnoreCase hpc "false"))
       [(.hpcAppGroup agave)]))
 
-  (hasCategory [_ category-id]
-    (= category-id (uuidify (:id (.hpcAppGroup agave)))))
-
-  (listAppsInCategory [_ category-id params]
-    (when (= category-id (uuidify (:id (.hpcAppGroup agave))))
-      (listings/list-apps agave category-id params)))
+  (listAppsInCategory [_ system-id category-id params]
+    (validate-system-id system-id)
+    (listings/list-apps agave category-id params))
 
   (listAppsUnderHierarchy [_ root-iri attr params]
     (when (user-has-access-token?)
@@ -107,129 +110,65 @@
   (deleteApps [this deletion-request]
     (.validateDeletionRequest this deletion-request))
 
-  (getAppJobView [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.getApp agave app-id)))
-
   (getAppJobView [_ system-id app-id]
     (validate-system-id system-id)
     (.getApp agave app-id))
-
-  (deleteApp [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
 
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (relabelApp [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
-
   (relabelApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
-
-  (updateApp [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
 
   (updateApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (copyApp [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
-
   (copyApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
-
-  (getAppDetails [_ app-id admin?]
-    (when-not (util/uuid? app-id)
-      (listings/get-app-details agave app-id admin?)))
 
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
     (listings/get-app-details agave app-id admin?))
 
-  (removeAppFavorite [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-favorite-request)))
-
   (removeAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-favorite-request))
-
-  (addAppFavorite [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-favorite-request)))
 
   (addAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-favorite-request))
 
-  (isAppPublishable [_ app-id]
-    (when-not (util/uuid? app-id)
-      false))
-
   (isAppPublishable [_ system-id app-id]
     (validate-system-id system-id)
     false)
-
-  (makeAppPublic [_ app]
-    (when-not (util/uuid? (:id app))
-      (reject-app-integration-request)))
 
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (deleteAppRating [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-rating-request)))
-
   (deleteAppRating [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-rating-request))
-
-  (rateApp [_ app-id rating]
-    (when-not (util/uuid? app-id)
-      (reject-app-rating-request)))
 
   (rateApp [_ system-id app-id rating]
     (validate-system-id system-id)
     (reject-app-rating-request))
 
-  (getAppTaskListing [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.listAppTasks agave app-id)))
-
   (getAppTaskListing [_ system-id app-id]
     (validate-system-id system-id)
     (.listAppTasks agave app-id))
-
-  (getAppToolListing [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.getAppToolListing agave app-id)))
 
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (.getAppToolListing agave app-id))
 
-  (getAppUi [_ app-id]
-    (when-not (util/uuid? app-id)
-      (reject-app-integration-request)))
-
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
-
-  (getAppInputIds [_ app-id]
-    (when-not (util/uuid? app-id)
-      (.getAppInputIds agave app-id)))
 
   (getAppInputIds [_ system-id app-id]
     (validate-system-id system-id)
@@ -241,14 +180,9 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
-  ;; TODO: Determine how this should be refactored now that we have system IDs. If I remember correctly,
-  ;; this method is used during job listings. If that's the case, we can filter apps by execution system
-  ;; easily enough.
-  (loadAppTables [_ app-ids]
-    (let [agave-app-ids (remove util/uuid? app-ids)]
-      (if (and (seq agave-app-ids) (user-has-access-token?))
-        (listings/load-app-tables agave agave-app-ids)
-        [])))
+  (loadAppTables [_ qualified-app-ids]
+    (validate-system-ids (set (map :system_id qualified-app-ids)))
+    (listings/load-app-tables agave (set (map :app_id qualified-app-ids))))
 
   (submitJob [this submission]
     (validate-system-id (:system_id submission))
@@ -274,9 +208,6 @@
   (prepareStepSubmission [_ job-id submission]
     (agave-jobs/prepare-step-submission agave job-id submission))
 
-  (getParamDefinitions [_ app-id]
-    (listings/get-param-definitions agave app-id))
-
   (getParamDefinitions [_ system-id app-id]
     (validate-system-id system-id)
     (listings/get-param-definitions agave app-id))
@@ -286,116 +217,96 @@
                (not (string/blank? external_id)))
       (.stopJob agave external_id)))
 
-  (getAppDocs [_ app-id]
-    (when-not (util/uuid? app-id)
-      (empty-doc-map app-id)))
+  (categorizeApps [_ {:keys [categories]}]
+    (validate-system-ids (set (map :system_id categories)))
+    (validate-system-ids (set (mapcat (fn [m] (map :system_id (:category_ids m))) categories)))
+    (reject-categorization-request))
+
+  (permanentlyDeleteApps [this req]
+    (.validateDeletionRequest this req))
+
+  (adminDeleteApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+  (adminUpdateApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+  (getAdminAppCategories [_ _]
+    [])
+
+  (adminAddCategory [_ system-id _]
+    (validate-system-id system-id)
+    (reject-categorization-request))
+
+  (adminDeleteCategory [_ system-id _]
+    (validate-system-id system-id)
+    (reject-categorization-request))
+
+  (adminUpdateCategory [_ system-id _]
+    (validate-system-id system-id)
+    (reject-categorization-request))
 
   (getAppDocs [_ system-id app-id]
     (validate-system-id system-id)
     (empty-doc-map app-id))
 
-  (getAppIntegrationData [_ app-id]
-    (when-not (util/uuid? app-id)
-      (service/bad-request integration-data-rejection)))
-
   (getAppIntegrationData [_ system-id app-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
-
-  (getToolIntegrationData [_ tool-id]
-    (when-not (util/uuid? tool-id)
-      (service/bad-request integration-data-rejection)))
 
   (getToolIntegrationData [_ system-id tool-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (updateAppIntegrationData [_ app-id integration-data-id]
-    (when-not (util/uuid? app-id)
-      (service/bad-request integration-data-rejection)))
-
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
-
-  (updateToolIntegrationData [_ tool-id integration-data-id]
-    (when-not (util/uuid? tool-id)
-      (service/bad-request integration-data-rejection)))
 
   (updateToolIntegrationData [_ system-id tool-id integration-data-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (ownerEditAppDocs [_ app-id _]
-    (when-not (util/uuid? app-id)
-      (reject-app-documentation-edit-request)))
-
   (ownerEditAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
-
-  (ownerAddAppDocs [_ app-id _]
-    (when-not (util/uuid? app-id)
-      (reject-app-documentation-edit-request)))
 
   (ownerAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
-  (adminEditAppDocs [_ app-id _]
-    (when-not (util/uuid? app-id)
-      (reject-app-documentation-edit-request)))
-
   (adminEditAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
-
-  (adminAddAppDocs [_ app-id _]
-    (when-not (util/uuid? app-id)
-      (reject-app-documentation-edit-request)))
 
   (adminAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
-  ;; TODO: this will have to be changed when the corresponding endpoint is changed.
-  (listAppPermissions [_ app-ids]
-    (when (and (user-has-access-token?)
-               (some (complement util/uuid?) app-ids))
-      (.listAppPermissions agave app-ids)))
+  (listAppPermissions [_ qualified-app-ids]
+    (validate-system-ids (set (map :system_id qualified-app-ids)))
+    (.listAppPermissions agave (map :app_id qualified-app-ids)))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
     (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (shareAppWithUser [_ app-names sharee app-id level]
-    (when (and (user-has-access-token?)
-               (not (util/uuid? app-id)))
-      (sharing/share-app-with-user agave app-names sharee app-id level)))
+  (shareAppWithUser [_ app-names sharee system-id app-id level]
+    (validate-system-id system-id)
+    (sharing/share-app-with-user agave app-names sharee app-id level))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (unshareAppsWithUser [self app-names sharee app-ids]
-    (app-permissions/process-user-app-unsharing-requests self app-names sharee app-ids))
+  (unshareAppsWithUser [self app-names sharee user-app-unsharing-requests]
+    (app-permissions/process-user-app-unsharing-requests self app-names sharee user-app-unsharing-requests))
 
-  ;; TODO: this will have to be changed when system IDs are added to the corresponding endoint.
-  (unshareAppWithUser [_ app-names sharee app-id]
-    (when (and (user-has-access-token?)
-               (not (util/uuid? app-id)))
-      (sharing/unshare-app-with-user agave app-names sharee app-id)))
-
-  (hasAppPermission [_ username app-id required-level]
-    (when (and (user-has-access-token?)
-               (not (util/uuid? app-id)))
-      (.hasAppPermission agave username app-id required-level)))
+  (unshareAppWithUser [_ app-names sharee system-id app-id]
+    (validate-system-id system-id)
+    (sharing/unshare-app-with-user agave app-names sharee app-id))
 
   (hasAppPermission [_ username system-id app-id required-level]
     (validate-system-id system-id)

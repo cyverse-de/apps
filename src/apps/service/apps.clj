@@ -76,10 +76,10 @@
     {:categories (transaction (.listAppCategories client params))}))
 
 (defn list-apps-in-category
-  [user category-id params]
-  (let [state-info (str "type=apps&app-category=" category-id)
+  [user system-id category-id params]
+  (let [state-info (str "type=apps&system-id=" system-id "&category-id=" category-id)
         client     (get-apps-client user state-info)]
-    (.listAppsInCategory client category-id params)))
+    (.listAppsInCategory client system-id category-id params)))
 
 (defn list-apps-under-hierarchy
   [user root-iri attr params]
@@ -98,114 +98,80 @@
   (.adminSearchApps (get-apps-client user) search params))
 
 (defn add-app
-  ([user app]
-   (.addApp (get-apps-client user) app))
-  ([user system-id app]
-   (.addApp (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.addApp (get-apps-client user) system-id app))
 
 (defn preview-command-line
-  ([user app]
-   (.previewCommandLine (get-apps-client user) app))
-  ([user system-id app]
-   (.previewCommandLine (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.previewCommandLine (get-apps-client user) system-id app))
 
 (defn delete-apps
   [user deletion-request]
   (.deleteApps (get-apps-client user) deletion-request))
 
 (defn get-app-job-view
-  ([user app-id]
-   (.getAppJobView (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppJobView (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppJobView (get-apps-client user) system-id app-id))
 
 (defn delete-app
-  ([user app-id]
-   (.deleteApp (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.deleteApp (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.deleteApp (get-apps-client user) system-id app-id))
 
 (defn relabel-app
-  ([user app]
-   (.relabelApp (get-apps-client user) app))
-  ([user system-id app]
-   (.relabelApp (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.relabelApp (get-apps-client user) system-id app))
 
 (defn update-app
-  ([user app]
-   (.updateApp (get-apps-client user) app))
-  ([user system-id app]
-   (.updateApp (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.updateApp (get-apps-client user) system-id app))
 
 (defn copy-app
-  ([user app-id]
-   (.copyApp (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.copyApp (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.copyApp (get-apps-client user) system-id app-id))
 
 (defn get-app-details
-  ([user app-id]
-   (.getAppDetails (get-apps-client user) app-id false))
-  ([user system-id app-id]
-   (.getAppDetails (get-apps-client user) system-id app-id false)))
+  [user system-id app-id]
+  (.getAppDetails (get-apps-client user) system-id app-id false))
 
 (defn admin-get-app-details
-  [user app-id]
-  (.getAppDetails (get-apps-client user) app-id true))
+  [user system-id app-id]
+  (.getAppDetails (get-apps-client user) system-id app-id true))
 
 (defn remove-app-favorite
-  ([user app-id]
-   (.removeAppFavorite (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.removeAppFavorite (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.removeAppFavorite (get-apps-client user) system-id app-id))
 
 (defn add-app-favorite
-  ([user app-id]
-   (.addAppFavorite (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.addAppFavorite (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.addAppFavorite (get-apps-client user) system-id app-id))
 
 (defn app-publishable?
-  ([user app-id]
-   {:publishable (.isAppPublishable (get-apps-client user) app-id)})
-  ([user system-id app-id]
-   {:publishable (.isAppPublishable (get-apps-client user) system-id app-id)}))
+  [user system-id app-id]
+  {:publishable (.isAppPublishable (get-apps-client user) system-id app-id)})
 
 (defn make-app-public
-  ([user app]
-   (.makeAppPublic (get-apps-client user) app))
-  ([user system-id app]
-   (.makeAppPublic (get-apps-client user) system-id app)))
+  [user system-id app]
+  (.makeAppPublic (get-apps-client user) system-id app))
 
 (defn delete-app-rating
-  ([user app-id]
-   (.deleteAppRating (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.deleteAppRating (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.deleteAppRating (get-apps-client user) system-id app-id))
 
 (defn rate-app
-  ([user app-id rating]
-   (.rateApp (get-apps-client user) app-id rating))
-  ([user system-id app-id rating]
-   (.rateApp (get-apps-client user) system-id app-id rating)))
+  [user system-id app-id rating]
+  (.rateApp (get-apps-client user) system-id app-id rating))
 
 (defn get-app-task-listing
-  ([user app-id]
-   (.getAppTaskListing (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppTaskListing (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppTaskListing (get-apps-client user) system-id app-id))
 
 (defn get-app-tool-listing
-  ([user app-id]
-   (.getAppToolListing (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppToolListing (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppToolListing (get-apps-client user) system-id app-id))
 
 (defn get-app-ui
-  ([user app-id]
-   (.getAppUi (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppUi (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppUi (get-apps-client user) system-id app-id))
 
 (defn add-pipeline
   [user pipeline]
@@ -314,88 +280,80 @@
 
 (defn categorize-apps
   [user body]
-  (.categorizeApps (get-apps-client user) body))
+  (transaction (.categorizeApps (get-apps-client user) body)))
 
 (defn permanently-delete-apps
   [user body]
   (.permanentlyDeleteApps (get-apps-client user) body))
 
 (defn admin-delete-app
-  [user app-id]
-  (.adminDeleteApp (get-apps-client user) app-id))
+  [user system-id app-id]
+  (.adminDeleteApp (get-apps-client user) system-id app-id))
 
 (defn admin-update-app
-  [user body]
+  [user system-id body]
   (let [apps-client (get-apps-client user)]
-    (.adminUpdateApp apps-client body)
-    (.getAppDetails apps-client (:id body) true)))
+    (.adminUpdateApp apps-client system-id body)
+    (.getAppDetails apps-client system-id (:id body) true)))
 
 (defn get-admin-app-categories
   [user params]
   {:categories (.getAdminAppCategories (get-apps-client user) params)})
 
 (defn admin-add-category
-  [user body]
+  [user system-id body]
   (let [apps-client (get-apps-client user)]
-    (.listAppsInCategory apps-client (.adminAddCategory apps-client body) {})))
-
-(defn admin-delete-categories
-  [user body]
-  {:category_ids (.adminDeleteCategories (get-apps-client user) body)})
+    (.listAppsInCategory apps-client system-id (.adminAddCategory apps-client system-id body) {})))
 
 (defn admin-delete-category
-  [user category-id]
-  (.adminDeleteCategory (get-apps-client user) category-id))
+  [user system-id category-id]
+  (.adminDeleteCategory (get-apps-client user) system-id category-id))
 
 (defn admin-update-category
-  [user {:keys [id] :as body}]
+  [user system-id {:keys [id] :as body}]
   (let [apps-client (get-apps-client user)]
-    (.adminUpdateCategory apps-client body)
-    (.listAppsInCategory apps-client id {})))
+    (.adminUpdateCategory apps-client system-id body)
+    (.listAppsInCategory apps-client system-id id {})))
 
 (defn get-app-docs
-  ([user app-id]
-   (.getAppDocs (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppDocs (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppDocs (get-apps-client user) system-id app-id))
 
 (defn get-app-integration-data
-  ([user app-id]
-   (.getAppIntegrationData (get-apps-client user) app-id))
-  ([user system-id app-id]
-   (.getAppIntegrationData (get-apps-client user) system-id app-id)))
+  [user system-id app-id]
+  (.getAppIntegrationData (get-apps-client user) system-id app-id))
 
 (defn get-tool-integration-data
-  [user tool-id]
-  (.getToolIntegrationData (get-apps-client user) tool-id))
+  [user system-id tool-id]
+  (.getToolIntegrationData (get-apps-client user) system-id tool-id))
 
 (defn update-app-integration-data
-  [user app-id integration-data-id]
-  (.updateAppIntegrationData (get-apps-client user) app-id integration-data-id))
+  [user system-id app-id integration-data-id]
+  (.updateAppIntegrationData (get-apps-client user) system-id app-id integration-data-id))
 
 (defn update-tool-integration-data
-  [user tool-id integration-data-id]
-  (.updateToolIntegrationData (get-apps-client user) tool-id integration-data-id))
+  [user system-id tool-id integration-data-id]
+  (.updateToolIntegrationData (get-apps-client user) system-id tool-id integration-data-id))
 
 (defn owner-edit-app-docs
-  [user app-id body]
-  (.ownerEditAppDocs (get-apps-client user) app-id body))
+  [user system-id app-id body]
+  (.ownerEditAppDocs (get-apps-client user) system-id app-id body))
 
 (defn owner-add-app-docs
-  [user app-id body]
-  (.ownerAddAppDocs (get-apps-client user) app-id body))
+  [user system-id app-id body]
+  (.ownerAddAppDocs (get-apps-client user) system-id app-id body))
 
 (defn admin-edit-app-docs
-  [user app-id body]
-  (.adminEditAppDocs (get-apps-client user) app-id body))
+  [user system-id app-id body]
+  (.adminEditAppDocs (get-apps-client user) system-id app-id body))
 
 (defn admin-add-app-docs
-  [user app-id body]
-  (.adminAddAppDocs (get-apps-client user) app-id body))
+  [user system-id app-id body]
+  (.adminAddAppDocs (get-apps-client user) system-id app-id body))
 
 (defn list-app-permissions
-  [user app-ids]
-  {:apps (.listAppPermissions (get-apps-client user) app-ids)})
+  [user qualified-app-ids]
+  {:apps (.listAppPermissions (get-apps-client user) qualified-app-ids)})
 
 (defn share-apps
   [user sharing-requests]

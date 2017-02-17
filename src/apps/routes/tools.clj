@@ -1,6 +1,7 @@
 (ns apps.routes.tools
   (:use [common-swagger-api.schema]
         [apps.metadata.tool-requests]
+        [apps.constants :only [de-system-id]]
         [apps.containers]
         [apps.routes.params]
         [apps.routes.schemas.containers]
@@ -280,7 +281,7 @@
         :return IntegrationData
         :summary "Return the Integration Data Record for a Tool"
         :description "This service returns the integration data associated with an app."
-        (ok (apps/get-tool-integration-data current-user tool-id))))
+        (ok (apps/get-tool-integration-data current-user de-system-id tool-id))))
 
 (defroutes tool-requests
   (GET "/" []
@@ -508,4 +509,4 @@ included in it. Any existing settings not included in the request's `container` 
         :summary "Update the Integration Data Record for a Tool"
         :description "This service allows administrators to change the integration data record
         associated with a tool."
-        (ok (apps/update-tool-integration-data current-user tool-id integration-data-id))))
+        (ok (apps/update-tool-integration-data current-user de-system-id tool-id integration-data-id))))

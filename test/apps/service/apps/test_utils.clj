@@ -1,11 +1,11 @@
 (ns apps.service.apps.test-utils
   (:use [apps.user :only [user-from-attributes]])
-  (:require [apps.persistence.jobs :as jp]
+  (:require [apps.constants :as c]
             [apps.service.apps :as apps]))
 
 (def fake-system-id "notreal")
-(def hpc-system-id jp/agave-client-name)
-(def de-system-id jp/de-client-name)
+(def hpc-system-id c/hpc-system-id)
+(def de-system-id c/de-system-id)
 
 (defn create-user [i]
   (let [username (str "testde" i)]
