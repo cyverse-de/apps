@@ -176,6 +176,9 @@
   (buildNextStepSubmission [self job-step job]
     (combined-jobs/build-next-step-submission self clients job-step job))
 
+  (getParamDefinitions [_ system-id app-id]
+    (.getParamDefinitions (util/get-apps-client clients system-id) system-id app-id))
+
   (stopJobStep [_ job-step]
     (dorun (map #(.stopJobStep % job-step) clients)))
 
