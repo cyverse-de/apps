@@ -237,7 +237,7 @@
     (.adminEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
   (adminAddAppDocs [_ system-id app-id body]
-    (.adminAddAppDocs (util/get-apps-client clients system-id) app-id body))
+    (.adminAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
   (listAppPermissions [_ qualified-app-ids]
     (->> (group-by :system_id qualified-app-ids)
