@@ -15,6 +15,7 @@
             [apps.routes.apps.elements :as app-element-routes]
             [apps.routes.apps.pipelines :as pipeline-routes]
             [apps.routes.apps.metadata :as metadata-routes]
+            [apps.routes.bootstrap :as bootstrap-routes]
             [apps.routes.callbacks :as callback-routes]
             [apps.routes.collaborators :as collaborator-routes]
             [apps.routes.groups :as group-routes]
@@ -46,6 +47,7 @@
                    {:name "app-metadata", :description "App Metadata endpoints."}
                    {:name "pipelines", :description "Pipeline endpoints."}
                    {:name "analyses", :description "Analysis endpoints."}
+                   {:name "bootstrap", :description "Bootstrap endpoints."}
                    {:name "tool-data-containers", :description "Tool Docker Data Container endpoints."}
                    {:name "tools", :description "Tool endpoints."}
                    {:name "workspaces", :description "Workspace endpoints."}
@@ -105,6 +107,9 @@
     (context "/analyses" []
       :tags ["analyses"]
       analysis-routes/analyses)
+    (context "/bootstrap" []
+      :tags ["bootstrap"]
+      bootstrap-routes/bootstrap)
     (context "/tools/data-containers" []
       :tags ["tool-data-containers"]
       tool-routes/data-containers)

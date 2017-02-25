@@ -1,0 +1,7 @@
+(ns apps.service.bootstrap
+  (:use [apps.service.apps :only [list-system-ids]]
+        [apps.service.workspace :only [get-workspace]]))
+
+(defn bootstrap [current-user]
+  {:system_ids (list-system-ids current-user)
+   :workspace  (get-workspace current-user)})

@@ -551,7 +551,3 @@
            (optional-key :deleted)    AppDeletedParam
            (optional-key :disabled)   AppDisabledParam
            OptionalGroupsKey          (describe [AppGroup] GroupListDocs))))
-
-(defschema SystemIdsResponse
-  {:de_system_id   (describe SystemId "The internal system ID used by the Discovery Environment.")
-   :all_system_ids (describe [SystemId] "The list of system IDs available to the Discovery Environment.")})

@@ -77,17 +77,6 @@
     operation."
     (ok (apps/unshare-apps current-user (:unsharing body))))
 
-  (context "/systems" []
-
-    (GET "/ids" []
-      :query [params SecuredQueryParams]
-      :return SystemIdsResponse
-      :summary "List execution system IDs."
-      :description "This endpoint allows the caller to obtain a list of system IDs available to the
-      Discovery Environment. The response body contains a list of all system IDs available along with
-      an indication of which system ID is the default internal system ID."
-      (ok (apps/list-system-ids current-user))))
-
   (context "/:system-id" []
     :path-params [system-id :- SystemId]
 
