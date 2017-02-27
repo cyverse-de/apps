@@ -89,7 +89,8 @@
   (assoc AnalysisSharingRequestElement
     :analysis_name                (describe NonBlankString "The analysis name")
     :success                      (describe Boolean "A Boolean flag indicating whether the sharing request succeeded")
-    (optional-key :outputs_error) (describe NonBlankString "A brief reason for the result folder sharing error")
+    (optional-key :outputs_error) (describe NonBlankString "A brief reason for any result folder sharing errors")
+    (optional-key :app_error)     (describe NonBlankString "A brief reason for any app sharing errors")
     (optional-key :error)         (describe ErrorResponse "Information about any error that may have occurred")))
 
 (defschema UserAnalysisSharingRequestElement
