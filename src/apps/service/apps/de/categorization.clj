@@ -1,10 +1,14 @@
 (ns apps.service.apps.de.categorization
-  (:use [apps.persistence.app-groups :only [add-app-to-category decategorize-app]]
-        [kameleon.uuids :only [uuidify]])
+  (:use [apps.persistence.app-groups :only [add-app-to-category decategorize-app get-app-category]]
+        [apps.persistence.app-listing :only [get-app-listing]]
+        [apps.util.assertions :only [assert-not-nil]]
+        [kameleon.uuids :only [uuidify]]
+        [korma.db :only [transaction]])
   (:require [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
             [apps.service.apps.de.validation :as av]
-            [apps.util.config :as config]))
+            [apps.util.config :as config]
+            [clojure-commons.exception-util :as cxu]))
 
 (defn validate-app-name-in-hierarchy-avus
   [username app-id app-name avus]
@@ -28,14 +32,37 @@
         :body
         :avus)))
 
+(defn- validate-app
+  [app-id category-ids]
+  (let [app (get-app-listing app-id)]
+    (when-not app
+      (cxu/not-found (str "could not find app with ID: " app-id)))
+    (av/validate-app-name (:name app) app-id (mapv :id category-ids))))
+
+(defn- validate-category-id
+  [category-id]
+  (let [category (get-app-category category-id)]
+    (when-not category
+      (cxu/not-found (str "could not find app category with ID: " category-id)))
+    (when (seq (:app_categories category))
+      (cxu/bad-request (str "category " category-id " contains subcategories")))))
+
+(defn- validate-categorization-request
+  [app-id category-ids]
+  (when (empty? category-ids)
+    (cxu/bad-request "no categories provided in app categorization request"))
+  (validate-app app-id category-ids)
+  (dorun (map (comp validate-category-id uuidify :id) category-ids)))
+
 (defn- categorize-app
   "Associates an app with an app category."
   [{app-id :app_id category-ids :category_ids}]
   (let [app-id (uuidify app-id)]
+    (validate-categorization-request app-id category-ids)
     (decategorize-app app-id)
     (dorun (map (comp (partial add-app-to-category app-id) uuidify :id) category-ids))))
 
 (defn categorize-apps
   "A service that categorizes one or more apps in the database."
   [categories]
-  (dorun (map categorize-app categories)))
+  (transaction (dorun (map categorize-app categories))))
