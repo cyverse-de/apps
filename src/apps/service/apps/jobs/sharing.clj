@@ -24,12 +24,13 @@
    :not-supported "analysis sharing is not supported for jobs of this type"})
 
 (defn- job-sharing-success
-  [job-id job level output-share-err-msg]
+  [job-id job level output-share-err-msg app-share-err-msg]
   (remove-nil-values
     {:analysis_id   job-id
      :analysis_name (get-job-name job-id job)
      :permission    level
      :outputs_error output-share-err-msg
+     :app_error     app-share-err-msg
      :success       true}))
 
 (defn- job-sharing-failure
@@ -133,7 +134,6 @@
   (or (verify-not-subjob job)
       (verify-accessible sharer job-id)
       (verify-support apps-client job-id)
-      (share-app-for-job apps-client sharer sharee job-id job)
       (perms-client/share-analysis job-id "user" sharee level)
       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
       (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)))
@@ -144,7 +144,9 @@
     (try+
      (if-let [failure-reason (share-job* apps-client sharer sharee job-id job level)]
        (job-sharing-failure job-id job level failure-reason)
-       (job-sharing-success job-id job level (share-output-folder sharer sharee job)))
+       (job-sharing-success job-id job level
+                            (share-output-folder sharer sharee job)
+                            (share-app-for-job apps-client sharer sharee job-id job)))
      (catch [:type ::permission-load-failure] {:keys [reason]}
        (job-sharing-failure job-id job level (job-sharing-msg :load-failure job-id reason))))
     (job-sharing-failure job-id nil level (job-sharing-msg :not-found job-id))))
