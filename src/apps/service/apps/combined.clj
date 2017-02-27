@@ -25,6 +25,9 @@
   (getJobTypes [_]
     (mapcat #(.getJobTypes %) clients))
 
+  (listSystemIds [_]
+    (mapcat #(.listSystemIds %) clients))
+
   (supportsSystemId [_ system-id]
     (some #(.supportsSystemId % system-id) clients))
 

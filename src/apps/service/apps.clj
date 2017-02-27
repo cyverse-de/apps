@@ -1,5 +1,6 @@
 (ns apps.service.apps
-  (:use [apps.service.oauth :only [authorization-uri has-access-token]]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.service.oauth :only [authorization-uri has-access-token]]
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+ throw+]]
@@ -374,3 +375,8 @@
 (defn unshare-jobs
   [user unsharing-requests]
   {:unsharing (jobs/unshare-jobs (get-apps-client user) user unsharing-requests)})
+
+(defn list-system-ids
+  [user]
+  {:de_system_id   de-system-id
+   :all_system_ids (.listSystemIds (get-apps-client user))})

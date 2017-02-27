@@ -5,6 +5,7 @@
   (getUser [_])
   (getClientName [_])
   (getJobTypes [_])
+  (listSystemIds [_])
   (supportsSystemId [_ system-id])
   (listAppCategories [_ params])
   (listAppsInCategory [_ system-id category-id params])

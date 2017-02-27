@@ -64,6 +64,9 @@
   (getJobTypes [_]
     [jp/agave-job-type])
 
+  (listSystemIds [_]
+    (vec supported-system-ids))
+
   (supportsSystemId [_ system-id]
     (supported-system-ids system-id))
 
