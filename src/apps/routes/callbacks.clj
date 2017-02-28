@@ -7,7 +7,7 @@
 
 (defroutes callbacks
   (POST "/de-job" []
-         :body [body (describe DeJobStatusUpdate "The App to add.")]
+         :body [body (describe DeJobStatusUpdate "The updated job status information.")]
          :summary "Update the status of of a DE analysis."
          :description "The jex-events service calls this endpoint when the status of a DE analysis
          changes"
@@ -15,7 +15,8 @@
 
   (POST "/agave-job/:job-id" []
          :path-params [job-id :- AnalysisIdPathParam]
-         :query [params AgaveJobStatusUpdate]
+         :body [body (describe AgaveJobStatusUpdate "The updated job status information.")]
+         :query [params AgaveJobStatusUpdateParams]
          :summary "Update the status of an Agave analysis."
          :description "The DE registers this endpoint as a callback when it submts jobs to Agave."
-         (ok (callbacks/update-agave-job-status job-id params))))
+         (ok (callbacks/update-agave-job-status job-id (:lastUpdated body) params))))
