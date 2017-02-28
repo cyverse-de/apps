@@ -137,9 +137,10 @@
 
 (defn update-job-status
   [{:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
-  (when (jp/status-follows? status (:status job-step))
-    (jp/update-job-step job-id external_id status end-date)
-    (jp/update-job job-id status end-date)))
+  (let [end-date (when (jp/completed? status) end-date)]
+    (when (jp/status-follows? status (:status job-step))
+      (jp/update-job-step job-id external_id status end-date)
+      (jp/update-job job-id status end-date))))
 
 (defn get-default-output-name
   [{output-id :output_id :as io-map} {task-id :task_id :as source-step}]

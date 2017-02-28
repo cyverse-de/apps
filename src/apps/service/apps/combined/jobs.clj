@@ -212,7 +212,8 @@
 
 (defn- update-pipeline-status
   [combined-client clients max-step-number job-step {job-id :id :as job} status end-date]
-  (let [status (.translateJobStatus combined-client (:job_type job-step) status)]
+  (let [status   (.translateJobStatus combined-client (:job_type job-step) status)
+        end-date (when (jp/completed? status) end-date)]
     (when (jp/status-follows? status (:status job-step))
       (jp/update-job-step job-id (:external_id job-step) status end-date)
       (handle-pipeline-status-change job-id job-step max-step-number status end-date)
