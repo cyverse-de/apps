@@ -1,5 +1,6 @@
 (ns apps.service.apps.de.job-view
-  (:use [apps.util.conversions :only [remove-nil-vals]]
+  (:use [apps.service.apps.de.validation :only [verify-app-permission]]
+        [apps.util.conversions :only [remove-nil-vals]]
         [korma.core :exclude [update]])
   (:require [apps.metadata.params :as mp]
             [apps.persistence.app-metadata :as amp]
@@ -84,6 +85,7 @@
 (defn get-app
   "This service obtains an app description in a format that is suitable for building the job
   submission UI."
-  [app-id]
-  (-> (amp/get-app app-id)
-      (format-app)))
+  [user app-id]
+  (let [app (amp/get-app app-id)]
+    (verify-app-permission user app "read")
+    (format-app app)))

@@ -86,7 +86,7 @@
 
   (getAppJobView [_ system-id app-id]
     (validate-system-id system-id)
-    (job-view/get-app (uuidify app-id)))
+    (job-view/get-app user (uuidify app-id)))
 
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
