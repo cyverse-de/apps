@@ -5,3 +5,5 @@
 (def hpc-system-id c/hpc-system-id)
 
 (def system-ids [de-system-id hpc-system-id])
+
+(def internal-app-integrator "Internal DE Tools")

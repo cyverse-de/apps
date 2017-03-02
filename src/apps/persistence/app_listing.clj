@@ -5,7 +5,8 @@
         [kameleon.util :only [query-spy]]
         [kameleon.util.search]
         [korma.core :exclude [update]])
-  (:require [clojure.string :as str]))
+  (:require [apps.constants :as c]
+            [clojure.string :as str]))
 
 (defn get-app-listing
   "Retrieves all app listing fields from the database for the given App ID."
@@ -111,7 +112,8 @@
   "Adds a where clause to the get-all-apps-count-base-query, filtering out `deleted` apps."
   [query-opts]
   (-> (get-all-apps-count-base-query query-opts)
-      (where {:deleted false})))
+      (where {:deleted false})
+      (where {:integrator_name [not= c/internal-app-integrator]})))
 
 (defn count-apps-in-group-for-user
   "Counts all of the apps in an app group and all of its descendents."
@@ -197,7 +199,8 @@
   "Adds a where clause to the get-all-apps-listing-base-query, filtering out `deleted` apps."
   [workspace favorites_group_index query_opts]
   (-> (get-all-apps-listing-base-query workspace favorites_group_index query_opts)
-      (where {:deleted false})))
+      (where {:deleted false})
+      (where {:integrator_name [not= c/internal-app-integrator]})))
 
 (defn get-apps-in-group-for-user
   "Lists all of the apps in an app group and all of its descendents, using the
