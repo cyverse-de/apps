@@ -11,7 +11,7 @@
         [apps.workspace :only [get-workspace]]
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
-        [slingshot.slingshot :only [throw+]])
+        [slingshot.slingshot :only [throw+ try+]])
   (:require [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
@@ -20,7 +20,8 @@
             [apps.translations.app-metadata :as atx]
             [apps.util.config :as config]
             [cheshire.core :as cheshire]
-            [clj-http.client :as client]))
+            [clj-http.client :as client]
+            [clojure.tools.logging :as log]))
 
 (defn- validate-app-existence
   "Verifies that apps exist."
@@ -50,7 +51,10 @@
   "Permanently deletes a single app from the database."
   [app-id]
   (amp/permanently-delete-app app-id)
-  (perms-client/delete-app-resource app-id))
+  (try+
+   (perms-client/delete-app-resource app-id)
+   (catch [:status 404] _
+     (log/warn "app resource" app-id "not found by permissions service"))))
 
 (defn permanently-delete-apps
   "This service removes apps from the database rather than merely marking them as deleted."
