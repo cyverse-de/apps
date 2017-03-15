@@ -97,6 +97,10 @@
   [app-id]
   (pc/delete-resource (client) app-id (rt-app)))
 
+(defn delete-tool-resource
+  [tool-id]
+  (pc/delete-resource (client) tool-id (rt-tool)))
+
 (defn- revoke-app-user-permission
   "Revokes a user's permission to access an app, ignoring cases where the user didn't already have access."
   [user app-id]

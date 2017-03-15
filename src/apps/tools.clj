@@ -8,7 +8,8 @@
         [kameleon.queries]
         [kameleon.util.search]
         [korma.core :exclude [update]]
-        [korma.db :only [transaction]])
+        [korma.db :only [transaction]]
+        [slingshot.slingshot :only [try+]])
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
             [clojure.tools.logging :as log]))
@@ -113,4 +114,8 @@
     (validate-tool-not-used tool-id)
     (log/warn user "deleting tool" tool-id name version "@" location))
   (delete tools (where {:id tool-id}))
+  (try+
+    (permissions/delete-tool-resource tool-id)
+    (catch [:status 404] _
+      (log/warn "tool resource" tool-id "not found by permissions service")))
   nil)
