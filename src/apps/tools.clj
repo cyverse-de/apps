@@ -9,7 +9,8 @@
         [kameleon.util.search]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
-  (:require [apps.persistence.app-metadata :as persistence]
+  (:require [apps.clients.permissions :as permissions]
+            [apps.persistence.app-metadata :as persistence]
             [clojure.tools.logging :as log]))
 
 (defn- add-search-where-clauses
@@ -96,6 +97,7 @@
   [{:keys [tools]}]
   (transaction
     (let [tool-ids (doall (map add-new-tool tools))]
+      (dorun (map permissions/register-public-tool tool-ids))
       {:tool_ids tool-ids})))
 
 (defn update-tool

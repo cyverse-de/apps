@@ -18,6 +18,9 @@
 (defn- rt-analysis []
   (config/analysis-resource-type))
 
+(defn- rt-tool []
+  (config/tool-resource-type))
+
 (defn- get-failure-reason
   "Extracts the failure reason from an error response body."
   [body]
@@ -105,6 +108,10 @@
   [user app-id]
   (revoke-app-user-permission user app-id)
   (pc/grant-permission (client) (rt-app) app-id "group" (ipg/grouper-user-group-id) "read"))
+
+(defn register-public-tool
+  [tool-id]
+  (pc/grant-permission (client) (rt-tool) tool-id "group" (ipg/grouper-user-group-id) "read"))
 
 (defn- resource-sharing-log-msg
   [action resource-type resource-name subject-type subject-id reason]

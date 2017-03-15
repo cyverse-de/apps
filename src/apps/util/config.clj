@@ -371,6 +371,12 @@
   []
   "analysis")
 
+(defn tool-resource-type
+  "The tool resource type name. This value is hard-coded for now, but placed in this namespace so that we can easily
+   convert it to a configuration setting if necessary."
+  []
+  "tool")
+
 (defn log-environment
   []
   (log/warn "ENV?: apps.data-info.base-url = " (data-info-base)))
