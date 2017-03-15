@@ -8,6 +8,7 @@
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
         [apps.tools :only [add-tools delete-tool get-tool search-tools update-tool]]
+        [apps.tools.private :only [add-private-tool]]
         [apps.user :only [current-user]]
         [apps.util.service]
         [slingshot.slingshot :only [throw+]]
@@ -127,6 +128,14 @@
         :description "This endpoint allows users to search for a tool with a name or description that
         contains the given search term."
         (ok (search-tools params)))
+
+  (POST "/" []
+        :query [params SecuredQueryParamsRequired]
+        :body [body (describe PrivateToolImportRequest "The Tool to import.")]
+        :return ToolDetails
+        :summary "Add Private Tool"
+        :description "This service adds a new private Tool to the DE for the requesting user."
+        (ok (add-private-tool current-user body)))
 
   (GET "/:tool-id" []
         :path-params [tool-id :- ToolIdParam]

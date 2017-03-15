@@ -41,6 +41,7 @@
 
 (def register-private-app (partial register-private-resource (rt-app)))
 (def register-private-analysis (partial register-private-resource (rt-analysis)))
+(def register-private-tool (partial register-private-resource (rt-tool)))
 
 (defn- filter-perms-response
   [response filter-fn]

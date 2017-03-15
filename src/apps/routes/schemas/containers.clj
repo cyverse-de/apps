@@ -189,13 +189,17 @@
    {:container_volumes_from [VolumesFrom]}
    "The list of VolumeFroms associated with a tool's container."))
 
+(def DevicesParamOptional     (s/optional-key :container_devices))
+(def VolumesParamOptional     (s/optional-key :container_volumes))
+(def VolumesFromParamOptional (s/optional-key :container_volumes_from))
+
 (s/defschema ToolContainerSettings
   (describe
    (merge
     Settings
-    {(s/optional-key :container_devices)      [Device]
-     (s/optional-key :container_volumes)      [Volume]
-     (s/optional-key :container_volumes_from) [VolumesFrom]})
+    {DevicesParamOptional     [Device]
+     VolumesParamOptional     [Volume]
+     VolumesFromParamOptional [VolumesFrom]})
    "Bare minimum map containing all of the container settings."))
 
 (s/defschema ToolContainer
@@ -209,8 +213,8 @@
   (describe
    (merge
     NewSettings
-    {(s/optional-key :container_devices)      [NewDevice]
-     (s/optional-key :container_volumes)      [NewVolume]
-     (s/optional-key :container_volumes_from) [NewVolumesFrom]
-     :image                                   NewImage})
+    {DevicesParamOptional     [NewDevice]
+     VolumesParamOptional     [NewVolume]
+     VolumesFromParamOptional [NewVolumesFrom]
+     :image                   NewImage})
    "The settings for adding a new full container definition to a tool."))
