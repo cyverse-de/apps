@@ -94,7 +94,7 @@
 
 (defn create-test-tool-app [user name]
   (sql/delete :apps (sql/where {:name name}))
-  (let [tool (tools/get-tool test-tool-id)
+  (let [tool (tools/get-tool (:shortUsername user) test-tool-id)
         app  (apps/add-app user jp/de-client-name (assoc app-definition :name name :tools [tool]))]
     (apps/owner-add-app-docs user de-system-id (:id app) {:documentation "This is a test."})
     app))

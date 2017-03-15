@@ -18,6 +18,9 @@
 (defn- rt-analysis []
   (config/analysis-resource-type))
 
+(defn- rt-tool []
+  (config/tool-resource-type))
+
 (defn- get-failure-reason
   "Extracts the failure reason from an error response body."
   [body]
@@ -73,6 +76,7 @@
 
 (def load-app-permissions (partial load-resource-permissions (rt-app)))
 (def load-analysis-permissions (partial load-resource-permissions (rt-analysis)))
+(def load-tool-permissions (partial load-resource-permissions (rt-tool)))
 
 (defn- format-perms-listing
   [user perms]
@@ -94,6 +98,10 @@
   [app-id]
   (pc/delete-resource (client) app-id (rt-app)))
 
+(defn delete-tool-resource
+  [tool-id]
+  (pc/delete-resource (client) tool-id (rt-tool)))
+
 (defn- revoke-app-user-permission
   "Revokes a user's permission to access an app, ignoring cases where the user didn't already have access."
   [user app-id]
@@ -105,6 +113,10 @@
   [user app-id]
   (revoke-app-user-permission user app-id)
   (pc/grant-permission (client) (rt-app) app-id "group" (ipg/grouper-user-group-id) "read"))
+
+(defn register-public-tool
+  [tool-id]
+  (pc/grant-permission (client) (rt-tool) tool-id "group" (ipg/grouper-user-group-id) "read"))
 
 (defn- resource-sharing-log-msg
   [action resource-type resource-name subject-type subject-id reason]
@@ -148,6 +160,7 @@
        set))
 
 (def get-public-app-ids (partial get-public-resource-ids "app"))
+(def get-public-tool-ids (partial get-public-resource-ids "tool"))
 
 (defn- get-directly-accessible-resource-ids [resource-type user]
   (->> (pc/get-subject-permissions-for-resource-type (client) "user" user resource-type false)
