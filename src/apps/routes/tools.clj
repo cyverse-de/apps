@@ -130,11 +130,11 @@
 
   (GET "/:tool-id" []
         :path-params [tool-id :- ToolIdParam]
-        :query [params SecuredQueryParams]
+        :query [{:keys [user]} SecuredQueryParams]
         :return ToolDetails
         :summary "Get a Tool"
         :description "This endpoint returns the details for one tool."
-        (ok (get-tool tool-id)))
+        (ok (get-tool user tool-id)))
 
   (GET "/:tool-id/container" []
         :path-params [tool-id :- ToolIdParam]
@@ -333,7 +333,7 @@
 
   (PATCH "/:tool-id" []
           :path-params [tool-id :- ToolIdParam]
-          :query [{:keys [overwrite-public]} ToolUpdateParams]
+          :query [{:keys [user overwrite-public]} ToolUpdateParams]
           :body [body (describe ToolUpdateRequest "The Tool to update.")]
           :return ToolDetails
           :summary "Update a Tool"
@@ -349,7 +349,7 @@ included in it. Any existing settings not included in the request's `container` 
     Do not update container settings that are in use by tools in public apps unless it is certain the new
     container settings will not break reproducibility for those apps.
     If required, the `overwrite-public` flag may be used to update these settings for public tools."
-          (ok (update-tool overwrite-public (assoc body :id tool-id))))
+          (ok (update-tool user overwrite-public (assoc body :id tool-id))))
 
   (POST "/:tool-id/container/devices" []
          :path-params [tool-id :- ToolIdParam]

@@ -41,8 +41,13 @@
    (optional-key :restricted)         ToolRestricted
    (optional-key :time_limit_seconds) ToolTimeLimit})
 
-(defschema ToolDetails
+(defschema ToolListingItem
   (merge Tool
+    {:is_public  (describe Boolean "Whether the Tool has been published and is viewable by all users")
+     :permission (describe String "The user's access level for the Tool")}))
+
+(defschema ToolDetails
+  (merge ToolListingItem
     {:implementation (describe ToolImplementation ToolImplementationDocs)
      :container      containers/ToolContainer}))
 
@@ -65,7 +70,7 @@
       (->optional-param :container)))
 
 (defschema ToolListing
-  {:tools (describe [Tool] "Listing of App Tools")})
+  {:tools (describe [ToolListingItem] "Listing of App Tools")})
 
 (defschema NewTool
   (assoc Tool

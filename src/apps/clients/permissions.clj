@@ -76,6 +76,7 @@
 
 (def load-app-permissions (partial load-resource-permissions (rt-app)))
 (def load-analysis-permissions (partial load-resource-permissions (rt-analysis)))
+(def load-tool-permissions (partial load-resource-permissions (rt-tool)))
 
 (defn- format-perms-listing
   [user perms]
@@ -159,6 +160,7 @@
        set))
 
 (def get-public-app-ids (partial get-public-resource-ids "app"))
+(def get-public-tool-ids (partial get-public-resource-ids "tool"))
 
 (defn- get-directly-accessible-resource-ids [resource-type user]
   (->> (pc/get-subject-permissions-for-resource-type (client) "user" user resource-type false)
