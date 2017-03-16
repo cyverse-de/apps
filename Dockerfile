@@ -1,7 +1,4 @@
-FROM clojure:alpine
-
-RUN apk add --update git && \
-    rm -rf /var/cache/apk
+FROM discoenv/clojure-base:master
 
 RUN mkdir -p /etc/iplant/de/crypto && \
     touch /etc/iplant/de/crypto/pubring.gpg && \
@@ -10,8 +7,6 @@ RUN mkdir -p /etc/iplant/de/crypto && \
     touch /etc/iplant/de/crypto/trustdb.gpg
 
 VOLUME ["/etc/iplant/de"]
-
-WORKDIR /usr/src/app
 
 COPY project.clj /usr/src/app/
 RUN lein deps
