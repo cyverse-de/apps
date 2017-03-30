@@ -19,7 +19,8 @@
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.permissions :as perms]
             [apps.service.util :as svc-util]
-            [cemerick.url :as curl]))
+            [cemerick.url :as curl]
+            [clojure.string :as string]))
 
 (def my-public-apps-id (uuidify "00000000-0000-0000-0000-000000000000"))
 (def shared-with-me-id (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))
@@ -487,9 +488,9 @@
   (dissoc file-parameter :value))
 
 (defn- format-task-output
-  [{value :value :as output}]
+  [{:keys [label value] :as output}]
   (-> output
-    (assoc :label value)
+    (assoc :label (first (remove string/blank? [value label])))
     format-task-file-param))
 
 (defn- format-task
