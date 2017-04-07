@@ -16,11 +16,6 @@
 
 (def ^:private max-app-category-name-len 255)
 
-(defn- validate-app-existence
-  "Verifies that apps exist."
-  [app-id]
-  (persistence/get-app app-id))
-
 (defn- validate-app-category-existence
   "Retrieves all app category fields from the database."
   [category-id]
@@ -100,7 +95,7 @@
    deleted or disabled in the database."
   [{username :shortUsername} {app-name :name app-id :id :as app}]
   (transaction
-   (validate-app-existence app-id)
+   (av/validate-app-existence app-id)
    (when-not (nil? app-name)
      (categorization/validate-app-name-in-current-hierarchy username app-id app-name)
      (av/validate-app-name app-name app-id))
