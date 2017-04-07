@@ -11,6 +11,11 @@
             [apps.service.apps.de.permissions :as perms]
             [clojure.string :as string]))
 
+(defn validate-app-existence
+  "Verifies that apps exist."
+  [app-id]
+  (get-app app-id))
+
 (defn- get-tool-type-from-database
   "Gets the tool type for the deployed component with the given identifier from
    the database."
@@ -110,9 +115,9 @@
    a flag indicating whether or not the app is publishable along with the reason the app isn't
    publishable if it's not."
   [{username :shortUsername} app-id & {:keys [permissions-checked]}]
+  (validate-app-existence app-id)
   (perms/check-app-permissions username "own" [app-id])
-  (let [app              (get-app app-id)
-        task-ids         (task-ids-for-app app-id)
+  (let [task-ids         (task-ids-for-app app-id)
         unrunnable-tasks (list-unrunnable-tasks task-ids)
         public-app-ids   (perms-client/get-public-app-ids)
         is-public?       (contains? public-app-ids app-id)

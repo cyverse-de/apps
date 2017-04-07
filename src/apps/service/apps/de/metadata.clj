@@ -6,7 +6,9 @@
                                             decategorize-app
                                             get-app-subcategory-id
                                             remove-app-from-category]]
-        [apps.service.apps.de.validation :only [app-publishable? verify-app-permission]]
+        [apps.service.apps.de.validation :only [app-publishable?
+                                                validate-app-existence
+                                                verify-app-permission]]
         [apps.validation :only [get-valid-user-id]]
         [apps.workspace :only [get-workspace]]
         [kameleon.uuids :only [uuidify]]
@@ -22,11 +24,6 @@
             [cheshire.core :as cheshire]
             [clj-http.client :as client]
             [clojure.tools.logging :as log]))
-
-(defn- validate-app-existence
-  "Verifies that apps exist."
-  [app-id]
-  (amp/get-app app-id))
 
 (defn- app-ids-from-deletion-request
   "Extracts the app IDs from a deletion request."
@@ -96,8 +93,8 @@
   "Adds or updates a user's rating and comment ID for the given app. The request must contain either
    the rating or the comment ID, and the rating must be between 1 and 5, inclusive."
   [user app-id {:keys [rating comment_id] :as request}]
-  (let [app     (validate-app-existence app-id)
-        user-id (get-valid-user-id (:username user))]
+  (validate-app-existence app-id)
+  (let [user-id (get-valid-user-id (:username user))]
     (when (and (nil? rating) (nil? comment_id))
       (throw+ {:type  :clojure-commons.exception/bad-request-field
                :error (str "No rating or comment ID given")}))
@@ -114,8 +111,8 @@
 (defn delete-app-rating
   "Removes a user's rating and comment ID for the given app."
   [user app-id]
-  (let [app     (validate-app-existence app-id)
-        user-id (get-valid-user-id (:username user))]
+  (validate-app-existence app-id)
+  (let [user-id (get-valid-user-id (:username user))]
     (when-not (contains? (perms-client/get-public-app-ids) app-id)
       (throw+ {:type  :clojure-commons.exception/bad-request-field
                :error (str "Unable to remove rating from private app, " app-id)}))
