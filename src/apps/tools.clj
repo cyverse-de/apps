@@ -10,9 +10,16 @@
         [korma.core :exclude [update]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+]])
-  (:require [apps.clients.permissions :as permissions]
+  (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as persistence]
+            [apps.tools.permissions :as permissions]
             [clojure.tools.logging :as log]))
+
+(defn- add-listing-where-clause
+  [query tool-ids]
+  (if (empty? tool-ids)
+    query
+    (where query {:tools.id [in tool-ids]})))
 
 (defn- add-search-where-clauses
   "Adds where clauses to a base tool search query to restrict results to tools that contain the
@@ -49,12 +56,13 @@
                [:tools.restricted :restricted]
                [:tools.time_limit_seconds :time_limit_seconds])
        (join tool_types)))
-  ([{search-term :search :keys [sort-field sort-dir limit offset include-hidden]
+  ([{search-term :search :keys [tool-ids sort-field sort-dir limit offset include-hidden]
                          :or {include-hidden false}}]
    (let [sort-field (when sort-field (keyword (str "tools." sort-field)))
          sort-dir (when sort-dir (keyword (upper-case sort-dir)))]
      (-> (tool-listing-base-query)
          (add-search-where-clauses search-term)
+         (add-listing-where-clause tool-ids)
          (add-query-sorting sort-field sort-dir)
          (add-query-limit limit)
          (add-query-offset offset)
@@ -70,19 +78,21 @@
 (defn search-tools
   "Obtains a listing of tools for the tool search service."
   [{:keys [user] :as params}]
-  (let [perms           (permissions/load-tool-permissions user)
-        public-tool-ids (permissions/get-public-tool-ids)]
+  (let [perms           (perms-client/load-tool-permissions user)
+        tool-ids        (set (keys perms))
+        public-tool-ids (perms-client/get-public-tool-ids)]
     {:tools
      (map (partial format-tool-listing perms public-tool-ids)
-       (select (tool-listing-base-query params)))}))
+       (select (tool-listing-base-query (assoc params :tool-ids tool-ids))))}))
 
 (defn get-tool
   "Obtains a tool by ID."
   [user tool-id]
+  (permissions/check-tool-permissions user "read" [tool-id])
   (let [tool           (->> (first (select (tool-listing-base-query) (where {:tools.id tool-id})))
                             (assert-not-nil [:tool-id tool-id])
-                            (format-tool-listing (permissions/load-tool-permissions user)
-                                                 (permissions/get-public-tool-ids)))
+                            (format-tool-listing (perms-client/load-tool-permissions user)
+                                                 (perms-client/get-public-tool-ids)))
         container      (tool-container-info tool-id)
         implementation (persistence/get-tool-implementation-details tool-id)]
     (assoc tool
@@ -108,7 +118,7 @@
   [{:keys [tools]}]
   (transaction
     (let [tool-ids (doall (map add-new-tool tools))]
-      (dorun (map permissions/register-public-tool tool-ids))
+      (dorun (map perms-client/register-public-tool tool-ids))
       {:tool_ids tool-ids})))
 
 (defn update-tool
@@ -125,7 +135,7 @@
     (log/warn user "deleting tool" tool-id name version "@" location))
   (delete tools (where {:id tool-id}))
   (try+
-    (permissions/delete-tool-resource tool-id)
+    (perms-client/delete-tool-resource tool-id)
     (catch [:status 404] _
       (log/warn "tool resource" tool-id "not found by permissions service")))
   nil)

@@ -97,6 +97,21 @@
   [props config-valid configs]
   "apps.data-info.base-url" "http://data-info:60000")
 
+(cc/defprop-optint private-tool-time-limit-seconds
+  "The time limit to use when adding new private tools."
+  [props config-valid configs]
+  "apps.tools.private.time-limit-seconds" (* 24 60 60)) ;; 24 hours
+
+(cc/defprop-optint private-tool-cpu-shares
+  "The cpu shares limit to use when adding new private tools."
+  [props config-valid configs]
+  "apps.tools.private.cpu-shares" 4)
+
+(cc/defprop-optint private-tool-memory-limit
+  "The memory limit, in bytes, to use when adding new private tools."
+  [props config-valid configs]
+  "apps.tools.private.memory-limit" (* 16 1024 1024 1024)) ;; 16GB
+
 (cc/defprop-optstr workspace-root-app-category
   "The name of the root app category in a user's workspace."
   [props config-valid configs]

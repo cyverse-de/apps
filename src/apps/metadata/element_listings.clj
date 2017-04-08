@@ -81,11 +81,14 @@
   "Obtains a listing of tools for the metadata element listing service."
   [{:keys [user] :as params}]
   (let [perms           (perms-client/load-tool-permissions user)
-        public-tool-ids (perms-client/get-public-tool-ids)]
-    {:tools (->> (select-keys params [:include-hidden])
-                 (tool-listing-base-query)
-                 (select)
-                 (map (partial format-tool-listing perms public-tool-ids)))}))
+        tool-ids        (set (keys perms))
+        public-tool-ids (perms-client/get-public-tool-ids)
+        tools           (-> params
+                            (select-keys [:include-hidden])
+                            (assoc :tool-ids tool-ids)
+                            (tool-listing-base-query)
+                            (select))]
+    {:tools (map (partial format-tool-listing perms public-tool-ids) tools)}))
 
 (defn- list-info-types
   "Obtains a listing of information types for the metadata element listing service."

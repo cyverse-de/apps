@@ -58,6 +58,18 @@
         {:implementation (describe ToolImplementation ToolImplementationDocs)
          :container      containers/NewToolContainer})))
 
+(defschema PrivateToolContainerImportRequest
+  (dissoc containers/NewToolContainer
+          containers/DevicesParamOptional
+          containers/VolumesParamOptional
+          containers/VolumesFromParamOptional))
+
+(defschema PrivateToolImportRequest
+  (-> Tool
+      (->optional-param :id)
+      (->optional-param :type)
+      (merge {:container PrivateToolContainerImportRequest})))
+
 (defschema ToolsImportRequest
   {:tools (describe [ToolImportRequest] "zero or more Tool definitions")})
 
