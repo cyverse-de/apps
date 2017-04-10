@@ -134,7 +134,15 @@
         :body [body (describe PrivateToolImportRequest "The Tool to import.")]
         :return ToolDetails
         :summary "Add Private Tool"
-        :description "This service adds a new private Tool to the DE for the requesting user."
+        :description
+"This service adds a new private Tool to the DE for the requesting user.
+
+Note that `type` is always set to `executable`, `restricted` is always set to `true`,
+and `container.network_mode` is always set to `none`, even if another value is set in the request.
+
+Configured default values will be used for the `time_limit_seconds`, `container.cpu_shares`, and `container.memory_limit` fields
+The request may include a value less than the configured default if it's also greater than 0,
+otherwise the default value will be used."
         (ok (add-private-tool current-user body)))
 
   (GET "/:tool-id" []
