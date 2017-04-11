@@ -13,7 +13,9 @@
         [apps.util.service]
         [slingshot.slingshot :only [throw+]]
         [ring.util.http-response :only [ok]])
-  (:require [apps.service.apps :as apps]))
+  (:require [apps.routes.schemas.permission :as permission]
+            [apps.service.apps :as apps]
+            [apps.tools.sharing :as tool-sharing]))
 
 (def entrypoint-warning
   (str "
@@ -144,6 +146,21 @@ Configured default values will be used for the `time_limit_seconds`, `container.
 The request may include a value less than the configured default if it's also greater than 0,
 otherwise the default value will be used."
         (ok (add-private-tool current-user body)))
+
+  (POST "/sharing" []
+        :query [params SecuredQueryParams]
+        :body [{:keys [sharing]} (describe permission/ToolSharingRequest "The Tool sharing request.")]
+        :return permission/ToolSharingResponse
+        :summary "Add Tool Permissions"
+        :description "This endpoint allows the caller to share multiple Tools with multiple users.
+        The authenticated user must have ownership permission to every Tool in the request body for this endpoint to fully succeed.
+        Note: this is a potentially slow operation and the response is returned synchronously.
+        The DE UI handles this by allowing the user to continue working while the request is being processed.
+        When calling this endpoint, please be sure that the response timeout is long enough.
+        Using a response timeout that is too short will result in an exception on the client side.
+        On the server side, the result of the sharing operation when a connection is lost is undefined.
+        It may be worthwhile to repeat failed or timed out calls to this endpoint."
+        (ok (tool-sharing/share-tools current-user sharing)))
 
   (GET "/:tool-id" []
         :path-params [tool-id :- ToolIdParam]

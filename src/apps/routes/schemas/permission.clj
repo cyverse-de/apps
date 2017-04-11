@@ -6,6 +6,7 @@
 
 (def AppPermissionEnum (enum "read" "write" "own" ""))
 (def AnalysisPermissionEnum (enum "read" "own" ""))
+(def ToolPermissionEnum AppPermissionEnum)
 
 (defschema QualifiedAppId
   {:system_id SystemId
@@ -127,3 +128,27 @@
 
 (defschema AnalysisUnsharingResponse
   {:unsharing (describe [UserAnalysisUnsharingResponseElement] "The list of unsharing responses for individual users")})
+
+(defschema ToolSharingRequestElement
+  {:tool_id    (describe UUID "The Tool ID")
+   :permission (describe ToolPermissionEnum "The requested permission level")})
+
+(defschema ToolSharingResponseElement
+  (assoc ToolSharingRequestElement
+    :tool_name            (describe NonBlankString "The Tool name")
+    :success              (describe Boolean "A Boolean flag indicating whether the sharing request succeeded")
+    (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")))
+
+(defschema UserToolSharingRequestElement
+  {:user  (describe NonBlankString "The user ID")
+   :tools (describe [ToolSharingRequestElement] "The list of Tool sharing requests for the user")})
+
+(defschema UserToolSharingResponseElement
+  (assoc UserToolSharingRequestElement
+    :tools (describe [ToolSharingResponseElement] "The list of Tool sharing responses for the user")))
+
+(defschema ToolSharingRequest
+  {:sharing (describe [UserToolSharingRequestElement] "The list of Tool sharing requests")})
+
+(defschema ToolSharingResponse
+  {:sharing (describe [UserToolSharingResponseElement] "The list of Tool sharing responses")})
