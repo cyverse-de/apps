@@ -152,3 +152,9 @@
   (->> (tool-notifications/format-sharing-notifications sharer sharee responses)
        (map guarded-send-notification)
        dorun))
+
+(defn send-tool-unsharing-notifications
+  [sharer sharee responses]
+  (->> (tool-notifications/format-unsharing-notifications sharer sharee responses)
+       (map guarded-send-notification)
+       dorun))

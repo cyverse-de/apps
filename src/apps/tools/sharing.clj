@@ -40,6 +40,20 @@
    :error      {:error_code error-codes/ERR_BAD_REQUEST
                 :reason     reason}})
 
+(defn tool-unsharing-success
+  [tool-id tool]
+  {:tool_id   (str tool-id)
+   :tool_name (get-tool-name tool-id tool)
+   :success   true})
+
+(defn tool-unsharing-failure
+  [tool-id tool reason]
+  {:tool_id   (str tool-id)
+   :tool_name (get-tool-name tool-id tool)
+   :success   false
+   :error     {:error_code error-codes/ERR_BAD_REQUEST
+               :reason     reason}})
+
 (defn share-tool-with-user
   [{username :shortUsername} sharee tool-id level]
   (if-let [tool (first (tools/get-tools-by-id [tool-id]))]
@@ -54,6 +68,20 @@
           (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
     (tool-sharing-failure tool-id nil level (tool-sharing-msg :not-found tool-id))))
 
+(defn unshare-tool-with-user
+  [{username :shortUsername} sharee tool-id]
+  (if-let [tool (first (tools/get-tools-by-id [tool-id]))]
+    (let [share-failure (partial tool-unsharing-failure tool-id tool)]
+      (try+
+        (if-not (perms/has-tool-permission username tool-id "own")
+          (share-failure (tool-sharing-msg :not-allowed tool-id))
+          (if-let [failure-reason (perms-client/unshare-tool tool-id "user" sharee)]
+            (share-failure failure-reason)
+            (tool-unsharing-success tool-id tool)))
+        (catch [:type :apps.service.apps.de.permissions/permission-load-failure] {:keys [reason]}
+          (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
+    (tool-unsharing-failure tool-id nil (tool-sharing-msg :not-found tool-id))))
+
 (defn- share-tools-with-user
   [sharer {sharee :user :keys [tools]}]
   (let [responses (for [{:keys [tool_id permission]} tools] (share-tool-with-user sharer sharee tool_id permission) )]
@@ -64,3 +92,14 @@
 (defn share-tools
   [user sharing-requests]
   {:sharing (mapv (partial share-tools-with-user user) sharing-requests)})
+
+(defn- unshare-tools-with-user
+  [sharer {sharee :user :keys [tools]}]
+  (let [responses (mapv (partial unshare-tool-with-user sharer sharee) tools)]
+    (cn/send-tool-unsharing-notifications (:shortUsername sharer) sharee responses)
+    {:user  sharee
+     :tools responses}))
+
+(defn unshare-tools
+  [user unsharing-requests]
+  {:unsharing (mapv (partial unshare-tools-with-user user) unsharing-requests)})

@@ -152,3 +152,23 @@
 
 (defschema ToolSharingResponse
   {:sharing (describe [UserToolSharingResponseElement] "The list of Tool sharing responses")})
+
+(defschema ToolUnsharingResponseElement
+  {:tool_id              (describe UUID "The Tool ID")
+   :tool_name            (describe NonBlankString "The Tool name")
+   :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
+   (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")})
+
+(defschema UserToolUnsharingRequestElement
+  {:user  (describe NonBlankString "The user ID")
+   :tools (describe [UUID] "The identifiers of the Tools to unshare")})
+
+(defschema UserToolUnsharingResponseElement
+  (assoc UserToolUnsharingRequestElement
+    :tools (describe [ToolUnsharingResponseElement] "The list of Tool unsharing responses for the user")))
+
+(defschema ToolUnsharingRequest
+  {:unsharing (describe [UserToolUnsharingRequestElement] "The list of unsharing requests for individual users")})
+
+(defschema ToolUnsharingResponse
+  {:unsharing (describe [UserToolUnsharingResponseElement] "The list of unsharing responses for individual users")})

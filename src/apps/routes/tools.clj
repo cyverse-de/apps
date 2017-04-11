@@ -162,6 +162,16 @@ otherwise the default value will be used."
         It may be worthwhile to repeat failed or timed out calls to this endpoint."
         (ok (tool-sharing/share-tools current-user sharing)))
 
+  (POST "/unsharing" []
+        :query [params SecuredQueryParams]
+        :body [{:keys [unsharing]} (describe permission/ToolUnsharingRequest "The Tool unsharing request.")]
+        :return permission/ToolUnsharingResponse
+        :summary "Revoke Tool Permissions"
+        :description "This endpoint allows the caller to revoke permission to access one or more Tools from one or more users.
+        The authenticated user must have ownership permission to every Tool in the request body for this endoint to fully succeed.
+        Note: like Tool sharing, this is a potentially slow operation."
+        (ok (tool-sharing/unshare-tools current-user unsharing)))
+
   (GET "/:tool-id" []
         :path-params [tool-id :- ToolIdParam]
         :query [{:keys [user]} SecuredQueryParams]

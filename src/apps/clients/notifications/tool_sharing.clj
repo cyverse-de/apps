@@ -43,3 +43,11 @@
             [(format-sharer-notification sharer-success-formats share-action sharer sharee (responses true))
              (format-sharee-notification sharee-success-formats share-action sharer sharee (responses true))
              (format-sharer-notification failure-formats share-action sharer sharee (responses false))])))
+
+(defn format-unsharing-notifications
+  "Formats unsharing notifications for tools."
+  [sharer sharee responses]
+  (let [responses (group-by :success responses)]
+    (remove nil?
+            [(format-sharer-notification sharer-success-formats unshare-action sharer sharee (responses true))
+             (format-sharer-notification failure-formats unshare-action sharer sharee (responses false))])))

@@ -154,6 +154,7 @@
 (def share-analysis (partial share-resource (rt-analysis)))
 (def unshare-analysis (partial unshare-resource (rt-analysis)))
 (def share-tool (partial share-resource (rt-tool)))
+(def unshare-tool (partial unshare-resource (rt-tool)))
 
 (defn- get-public-resource-ids [resource-type]
   (->> (pc/get-subject-permissions-for-resource-type (client) "group" (ipg/grouper-user-group-id) resource-type false)
