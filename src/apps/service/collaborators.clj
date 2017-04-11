@@ -32,8 +32,8 @@
        (map remove-domain)
        (remove string/blank?)
        (map (partial ipg/lookup-subject (remove-domain username)))
-       (map remove-nil-vals)
        (map format-like-trellis)
+       (map remove-nil-vals)
        (hash-map :users)))
 
 (defn add-collaborators
