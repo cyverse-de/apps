@@ -137,7 +137,7 @@
    (catch clj-http-error? {:keys [body]}
      (let [reason (get-failure-reason body)]
        (log/error (resource-sharing-log-msg "share" resource-type resource-name subject-type subject-id reason)))
-     "the app sharing request failed")))
+     (str "the " resource-type " sharing request failed"))))
 
 (defn- unshare-resource
   [resource-type resource-name subject-type subject-id]
@@ -147,12 +147,14 @@
    (catch clj-http-error? {:keys [body]}
      (let [reason (get-failure-reason body)]
        (log/error (resource-sharing-log-msg "unshare" resource-type resource-name subject-type subject-id reason)))
-     "the app unsharing request failed")))
+     (str "the " resource-type " unsharing request failed"))))
 
 (def share-app (partial share-resource (rt-app)))
 (def unshare-app (partial unshare-resource (rt-app)))
 (def share-analysis (partial share-resource (rt-analysis)))
 (def unshare-analysis (partial unshare-resource (rt-analysis)))
+(def share-tool (partial share-resource (rt-tool)))
+(def unshare-tool (partial unshare-resource (rt-tool)))
 
 (defn- get-public-resource-ids [resource-type]
   (->> (pc/get-subject-permissions-for-resource-type (client) "group" (ipg/grouper-user-group-id) resource-type false)

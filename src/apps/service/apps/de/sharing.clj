@@ -3,8 +3,12 @@
         [slingshot.slingshot :only [try+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
+            [apps.persistence.app-listing :as app-listing]
             [apps.service.apps.de.listings :as listings]
-            [apps.service.apps.de.permissions :as perms]))
+            [apps.service.apps.de.permissions :as perms]
+            [apps.tools.permissions :as tool-perms]
+            [apps.tools.sharing :as tool-sharing]
+            [clojure.tools.logging :as log]))
 
 (def app-sharing-formats
   {:not-found    "app ID {{app-id}} does not exist"
@@ -19,18 +23,37 @@
              {:app-id app-id
               :detail (or detail "unexpected error")})))
 
+(defn- share-tool-for-app
+  [user sharee {tool-id :id}]
+  (when-not (tool-perms/has-tool-permission sharee tool-id "read")
+    (tool-sharing/share-tool-with-user user sharee tool-id "read")))
+
+(defn- share-app-tools
+  [user sharee {app-id :id}]
+  (try+
+    (doseq [tool (amp/get-app-tools app-id)]
+      (share-tool-for-app user sharee tool))
+    (catch Object _
+      (log/error (:throwable &throw-context) "unable to share tools for app" app-id)
+      (.getMessage (:throwable &throw-context)))))
+
+(defn- share-app
+  [user {app-id :id :as app} sharee level]
+  (or (share-app-tools user sharee app)
+      (perms-client/share-app app-id "user" sharee level)))
+
 (defn share-app-with-user
   [{username :shortUsername :as user} sharee app-id level success-fn failure-fn]
   (try+
-    (if-not (amp/app-exists? app-id)
-      (failure-fn nil nil (app-sharing-msg :not-found app-id))
+    (if-let [app (app-listing/get-app-listing app-id)]
       (let [sharer-category (listings/get-category-id-for-app user app-id)
             sharee-category listings/shared-with-me-id]
         (if-not (perms/has-app-permission username app-id "own")
           (failure-fn sharer-category sharee-category (app-sharing-msg :not-allowed app-id))
-          (if-let [failure-reason (perms-client/share-app app-id "user" sharee level)]
+          (if-let [failure-reason (share-app user app sharee level)]
             (failure-fn sharer-category sharee-category failure-reason)
-            (success-fn sharer-category sharee-category)))))
+            (success-fn sharer-category sharee-category))))
+      (failure-fn nil nil (app-sharing-msg :not-found app-id)))
     (catch [:type :apps.service.apps.de.permissions/permission-load-failure] {:keys [reason]}
       (failure-fn nil nil (app-sharing-msg :load-failure app-id reason)))))
 
