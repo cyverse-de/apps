@@ -64,7 +64,7 @@
           (if-let [failure-reason (perms-client/share-tool tool-id "user" sharee level)]
             (share-failure failure-reason)
             (tool-sharing-success tool-id tool level)))
-        (catch [:type :apps.service.apps.de.permissions/permission-load-failure] {:keys [reason]}
+        (catch [:type :apps.tools.permissions/permission-load-failure] {:keys [reason]}
           (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
     (tool-sharing-failure tool-id nil level (tool-sharing-msg :not-found tool-id))))
 
@@ -78,7 +78,7 @@
           (if-let [failure-reason (perms-client/unshare-tool tool-id "user" sharee)]
             (share-failure failure-reason)
             (tool-unsharing-success tool-id tool)))
-        (catch [:type :apps.service.apps.de.permissions/permission-load-failure] {:keys [reason]}
+        (catch [:type :apps.tools.permissions/permission-load-failure] {:keys [reason]}
           (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
     (tool-unsharing-failure tool-id nil (tool-sharing-msg :not-found tool-id))))
 
