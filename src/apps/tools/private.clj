@@ -3,7 +3,7 @@
         [korma.db :only [transaction]])
   (:require [apps.clients.permissions :as permissions]
             [apps.containers :as containers]
-            [apps.persistence.app-metadata :as persistence]
+            [apps.persistence.tools :as persistence]
             [apps.tools :as tools]
             [apps.util.config :as cfg]))
 

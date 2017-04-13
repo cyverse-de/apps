@@ -2,6 +2,7 @@
   (:use [korma.db :only [transaction]]
         [medley.core :only [remove-vals]])
   (:require [apps.persistence.app-metadata :as amp]
+            [apps.persistence.tools :as tools-db]
             [apps.util.config :as cfg]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]))
@@ -109,7 +110,7 @@
     (not-found integration-data-id)))
 
 (defn update-integration-data-for-tool [_ tool-id integration-data-id]
-  (amp/get-tool tool-id)
+  (tools-db/get-tool tool-id)
   (if-let [integration-data (amp/get-integration-data-by-id integration-data-id)]
     (do (amp/update-tool-integration-data tool-id integration-data-id)
         (format-integration-data integration-data))
