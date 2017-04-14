@@ -3,7 +3,7 @@
         [slingshot.slingshot :only [try+]])
   (:require [apps.clients.notifications :as cn]
             [apps.clients.permissions :as perms-client]
-            [apps.tools :as tools]
+            [apps.persistence.tools :as tools-db]
             [apps.tools.permissions :as perms]
             [clojure-commons.error-codes :as error-codes]))
 
@@ -56,7 +56,7 @@
 
 (defn share-tool-with-user
   [{username :shortUsername} sharee tool-id level]
-  (if-let [tool (first (tools/get-tools-by-id [tool-id]))]
+  (if-let [tool (first (tools-db/get-tools-by-id [tool-id]))]
     (let [share-failure (partial tool-sharing-failure tool-id tool level)]
       (try+
         (if-not (perms/has-tool-permission username tool-id "own")
@@ -70,7 +70,7 @@
 
 (defn unshare-tool-with-user
   [{username :shortUsername} sharee tool-id]
-  (if-let [tool (first (tools/get-tools-by-id [tool-id]))]
+  (if-let [tool (first (tools-db/get-tools-by-id [tool-id]))]
     (let [share-failure (partial tool-unsharing-failure tool-id tool)]
       (try+
         (if-not (perms/has-tool-permission username tool-id "own")

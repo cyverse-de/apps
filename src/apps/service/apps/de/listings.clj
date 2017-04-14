@@ -4,7 +4,7 @@
         [apps.persistence.app-groups]
         [apps.persistence.app-listing]
         [apps.persistence.entities]
-        [apps.tools :only [get-tools-by-id]]
+        [apps.persistence.tools :only [get-tools-by-id]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.config]
         [apps.util.conversions :only [to-long remove-nil-vals]]

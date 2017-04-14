@@ -1,11 +1,12 @@
 (ns apps.metadata.element-listings
   (:use [apps.persistence.app-metadata :only [parameter-types-for-tool-type]]
         [apps.persistence.entities]
-        [apps.tools :only [format-tool-listing tool-listing-base-query]]
+        [apps.tools :only [format-tool-listing]]
         [apps.util.conversions :only [remove-nil-vals]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
-  (:require [apps.clients.permissions :as perms-client]))
+  (:require [apps.clients.permissions :as perms-client]
+            [apps.persistence.tools :as tools-db]))
 
 (defn get-tool-type-by-name
   "Searches for the tool type with the given name."
@@ -86,8 +87,7 @@
         tools           (-> params
                             (select-keys [:include-hidden])
                             (assoc :tool-ids tool-ids)
-                            (tool-listing-base-query)
-                            (select))]
+                            (tools-db/get-tool-listing))]
     {:tools (map (partial format-tool-listing perms public-tool-ids) tools)}))
 
 (defn- list-info-types

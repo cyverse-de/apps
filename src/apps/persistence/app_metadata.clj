@@ -33,29 +33,6 @@
 
 (def param-reference-genome-types #{"ReferenceGenome" "ReferenceSequence" "ReferenceAnnotation"})
 
-(defn- filter-valid-app-values
-  "Filters valid keys from the given App for inserting or updating in the database, setting the
-  current date as the edited date."
-  [app]
-  (-> app
-      (select-keys [:name :description])
-      (assoc :edited_date (sqlfn now))))
-
-(defn- filter-valid-tool-values
-  "Filters valid keys from the given Tool for inserting or updating in the database."
-  [tool]
-  (select-keys tool [:id
-                     :container_images_id
-                     :name
-                     :description
-                     :attribution
-                     :location
-                     :version
-                     :integration_data_id
-                     :restricted
-                     :time_limit_seconds
-                     :tool_type_id]))
-
 (defn- filter-valid-task-values
   "Filters valid keys from the given Task for inserting or updating in the database."
   [task]
@@ -266,7 +243,7 @@
       (where {:id integration-data-id})
       delete))
 
-(defn get-tool-listing-base-query
+(defn- get-tool-listing-base-query
   "Common select query for tool listings."
   []
   (-> (select* tool_listing)
@@ -277,18 +254,6 @@
               :type
               :version
               :attribution)))
-
-(defn get-tool
-  "Loads information about a single tool."
-  [tool-id]
-  (assert-not-nil
-   [:tool-id tool-id]
-   (-> (select* [:tools :t])
-       (join [:tool_types :tt] {:t.tool_type_id :tt.id})
-       (fields :t.id :t.name :t.description :t.location [:tt.name :type] :t.version :t.attribution)
-       (where {:t.id tool-id})
-       select
-       first)))
 
 (defn get-app-tools
   "Loads information about the tools associated with an app."
@@ -325,11 +290,6 @@
                        :app_id  [in (perms-client/get-public-app-ids)]}))
        (map (comp get-app :app_id))))
 
-(defn get-tool-type-id
-  "Gets the ID of the given tool type name."
-  [tool-type]
-  (:id (first (select tool_types (fields :id) (where {:name tool-type})))))
-
 (defn parameter-types-for-tool-type
   "Lists the valid parameter types for the tool type with the given identifier."
   ([tool-type-id]
@@ -340,69 +300,6 @@
                  {:tool_type_parameter_type.parameter_type_id
                   :parameter_types.id})
            (where {:tool_type_parameter_type.tool_type_id tool-type-id}))))
-
-(defn- get-tool-data-files
-  "Fetches a tool's test data files."
-  [tool-id]
-  (let [data-files (select tool_test_data_files
-                           (fields :input_file :filename)
-                           (where {:tool_id tool-id}))
-        [input-files output-files] ((juxt filter remove) :input_file data-files)]
-    {:input_files  (map :filename input-files)
-     :output_files (map :filename output-files)}))
-
-(defn get-tool-implementation-details
-  "Fetches a tool's implementation details."
-  [tool-id]
-  (let [{:keys [integrator_name integrator_email]} (get-integration-data-by-tool-id tool-id)
-        tool-data-files (get-tool-data-files tool-id)]
-    {:implementor_email integrator_email
-     :implementor       integrator_name
-     :test              tool-data-files}))
-
-(defn add-tool-data-file
-  "Adds a tool's test data files to the database"
-  [tool-id input-file filename]
-  (insert tool_test_data_files (values {:tool_id tool-id
-                                        :input_file input-file
-                                        :filename filename})))
-
-(defn add-tool
-  "Adds a new tool and its test data files to the database"
-  [{type :type {:keys [implementor_email implementor test]} :implementation :as tool}]
-  (transaction
-   (let [integration-data-id (:id (get-integration-data implementor_email implementor))
-         tool (-> tool
-                  (assoc :integration_data_id integration-data-id
-                         :tool_type_id (get-tool-type-id type))
-                  (filter-valid-tool-values))
-         tool-id (:id (insert tools (values tool)))]
-     (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
-     (dorun (map (partial add-tool-data-file tool-id false) (:output_files test)))
-     tool-id)))
-
-(defn update-tool
-  "Updates a tool and its test data files in the database"
-  [{tool-id :id
-    type :type
-    {:keys [implementor_email implementor test] :as implementation} :implementation
-    :as tool}]
-  (transaction
-   (let [integration-data-id (when implementation
-                               (:id (get-integration-data implementor_email implementor)))
-         type-id (when type (get-tool-type-id type))
-         tool (-> tool
-                  (assoc :integration_data_id integration-data-id
-                         :tool_type_id        type-id)
-                  (dissoc :id)
-                  filter-valid-tool-values
-                  remove-nil-vals)]
-     (when-not (empty? tool)
-       (sql/update tools (set-fields tool) (where {:id tool-id})))
-     (when-not (empty? test)
-       (delete tool_test_data_files (where {:tool_id tool-id}))
-       (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
-       (dorun (map (partial add-tool-data-file tool-id false) (:output_files test)))))))
 
 (defn- prep-app
   "Prepares an app for insertion into the database."

@@ -15,6 +15,7 @@
         [ring.util.http-response :only [ok]])
   (:require [apps.routes.schemas.permission :as permission]
             [apps.service.apps :as apps]
+            [apps.tools.permissions :as tool-permissions]
             [apps.tools.sharing :as tool-sharing]))
 
 (def entrypoint-warning
@@ -146,6 +147,15 @@ Configured default values will be used for the `time_limit_seconds`, `container.
 The request may include a value less than the configured default if it's also greater than 0,
 otherwise the default value will be used."
         (ok (add-private-tool current-user body)))
+
+  (POST "/permission-lister" []
+        :query [params SecuredQueryParams]
+        :body [{:keys [tools]} (describe permission/ToolIdList "The Tool permission listing request.")]
+        :return permission/ToolPermissionListing
+        :summary "List Tool Permissions"
+        :description "This endpoint allows the caller to list the permissions for one or more Tools.
+        The authenticated user must have read permission on every Tool in the request body for this endpoint to succeed."
+        (ok (tool-permissions/list-tool-permissions current-user tools)))
 
   (POST "/sharing" []
         :query [params SecuredQueryParams]

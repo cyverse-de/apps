@@ -1,7 +1,6 @@
 (ns apps.containers
   (:use [apps.persistence.app-metadata :only [get-public-tools-by-image-id
-                                              get-tools-by-image-id
-                                              update-tool]]
+                                              get-tools-by-image-id]]
         [apps.persistence.entities :only [tools
                                           container-images
                                           container-settings
@@ -10,6 +9,7 @@
                                           container-volumes-from
                                           data-containers]]
         [apps.persistence.docker-registries :only [get-registry]]
+        [apps.persistence.tools :only [update-tool]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals remove-empty-vals]]
         [apps.validation :only [validate-image-not-public

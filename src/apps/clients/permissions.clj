@@ -94,6 +94,7 @@
 
 (def list-app-permissions (partial list-resource-permissions (rt-app)))
 (def list-analysis-permissions (partial list-resource-permissions (rt-analysis)))
+(def list-tool-permissions (partial list-resource-permissions (rt-tool)))
 
 (defn delete-app-resource
   [app-id]
