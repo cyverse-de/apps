@@ -129,6 +129,17 @@
 (defschema AnalysisUnsharingResponse
   {:unsharing (describe [UserAnalysisUnsharingResponseElement] "The list of unsharing responses for individual users")})
 
+(defschema ToolIdList
+  {:tools (describe [UUID] "A List of Tool IDs")})
+
+(defschema ToolPermissionListElement
+  {:id          (describe UUID "The Tool ID")
+   :name        (describe NonBlankString "The Tool name")
+   :permissions (describe [UserPermissionListElement] "The list of user permissions for the Tool")})
+
+(defschema ToolPermissionListing
+  {:tools (describe [ToolPermissionListElement] "The list of Tool permissions")})
+
 (defschema ToolSharingRequestElement
   {:tool_id    (describe UUID "The Tool ID")
    :permission (describe ToolPermissionEnum "The requested permission level")})
