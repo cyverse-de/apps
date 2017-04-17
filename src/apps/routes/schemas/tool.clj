@@ -65,10 +65,16 @@
           containers/VolumesFromParamOptional))
 
 (defschema PrivateToolImportRequest
-  (-> Tool
-      (->optional-param :id)
+  (-> ToolImportRequest
       (->optional-param :type)
+      (->optional-param :implementation)
       (merge {:container PrivateToolContainerImportRequest})))
+
+(defschema PrivateToolUpdateRequest
+  (-> PrivateToolImportRequest
+      (->optional-param :name)
+      (->optional-param :location)
+      (->optional-param :container)))
 
 (defschema ToolsImportRequest
   {:tools (describe [ToolImportRequest] "zero or more Tool definitions")})

@@ -54,10 +54,10 @@
 (deftest validate-tool-not-public
   (let [user (get-user :testde1)
         app  (atf/create-test-tool-app user "To be published")]
-    (is (nil? (v/validate-tool-not-public atf/test-tool-id)))
+    (is (nil? (v/validate-tool-not-used-in-public-apps atf/test-tool-id)))
     (sql/delete :app_documentation (sql/where {:app_id (:id app)}))
     (apps/make-app-public user de-system-id app)
-    (is (thrown-with-msg? ExceptionInfo #"in use by public apps" (v/validate-tool-not-public atf/test-tool-id)))
+    (is (thrown-with-msg? ExceptionInfo #"in use by public apps" (v/validate-tool-not-used-in-public-apps atf/test-tool-id)))
     (permanently-delete-app user de-system-id (:id app) true)))
 
 (deftest validate-app-trash

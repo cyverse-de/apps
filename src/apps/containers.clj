@@ -14,7 +14,7 @@
         [apps.util.conversions :only [remove-nil-vals remove-empty-vals]]
         [apps.validation :only [validate-image-not-public
                                 validate-image-not-used
-                                validate-tool-not-public]]
+                                validate-tool-not-used-in-public-apps]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
@@ -625,7 +625,7 @@
    overwrite-public
    {:keys [container_devices container_volumes container_volumes_from] :as settings}]
   (when-not overwrite-public
-    (validate-tool-not-public tool-id))
+    (validate-tool-not-used-in-public-apps tool-id))
   (transaction
     (delete container-settings (where {:tools_id tool-id}))
     (let [img-id      (find-or-add-image-id (:image settings))

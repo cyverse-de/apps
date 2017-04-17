@@ -8,7 +8,7 @@
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
         [apps.tools :only [add-tools delete-tool get-tool search-tools update-tool]]
-        [apps.tools.private :only [add-private-tool]]
+        [apps.tools.private :only [add-private-tool update-private-tool]]
         [apps.user :only [current-user]]
         [apps.util.service]
         [slingshot.slingshot :only [throw+]]
@@ -134,7 +134,7 @@
 
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
-        :body [body (describe PrivateToolImportRequest "The Tool to import.")]
+        :body [body (describe PrivateToolImportRequest "The private Tool to import.")]
         :return ToolDetails
         :summary "Add Private Tool"
         :description
@@ -189,6 +189,24 @@ otherwise the default value will be used."
         :summary "Get a Tool"
         :description "This endpoint returns the details for one tool."
         (ok (get-tool user tool-id)))
+
+  (PATCH "/:tool-id" []
+         :path-params [tool-id :- ToolIdParam]
+         :query [{:keys [user]} SecuredQueryParams]
+         :body [body (describe PrivateToolUpdateRequest "The private Tool to update.")]
+         :return ToolDetails
+         :summary "Update a Private Tool"
+         :description "This service updates a private Tool definition in the DE.
+As with new private Tools, `type` is always set to `executable` and `restricted` is always set to `true`,
+even if other values are set in the request,
+and a configured limit may override the `time_limit_seconds` field set in the request.
+
+**Note**: If the `container` object is omitted in the request, then existing container settings will not be modified,
+but if the `container` object is present in the request, then all container settings must be included in it.
+Any existing settings not included in the request's `container` object will be removed,
+except `network_mode` is always set to `none` and configured limits may override values set (or omitted)
+for the `cpu_shares` and `memory_limit` fields."
+         (ok (update-private-tool user (assoc body :id tool-id))))
 
   (GET "/:tool-id/container" []
         :path-params [tool-id :- ToolIdParam]
