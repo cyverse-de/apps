@@ -4,7 +4,8 @@
         [clojure.string :only [blank?]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
-  (:require [apps.persistence.app-metadata :as persistence]))
+  (:require [apps.clients.permissions :as perms-client]
+            [apps.persistence.app-metadata :as persistence]))
 
 (defn missing-json-field-exception
   "Thrown when a required field is missing from a JSON request body."
@@ -206,6 +207,14 @@
                :tools tools}))))
 
 (defn validate-tool-not-public
+  [tool-id]
+  (let [public-tool-ids (perms-client/get-public-tool-ids)]
+    (when (contains? public-tool-ids tool-id)
+      (throw+ {:type    :clojure-commons.exception/not-writeable
+               :error   "This tool is already public."
+               :tool_id tool-id}))))
+
+(defn validate-tool-not-used-in-public-apps
   [tool-id]
   (let [apps (persistence/get-public-apps-by-tool-id tool-id)]
     (when-not (empty? apps)
