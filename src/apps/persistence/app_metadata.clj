@@ -402,6 +402,13 @@
                 (set-fields (assoc (filter-valid-task-values task) :job_type_id job-type-id))
                 (where {:id task-id}))))
 
+(defn remove-tool-from-tasks
+  "Removes the given tool ID from all tasks."
+  [tool-id]
+  (sql/update tasks
+              (set-fields {:tool_id nil})
+              (where      {:tool_id tool-id})))
+
 (defn remove-app-steps
   "Removes all steps from an App. This delete will cascade to workflow_io_maps and
   input_output_mapping entries."

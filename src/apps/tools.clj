@@ -65,13 +65,18 @@
   (get-tool user id))
 
 (defn delete-tool
-  [user tool-id]
-  (let [{:keys [name location version]} (get-tool user tool-id)]
-    (validate-tool-not-used tool-id)
-    (log/warn user "deleting tool" tool-id name version "@" location))
-  (delete tools (where {:id tool-id}))
+  [tool-id]
+  (persistence/delete-tool tool-id)
   (try+
     (perms-client/delete-tool-resource tool-id)
     (catch [:status 404] _
       (log/warn "tool resource" tool-id "not found by permissions service")))
   nil)
+
+(defn admin-delete-tool
+  "Deletes a tool, as long as it is not in use by any apps."
+  [user tool-id]
+  (let [{:keys [name location version]} (get-tool user tool-id)]
+    (validate-tool-not-used tool-id)
+    (log/warn user "deleting tool" tool-id name version "@" location))
+  (delete-tool tool-id))

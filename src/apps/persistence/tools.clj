@@ -3,7 +3,8 @@
                                           tool_test_data_files
                                           tool_types]]
         [apps.persistence.app-metadata :only [get-integration-data
-                                              get-integration-data-by-tool-id]]
+                                              get-integration-data-by-tool-id
+                                              remove-tool-from-tasks]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals]]
         [clojure.string :only [upper-case]]
@@ -97,6 +98,12 @@
         (delete tool_test_data_files (where {:tool_id tool-id}))
         (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
         (dorun (map (partial add-tool-data-file tool-id false) (:output_files test)))))))
+
+(defn delete-tool
+  [tool-id]
+  (transaction
+    (remove-tool-from-tasks tool-id)
+    (delete tools (where {:id tool-id}))))
 
 (defn- add-listing-where-clause
   [query tool-ids]
