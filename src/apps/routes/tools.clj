@@ -135,7 +135,11 @@
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
         :body [body (describe PrivateToolImportRequest "The private Tool to import.")]
-        :return ToolDetails
+        :responses (merge CommonResponses
+                          {200 {:schema      ToolDetails
+                                :description "The new Tool details."}
+                           400 {:schema      ErrorResponseExists
+                                :description "A Tool with the given `name` already exists."}})
         :summary "Add Private Tool"
         :description
 "This service adds a new private Tool to the DE for the requesting user.
@@ -151,7 +155,13 @@ otherwise the default value will be used."
   (POST "/permission-lister" []
         :query [params SecuredQueryParams]
         :body [{:keys [tools]} (describe permission/ToolIdList "The Tool permission listing request.")]
-        :return permission/ToolPermissionListing
+        :responses (merge CommonResponses
+                          {200 {:schema      permission/ToolPermissionListing
+                                :description "The Tool permission listings."}
+                           403 {:schema      ErrorResponseForbidden
+                                :description "The requesting user does not have `read` permission for some Tool(s) in the request."}
+                           404 {:schema      ErrorResponseNotFound
+                                :description "Some `tool-id`(s) in the request do not exist."}})
         :summary "List Tool Permissions"
         :description "This endpoint allows the caller to list the permissions for one or more Tools.
         The authenticated user must have read permission on every Tool in the request body for this endpoint to succeed."

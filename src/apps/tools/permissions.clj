@@ -3,7 +3,6 @@
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.tools :as tools-db]
-            [apps.util.service :as service]
             [clojure-commons.exception-util :as exception-util]
             [clojure.string :as string]))
 
@@ -18,7 +17,7 @@
   [tool-ids]
   (let [missing-ids (list-non-existent-tool-ids (set tool-ids))]
     (when-not (empty? missing-ids)
-      (service/not-found "tools" tool-ids))))
+      (exception-util/not-found (string/join " " ["tools" tool-ids "not found"])))))
 
 (defn check-tool-permissions
   [user required-level tool-ids]
