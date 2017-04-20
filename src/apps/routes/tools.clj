@@ -185,6 +185,14 @@ otherwise the default value will be used."
   (DELETE "/:tool-id" []
           :path-params [tool-id :- ToolIdParam]
           :query [{:keys [user force-delete]} PrivateToolDeleteParams]
+          :responses (merge CommonResponses
+                            {200 {:description "The Tool was successfully deleted."}
+                             400 {:schema      ErrorResponseNotWritable
+                                  :description "The Tool could not be deleted."}
+                             403 {:schema      ErrorResponseForbidden
+                                  :description "The requesting user does not have permission to delete this Tool."}
+                             404 {:schema      ErrorResponseNotFound
+                                  :description "A Tool with the given `tool-id` does not exist."}})
           :summary "Delete a Private Tool"
           :description "Deletes a private Tool, as long as it is not in use by any Apps.
           The requesting user must have ownership permission for the Tool.
