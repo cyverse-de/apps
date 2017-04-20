@@ -15,6 +15,11 @@
 (def ToolRestricted (describe Boolean "Determines whether a time limit is applied and whether network access is granted"))
 (def ToolTimeLimit (describe Integer "The number of seconds that a tool is allowed to execute. A value of 0 means the time limit is disabled."))
 
+(defschema PrivateToolDeleteParams
+  (merge SecuredQueryParams
+         {(optional-key :force-delete)
+          (describe Boolean "Flag to force deletion of a Tool already in use by Apps.")}))
+
 (defschema ToolUpdateParams
   (merge SecuredQueryParams
     {(optional-key :overwrite-public)

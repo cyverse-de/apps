@@ -74,3 +74,14 @@
     (when container
       (containers/set-tool-container tool-id false (restrict-private-tool-container container))))
   (tools/get-tool user tool-id))
+
+(defn delete-private-tool
+  "Deletes a private tool if user has `own` permission for the tool.
+   If `force-delete` is not truthy, then the tool is validated as not in use by any apps."
+  [user tool-id force-delete]
+  (persistence/get-tool tool-id)
+  (perms/check-tool-permissions user "own" [tool-id])
+  (validation/validate-tool-not-public tool-id)
+  (when-not force-delete
+    (validate-tool-not-used tool-id))
+  (tools/delete-tool tool-id))

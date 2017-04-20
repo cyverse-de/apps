@@ -7,8 +7,8 @@
         [apps.routes.schemas.containers]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
-        [apps.tools :only [add-tools delete-tool get-tool search-tools update-tool]]
-        [apps.tools.private :only [add-private-tool update-private-tool]]
+        [apps.tools :only [add-tools admin-delete-tool get-tool search-tools update-tool]]
+        [apps.tools.private :only [add-private-tool delete-private-tool update-private-tool]]
         [apps.user :only [current-user]]
         [apps.util.service]
         [slingshot.slingshot :only [throw+]]
@@ -181,6 +181,25 @@ otherwise the default value will be used."
         The authenticated user must have ownership permission to every Tool in the request body for this endoint to fully succeed.
         Note: like Tool sharing, this is a potentially slow operation."
         (ok (tool-sharing/unshare-tools current-user unsharing)))
+
+  (DELETE "/:tool-id" []
+          :path-params [tool-id :- ToolIdParam]
+          :query [{:keys [user force-delete]} PrivateToolDeleteParams]
+          :responses (merge CommonResponses
+                            {200 {:description "The Tool was successfully deleted."}
+                             400 {:schema      ErrorResponseNotWritable
+                                  :description "The Tool could not be deleted."}
+                             403 {:schema      ErrorResponseForbidden
+                                  :description "The requesting user does not have permission to delete this Tool."}
+                             404 {:schema      ErrorResponseNotFound
+                                  :description "A Tool with the given `tool-id` does not exist."}})
+          :summary "Delete a Private Tool"
+          :description "Deletes a private Tool, as long as it is not in use by any Apps.
+          The requesting user must have ownership permission for the Tool.
+          If the Tool is already in use in private Apps,
+          then an `ERR_NOT_WRITEABLE` will be returned along with a listing of the Apps using this Tool,
+          unless the `force-delete` flag is set to `true`."
+          (ok (delete-private-tool user tool-id force-delete)))
 
   (GET "/:tool-id" []
         :path-params [tool-id :- ToolIdParam]
@@ -401,7 +420,7 @@ for the `cpu_shares` and `memory_limit` fields."
            :query [{:keys [user]} SecuredQueryParams]
            :summary "Delete a Tool"
            :description "Deletes a tool, as long as it is not in use by any apps."
-           (ok (delete-tool user tool-id)))
+           (ok (admin-delete-tool user tool-id)))
 
   (PATCH "/:tool-id" []
           :path-params [tool-id :- ToolIdParam]
