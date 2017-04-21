@@ -7,7 +7,7 @@
         [apps.routes.schemas.containers]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
-        [apps.tools :only [add-tools admin-delete-tool get-tool search-tools update-tool]]
+        [apps.tools :only [add-tools admin-delete-tool get-tool list-tools update-tool]]
         [apps.tools.private :only [add-private-tool delete-private-tool update-private-tool]]
         [apps.user :only [current-user]]
         [apps.util.service]
@@ -125,12 +125,11 @@
 
 (defroutes tools
   (GET "/" []
-        :query [params ToolSearchParams]
-        :return ToolListing
-        :summary "Search Tools"
-        :description "This endpoint allows users to search for a tool with a name or description that
-        contains the given search term."
-        (ok (search-tools params)))
+       :query [params ToolSearchParams]
+       :return ToolListing
+       :summary "List Tools"
+       :description "This endpoint allows users to get a listing of all Tools accessible to the user."
+       (ok (list-tools params)))
 
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
