@@ -46,15 +46,16 @@
    (optional-key :restricted)         ToolRestricted
    (optional-key :time_limit_seconds) ToolTimeLimit})
 
-(defschema ToolListingItem
-  (merge Tool
-    {:is_public  (describe Boolean "Whether the Tool has been published and is viewable by all users")
-     :permission (describe String "The user's access level for the Tool")}))
-
 (defschema ToolDetails
-  (merge ToolListingItem
-    {:implementation (describe ToolImplementation ToolImplementationDocs)
-     :container      containers/ToolContainer}))
+  (merge Tool
+         {:is_public      (describe Boolean "Whether the Tool has been published and is viewable by all users")
+          :permission     (describe String "The user's access level for the Tool")
+          :implementation (describe ToolImplementation ToolImplementationDocs)
+          :container      containers/ToolContainer}))
+
+(defschema ToolListingItem
+  (merge (dissoc ToolDetails :implementation)
+         {:container {:image (dissoc containers/Image :id)}}))
 
 (defschema ToolImportRequest
   (-> Tool

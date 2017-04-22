@@ -12,10 +12,13 @@
             [clojure.tools.logging :as log]))
 
 (defn format-tool-listing
-  [perms public-tool-ids {:keys [id] :as tool}]
+  [perms public-tool-ids {:keys [id image_name image_tag] :as tool}]
   (-> tool
       (assoc :is_public  (contains? public-tool-ids id)
-             :permission (or (perms id) ""))
+             :permission (or (perms id) "")
+             :container  {:image {:name image_name
+                                  :tag  image_tag}})
+      (dissoc :image_name :image_tag)
       remove-nil-vals))
 
 (defn- filter-listing-tool-ids

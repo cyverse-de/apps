@@ -133,34 +133,37 @@
     base-query))
 
 (defn- tool-listing-base-query
-  "Obtains a listing query for tools, with optional search and paging params."
-  ([]
-   (-> (select* tools)
-       (fields [:tools.id :id]
-               [:tools.name :name]
-               [:tools.description :description]
-               [:tools.location :location]
-               [:tool_types.name :type]
-               [:tools.version :version]
-               [:tools.attribution :attribution]
-               [:tools.restricted :restricted]
-               [:tools.time_limit_seconds :time_limit_seconds])
-       (join tool_types)))
-  ([{search-term :search :keys [tool-ids sort-field sort-dir limit offset include-hidden]
-     :or {include-hidden false}}]
-   (let [sort-field (when sort-field (keyword (str "tools." sort-field)))
-         sort-dir (when sort-dir (keyword (upper-case sort-dir)))]
-     (-> (tool-listing-base-query)
-         (add-search-where-clauses search-term)
-         (add-listing-where-clause tool-ids)
-         (add-query-sorting sort-field sort-dir)
-         (add-query-limit limit)
-         (add-query-offset offset)
-         (add-hidden-tool-types-clause include-hidden)))))
+  "Obtains a listing query for tools, with common fields for tool details and listings."
+  []
+  (-> (select* tools)
+      (fields [:tools.id :id]
+              [:tools.name :name]
+              [:tools.description :description]
+              [:tools.location :location]
+              [:tool_types.name :type]
+              [:tools.version :version]
+              [:tools.attribution :attribution]
+              [:tools.restricted :restricted]
+              [:tools.time_limit_seconds :time_limit_seconds])
+      (join tool_types)))
 
 (defn get-tool-listing
-  [params]
-  (select (tool-listing-base-query params)))
+  "Obtains a listing of tools, with optional search and paging params."
+  [{search-term :search :keys [tool-ids sort-field sort-dir limit offset include-hidden]
+    :or {include-hidden false}}]
+  (let [sort-field (when sort-field (keyword (str "tools." sort-field)))
+        sort-dir (when sort-dir (keyword (upper-case sort-dir)))]
+    (-> (tool-listing-base-query)
+        (join :container_images {:container_images.id :tools.container_images_id})
+        (fields [:container_images.name :image_name]
+                [:container_images.tag  :image_tag])
+        (add-search-where-clauses search-term)
+        (add-listing-where-clause tool-ids)
+        (add-query-sorting sort-field sort-dir)
+        (add-query-limit limit)
+        (add-query-offset offset)
+        (add-hidden-tool-types-clause include-hidden)
+        select)))
 
 (defn get-tool
   "Obtains a tool for the given tool ID, throwing a `not-found` error if the tool doesn't exist."
