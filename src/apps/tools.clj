@@ -12,18 +12,31 @@
             [clojure.tools.logging :as log]))
 
 (defn format-tool-listing
-  [perms public-tool-ids {:keys [id] :as tool}]
+  [perms public-tool-ids {:keys [id image_name image_tag implementor implementor_email] :as tool}]
   (-> tool
-      (assoc :is_public  (contains? public-tool-ids id)
-             :permission (or (perms id) ""))
+      (assoc :is_public      (contains? public-tool-ids id)
+             :permission     (or (perms id) "")
+             :implementation {:implementor       implementor
+                              :implementor_email implementor_email}
+             :container      {:image {:name image_name
+                                      :tag  image_tag}})
+      (dissoc :image_name :image_tag :implementor :implementor_email)
       remove-nil-vals))
 
-(defn search-tools
-  "Obtains a listing of tools for the tool search service."
+(defn- filter-listing-tool-ids
+  [all-tool-ids public-tool-ids {:keys [public] :as params}]
+  (if (contains? params :public)
+    (if public
+      public-tool-ids
+      (clojure.set/difference all-tool-ids public-tool-ids))
+    all-tool-ids))
+
+(defn list-tools
+  "Obtains a listing of tools accessible to the given user."
   [{:keys [user] :as params}]
-  (let [perms           (perms-client/load-tool-permissions user)
-        tool-ids        (set (keys perms))
-        public-tool-ids (perms-client/get-public-tool-ids)]
+  (let [public-tool-ids (perms-client/get-public-tool-ids)
+        perms           (perms-client/load-tool-permissions user)
+        tool-ids        (filter-listing-tool-ids (set (keys perms)) public-tool-ids params)]
     {:tools
      (map (partial format-tool-listing perms public-tool-ids)
           (persistence/get-tool-listing (assoc params :tool-ids tool-ids)))}))

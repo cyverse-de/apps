@@ -30,10 +30,13 @@
    :input_files           (describe [String] "The list of paths to test input files in iRODS")
    :output_files          (describe [String] "The list of paths to expected output files in iRODS")})
 
-(defschema ToolImplementation
+(defschema ToolImplementor
   {:implementor       (describe String "The name of the implementor")
-   :implementor_email (describe String "The email address of the implementor")
-   :test              (describe ToolTestData "The test data for the Tool")})
+   :implementor_email (describe String "The email address of the implementor")})
+
+(defschema ToolImplementation
+  (merge ToolImplementor
+         {:test (describe ToolTestData "The test data for the Tool")}))
 
 (defschema Tool
   {:id                                ToolIdParam
@@ -46,15 +49,17 @@
    (optional-key :restricted)         ToolRestricted
    (optional-key :time_limit_seconds) ToolTimeLimit})
 
-(defschema ToolListingItem
-  (merge Tool
-    {:is_public  (describe Boolean "Whether the Tool has been published and is viewable by all users")
-     :permission (describe String "The user's access level for the Tool")}))
-
 (defschema ToolDetails
-  (merge ToolListingItem
-    {:implementation (describe ToolImplementation ToolImplementationDocs)
-     :container      containers/ToolContainer}))
+  (merge Tool
+         {:is_public      (describe Boolean "Whether the Tool has been published and is viewable by all users")
+          :permission     (describe String "The user's access level for the Tool")
+          :implementation (describe ToolImplementation ToolImplementationDocs)
+          :container      containers/ToolContainer}))
+
+(defschema ToolListingItem
+  (merge ToolDetails
+         {:implementation (describe ToolImplementor ToolImplementationDocs)
+          :container      {:image (dissoc containers/Image :id)}}))
 
 (defschema ToolImportRequest
   (-> Tool

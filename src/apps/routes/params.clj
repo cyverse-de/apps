@@ -101,7 +101,10 @@
 
 (s/defschema ToolSearchParams
   (merge SecuredPagingParams IncludeHiddenParams
-    {:search (describe String "The pattern to match in an Tool's Name or Description.")}))
+    {(s/optional-key :search) (describe String "The pattern to match in an Tool's Name or Description.")
+     (s/optional-key :public) (describe Boolean
+                                        "Set to `true` to list only public Tools, `false` to list only private Tools,
+                                         or leave unset to list all Tools.")}))
 
 (s/defschema AppParameterTypeParams
   (merge SecuredQueryParams
