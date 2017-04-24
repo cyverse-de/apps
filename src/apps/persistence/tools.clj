@@ -116,12 +116,17 @@
    given search term in their name or description."
   [base-query search-term]
   (if search-term
-    (let [search-term (format-query-wildcards search-term)
-          search-term (str "%" search-term "%")]
+    (let [search-term   (format-query-wildcards search-term)
+          search-term   (str "%" search-term "%")
+          search-clause #(hash-map (sqlfn lower %)
+                                   ['like (sqlfn lower search-term)])]
       (where base-query
              (or
-               {(sqlfn lower :tools.name) [like (sqlfn lower search-term)]}
-               {(sqlfn lower :tools.description) [like (sqlfn lower search-term)]})))
+               (search-clause :tools.name)
+               (search-clause :tools.description)
+               (search-clause :container_images.name)
+               (search-clause :integration_data.integrator_name)
+               (search-clause :integration_data.integrator_email))))
     base-query))
 
 (defn- add-hidden-tool-types-clause
@@ -155,8 +160,11 @@
         sort-dir (when sort-dir (keyword (upper-case sort-dir)))]
     (-> (tool-listing-base-query)
         (join :container_images {:container_images.id :tools.container_images_id})
+        (join :integration_data {:integration_data.id :tools.integration_data_id})
         (fields [:container_images.name :image_name]
-                [:container_images.tag  :image_tag])
+                [:container_images.tag  :image_tag]
+                [:integration_data.integrator_name  :implementor]
+                [:integration_data.integrator_email :implementor_email])
         (add-search-where-clauses search-term)
         (add-listing-where-clause tool-ids)
         (add-query-sorting sort-field sort-dir)

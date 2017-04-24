@@ -30,10 +30,13 @@
    :input_files           (describe [String] "The list of paths to test input files in iRODS")
    :output_files          (describe [String] "The list of paths to expected output files in iRODS")})
 
-(defschema ToolImplementation
+(defschema ToolImplementor
   {:implementor       (describe String "The name of the implementor")
-   :implementor_email (describe String "The email address of the implementor")
-   :test              (describe ToolTestData "The test data for the Tool")})
+   :implementor_email (describe String "The email address of the implementor")})
+
+(defschema ToolImplementation
+  (merge ToolImplementor
+         {:test (describe ToolTestData "The test data for the Tool")}))
 
 (defschema Tool
   {:id                                ToolIdParam
@@ -54,8 +57,9 @@
           :container      containers/ToolContainer}))
 
 (defschema ToolListingItem
-  (merge (dissoc ToolDetails :implementation)
-         {:container {:image (dissoc containers/Image :id)}}))
+  (merge ToolDetails
+         {:implementation (describe ToolImplementor ToolImplementationDocs)
+          :container      {:image (dissoc containers/Image :id)}}))
 
 (defschema ToolImportRequest
   (-> Tool
