@@ -16,7 +16,8 @@
   (:require [apps.routes.schemas.permission :as permission]
             [apps.service.apps :as apps]
             [apps.tools.permissions :as tool-permissions]
-            [apps.tools.sharing :as tool-sharing]))
+            [apps.tools.sharing :as tool-sharing]
+            [compojure.api.middleware :as middleware]))
 
 (def entrypoint-warning
   (str "
@@ -194,6 +195,7 @@ otherwise the default value will be used."
   (DELETE "/:tool-id" []
           :path-params [tool-id :- ToolIdParam]
           :query [{:keys [user force-delete]} PrivateToolDeleteParams]
+          :coercion middleware/no-response-coercion
           :responses (merge CommonResponses
                             {200 {:description "The Tool was successfully deleted."}
                              400 {:schema      ErrorResponseNotWritable
