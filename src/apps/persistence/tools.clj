@@ -185,3 +185,8 @@
   [tool-ids]
   (map remove-nil-vals
        (select (tool-listing-base-query) (where {:tools.id [in tool-ids]}))))
+
+(defn get-tool-ids
+  "Obtains a list of all tool IDs."
+  []
+  (map :id (select tools (fields :id))))

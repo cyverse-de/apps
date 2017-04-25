@@ -7,7 +7,7 @@
         [apps.routes.schemas.containers]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
-        [apps.tools :only [add-tools admin-delete-tool get-tool list-tools update-tool]]
+        [apps.tools :only [add-tools admin-delete-tool admin-list-tools get-tool list-tools update-tool]]
         [apps.tools.private :only [add-private-tool delete-private-tool update-private-tool]]
         [apps.user :only [current-user]]
         [apps.util.service]
@@ -416,6 +416,13 @@ for the `cpu_shares` and `memory_limit` fields."
         (ok (list-tool-request-status-codes params))))
 
 (defroutes admin-tools
+  (GET "/" []
+       :query [params ToolSearchParams]
+       :return ToolListing
+       :summary "List Tools"
+       :description "This endpoint allows admins to get a listing of all Tools."
+       (ok (admin-list-tools params)))
+
   (POST "/" []
          :query [params SecuredQueryParams]
          :body [body (describe ToolsImportRequest "The Tools to import.")]

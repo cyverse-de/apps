@@ -31,6 +31,11 @@
       (clojure.set/difference all-tool-ids public-tool-ids))
     all-tool-ids))
 
+(defn- admin-filter-listing-tool-ids
+  [public-tool-ids params]
+  (when (contains? params :public)
+    (filter-listing-tool-ids (set (persistence/get-tool-ids)) public-tool-ids params)))
+
 (defn list-tools
   "Obtains a listing of tools accessible to the given user."
   [{:keys [user] :as params}]
@@ -53,6 +58,18 @@
     (assoc tool
       :container container
       :implementation implementation)))
+
+(defn admin-list-tools
+  "Obtains a listing of any tool for admin users."
+  [{:keys [user] :as params}]
+  (let [public-tool-ids (perms-client/get-public-tool-ids)
+        perms           (perms-client/load-tool-permissions user)
+        params          (-> params
+                            (assoc :tool-ids (admin-filter-listing-tool-ids public-tool-ids params))
+                            remove-nil-vals)]
+    {:tools
+     (map (partial format-tool-listing perms public-tool-ids)
+          (persistence/get-tool-listing params))}))
 
 (defn- add-new-tool
   [{:keys [container] :as tool}]
