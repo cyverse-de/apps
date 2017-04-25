@@ -107,9 +107,9 @@
 
 (defn- add-listing-where-clause
   [query tool-ids]
-  (if (empty? tool-ids)
-    query
-    (where query {:tools.id [in tool-ids]})))
+  (if tool-ids
+    (where query {:tools.id [in tool-ids]})
+    query))
 
 (defn- add-search-where-clauses
   "Adds where clauses to a base tool search query to restrict results to tools that contain the
