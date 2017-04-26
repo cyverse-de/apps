@@ -94,6 +94,7 @@
 
 (defn admin-update-tool
   [user overwrite-public {:keys [id container] :as tool}]
+  (persistence/get-tool id)
   (persistence/update-tool tool)
   (when container
     (set-tool-container id overwrite-public container))
