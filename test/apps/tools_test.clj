@@ -26,12 +26,12 @@
     (testing "(update-tool) actually updates the tool"
       (let [tool-id      (:id tool-map)
             user         (:shortUsername current-user)
-            updated-tool (update-tool user false (-> tool-map
-                                                     (assoc :restricted true)
-                                                     (assoc :time_limit_seconds 10)))]
+            updated-tool (admin-update-tool user false (-> tool-map
+                                                           (assoc :restricted true)
+                                                           (assoc :time_limit_seconds 10)))]
         (is (= tool-id (:id updated-tool)))
         (is (contains? updated-tool :restricted))
         (is (contains? updated-tool :time_limit_seconds))
         (is (:restricted updated-tool))
         (is (= (:time_limit_seconds updated-tool) 10))
-        (update-tool user false tool-map)))))
+        (admin-update-tool user false tool-map)))))
