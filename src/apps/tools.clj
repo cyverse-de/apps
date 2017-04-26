@@ -31,6 +31,11 @@
       (clojure.set/difference all-tool-ids public-tool-ids))
     all-tool-ids))
 
+(defn- admin-filter-listing-tool-ids
+  [public-tool-ids params]
+  (when (contains? params :public)
+    (filter-listing-tool-ids (set (persistence/get-tool-ids)) public-tool-ids params)))
+
 (defn list-tools
   "Obtains a listing of tools accessible to the given user."
   [{:keys [user] :as params}]
@@ -44,7 +49,6 @@
 (defn get-tool
   "Obtains a tool by ID."
   [user tool-id]
-  (permissions/check-tool-permissions user "read" [tool-id])
   (let [tool           (->> (persistence/get-tool tool-id)
                             (format-tool-listing (perms-client/load-tool-permissions user)
                                                  (perms-client/get-public-tool-ids)))
@@ -54,6 +58,24 @@
       :container container
       :implementation implementation)))
 
+(defn user-get-tool
+  "Obtains tool details for a user."
+  [user tool-id]
+  (permissions/check-tool-permissions user "read" [tool-id])
+  (get-tool user tool-id))
+
+(defn admin-list-tools
+  "Obtains a listing of any tool for admin users."
+  [{:keys [user] :as params}]
+  (let [public-tool-ids (perms-client/get-public-tool-ids)
+        perms           (perms-client/load-tool-permissions user)
+        params          (-> params
+                            (assoc :tool-ids (admin-filter-listing-tool-ids public-tool-ids params))
+                            remove-nil-vals)]
+    {:tools
+     (map (partial format-tool-listing perms public-tool-ids)
+          (persistence/get-tool-listing params))}))
+
 (defn- add-new-tool
   [{:keys [container] :as tool}]
   (verify-tool-name-location tool)
@@ -62,7 +84,7 @@
       (add-tool-container tool-id container))
     tool-id))
 
-(defn add-tools
+(defn admin-add-tools
   "Adds a list of tools to the database, returning a list of IDs of the tools added."
   [{:keys [tools]}]
   (transaction
@@ -70,8 +92,9 @@
       (dorun (map perms-client/register-public-tool tool-ids))
       {:tool_ids tool-ids})))
 
-(defn update-tool
+(defn admin-update-tool
   [user overwrite-public {:keys [id container] :as tool}]
+  (persistence/get-tool id)
   (persistence/update-tool tool)
   (when container
     (set-tool-container id overwrite-public container))

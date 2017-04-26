@@ -7,7 +7,13 @@
         [apps.routes.schemas.containers]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
-        [apps.tools :only [add-tools admin-delete-tool get-tool list-tools update-tool]]
+        [apps.tools :only [admin-add-tools
+                           admin-delete-tool
+                           admin-list-tools
+                           admin-update-tool
+                           get-tool
+                           list-tools
+                           user-get-tool]]
         [apps.tools.private :only [add-private-tool delete-private-tool update-private-tool]]
         [apps.user :only [current-user]]
         [apps.util.service]
@@ -213,12 +219,18 @@ otherwise the default value will be used."
           (ok (delete-private-tool user tool-id force-delete)))
 
   (GET "/:tool-id" []
-        :path-params [tool-id :- ToolIdParam]
-        :query [{:keys [user]} SecuredQueryParams]
-        :return ToolDetails
-        :summary "Get a Tool"
-        :description "This endpoint returns the details for one tool."
-        (ok (get-tool user tool-id)))
+       :path-params [tool-id :- ToolIdParam]
+       :query [{:keys [user]} SecuredQueryParams]
+       :responses (merge CommonResponses
+                         {200 {:schema      ToolDetails
+                               :description "The Tool details."}
+                          403 {:schema      ErrorResponseForbidden
+                               :description "The requesting user does not have `read` permission for the Tool."}
+                          404 {:schema      ErrorResponseNotFound
+                               :description "The `tool-id` does not exist."}})
+       :summary "Get a Tool"
+       :description "This endpoint returns the details for one tool accessible to the user."
+       (ok (user-get-tool user tool-id)))
 
   (PATCH "/:tool-id" []
          :path-params [tool-id :- ToolIdParam]
@@ -416,30 +428,66 @@ for the `cpu_shares` and `memory_limit` fields."
         (ok (list-tool-request-status-codes params))))
 
 (defroutes admin-tools
+  (GET "/" []
+       :query [params ToolSearchParams]
+       :return ToolListing
+       :summary "List Tools"
+       :description "This endpoint allows admins to get a listing of all Tools."
+       (ok (admin-list-tools params)))
+
   (POST "/" []
-         :query [params SecuredQueryParams]
-         :body [body (describe ToolsImportRequest "The Tools to import.")]
-         :summary "Add new Tools."
-         :description (str
-                        "This service adds new Tools to the DE."
-                        entrypoint-warning
-                        volumes-warning)
-         (ok (add-tools body)))
+        :query [params SecuredQueryParams]
+        :body [body (describe ToolsImportRequest "The Tools to import.")]
+        :responses (merge CommonResponses
+                          {200 {:schema      ToolIdsList
+                                :description "A list of the new Tool IDs."}
+                           400 {:schema      ErrorResponseExists
+                                :description "A Tool with the given `name` already exists."}})
+        :summary "Add new Tools."
+        :description (str "This service adds new Tools to the DE."
+                          entrypoint-warning
+                          volumes-warning)
+        (ok (admin-add-tools body)))
 
   (DELETE "/:tool-id" []
-           :path-params [tool-id :- ToolIdParam]
-           :query [{:keys [user]} SecuredQueryParams]
-           :summary "Delete a Tool"
-           :description "Deletes a tool, as long as it is not in use by any apps."
-           (ok (admin-delete-tool user tool-id)))
+          :path-params [tool-id :- ToolIdParam]
+          :query [{:keys [user]} SecuredQueryParams]
+          :coercion middleware/no-response-coercion
+          :responses (merge CommonResponses
+                            {200 {:description "The Tool was successfully deleted."}
+                             400 {:schema      ErrorResponseNotWritable
+                                  :description "The Tool is already in use by apps and could not be deleted."}
+                             404 {:schema      ErrorResponseNotFound
+                                  :description "A Tool with the given `tool-id` does not exist."}})
+          :summary "Delete a Tool"
+          :description "Deletes a tool, as long as it is not in use by any apps."
+          (ok (admin-delete-tool user tool-id)))
+
+  (GET "/:tool-id" []
+       :path-params [tool-id :- ToolIdParam]
+       :query [{:keys [user]} SecuredQueryParams]
+       :responses (merge CommonResponses
+                         {200 {:schema      ToolDetails
+                               :description "The Tool details."}
+                          404 {:schema      ErrorResponseNotFound
+                               :description "The `tool-id` does not exist."}})
+       :summary "Get a Tool"
+       :description "This endpoint returns the details for one tool."
+       (ok (get-tool user tool-id)))
 
   (PATCH "/:tool-id" []
-          :path-params [tool-id :- ToolIdParam]
-          :query [{:keys [user overwrite-public]} ToolUpdateParams]
-          :body [body (describe ToolUpdateRequest "The Tool to update.")]
-          :return ToolDetails
-          :summary "Update a Tool"
-          :description
+         :path-params [tool-id :- ToolIdParam]
+         :query [{:keys [user overwrite-public]} ToolUpdateParams]
+         :body [body (describe ToolUpdateRequest "The Tool to update.")]
+         :responses (merge CommonResponses
+                           {200 {:schema      ToolDetails
+                                 :description "The Tool details."}
+                            400 {:schema      ErrorResponseNotWritable
+                                 :description "The Tool is in use by public apps its container could not be updated."}
+                            404 {:schema      ErrorResponseNotFound
+                                 :description "The `tool-id` does not exist."}})
+         :summary "Update a Tool"
+         :description
 "This service updates a Tool definition in the DE.
 
 **Note**: If the `container` object is omitted in the request, then existing container settings will not
@@ -451,7 +499,7 @@ included in it. Any existing settings not included in the request's `container` 
     Do not update container settings that are in use by tools in public apps unless it is certain the new
     container settings will not break reproducibility for those apps.
     If required, the `overwrite-public` flag may be used to update these settings for public tools."
-          (ok (update-tool user overwrite-public (assoc body :id tool-id))))
+         (ok (admin-update-tool user overwrite-public (assoc body :id tool-id))))
 
   (POST "/:tool-id/container/devices" []
          :path-params [tool-id :- ToolIdParam]

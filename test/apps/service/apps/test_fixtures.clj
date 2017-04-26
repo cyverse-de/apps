@@ -160,7 +160,7 @@
    (create-tool implementor (:name tool-definition)))
   ([implementor name]
    (sql/delete :tools (sql/where {:name name}))
-   (tools/add-tools {:tools [(assoc tool-definition
+   (tools/admin-add-tools {:tools [(assoc tool-definition
                                     :name           name
                                     :implementation (implementation-for-user implementor))]})))
 
