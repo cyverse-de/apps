@@ -74,7 +74,7 @@
    :name        "test-tool"
    :type        "executable"
    :container   {:image {:name "dwr71/print-args"}}
-   :location    ""})
+   :version     "0.0.1"})
 
 (def ^:dynamic test-app-user nil)
 (def ^:dynamic test-app nil)

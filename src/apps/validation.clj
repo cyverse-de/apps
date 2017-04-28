@@ -182,12 +182,12 @@
   ([m k path]
      (validate-json-field* m k (add-field path k))))
 
-(defn verify-tool-name-location
+(defn verify-tool-name-version
   [tool]
-  (let [existing-tool (first (select tools (where (select-keys tool [:name :location]))))]
+  (let [existing-tool (first (select tools (where (select-keys tool [:name :version]))))]
     (when existing-tool
       (throw+ {:type  :clojure-commons.exception/exists
-               :error "A Tool with that name and location already exists."
+               :error "A Tool with that name and version already exists."
                :tool  tool}))))
 
 (defn validate-image-not-public

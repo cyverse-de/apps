@@ -2,7 +2,7 @@
   (:use [apps.containers :only [add-tool-container set-tool-container tool-container-info]]
         [apps.persistence.entities :only [tools]]
         [apps.util.conversions :only [remove-nil-vals]]
-        [apps.validation :only [verify-tool-name-location validate-tool-not-used]]
+        [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+]])
@@ -78,7 +78,7 @@
 
 (defn- add-new-tool
   [{:keys [container] :as tool}]
-  (verify-tool-name-location tool)
+  (verify-tool-name-version tool)
   (let [tool-id (persistence/add-tool tool)]
     (when container
       (add-tool-container tool-id container))
