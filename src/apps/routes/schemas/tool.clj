@@ -46,8 +46,8 @@
    :name                              ToolNameParam
    (optional-key :description)        ToolDescriptionParam
    (optional-key :attribution)        AttributionParam
-   :location                          (describe String "The path of the directory containing the Tool")
-   (optional-key :version)            VersionParam
+   (optional-key :location)           (describe String "The path of the directory containing the Tool")
+   :version                           VersionParam
    :type                              (describe String "The Tool Type name")
    (optional-key :restricted)         ToolRestricted
    (optional-key :time_limit_seconds) ToolTimeLimit})
@@ -86,7 +86,7 @@
 (defschema PrivateToolUpdateRequest
   (-> PrivateToolImportRequest
       (->optional-param :name)
-      (->optional-param :location)
+      (->optional-param :version)
       (->optional-param :container)))
 
 (defschema ToolsImportRequest
@@ -95,7 +95,7 @@
 (defschema ToolUpdateRequest
   (-> ToolImportRequest
       (->optional-param :name)
-      (->optional-param :location)
+      (->optional-param :version)
       (->optional-param :type)
       (->optional-param :implementation)
       (->optional-param :container)))

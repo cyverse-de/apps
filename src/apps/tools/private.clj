@@ -1,5 +1,5 @@
 (ns apps.tools.private
-  (:use [apps.validation :only [verify-tool-name-location validate-tool-not-used]]
+  (:use [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
         [korma.db :only [transaction]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.containers :as containers]
@@ -51,7 +51,7 @@
   "Adds a private tool to the database, returning the tool details added."
   [{:keys [shortUsername] :as user}
    {:keys [container implementation] :as tool}]
-  (verify-tool-name-location tool)
+  (verify-tool-name-version tool)
   (transaction
     (let [tool-id (-> tool
                       restrict-private-tool
