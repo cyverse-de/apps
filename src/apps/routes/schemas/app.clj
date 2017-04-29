@@ -7,6 +7,7 @@
                                           SortFieldOptionalKey]]
         [apps.routes.params]
         [apps.routes.schemas.app.rating]
+        [apps.routes.schemas.containers :as containers]
         [apps.routes.schemas.tool :only [Tool]]
         [schema.core :only [Any defschema enum optional-key recursive]])
   (:require [clojure.set :as sets])
@@ -261,8 +262,9 @@
    :name (describe String "The App Category's name")})
 
 (defschema AppDetailsTool
-  (assoc Tool
-    :id (describe String "The tool identifier.")))
+  (merge Tool
+         {:id                       (describe String "The tool identifier.")
+          (optional-key :container) {:image (dissoc containers/Image :id)}}))
 
 (defschema AppListingJobStats
   {:job_count_completed

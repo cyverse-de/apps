@@ -189,6 +189,10 @@
   (remove-nil-vals
     (update-in group [:parameters] (partial map format-param))))
 
+(defn- format-app-tool
+  [tool]
+  (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution])))
+
 (defn- format-app-for-editing
   [app]
   (let [app (get-app-details (:id app))
@@ -199,7 +203,7 @@
     (remove-nil-vals
       (-> app
           (assoc :references (map :reference_text (:app_references app))
-                 :tools      (map remove-nil-vals (persistence/get-app-tools (:id app)))
+                 :tools      (map format-app-tool (persistence/get-app-tools (:id app)))
                  :groups     (map format-group (:parameter_groups task))
                  :system_id  c/system-id)
           (dissoc :app_references
