@@ -258,7 +258,12 @@
 (defn get-app-tools
   "Loads information about the tools associated with an app."
   [app-id]
-  (select (get-tool-listing-base-query) (where {:app_id app-id})))
+  (select (get-tool-listing-base-query)
+          (join :container_images {:tool_listing.container_images_id :container_images.id})
+          (fields [:container_images.name :image_name]
+                  [:container_images.tag  :image_tag]
+                  [:container_images.url  :image_url])
+          (where {:app_id app-id})))
 
 (defn get-tools-by-image-id
   "Loads information about the tools associated with a Docker image."

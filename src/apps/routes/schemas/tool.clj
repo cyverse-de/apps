@@ -59,10 +59,13 @@
           :implementation (describe ToolImplementation ToolImplementationDocs)
           :container      containers/ToolContainer}))
 
+(defschema ToolListingImage
+  {:image (dissoc containers/Image :id)})
+
 (defschema ToolListingItem
   (merge ToolDetails
          {:implementation (describe ToolImplementor ToolImplementationDocs)
-          :container      {:image (dissoc containers/Image :id)}}))
+          :container      ToolListingImage}))
 
 (defschema ToolImportRequest
   (-> Tool

@@ -426,6 +426,15 @@
     (if admin? (jobs-db/get-job-stats app-id)
                (jobs-db/get-public-job-stats app-id))))
 
+(defn- format-tool-image [tool]
+  (remove-nil-vals {:name (:image_name tool)
+                    :tag  (:image_tag tool)
+                    :url  (:image_url tool)}))
+
+(defn- format-app-tool [tool]
+  (assoc (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution]))
+         :container {:image (format-tool-image tool)}))
+
 (defn- format-app-details
   "Formats information for the get-app-details service."
   [username details tools admin?]
@@ -436,7 +445,7 @@
       (assoc :name                 (:name details "")
              :description          (:description details "")
              :references           (map :reference_text (:app_references details))
-             :tools                (map remove-nil-vals tools)
+             :tools                (map format-app-tool tools)
              :job_stats            (format-app-details-job-stats (str app-id) admin?)
              :categories           (get-groups-for-app app-id)
              :suggested_categories (get-suggested-groups-for-app app-id)
