@@ -1,92 +1,92 @@
 {{ with $base := (printf "configs/%s" (env "DE_ENV")) -}}
 # Application details.
-apps.app.listen-port      = {{ (key (printf "%s/services/port" $base)) }}
-apps.app.environment-name = {{ (key (printf "%s/de/environment-name" $base)) }}
+{{ with $v := (key (printf "%s/services/port" $base)) }}apps.app.listen-port      = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/environment-name" $base)) }}apps.app.environment-name = {{ $v }}{{ end }}
 
 # Route-independent feature flags.
-apps.features.agave      = {{ (key (printf "%s/agave/enabled" $base)) }}
-apps.features.agave.jobs = {{ (key (printf "%s/agave/jobs-enabled" $base)) }}
+{{ with $v := (key (printf "%s/agave/enabled" $base)) }}apps.features.agave      = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/agave/jobs-enabled" $base)) }}apps.features.agave.jobs = {{ $v }}{{ end }}
 
 # Database settings.
-apps.db.driver      = {{ (key (printf "%s/de-db/driver" $base)) }}
-apps.db.subprotocol = {{ (key (printf "%s/de-db/subprotocol" $base)) }}
-apps.db.host        = {{ (key (printf "%s/de-db/host" $base)) }}
-apps.db.port        = {{ (key (printf "%s/de-db/port" $base)) }}
-apps.db.name        = {{ (key (printf "%s/de-db/name" $base)) }}
-apps.db.user        = {{ (key (printf "%s/de-db/user" $base)) }}
-apps.db.password    = {{ (key (printf "%s/de-db/pass" $base)) }}
+{{ with $v := (key (printf "%s/de-db/driver" $base)) }}apps.db.driver      = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de-db/subprotocol" $base)) }}apps.db.subprotocol = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de-db/host" $base)) }}apps.db.host        = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de-db/port" $base)) }}apps.db.port        = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de-db/name" $base)) }}apps.db.name        = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de-db/user" $base)) }}apps.db.user        = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de-db/pass" $base)) }}apps.db.password    = {{ $v }}{{ end }}
 
 # JEX connection settings.
-apps.jex.base-url = {{ (key (printf "%s/jex/base" $base)) }}
+{{ with $v := (key (printf "%s/jex/base" $base)) }}apps.jex.base-url = {{ $v }}{{ end }}
 
 # Data Info connection settings.
-apps.data-info.base-url = {{ (key (printf "%s/data-info/base" $base)) }}
+{{ with $v := (key (printf "%s/data-info/base" $base)) }}apps.data-info.base-url = {{ $v }}{{ end }}
 
 # Workspace app category names.
-apps.workspace.root-app-category            = {{ (key (printf "%s/de/root-app-category" $base)) }}
-apps.workspace.default-app-categories       = {{ (key (printf "%s/de/default-app-categories" $base)) }}
-apps.workspace.dev-app-category-index       = {{ (key (printf "%s/de/dev-app-category-index" $base)) }}
-apps.workspace.favorites-app-category-index = {{ (key (printf "%s/de/favorites-app-category-index" $base)) }}
-apps.workspace.public-id                    = {{ (key (printf "%s/apps/public-workspace-id" $base)) }}
-apps.workspace.metadata.category.attrs      = {{ (key (printf "%s/apps/root-category-attrs" $base)) }}
-apps.workspace.metadata.beta.attr.iri       = {{ (key (printf "%s/de/beta-attr-iri" $base)) }}
-apps.workspace.metadata.beta.attr.label     = {{ (key (printf "%s/de/beta-attr-label" $base)) }}
-apps.workspace.metadata.beta.value          = {{ (key (printf "%s/de/beta-value" $base)) }}
+{{ with $v := (key (printf "%s/de/root-app-category" $base)) }}apps.workspace.root-app-category            = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/default-app-categories" $base)) }}apps.workspace.default-app-categories       = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/dev-app-category-index" $base)) }}apps.workspace.dev-app-category-index       = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/favorites-app-category-index" $base)) }}apps.workspace.favorites-app-category-index = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/public-workspace-id" $base)) }}apps.workspace.public-id                    = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/root-category-attrs" $base)) }}apps.workspace.metadata.category.attrs      = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/beta-attr-iri" $base)) }}apps.workspace.metadata.beta.attr.iri       = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/beta-attr-label" $base)) }}apps.workspace.metadata.beta.attr.label     = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/beta-value" $base)) }}apps.workspace.metadata.beta.value          = {{ $v }}{{ end }}
 
 # The domain name to append to the user id to get the fully qualified user id.
 apps.uid.domain = {{ (key (printf "%s/de/cas-uid-domain" $base)) }}
 
 # The path to the home directory in iRODS.
-apps.irods.home = {{ (key (printf "%s/de/irods-home" $base)) }}
+{{ with $v := (key (printf "%s/de/irods-home" $base)) }}apps.irods.home = {{ $v }}{{ end }}
 
 # Batch job settings.
-apps.batch.group               = {{ (key (printf "%s/jex/batch-group" $base)) }}
-apps.batch.path-list.info-type = {{ (key (printf "%s/apps/path-list-info-type" $base)) }}
-apps.batch.path-list.max-paths = {{ (key (printf "%s/apps/path-list-max-paths" $base)) }}
-apps.batch.path-list.max-size  = {{ (key (printf "%s/apps/path-list-max-size" $base)) }}
+{{ with $v := (key (printf "%s/jex/batch-group" $base)) }}apps.batch.group               = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/path-list-info-type" $base)) }}apps.batch.path-list.info-type = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/path-list-max-paths" $base)) }}apps.batch.path-list.max-paths = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/path-list-max-size" $base)) }}apps.batch.path-list.max-size  = {{ $v }}{{ end }}
 
 # Agave connection settings.
-apps.agave.base-url             = {{ (key (printf "%s/agave/base" $base)) }}
-apps.agave.key                  = {{ (key (printf "%s/agave/client-key" $base)) }}
-apps.agave.secret               = {{ (key (printf "%s/agave/client-secret" $base)) }}
-apps.agave.oauth-base           = {{ (key (printf "%s/agave/base" $base)) }}/oauth2
-apps.agave.oauth-refresh-window = {{ (key (printf "%s/agave/oauth-refresh-window" $base)) }}
-apps.agave.redirect-uri         = {{ (key (printf "%s/de/base" $base)) }}/oauth/callback/agave
-apps.agave.storage-system       = {{ (key (printf "%s/irods/host" $base)) }}
-apps.agave.read-timeout         = {{ (key (printf "%s/agave/read-timeout" $base)) }}
-apps.agave.page-length          = {{ (key (printf "%s/agave/page-length" $base)) }}
+{{ with $v := (key (printf "%s/agave/base" $base)) }}apps.agave.base-url             = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/agave/client-key" $base)) }}apps.agave.key                  = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/agave/client-secret" $base)) }}apps.agave.secret               = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/agave/base" $base)) }}apps.agave.oauth-base           = {{ $v }}/oauth2{{ end }}
+{{ with $v := (key (printf "%s/agave/oauth-refresh-window" $base)) }}apps.agave.oauth-refresh-window = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/de/base" $base)) }}apps.agave.redirect-uri         = {{ $v }}/oauth/callback/agave{{ end }}
+{{ with $v := (key (printf "%s/irods/host" $base)) }}apps.agave.storage-system       = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/agave/read-timeout" $base)) }}apps.agave.read-timeout         = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/agave/page-length" $base)) }}apps.agave.page-length          = {{ $v }}{{ end }}
 
 # Agave callback settings.
-apps.agave.callback-base = {{ (key (printf "%s/agave/job-status-callback" $base)) }}
+{{ with $v := (key (printf "%s/agave/job-status-callback" $base)) }}apps.agave.callback-base = {{ $v }}{{ end }}
 
 # PGP Settings
-apps.pgp.keyring-path = {{ (key (printf "%s/data-container/pgp-keyring-path" $base)) }}
-apps.pgp.key-password = {{ (key (printf "%s/data-container/pgp-key-pass" $base)) }}
+{{ with $v := (key (printf "%s/data-container/pgp-keyring-path" $base)) }}apps.pgp.keyring-path = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/data-container/pgp-key-pass" $base)) }}apps.pgp.key-password = {{ $v }}{{ end }}
 
 # Notification agent connection settings.
-apps.notificationagent.base-url = {{ (key (printf "%s/notifications/base" $base)) }}
+{{ with $v := (key (printf "%s/notifications/base" $base)) }}apps.notificationagent.base-url = {{ $v }}{{ end }}
 
 # The job status polling interval.
-apps.jobs.poll-interval = {{ (key (printf "%s/apps/job-status-poll-interval" $base)) }}
+{{ with $v := (key (printf "%s/apps/job-status-poll-interval" $base)) }}apps.jobs.poll-interval = {{ $v }}{{ end }}
 
 # The base URL for iplant-groups.
-apps.iplant-groups.base-url     = {{ (key (printf "%s/groups/base" $base)) }}
-apps.iplant-groups.grouper-user = {{ (key (printf "%s/apps/grouper-user" $base)) }}
+{{ with $v := (key (printf "%s/groups/base" $base)) }}apps.iplant-groups.base-url     = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/grouper-user" $base)) }}apps.iplant-groups.grouper-user = {{ $v }}{{ end }}
 
 # Metadata connection settings
-apps.metadata.base-url = {{ (key (printf "%s/metadata/base" $base)) }}
+{{ with $v := (key (printf "%s/metadata/base" $base)) }}apps.metadata.base-url = {{ $v }}{{ end }}
 
 # Permissions service connection settings.
-apps.permissions.base-url = {{ (key (printf "%s/permissions/base" $base)) }}
+{{ with $v := (key (printf "%s/permissions/base" $base)) }}apps.permissions.base-url = {{ $v }}{{ end }}
 
 # iPlant Email service settings.
-apps.email.base-url             = {{ (key (printf "%s/email/base" $base)) }}
+{{ with $v := (key (printf "%s/email/base" $base)) }}apps.email.base-url             = {{ $v }}{{ end }}
 apps.email.app-deletion.from    = {{ (key (printf "%s/apps/deletion-from-addr" $base)) }}
-apps.email.app-deletion.subject = {{ (key (printf "%s/apps/deletion-subject" $base)) }}
+{{ with $v := (key (printf "%s/apps/deletion-subject" $base)) }}apps.email.app-deletion.subject = {{ $v }}{{ end }}
 
 # UI host
 apps.ui.base-url = {{ (key (printf "%s/de/base" $base)) }}
 
 # AMQP
-apps.amqp.uri = {{ (key (printf "%s/amqp/uri" $base)) }}
+{{ with $v := (key (printf "%s/amqp/uri" $base)) }}apps.amqp.uri = {{ $v }}{{ end }}
 {{ end -}}
