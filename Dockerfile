@@ -1,5 +1,9 @@
 FROM discoenv/clojure-base:master
 
+ENV CONF_TEMPLATE=/usr/src/app/apps.properties.tmpl
+ENV CONF_FILENAME=apps.properties
+ENV PROGRAM=apps
+
 RUN mkdir -p /etc/iplant/de/crypto && \
     touch /etc/iplant/de/crypto/pubring.gpg && \
     touch /etc/iplant/de/crypto/random_seed && \
@@ -19,7 +23,7 @@ RUN lein uberjar && \
 
 RUN ln -s "/usr/bin/java" "/bin/apps"
 
-ENTRYPOINT ["apps", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-cp", ".:apps-standalone.jar:/", "apps.core"]
+ENTRYPOINT ["run-service", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-cp", ".:apps-standalone.jar:/", "apps.core"]
 CMD ["--help"]
 
 ARG git_commit=unknown
