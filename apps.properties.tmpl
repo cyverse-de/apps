@@ -1,4 +1,4 @@
-{{- with $base := (printf "configs/%s" (env "DE_ENV")) -}}
+{{ with $base := (printf "configs/%s" (env "DE_ENV")) -}}
 # Application details.
 apps.app.listen-port      = {{ (key (printf "%s/services/port" $base)) }}
 apps.app.environment-name = {{ (key (printf "%s/de/environment-name" $base)) }}
@@ -28,9 +28,9 @@ apps.workspace.default-app-categories       = {{ (key (printf "%s/de/default-app
 apps.workspace.dev-app-category-index       = {{ (key (printf "%s/de/dev-app-category-index" $base)) }}
 apps.workspace.favorites-app-category-index = {{ (key (printf "%s/de/favorites-app-category-index" $base)) }}
 apps.workspace.public-id                    = {{ (key (printf "%s/apps/public-workspace-id" $base)) }}
-apps.workspace.metadata.category.attrs      = {{ (key (printf "%s/de/root-category-attrs" $base)) }}
+apps.workspace.metadata.category.attrs      = {{ (key (printf "%s/apps/root-category-attrs" $base)) }}
 apps.workspace.metadata.beta.attr.iri       = {{ (key (printf "%s/de/beta-attr-iri" $base)) }}
-apps.workspace.metadata.beta.attr.label     = {{ (key (pritnf "%s/de/beta-attr-label" $base)) }}
+apps.workspace.metadata.beta.attr.label     = {{ (key (printf "%s/de/beta-attr-label" $base)) }}
 apps.workspace.metadata.beta.value          = {{ (key (printf "%s/de/beta-value" $base)) }}
 
 # The domain name to append to the user id to get the fully qualified user id.
@@ -48,7 +48,7 @@ apps.batch.path-list.max-size  = {{ (key (printf "%s/apps/path-list-max-size" $b
 # Agave connection settings.
 apps.agave.base-url             = {{ (key (printf "%s/agave/base" $base)) }}
 apps.agave.key                  = {{ (key (printf "%s/agave/client-key" $base)) }}
-apps.agave.secret               = {{ (key (printf "%s/agave/client-secret", $base)) }}
+apps.agave.secret               = {{ (key (printf "%s/agave/client-secret" $base)) }}
 apps.agave.oauth-base           = {{ (key (printf "%s/agave/base" $base)) }}/oauth2
 apps.agave.oauth-refresh-window = {{ (key (printf "%s/agave/oauth-refresh-window" $base)) }}
 apps.agave.redirect-uri         = {{ (key (printf "%s/de/base" $base)) }}/oauth/callback/agave
@@ -89,4 +89,4 @@ apps.ui.base-url = {{ (key (printf "%s/de/base" $base)) }}
 
 # AMQP
 apps.amqp.uri = {{ (key (printf "%s/amqp/uri" $base)) }}
-{{- end -}}
+{{ end -}}
