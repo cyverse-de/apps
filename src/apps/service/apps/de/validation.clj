@@ -1,5 +1,6 @@
 (ns apps.service.apps.de.validation
   (:use [apps.persistence.app-metadata :only [get-app
+                                              get-app-tools
                                               list-duplicate-apps
                                               list-duplicate-apps-by-id
                                               parameter-types-for-tool-type]]
@@ -54,12 +55,16 @@
   (perms/check-app-permissions username "own" [app-id])
   (let [task-ids         (task-ids-for-app app-id)
         unrunnable-tasks (list-unrunnable-tasks task-ids)
+        tools            (get-app-tools app-id)
         public-app-ids   (perms-client/get-public-app-ids)
+        public-tool-ids  (perms-client/get-public-tool-ids)
         is-public?       (contains? public-app-ids app-id)
+        private-tools    (remove #(contains? public-tool-ids (:id %)) tools)
         private-apps     (private-apps-for task-ids public-app-ids)]
     (cond is-public?             [false "app is already public"]
           (empty? task-ids)      [false "no app ID provided"]
           (seq unrunnable-tasks) [false "contains unrunnable tasks" unrunnable-tasks]
+          (seq private-tools)    [false "contains private tools" private-tools]
           (= 1 (count task-ids)) [true]
           (seq private-apps)     [false "contains private apps" private-apps]
           :else                  [true])))
