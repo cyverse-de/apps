@@ -371,9 +371,8 @@
         (persistence/remove-parameter-values current-param-ids))
       (when-not (empty? references)
         (persistence/set-app-references app-id references))
-      (assoc app
-        :groups    (update-app-groups task-id groups)
-        :system_id c/system-id))))
+      (update-app-groups task-id groups))
+    (get-app-ui user app-id)))
 
 (defn get-user-subcategory
   [username index]
