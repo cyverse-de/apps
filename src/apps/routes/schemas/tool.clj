@@ -183,7 +183,7 @@
    (describe String
      "Any additional data file that may be helpful during tool installation or validation")
 
-   :architecture
+   (optional-key :architecture)
    (describe (enum "32-bit Generic" "64-bit Generic" "Others" "Don't know")
      "One of the architecture names known to the DE. Currently, the valid values are
       `32-bit Generic` for a 32-bit executable that will run in the DE,
