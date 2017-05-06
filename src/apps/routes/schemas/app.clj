@@ -7,7 +7,7 @@
                                           SortFieldOptionalKey]]
         [apps.routes.params]
         [apps.routes.schemas.app.rating]
-        [apps.routes.schemas.tool :only [Tool ToolListingImage]]
+        [apps.routes.schemas.tool :only [Tool ToolListingImage ToolListingItem]]
         [schema.core :only [Any defschema enum optional-key recursive]])
   (:require [clojure.set :as sets])
   (:import [java.util UUID Date]))
@@ -25,6 +25,7 @@
 
 (def OptionalDebugKey (optional-key :debug))
 (def OptionalGroupsKey (optional-key :groups))
+(def OptionalToolsKey (optional-key :tools))
 (def OptionalParametersKey (optional-key :parameters))
 (def OptionalParameterArgumentsKey (optional-key :arguments))
 
@@ -206,7 +207,7 @@
 
 (defschema App
   (merge AppBase
-         {(optional-key :tools)      (describe [Tool] ToolListDocs)
+         {OptionalToolsKey           (describe [Tool] ToolListDocs)
           (optional-key :references) AppReferencesParam
           OptionalGroupsKey          (describe [AppGroup] GroupListDocs)}))
 
@@ -517,10 +518,18 @@
       (->optional-param :id)
       (assoc OptionalParametersKey (describe [AppParameterRequest] ParameterListDocs))))
 
+(defschema AppToolRequest
+  (-> ToolListingItem
+      (->optional-param :is_public)
+      (->optional-param :permission)
+      (->optional-param :implementation)
+      (->optional-param :container)))
+
 (defschema AppRequest
   (-> App
-    (->optional-param :id)
-    (assoc OptionalGroupsKey (describe [AppGroupRequest] GroupListDocs))))
+      (->optional-param :id)
+      (assoc OptionalGroupsKey (describe [AppGroupRequest] GroupListDocs)
+             OptionalToolsKey  (describe [AppToolRequest] ToolListDocs))))
 
 (defschema AppPreviewRequest
   (-> App
@@ -528,7 +537,8 @@
     (->optional-param :name)
     (->optional-param :description)
     (assoc OptionalGroupsKey (describe [AppGroupRequest] GroupListDocs)
-           (optional-key :is_public) AppPublicParam)))
+           (optional-key :is_public) AppPublicParam
+           OptionalToolsKey  (describe [AppToolRequest] ToolListDocs))))
 
 (defschema AppCategoryMetadata
   {:avus (describe [Any] "A listing of App Category metadata")})
