@@ -46,7 +46,7 @@
   [username req]
   (transaction
    (let [user-id         (users/get-user-id username)
-         architecture-id (architecture-name-to-id (required-field req :architecture))
+         architecture-id (architecture-name-to-id (:architecture req "Others"))
          uuid            (UUID/randomUUID)]
 
      (insert tool_requests
