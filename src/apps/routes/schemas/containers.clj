@@ -39,6 +39,9 @@
   (describe
    {(s/optional-key :cpu_shares)         Integer
     (s/optional-key :memory_limit)       Long
+    (s/optional-key :min_memory_limit)   Long
+    (s/optional-key :min_cpu_cores)      Integer
+    (s/optional-key :min_disk_space)     Long
     (s/optional-key :network_mode)       s/Str
     (s/optional-key :working_directory)  s/Str
     (s/optional-key :name)               s/Str
@@ -65,6 +68,21 @@
   (describe
    {:memory_limit (s/maybe Long)}
    "The amount of memory (in bytes) that the tool container is restricted to."))
+
+(s/defschema MinMemoryLimit
+  (describe
+   {:min_memory_limit (s/maybe Long)}
+   "The minimum about of memory (in bytes) that is required to run the tool container."))
+
+(s/defschema MinCPUCores
+  (describe
+   {:min_cpu_cores (s/maybe Integer)}
+   "The minimum number of CPU cores needed to run the tool container."))
+
+(s/defschema MinDiskSpace
+  (describe
+   {:min_disk_space (s/maybe Long)}
+   "The minimum amount of disk space needed to run the tool container."))
 
 (s/defschema NetworkMode
   (describe

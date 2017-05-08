@@ -395,6 +395,9 @@
   (select-keys settings-map
     [:cpu_shares
      :memory_limit
+     :min_memory_limit
+     :min_cpu_cores
+     :min_disk_space
      :network_mode
      :working_directory
      :name
