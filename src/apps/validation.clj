@@ -224,11 +224,11 @@
 
 (defn validate-tool-not-used
   [tool-id]
-  (let [apps (persistence/get-apps-by-tool-id tool-id)]
-    (when-not (empty? apps)
+  (let [app-ids (persistence/get-app-ids-by-tool-id tool-id)]
+    (when-not (empty? app-ids)
       (throw+ {:type  :clojure-commons.exception/not-writeable
                :error "This tool is already in use by apps."
-               :apps  apps}))))
+               :apps  (map persistence/get-app app-ids)}))))
 
 (defn validate-external-app-step
   "Verifies that an external app step in a pipeline has all of the required fields."

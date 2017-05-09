@@ -6,6 +6,7 @@
         [apps.routes.params]
         [apps.routes.schemas.containers]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
+        [apps.routes.schemas.app :only [AdminAppListing AppListing]]
         [apps.routes.schemas.tool]
         [apps.tools :only [admin-add-tools
                            admin-delete-tool
@@ -16,11 +17,13 @@
                            user-get-tool]]
         [apps.tools.private :only [add-private-tool delete-private-tool update-private-tool]]
         [apps.user :only [current-user]]
+        [apps.util.coercions :only [coerce!]]
         [apps.util.service]
         [slingshot.slingshot :only [throw+]]
         [ring.util.http-response :only [ok]])
   (:require [apps.routes.schemas.permission :as permission]
             [apps.service.apps :as apps]
+            [apps.service.apps.de.listings :as app-listings]
             [apps.tools.permissions :as tool-permissions]
             [apps.tools.sharing :as tool-sharing]
             [compojure.api.middleware :as middleware]))
@@ -249,6 +252,19 @@ Any existing settings not included in the request's `container` object will be r
 except `network_mode` is always set to `none` and configured limits may override values set (or omitted)
 for the `cpu_shares` and `memory_limit` fields."
          (ok (update-private-tool user (assoc body :id tool-id))))
+
+  (GET "/:tool-id/apps" []
+       :path-params [tool-id :- ToolIdParam]
+       :query [params SecuredQueryParams]
+       :responses (merge CommonResponses
+                         {200 {:schema      AppListing
+                               :description "The listing of Apps using the given Tool."}
+                          404 {:schema      ErrorResponseNotFound
+                               :description "The `tool-id` does not exist."}})
+       :summary "Get Apps by Tool"
+       :description "This endpoint returns a listing of Apps using the given Tool."
+       (ok (coerce! AppListing
+                    (app-listings/user-list-apps-by-tool current-user tool-id params))))
 
   (GET "/:tool-id/container" []
         :path-params [tool-id :- ToolIdParam]
@@ -500,6 +516,19 @@ included in it. Any existing settings not included in the request's `container` 
     container settings will not break reproducibility for those apps.
     If required, the `overwrite-public` flag may be used to update these settings for public tools."
          (ok (admin-update-tool user overwrite-public (assoc body :id tool-id))))
+
+  (GET "/:tool-id/apps" []
+       :path-params [tool-id :- ToolIdParam]
+       :query [params SecuredQueryParams]
+       :responses (merge CommonResponses
+                         {200 {:schema      AdminAppListing
+                               :description "The listing of Apps using the given Tool."}
+                          404 {:schema      ErrorResponseNotFound
+                               :description "The `tool-id` does not exist."}})
+       :summary "Get Apps by Tool"
+       :description "This endpoint returns a listing of Apps using the given Tool."
+       (ok (coerce! AdminAppListing
+                    (app-listings/list-apps-by-tool current-user tool-id params true))))
 
   (POST "/:tool-id/container/devices" []
          :path-params [tool-id :- ToolIdParam]
