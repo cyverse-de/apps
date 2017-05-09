@@ -329,7 +329,7 @@ for the `cpu_shares` and `memory_limit` fields."
         :query [params SecuredQueryParams]
         :return MinDiskSpace
         :summary "Tool Container Minimum Disk Space"
-        :description "Retuns the minimum disk space requirement for the tool container."
+        :description "Returns the minimum disk space requirement for the tool container."
         (requester tool-id (get-settings-field tool-id :min_disk_space)))
 
   (GET "/:tool-id/container/network-mode" []
