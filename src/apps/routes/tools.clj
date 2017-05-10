@@ -324,6 +324,30 @@ for the `cpu_shares` and `memory_limit` fields."
         :description "Returns the maximum amount of RAM that can be allocated to the tool container (in bytes)."
         (requester tool-id (get-settings-field tool-id :memory_limit)))
 
+  (GET "/:tool-id/container/min-memory-limit" []
+        :path-params [tool-id :- ToolIdParam]
+        :query [params SecuredQueryParams]
+        :return MinMemoryLimit
+        :summary "Tool Container Minimum Memory Requirement"
+        :description "Returns the minimum amount of RAM that is required to run the tool container (in bytes)."
+        (requester tool-id (get-settings-field tool-id :min_memory_limit)))
+
+  (GET "/:tool-id/container/min-cpu-cores" []
+        :path-params [tool-id :- ToolIdParam]
+        :query [params SecuredQueryParams]
+        :return MinCPUCores
+        :summary "Tool Container Minimum CPU Cores Requirement"
+        :description "Returns the minimum number of CPU cores that is required to run the tool container."
+        (requester tool-id (get-settings-field tool-id :min_cpu_cores)))
+
+  (GET "/:tool-id/container/min-disk-space" []
+        :path-params [tool-id :- ToolIdParam]
+        :query [params SecuredQueryParams]
+        :return MinDiskSpace
+        :summary "Tool Container Minimum Disk Space"
+        :description "Returns the minimum disk space requirement for the tool container."
+        (requester tool-id (get-settings-field tool-id :min_disk_space)))
+
   (GET "/:tool-id/container/network-mode" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
@@ -593,6 +617,33 @@ included in it. Any existing settings not included in the request's `container` 
          :summary "Update Tool Container Memory Limit"
          :description "This endpoint updates a the memory limit for the tool's container."
          (requester tool-id (update-settings-field tool-id :memory_limit (:memory_limit body))))
+
+  (POST "/:tool-id/container/min-memory-limit" []
+         :path-params [tool-id :- ToolIdParam]
+         :query [params SecuredQueryParams]
+         :body [body MinMemoryLimit]
+         :return MinMemoryLimit
+         :summary "Update Tool Container Minimum Memory Limit"
+         :description "This endpoint updates the minimum memory limit for the tool's container."
+         (requester tool-id (update-settings-field tool-id :min_memory_limit (:min_memory_limit body))))
+
+  (POST "/:tool-id/container/min-cpu-cores" []
+         :path-params [tool-id :- ToolIdParam]
+         :query [params SecuredQueryParams]
+         :body [body MinCPUCores]
+         :return MinCPUCores
+         :summary "Update Tool Container Minimum CPU Cores"
+         :description "This endpoint updates the minimum number of CPU cores for the tool's container."
+         (requester tool-id (update-settings-field tool-id :min_cpu_cores (:min_cpu_cores body))))
+
+  (POST "/:tool-id/container/min-disk-space" []
+         :path-params [tool-id :- ToolIdParam]
+         :query [params SecuredQueryParams]
+         :body [body MinDiskSpace]
+         :return MinDiskSpace
+         :summary "Update Tool Container Minimum Disk Space Requirement"
+         :description "This endpoint updates the minimum amount of disk space required for the tool's container."
+         (requester tool-id (update-settings-field tool-id :min_disk_space (:min_disk_space body))))
 
   (POST "/:tool-id/container/network-mode" []
          :path-params [tool-id :- ToolIdParam]
