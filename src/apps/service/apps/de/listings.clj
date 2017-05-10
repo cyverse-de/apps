@@ -298,7 +298,7 @@
         beta-ids-set   (app-ids->beta-ids-set shortUsername app-ids)
         public-app-ids (perms-client/get-public-app-ids)
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
-        total          (count-apps-fn nil (:id workspace) (assoc params :app-ids app-ids))
+        total          (if (empty? app-ids) 0 (count-apps-fn nil (:id workspace) (assoc params :app-ids app-ids)))
         app-listing-fn (if admin? admin-list-apps-by-id list-apps-by-id)
         app-listing    (app-listing-fn workspace faves-index app-ids (fix-sort-params params))]
     {:total total
