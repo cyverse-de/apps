@@ -280,11 +280,11 @@
           (where {:container_images_id img-id
                   :app_id              [in (perms-client/get-public-app-ids)]})))
 
-(defn get-apps-by-tool-id
-  "Loads information about the apps using the tool with the given ID."
+(defn get-app-ids-by-tool-id
+  "Gets a list of IDs of the apps using the tool with the given ID."
   [tool-id]
   (let [tool-app-ids (select tool_listing (fields :app_id) (where {:tool_id tool-id}))]
-    (map (comp get-app :app_id) tool-app-ids)))
+    (map :app_id tool-app-ids)))
 
 (defn get-public-apps-by-tool-id
   "Loads information about the public apps using the tool with the given ID."

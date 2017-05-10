@@ -19,6 +19,7 @@
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.permissions :as perms]
             [apps.service.util :as svc-util]
+            [apps.tools.permissions :as tool-perms]
             [cemerick.url :as curl]
             [clojure.string :as string]))
 
@@ -290,19 +291,41 @@
                   :value (workspace-metadata-beta-value)}]
     (set (metadata-client/filter-by-avus username app-ids [beta-avu]))))
 
-(defn- apps-listing-with-metadata-filter
-  [{:keys [username shortUsername]} params metadata-filter admin?]
-  (let [workspace       (get-optional-workspace username)
-        faves-index     (workspace-favorites-app-category-index)
-        perms           (perms-client/load-app-permissions shortUsername)
-        app-ids         (set (keys perms))
-        app-listing-ids (metadata-filter app-ids)
-        beta-ids-set    (app-ids->beta-ids-set shortUsername app-listing-ids)
-        public-app-ids  (perms-client/get-public-app-ids)
-        app-listing-fn  (if admin? admin-list-apps-by-id list-apps-by-id)
-        app-listing     (app-listing-fn workspace faves-index app-listing-ids (fix-sort-params params))]
-    {:total (count app-listing-ids)
+(defn- app-listing-by-id
+  [{:keys [username shortUsername]} params perms app-ids admin?]
+  (let [workspace      (get-optional-workspace username)
+        faves-index    (workspace-favorites-app-category-index)
+        beta-ids-set   (app-ids->beta-ids-set shortUsername app-ids)
+        public-app-ids (perms-client/get-public-app-ids)
+        count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
+        total          (count-apps-fn nil (:id workspace) (assoc params :app-ids app-ids))
+        app-listing-fn (if admin? admin-list-apps-by-id list-apps-by-id)
+        app-listing    (app-listing-fn workspace faves-index app-ids (fix-sort-params params))]
+    {:total total
      :apps  (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) app-listing)}))
+
+(defn list-apps-by-tool
+  "Lists all apps accessible to the user that use the given tool."
+  [{:keys [shortUsername] :as user} tool-id params admin?]
+  (let [perms   (perms-client/load-app-permissions shortUsername)
+        app-ids (-> tool-id
+                    amp/get-app-ids-by-tool-id
+                    set
+                    (clojure.set/intersection (set (keys perms))))]
+    (app-listing-by-id user params perms app-ids admin?)))
+
+(defn user-list-apps-by-tool
+  "Lists all apps accessible to the user that use the given tool, if readable by the user."
+  [{:keys [shortUsername] :as user} tool-id params]
+  (tool-perms/check-tool-permissions shortUsername "read" [tool-id])
+  (list-apps-by-tool user tool-id params false))
+
+(defn- apps-listing-with-metadata-filter
+  [{:keys [shortUsername] :as user} params metadata-filter admin?]
+  (let [perms           (perms-client/load-app-permissions shortUsername)
+        app-ids         (set (keys perms))
+        app-listing-ids (metadata-filter app-ids)]
+    (app-listing-by-id user params perms app-listing-ids admin?)))
 
 (defn list-apps-under-hierarchy
   ([user root-iri attr params]
