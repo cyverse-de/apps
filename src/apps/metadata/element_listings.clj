@@ -86,7 +86,8 @@
         public-tool-ids (perms-client/get-public-tool-ids)
         tools           (-> params
                             (select-keys [:include-hidden])
-                            (assoc :tool-ids tool-ids)
+                            (assoc :tool-ids   tool-ids
+                                   :deprecated false)
                             (tools-db/get-tool-listing))]
     {:tools (map (partial format-tool-listing perms public-tool-ids) tools)}))
 

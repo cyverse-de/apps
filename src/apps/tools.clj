@@ -44,7 +44,7 @@
         tool-ids        (filter-listing-tool-ids (set (keys perms)) public-tool-ids params)]
     {:tools
      (map (partial format-tool-listing perms public-tool-ids)
-          (persistence/get-tool-listing (assoc params :tool-ids tool-ids)))}))
+          (persistence/get-tool-listing (assoc params :tool-ids tool-ids :deprecated false)))}))
 
 (defn get-tool
   "Obtains a tool by ID."
