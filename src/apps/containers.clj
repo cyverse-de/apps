@@ -47,11 +47,11 @@
     (when registry
       (encode-auth registry))))
 
-(defn public-image-info
+(defn- public-image-info
   "Returns a map containing only publicly-permissible image info (no auth)"
   [image-uuid]
   (first (select container-images
-                (fields :name :tag :url :id)
+                (fields :name :tag :url :deprecated :id)
                 (where {:id (uuidify image-uuid)}))))
 
 (defn image-info
@@ -68,7 +68,7 @@
   []
   {:container_images
     (select container-images
-      (fields :name :tag :url :id))})
+      (fields :name :tag :url :deprecated :id))})
 
 (defn image-public-tools
   [id]
@@ -478,7 +478,7 @@
                      (with data-containers
                        (fields :name_prefix :read_only)
                        (with container-images
-                         (fields :name :tag :url))))
+                         (fields :name :tag :url :deprecated))))
                    (where {:tools_id id}))
            first
            (update :container_volumes_from add-data-container-auth :auth? auth?)

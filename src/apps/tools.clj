@@ -12,15 +12,16 @@
             [clojure.tools.logging :as log]))
 
 (defn format-tool-listing
-  [perms public-tool-ids {:keys [id image_name image_tag implementor implementor_email] :as tool}]
+  [perms public-tool-ids {:keys [id image_name image_tag image_deprecated implementor implementor_email] :as tool}]
   (-> tool
       (assoc :is_public      (contains? public-tool-ids id)
              :permission     (or (perms id) "")
              :implementation {:implementor       implementor
                               :implementor_email implementor_email}
-             :container      {:image {:name image_name
-                                      :tag  image_tag}})
-      (dissoc :image_name :image_tag :implementor :implementor_email)
+             :container      {:image {:name       image_name
+                                      :tag        image_tag
+                                      :deprecated image_deprecated}})
+      (dissoc :image_name :image_tag :image_deprecated :implementor :implementor_email)
       remove-nil-vals))
 
 (defn- filter-listing-tool-ids

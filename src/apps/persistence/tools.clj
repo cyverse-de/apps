@@ -168,8 +168,9 @@
     (-> (tool-listing-base-query)
         (join :container_images {:container_images.id :tools.container_images_id})
         (join :integration_data {:integration_data.id :tools.integration_data_id})
-        (fields [:container_images.name :image_name]
-                [:container_images.tag  :image_tag]
+        (fields [:container_images.name       :image_name]
+                [:container_images.tag        :image_tag]
+                [:container_images.deprecated :image_deprecated]
                 [:integration_data.integrator_name  :implementor]
                 [:integration_data.integrator_email :implementor_email])
         (add-search-where-clauses search-term)
