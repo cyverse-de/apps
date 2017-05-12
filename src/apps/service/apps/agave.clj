@@ -294,22 +294,22 @@
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))
 
-  (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
-    (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
+  (shareAppsWithSubject [self app-names sharee user-app-sharing-requests]
+    (app-permissions/process-subject-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
-  (shareAppWithUser [_ app-names sharee system-id app-id level]
+  (shareAppWithSubject [_ app-names sharee system-id app-id level]
     (validate-system-id system-id)
-    (sharing/share-app-with-user agave app-names sharee app-id level))
+    (sharing/share-app-with-subject agave app-names sharee app-id level))
 
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
-  (unshareAppsWithUser [self app-names sharee user-app-unsharing-requests]
-    (app-permissions/process-user-app-unsharing-requests self app-names sharee user-app-unsharing-requests))
+  (unshareAppsWithSubject [self app-names sharee user-app-unsharing-requests]
+    (app-permissions/process-subject-app-unsharing-requests self app-names sharee user-app-unsharing-requests))
 
-  (unshareAppWithUser [_ app-names sharee system-id app-id]
+  (unshareAppWithSubject [_ app-names sharee system-id app-id]
     (validate-system-id system-id)
-    (sharing/unshare-app-with-user agave app-names sharee app-id))
+    (sharing/unshare-app-with-subject agave app-names sharee app-id))
 
   (hasAppPermission [_ username system-id app-id required-level]
     (validate-system-id system-id)

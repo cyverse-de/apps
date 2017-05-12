@@ -287,12 +287,12 @@
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))
 
-  (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
-    (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
+  (shareAppsWithSubject [self app-names sharee user-app-sharing-requests]
+    (app-permissions/process-subject-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
-  (shareAppWithUser [_ app-names sharee system-id app-id level]
+  (shareAppWithSubject [_ app-names sharee system-id app-id level]
     (validate-system-id system-id)
-    (sharing/share-app-with-user
+    (sharing/share-app-with-subject
      user sharee (uuidify app-id) level
      (partial app-permissions/app-sharing-success app-names system-id app-id level)
      (partial app-permissions/app-sharing-failure app-names system-id app-id level)))
@@ -300,12 +300,12 @@
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
-  (unshareAppsWithUser [self app-names sharee user-app-unsharing-requests]
-    (app-permissions/process-user-app-unsharing-requests self app-names sharee user-app-unsharing-requests))
+  (unshareAppsWithSubject [self app-names sharee user-app-unsharing-requests]
+    (app-permissions/process-subject-app-unsharing-requests self app-names sharee user-app-unsharing-requests))
 
-  (unshareAppWithUser [self app-names sharee system-id app-id]
+  (unshareAppWithSubject [self app-names sharee system-id app-id]
     (validate-system-id system-id)
-    (sharing/unshare-app-with-user
+    (sharing/unshare-app-with-subject
      user sharee (uuidify app-id)
      (partial app-permissions/app-unsharing-success app-names system-id app-id)
      (partial app-permissions/app-unsharing-failure app-names system-id app-id)))

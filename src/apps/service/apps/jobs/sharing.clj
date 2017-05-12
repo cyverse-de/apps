@@ -21,7 +21,8 @@
    :load-failure  "unable to load permissions for {{analysis-id}}: {{detail}}"
    :not-allowed   "insufficient privileges for analysis ID {{analysis-id}}"
    :is-subjob     "analysis sharing not supported for individual jobs within an HT batch"
-   :not-supported "analysis sharing is not supported for jobs of this type"})
+   :not-supported "analysis sharing is not supported for jobs of this type"
+   :is-group      "sharing an analysis with a group is not supported at this time"})
 
 (defn- job-sharing-success
   [job-id job level output-share-err-msg app-share-err-msg]
@@ -85,6 +86,11 @@
   (when-not (job-permissions/job-supports-job-sharing? apps-client job-id)
     (job-sharing-msg :not-supported job-id)))
 
+(defn- verify-not-group
+  [{subject-source-id :source_id subject-id :id} job-id]
+  (when-not (perms-client/user-source? subject-source-id)
+    (job-sharing-msg job-id :not-supported (str subject-id " is a group"))))
+
 (defn- share-app-for-job
   [apps-client sharer sharee job-id {system-id :system_id app-id :app_id}]
   (when-not (.hasAppPermission apps-client sharee system-id app-id "read")
@@ -101,7 +107,7 @@
      (str "unable to share result folder: " (:error_code (service/parse-json body))))))
 
 (defn- share-input-file
-  [sharer sharee path]
+  [sharer {sharee :id} path]
   (try+
    (data-info/share-path sharer path sharee "read")
    nil
@@ -127,14 +133,15 @@
 (defn- share-child-job
   [apps-client sharer sharee level job]
   (or (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
-      (perms-client/share-analysis (:id job) "user" sharee level)))
+      (perms-client/share-analysis (:id job) sharee level)))
 
 (defn- share-job*
   [apps-client sharer sharee job-id job level]
   (or (verify-not-subjob job)
       (verify-accessible sharer job-id)
       (verify-support apps-client job-id)
-      (perms-client/share-analysis job-id "user" sharee level)
+      (verify-not-group sharee job-id)
+      (perms-client/share-analysis job-id sharee level)
       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
       (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)))
 
@@ -152,10 +159,10 @@
     (job-sharing-failure job-id nil level (job-sharing-msg :not-found job-id))))
 
 (defn- share-jobs-with-user
-  [apps-client sharer {sharee :user :keys [analyses]}]
+  [apps-client sharer {sharee :subject :keys [analyses]}]
   (let [responses (mapv (partial share-job apps-client sharer sharee) analyses)]
     (cn/send-analysis-sharing-notifications (:shortUsername sharer) sharee responses)
-    {:user     sharee
+    {:subject  sharee
      :analyses responses}))
 
 (defn share-jobs
@@ -171,12 +178,16 @@
      (str "unable to unshare result folder: " (:error_code (service/parse-json body))))))
 
 (defn- unshare-input-file
-  [sharer sharee path]
+  [sharer {sharee :id} path]
   (try+
    (data-info/unshare-path sharer path sharee)
    nil
    (catch ce/clj-http-error? {:keys [body]}
      (str "unable to unshare input file: " (:error_code (service/parse-json body))))))
+
+(defn- unshare-analysis
+  [job-id sharee]
+  (perms-client/unshare-analysis job-id sharee))
 
 (defn- unshare-child-job
   [apps-client sharer sharee job]
@@ -188,6 +199,7 @@
   (or (verify-not-subjob job)
       (verify-accessible sharer job-id)
       (verify-support apps-client job-id)
+      (verify-not-group sharee job-id)
       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
       (perms-client/unshare-analysis job-id "user" sharee)
       (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)))
@@ -203,13 +215,13 @@
        (job-unsharing-failure job-id job (job-sharing-msg :load-failure job-id reason))))
     (job-unsharing-failure job-id nil (job-sharing-msg :not-found job-id))))
 
-(defn- unshare-jobs-with-user
-  [apps-client sharer {sharee :user :keys [analyses]}]
+(defn- unshare-jobs-with-subject
+  [apps-client sharer {sharee :subject :keys [analyses]}]
   (let [responses (mapv (partial unshare-job apps-client sharer sharee) analyses)]
     (cn/send-analysis-unsharing-notifications (:shortUsername sharer) sharee responses)
-    {:user     sharee
+    {:subject  sharee
      :analyses responses}))
 
 (defn unshare-jobs
   [apps-client user unsharing-requests]
-  (mapv (partial unshare-jobs-with-user apps-client user) unsharing-requests))
+  (mapv (partial unshare-jobs-with-subject apps-client user) unsharing-requests))

@@ -252,20 +252,20 @@
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))
 
-  (shareAppsWithUser [self app-names sharee user-app-sharing-requests]
-    (app-permissions/process-user-app-sharing-requests self app-names sharee user-app-sharing-requests))
+  (shareAppsWithSubject [self app-names sharee user-app-sharing-requests]
+    (app-permissions/process-subject-app-sharing-requests self app-names sharee user-app-sharing-requests))
 
-  (shareAppWithUser [_ app-names sharee system-id app-id level]
-    (.shareAppWithUser (util/get-apps-client clients system-id) app-names sharee system-id app-id level))
+  (shareAppWithSubject [_ app-names sharee system-id app-id level]
+    (.shareAppWithSubject (util/get-apps-client clients system-id) app-names sharee system-id app-id level))
 
   (unshareApps [self unsharing-requests]
     (app-permissions/process-app-unsharing-requests self unsharing-requests))
 
-  (unshareAppsWithUser [self app-names sharee app-unsharing-requests]
-    (app-permissions/process-user-app-unsharing-requests self app-names sharee app-unsharing-requests))
+  (unshareAppsWithSubject [self app-names sharee app-unsharing-requests]
+    (app-permissions/process-subject-app-unsharing-requests self app-names sharee app-unsharing-requests))
 
-  (unshareAppWithUser [self app-names sharee system-id app-id]
-    (.unshareAppWithUser (util/get-apps-client clients system-id) app-names sharee system-id app-id))
+  (unshareAppWithSubject [self app-names sharee system-id app-id]
+    (.unshareAppWithSubject (util/get-apps-client clients system-id) app-names sharee system-id app-id))
 
   (hasAppPermission [_ username system-id app-id required-level]
     (.hasAppPermission (util/get-apps-client clients system-id) username system-id app-id required-level))

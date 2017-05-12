@@ -21,6 +21,12 @@
 (defn- rt-tool []
   (config/tool-resource-type))
 
+(defn user-source? [subject-source-id]
+  (= subject-source-id (config/grouper-user-source)))
+
+(defn get-subject-type [subject-source-id]
+  (if (user-source? subject-source-id) "user" "group"))
+
 (defn- get-failure-reason
   "Extracts the failure reason from an error response body."
   [body]
@@ -131,24 +137,28 @@
            :reason        reason}))
 
 (defn- share-resource
-  [resource-type resource-name subject-type subject-id level]
-  (try+
-   (pc/grant-permission (client) resource-type resource-name subject-type subject-id level)
-   nil
-   (catch clj-http-error? {:keys [body]}
-     (let [reason (get-failure-reason body)]
-       (log/error (resource-sharing-log-msg "share" resource-type resource-name subject-type subject-id reason)))
-     (str "the " resource-type " sharing request failed"))))
+  ([resource-type resource-name {subject-source-id :source_id subject-id :id} level]
+   (share-resource resource-type resource-name (get-subject-type subject-source-id) subject-id level))
+  ([resource-type resource-name subject-type subject-id level]
+   (try+
+    (pc/grant-permission (client) resource-type resource-name subject-type subject-id level)
+    nil
+    (catch clj-http-error? {:keys [body]}
+      (let [reason (get-failure-reason body)]
+        (log/error (resource-sharing-log-msg "share" resource-type resource-name subject-type subject-id reason)))
+      (str "the " resource-type " sharing request failed")))))
 
 (defn- unshare-resource
-  [resource-type resource-name subject-type subject-id]
-  (try+
-   (pc/revoke-permission (client) resource-type resource-name subject-type subject-id)
-   nil
-   (catch clj-http-error? {:keys [body]}
-     (let [reason (get-failure-reason body)]
-       (log/error (resource-sharing-log-msg "unshare" resource-type resource-name subject-type subject-id reason)))
-     (str "the " resource-type " unsharing request failed"))))
+  ([resource-type resource-name {subject-source-id :source_id subject-id :id}]
+   (unshare-resource resource-type resource-name (get-subject-type subject-source-id) subject-id))
+  ([resource-type resource-name subject-type subject-id]
+   (try+
+    (pc/revoke-permission (client) resource-type resource-name subject-type subject-id)
+    nil
+    (catch clj-http-error? {:keys [body]}
+      (let [reason (get-failure-reason body)]
+        (log/error (resource-sharing-log-msg "unshare" resource-type resource-name subject-type subject-id reason)))
+      (str "the " resource-type " unsharing request failed")))))
 
 (def share-app (partial share-resource (rt-app)))
 (def unshare-app (partial unshare-resource (rt-app)))

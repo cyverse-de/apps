@@ -26,7 +26,7 @@
 (defn- share-tool-for-app
   [user sharee {tool-id :id}]
   (when-not (tool-perms/has-tool-permission sharee tool-id "read")
-    (tool-sharing/share-tool-with-user user sharee tool-id "read")))
+    (tool-sharing/share-tool-with-subject user sharee tool-id "read")))
 
 (defn- share-app-tools
   [user sharee {app-id :id}]
@@ -40,9 +40,9 @@
 (defn- share-app
   [user {app-id :id :as app} sharee level]
   (or (share-app-tools user sharee app)
-      (perms-client/share-app app-id "user" sharee level)))
+      (perms-client/share-app app-id sharee level)))
 
-(defn share-app-with-user
+(defn share-app-with-subject
   [{username :shortUsername :as user} sharee app-id level success-fn failure-fn]
   (try+
     (if-let [app (app-listing/get-app-listing app-id)]
@@ -57,7 +57,7 @@
     (catch [:type :apps.service.apps.de.permissions/permission-load-failure] {:keys [reason]}
       (failure-fn nil nil (app-sharing-msg :load-failure app-id reason)))))
 
-(defn unshare-app-with-user
+(defn unshare-app-with-subject
   [{username :shortUsername :as user} sharee app-id success-fn failure-fn]
   (try+
    (if-not (amp/app-exists? app-id)
@@ -65,7 +65,7 @@
      (let [sharer-category (listings/get-category-id-for-app user app-id)]
        (if-not (perms/has-app-permission username app-id "own")
          (failure-fn sharer-category (app-sharing-msg :not-allowed app-id))
-         (if-let [failure-reason (perms-client/unshare-app app-id "user" sharee)]
+         (if-let [failure-reason (perms-client/unshare-app app-id sharee)]
            (failure-fn sharer-category failure-reason)
            (success-fn sharer-category)))))
    (catch [:type :apps.service.apps.de.permissions/permission-load-failure] {:keys [reason]}
