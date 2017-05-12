@@ -184,11 +184,13 @@
 
 (defn verify-tool-name-version
   [tool]
-  (let [existing-tool (first (select tools (where (select-keys tool [:name :version]))))]
+  (let [existing-tool (first (select tools
+                                     (fields :id :name :version)
+                                     (where (select-keys tool [:name :version]))))]
     (when existing-tool
       (throw+ {:type  :clojure-commons.exception/exists
                :error "A Tool with that name and version already exists."
-               :tool  tool}))))
+               :tool  existing-tool}))))
 
 (defn validate-image-not-public
   [image-id]

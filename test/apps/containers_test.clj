@@ -16,7 +16,7 @@
 (def ^:dynamic volumes-from-map nil)
 
 (defn- add-image-info-map []
-  (add-image-info {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com"}))
+  (find-or-add-image-info {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com"}))
 
 (defn- add-data-container-map []
   (add-data-container {:name        "discoenv/foo"

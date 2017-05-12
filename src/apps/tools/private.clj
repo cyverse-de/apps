@@ -1,6 +1,7 @@
 (ns apps.tools.private
   (:use [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
-        [korma.db :only [transaction]])
+        [korma.db :only [transaction]]
+        [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.containers :as containers]
             [apps.persistence.tools :as persistence]
@@ -8,6 +9,14 @@
             [apps.tools.permissions :as perms]
             [apps.util.config :as cfg]
             [apps.validation :as validation]))
+
+(defn- validate-image-not-deprecated
+  [image-info]
+  (let [image (containers/find-image-by-name-and-tag image-info)]
+    (when (:deprecated image)
+    (throw+ {:type  :clojure-commons.exception/bad-request-field
+             :error "Image is deprecated and should not be used in new tools."
+             :image image}))))
 
 (defn- restrict-private-tool-setting
   [setting max]
@@ -51,6 +60,7 @@
   "Adds a private tool to the database, returning the tool details added."
   [{:keys [shortUsername] :as user}
    {:keys [container implementation] :as tool}]
+  (validate-image-not-deprecated (:image container))
   (verify-tool-name-version tool)
   (transaction
     (let [tool-id (-> tool
@@ -65,14 +75,19 @@
   [user {:keys [container time_limit_seconds] tool-id :id :as tool}]
   (perms/check-tool-permissions user "write" [tool-id])
   (validation/validate-tool-not-public tool-id)
-  (let [current-time-limit (:time_limit_seconds (persistence/get-tool tool-id))
-        tool (-> tool
-                 (dissoc :type :restricted)
-                 (assoc :time_limit_seconds (or time_limit_seconds current-time-limit))
-                 restrict-private-tool-time-limit)]
-    (persistence/update-tool tool)
-    (when container
-      (containers/set-tool-container tool-id false (restrict-private-tool-container container))))
+  (when container
+    (validate-image-not-deprecated (:image container)))
+  (transaction
+    (let [current-tool       (persistence/get-tool tool-id)
+          current-time-limit (:time_limit_seconds current-tool)
+          tool               (-> tool
+                                 (dissoc :type :restricted)
+                                 (assoc :time_limit_seconds (or time_limit_seconds current-time-limit))
+                                 restrict-private-tool-time-limit)]
+      (tools/verify-tool-name-version-for-update current-tool tool)
+      (persistence/update-tool tool)
+      (when container
+        (containers/set-tool-container tool-id false (restrict-private-tool-container container)))))
   (tools/get-tool user tool-id))
 
 (defn delete-private-tool

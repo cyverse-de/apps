@@ -93,13 +93,23 @@
       (dorun (map perms-client/register-public-tool tool-ids))
       {:tool_ids tool-ids})))
 
+(defn verify-tool-name-version-for-update
+  "Given the current tool and the tool values for update,
+   verifies the name and version values for update do not already exist for another tool."
+  [{current-name :name current-version :version} {:keys [name version]}]
+  (when (or (and name (not= current-name name))
+            (and version (not= current-version version)))
+    (verify-tool-name-version {:name    (or name current-name)
+                               :version (or version current-version)})))
+
 (defn admin-update-tool
   [user overwrite-public {:keys [id container] :as tool}]
-  (persistence/get-tool id)
-  (persistence/update-tool tool)
-  (when container
-    (set-tool-container id overwrite-public container))
-  (get-tool user id))
+  (transaction
+    (verify-tool-name-version-for-update (persistence/get-tool id) tool)
+    (persistence/update-tool tool)
+    (when container
+      (set-tool-container id overwrite-public container))
+    (get-tool user id)))
 
 (defn delete-tool
   [tool-id]
