@@ -60,11 +60,13 @@
         public-tool-ids  (perms-client/get-public-tool-ids)
         is-public?       (contains? public-app-ids app-id)
         private-tools    (remove #(contains? public-tool-ids (:id %)) tools)
+        deprecated-tools (filter :deprecated tools)
         private-apps     (private-apps-for task-ids public-app-ids)]
     (cond is-public?             [false "app is already public"]
           (empty? task-ids)      [false "no app ID provided"]
           (seq unrunnable-tasks) [false "contains unrunnable tasks" unrunnable-tasks]
           (seq private-tools)    [false "contains private tools" private-tools]
+          (seq deprecated-tools) [false "contains deprecated tools" deprecated-tools]
           (= 1 (count task-ids)) [true]
           (seq private-apps)     [false "contains private apps" private-apps]
           :else                  [true])))
