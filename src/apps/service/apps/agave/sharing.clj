@@ -1,6 +1,6 @@
 (ns apps.service.apps.agave.sharing
   (:use [slingshot.slingshot :only [try+]])
-  (:require [apps.clients.permissions :as perms-client]
+  (:require [apps.clients.iplant-groups :as ipg]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.permissions :as app-permissions]
             [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
@@ -8,7 +8,7 @@
 
 (defn- try-share-app-with-subject
   [agave sharee app-id level success-fn failure-fn]
-  (if-not (perms-client/user-source? (:source_id sharee))
+  (if-not (ipg/user-source? (:source_id sharee))
     (failure-fn "Sharing HPC apps with a group is not supported")
     (try+
      (.shareAppWithUser agave (:id sharee) app-id level)

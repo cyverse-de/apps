@@ -21,12 +21,6 @@
 (defn- rt-tool []
   (config/tool-resource-type))
 
-(defn user-source? [subject-source-id]
-  (= subject-source-id (config/grouper-user-source)))
-
-(defn get-subject-type [subject-source-id]
-  (if (user-source? subject-source-id) "user" "group"))
-
 (defn- get-failure-reason
   "Extracts the failure reason from an error response body."
   [body]
@@ -138,7 +132,7 @@
 
 (defn- share-resource
   ([resource-type resource-name {subject-source-id :source_id subject-id :id} level]
-   (share-resource resource-type resource-name (get-subject-type subject-source-id) subject-id level))
+   (share-resource resource-type resource-name (ipg/get-subject-type subject-source-id) subject-id level))
   ([resource-type resource-name subject-type subject-id level]
    (try+
     (pc/grant-permission (client) resource-type resource-name subject-type subject-id level)
@@ -150,7 +144,7 @@
 
 (defn- unshare-resource
   ([resource-type resource-name {subject-source-id :source_id subject-id :id}]
-   (unshare-resource resource-type resource-name (get-subject-type subject-source-id) subject-id))
+   (unshare-resource resource-type resource-name (ipg/get-subject-type subject-source-id) subject-id))
   ([resource-type resource-name subject-type subject-id]
    (try+
     (pc/revoke-permission (client) resource-type resource-name subject-type subject-id)

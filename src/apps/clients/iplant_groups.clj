@@ -3,7 +3,8 @@
   (:require [apps.util.config :as config]
             [cemerick.url :as curl]
             [clj-http.client :as http]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [cyverse-groups-client.core :as c]))
 
 (def ^:private grouper-environment-base-fmt "iplant:de:%s")
 
@@ -37,6 +38,12 @@
               :as           :json})))
 
 (def grouper-user-group-id (memoize (fn [] (lookup-group-id (grouper-user-group)))))
+
+(defn user-source? [subject-source-id]
+  (= subject-source-id (config/grouper-user-source)))
+
+(defn get-subject-type [subject-source-id]
+  (if (user-source? subject-source-id) "user" "group"))
 
 (defn lookup-subject
   "Uses iplant-groups's subject lookup by ID endpoint to retrieve user details."
@@ -109,7 +116,15 @@
   (get-group-members (grouper-workshop-group)))
 
 (defn update-workshop-group-members
-  "Updates the listof workshop group members, creating the group if necessary."
+  "Updates the list of workshop group members, creating the group if necessary."
   [subject-ids]
   (get-workshop-group)
   (update-group-members (grouper-workshop-group) subject-ids))
+
+(defn- get-client []
+  (c/new-cyverse-groups-client (config/ipg-base) (config/env-name)))
+
+(defn list-group-members-by-id
+  "Lists the members of the group with the given ID."
+  [user group-id]
+  (c/list-group-members-by-id (get-client) user group-id))

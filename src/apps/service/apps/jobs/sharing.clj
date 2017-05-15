@@ -3,6 +3,7 @@
         [clostache.parser :only [render]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.data-info :as data-info]
+            [apps.clients.iplant-groups :as ipg]
             [apps.clients.permissions :as perms-client]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
@@ -88,18 +89,18 @@
 
 (defn- verify-not-group
   [{subject-source-id :source_id subject-id :id} job-id]
-  (when-not (perms-client/user-source? subject-source-id)
-    (job-sharing-msg job-id :not-supported (str subject-id " is a group"))))
+  (when-not (ipg/user-source? subject-source-id)
+    (job-sharing-msg :is-group job-id (str subject-id " is a group"))))
 
 (defn- share-app-for-job
   [apps-client sharer sharee job-id {system-id :system_id app-id :app_id}]
   (when-not (.hasAppPermission apps-client sharee system-id app-id "read")
-    (let [response (.shareAppWithUser apps-client {} sharee system-id app-id "read")]
+    (let [response (.shareAppWithSubject apps-client {} sharee system-id app-id "read")]
       (when-not (:success response)
         (get-in response [:error :reason] "unable to share app")))))
 
 (defn- share-output-folder
-  [sharer sharee {:keys [result_folder_path]}]
+  [sharer {sharee :id} {:keys [result_folder_path]}]
   (try+
    (data-info/share-path sharer result_folder_path sharee "read")
    nil
@@ -170,7 +171,7 @@
   (mapv (partial share-jobs-with-user apps-client user) sharing-requests))
 
 (defn- unshare-output-folder
-  [sharer sharee {:keys [result_folder_path]}]
+  [sharer {sharee :id} {:keys [result_folder_path]}]
   (try+
    (data-info/unshare-path sharer result_folder_path sharee)
    nil
@@ -192,7 +193,7 @@
 (defn- unshare-child-job
   [apps-client sharer sharee job]
   (or (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
-      (perms-client/unshare-analysis (:id job) "user" sharee)))
+      (perms-client/unshare-analysis (:id job) sharee)))
 
 (defn- unshare-job*
   [apps-client sharer sharee job-id job]
@@ -201,7 +202,7 @@
       (verify-support apps-client job-id)
       (verify-not-group sharee job-id)
       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
-      (perms-client/unshare-analysis job-id "user" sharee)
+      (perms-client/unshare-analysis job-id sharee)
       (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)))
 
 (defn- unshare-job
