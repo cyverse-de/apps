@@ -36,7 +36,7 @@
   [formats action sharer sharee responses]
   (format-notification :sharee_category sharee formats action sharer sharee responses))
 
-(defn format-sharing-notifications
+(defn- format-sharing-notifications*
   "Formats sharing notifications for analyses."
   [sharer sharee responses]
   (let [responses (group-by :success responses)]
@@ -45,10 +45,20 @@
              (format-sharee-notification sharee-success-formats share-action sharer sharee (responses true))
              (format-sharer-notification failure-formats share-action sharer sharee (responses false))])))
 
-(defn format-unsharing-notifications
+(defn format-sharing-notifications
+  "Formats sharing notifications for analyses."
+  [sharer sharee responses]
+  (notifications-for-sharee format-sharing-notifications* sharer sharee responses))
+
+(defn- format-unsharing-notifications*
   "Formats unsharing notifications for analyses."
   [sharer sharee responses]
   (let [responses (group-by :success responses)]
     (remove nil?
             [(format-sharer-notification sharer-success-formats unshare-action sharer sharee (responses true))
              (format-sharer-notification failure-formats unshare-action sharer sharee (responses false))])))
+
+(defn format-unsharing-notifications
+  "Formats unsharing notifications for analyses."
+  [sharer sharee responses]
+  (notifications-for-sharee format-unsharing-notifications* sharer sharee responses))

@@ -272,6 +272,11 @@
   [props config-valid configs]
   "apps.iplant-groups.grouper-user" "de_grouper")
 
+(cc/defprop-optstr grouper-user-source
+  "The subject ID that Grouper uses for DE users."
+  [props config-valid configs]
+  "apps.iplant-groups.grouper-user-source" "ldap")
+
 (cc/defprop-optstr metadata-base
   "The base URL for the metadata service."
   [props config-valid configs]

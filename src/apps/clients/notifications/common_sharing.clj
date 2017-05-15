@@ -1,5 +1,6 @@
 (ns apps.clients.notifications.common-sharing
-  (:use [clostache.parser :only [render]]))
+  (:use [clostache.parser :only [render]])
+  (:require [apps.clients.iplant-groups :as ipg]))
 
 (def grouping-threshold 10)
 
@@ -49,3 +50,11 @@
   [formats singular plural action sharer sharee response-desc response-count]
   (let [formats (formats (if (< response-count grouping-threshold) :ungrouped :grouped))]
     (format-numbered-string formats singular plural action sharer sharee response-desc response-count)))
+
+(defn notifications-for-sharee
+  [notifications-fn sharer {sharee :id subject-source-id :source_id} responses]
+  (if (ipg/user-source? subject-source-id)
+    (notifications-fn sharer sharee responses)
+    (->> (:members (ipg/list-group-members-by-id sharer sharee))
+         (filter (comp ipg/user-source? :source_id))
+         (mapcat (fn [{sharee :id}] (notifications-fn sharer sharee responses))))))

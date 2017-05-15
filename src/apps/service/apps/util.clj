@@ -1,5 +1,6 @@
 (ns apps.service.apps.util
-  (:require [clojure.string :as string]
+  (:require [apps.util.config :as config]
+            [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]))
 
 (defn supports-job-type?

@@ -16,18 +16,18 @@
 (defn process-app-sharing-requests
   [apps-client app-sharing-requests]
   (let [app-names (load-app-names apps-client app-sharing-requests)]
-    (for [{sharee :user user-app-sharing-requests :apps} app-sharing-requests]
-      {:user sharee
-       :apps (.shareAppsWithUser apps-client app-names sharee user-app-sharing-requests)})))
+    (for [{sharee :subject subject-app-sharing-requests :apps} app-sharing-requests]
+      {:subject sharee
+       :apps    (.shareAppsWithSubject apps-client app-names sharee subject-app-sharing-requests)})))
 
-(defn- share-apps-with-user
-  [apps-client app-names sharee user-app-sharing-requests]
-  (for [{system-id :system_id app-id :app_id level :permission} user-app-sharing-requests]
-    (.shareAppWithUser apps-client app-names sharee system-id app-id level)))
+(defn- share-apps-with-subject
+  [apps-client app-names sharee subject-app-sharing-requests]
+  (for [{system-id :system_id app-id :app_id level :permission} subject-app-sharing-requests]
+    (.shareAppWithSubject apps-client app-names sharee system-id app-id level)))
 
-(defn process-user-app-sharing-requests
-  [apps-client app-names sharee user-app-sharing-requests]
-  (let [responses (share-apps-with-user apps-client app-names sharee user-app-sharing-requests)]
+(defn process-subject-app-sharing-requests
+  [apps-client app-names sharee subject-app-sharing-requests]
+  (let [responses (share-apps-with-subject apps-client app-names sharee subject-app-sharing-requests)]
     (cn/send-app-sharing-notifications (:shortUsername (.getUser apps-client)) sharee responses)
     (mapv #(dissoc % :sharer_category :sharee_category) responses)))
 
@@ -56,18 +56,18 @@
 (defn process-app-unsharing-requests
   [apps-client app-unsharing-requests]
   (let [app-names (load-app-names apps-client app-unsharing-requests)]
-    (for [{sharee :user app-ids :apps} app-unsharing-requests]
-      {:user sharee
-       :apps (.unshareAppsWithUser apps-client app-names sharee app-ids)})))
+    (for [{sharee :subject app-ids :apps} app-unsharing-requests]
+      {:subject sharee
+       :apps    (.unshareAppsWithSubject apps-client app-names sharee app-ids)})))
 
-(defn- unshare-apps-with-user
-  [apps-client app-names sharee user-app-unsharing-requests]
-  (for [{system-id :system_id app-id :app_id} user-app-unsharing-requests]
-    (.unshareAppWithUser apps-client app-names sharee system-id app-id)))
+(defn- unshare-apps-with-subject
+  [apps-client app-names sharee subject-app-unsharing-requests]
+  (for [{system-id :system_id app-id :app_id} subject-app-unsharing-requests]
+    (.unshareAppWithSubject apps-client app-names sharee system-id app-id)))
 
-(defn process-user-app-unsharing-requests
+(defn process-subject-app-unsharing-requests
   [apps-client app-names sharee app-ids]
-  (let [responses (unshare-apps-with-user apps-client app-names sharee app-ids)]
+  (let [responses (unshare-apps-with-subject apps-client app-names sharee app-ids)]
     (cn/send-app-unsharing-notifications (:shortUsername (.getUser apps-client)) sharee responses)
     (mapv #(dissoc % :sharer_category) responses)))
 
