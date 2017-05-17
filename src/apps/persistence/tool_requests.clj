@@ -22,6 +22,7 @@
             (fields :tr.id
                     [:requestor.username :submitted_by]
                     :tr.phone
+                    :tr.tool_id
                     [:tr.tool_name :name]
                     :tr.description
                     :tr.source_url

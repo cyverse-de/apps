@@ -52,6 +52,7 @@
      (insert tool_requests
              (values {:phone                (:phone req)
                       :id                   uuid
+                      :tool_id              (:tool_id req)
                       :tool_name            (required-field req :name)
                       :description          (required-field req :description)
                       :source_url           (required-field req :source_url :source_upload_file)
