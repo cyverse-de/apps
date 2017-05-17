@@ -191,7 +191,7 @@
 
 (defn- format-app-tool
   [tool]
-  (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution])))
+  (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution :deprecated])))
 
 (defn- format-app-for-editing
   [app]

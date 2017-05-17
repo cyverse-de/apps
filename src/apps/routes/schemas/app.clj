@@ -207,7 +207,11 @@
 
 (defschema App
   (merge AppBase
-         {OptionalToolsKey           (describe [Tool] ToolListDocs)
+         {OptionalToolsKey           (describe [(merge Tool
+                                                       {(optional-key :deprecated)
+                                                        (describe Boolean
+                                                                  "Flag indicating if this Tool has been deprecated")})]
+                                               ToolListDocs)
           (optional-key :references) AppReferencesParam
           OptionalGroupsKey          (describe [AppGroup] GroupListDocs)}))
 
