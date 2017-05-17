@@ -9,6 +9,8 @@
   (:require [apps.clients.notifications :as cn]
             [apps.persistence.tool-requests :as queries]
             [apps.persistence.users :as users]
+            [apps.tools :as tools]
+            [apps.tools.permissions :as permissions]
             [apps.util.params :as params]
             [clojure.string :as string])
   (:import [java.util UUID]))
@@ -41,10 +43,17 @@
              (fields :id)
              (where {:name status-code})))
 
+(defn- validate-tool
+  "Ensures the given tool ID exists and the user has 'own' permission for that tool."
+  [user tool-id]
+  (tools/get-tool user tool-id)
+  (permissions/check-tool-permissions user "own" [tool-id]))
+
 (defn- handle-new-tool-request
   "Submits a tool request on behalf of the authenticated user."
-  [username req]
+  [{:keys [shortUsername username]} {:keys [tool_id] :as req}]
   (transaction
+   (when tool_id (validate-tool shortUsername tool_id))
    (let [user-id         (users/get-user-id username)
          architecture-id (architecture-name-to-id (:architecture req "Others"))
          uuid            (UUID/randomUUID)]
@@ -52,6 +61,7 @@
      (insert tool_requests
              (values {:phone                (:phone req)
                       :id                   uuid
+                      :tool_id              tool_id
                       :tool_name            (required-field req :name)
                       :description          (required-field req :description)
                       :source_url           (required-field req :source_url :source_upload_file)
@@ -188,8 +198,8 @@
 
 (defn submit-tool-request
   "Submits a tool request on behalf of a user."
-  [{:keys [username] :as user} request]
-  (-> (handle-new-tool-request username request)
+  [user request]
+  (-> (handle-new-tool-request user request)
       (get-tool-request)
       (send-tool-request-notification user)))
 

@@ -6,7 +6,7 @@
   (:import [java.util UUID]))
 
 (def ToolRequestIdParam (describe UUID "The Tool Requests's UUID"))
-(def ToolNameParam (describe String "The Tool's name (should be the file name)"))
+(def ToolNameParam (describe String "The Tool's name (can be the file name or Docker image)"))
 (def ToolDescriptionParam (describe String "A brief description of the Tool"))
 (def VersionParam (describe String "The Tool's version"))
 (def AttributionParam (describe String "The Tool's author or publisher"))
@@ -140,6 +140,9 @@
 
    (optional-key :phone)
    (describe String "The phone number of the user submitting the request")
+
+   (optional-key :tool_id)
+   (describe UUID "The ID of the tool the user is requesting to be made public")
 
    :name
    ToolNameParam
