@@ -403,7 +403,10 @@
   (let [search_term    (curl/url-decode (:search params))
         workspace      (get-workspace username)
         perms          (perms-client/load-app-permissions shortUsername)
-        params         (fix-sort-params (augment-listing-params params shortUsername perms))
+        params         (-> params
+                           (augment-listing-params shortUsername perms)
+                           (assoc :orphans admin?)
+                           fix-sort-params)
         params         (augment-search-params search_term params shortUsername admin?)
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
         total          (count-apps-fn search_term (:id workspace) params)
