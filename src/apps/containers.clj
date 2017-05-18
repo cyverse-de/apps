@@ -105,7 +105,7 @@
   "Updates the record for a container image. Basically, just allows you to set a new URL
    at this point."
   [image-id user overwrite-public image-info]
-  (let [update-info (select-keys image-info [:name :tag :url])]
+  (let [update-info (select-keys image-info [:name :tag :url :deprecated])]
     (when-not (empty? update-info)
       (when-not overwrite-public
         (validate-image-not-public image-id))
