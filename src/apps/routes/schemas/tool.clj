@@ -1,5 +1,6 @@
 (ns apps.routes.schemas.tool
-  (:use [common-swagger-api.schema :only [->optional-param describe]]
+  (:use [clojure-commons.error-codes]
+        [common-swagger-api.schema :only [->optional-param describe ErrorResponse]]
         [apps.routes.params]
         [schema.core :only [defschema enum optional-key]])
   (:require [apps.routes.schemas.containers :as containers])
@@ -236,3 +237,13 @@
 
 (defschema StatusCodeListing
   {:status_codes (describe [StatusCode] "A listing of known Status Codes")})
+
+(defschema ErrorPrivateToolRequestBadParam
+  (assoc ErrorResponse
+    :error_code (describe (enum ERR_EXISTS ERR_BAD_OR_MISSING_FIELD) "Exists or Bad Field error code")))
+
+(def PrivateToolImportResponse400
+  {:schema      ErrorPrivateToolRequestBadParam
+   :description "
+* `ERR_EXISTS`: A Tool with the given `name` already exists.
+* `ERR_BAD_OR_MISSING_FIELD`: The image with the given `name` and `tag` has been deprecated."})

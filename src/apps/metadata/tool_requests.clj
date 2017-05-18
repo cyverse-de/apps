@@ -44,10 +44,14 @@
              (where {:name status-code})))
 
 (defn- validate-tool
-  "Ensures the given tool ID exists and the user has 'own' permission for that tool."
+  "Ensures the given tool ID exists, the user has 'own' permission for that tool, and the tool is not deprecated."
   [user tool-id]
-  (tools/get-tool user tool-id)
-  (permissions/check-tool-permissions user "own" [tool-id]))
+  (let [image (-> (tools/get-tool user tool-id) :container :image)]
+    (permissions/check-tool-permissions user "own" [tool-id])
+    (when (:deprecated image)
+      (throw+ {:type  :clojure-commons.exception/bad-request-field
+               :error "Tool is using a deprecated image and can not be made public."
+               :image image}))))
 
 (defn- handle-new-tool-request
   "Submits a tool request on behalf of the authenticated user."

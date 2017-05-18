@@ -73,7 +73,7 @@
         :return Image
         :summary "Add Container Image"
         :description "Adds a new container image to the system."
-        (ok (add-image-info body)))
+        (ok (find-or-add-image-info body)))
 
   (DELETE "/:image-id" []
            :path-params [image-id :- ImageId]
@@ -147,8 +147,7 @@
         :responses (merge CommonResponses
                           {200 {:schema      ToolDetails
                                 :description "The new Tool details."}
-                           400 {:schema      ErrorResponseExists
-                                :description "A Tool with the given `name` already exists."}})
+                           400 PrivateToolImportResponse400})
         :summary "Add Private Tool"
         :description
 "This service adds a new private Tool to the DE for the requesting user.
@@ -239,7 +238,10 @@ otherwise the default value will be used."
          :path-params [tool-id :- ToolIdParam]
          :query [{:keys [user]} SecuredQueryParams]
          :body [body (describe PrivateToolUpdateRequest "The private Tool to update.")]
-         :return ToolDetails
+         :responses (merge CommonResponses
+                           {200 {:schema      ToolDetails
+                                 :description "The updated Tool details."}
+                            400 PrivateToolImportResponse400})
          :summary "Update a Private Tool"
          :description "This service updates a private Tool definition in the DE.
 As with new private Tools, `type` is always set to `executable` and `restricted` is always set to `true`,

@@ -16,7 +16,7 @@
 (def ^:dynamic volumes-from-map nil)
 
 (defn- add-image-info-map []
-  (add-image-info {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com"}))
+  (find-or-add-image-info {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com"}))
 
 (defn- add-data-container-map []
   (add-data-container {:name        "discoenv/foo"
@@ -91,7 +91,7 @@
 
   (is (not (nil? (image-id {:name "discoenv/de-db" :tag "latest"}))))
 
-  (is (= {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com"}
+  (is (= {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com" :deprecated false}
          (dissoc (image-info (image-id {:name "discoenv/de-db" :tag "latest"})) :id))))
 
 
@@ -99,6 +99,9 @@
   (is (not (nil? (:id settings-map))))
 
   (is (= {:name "test"
+          :min_cpu_cores nil
+          :min_memory_limit nil
+          :min_disk_space nil
           :cpu_shares 1024
           :memory_limit 2048
           :network_mode "bridge"

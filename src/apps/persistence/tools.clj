@@ -137,6 +137,13 @@
     (where base-query {:tool_types.hidden false})
     base-query))
 
+(defn- add-deprecated-tools-clause
+  "Adds the clause used to filter out deprecated tools if the tool's image is marked as deprecated."
+  [base-query deprecated]
+  (if-not (nil? deprecated)
+    (where base-query {:container_images.deprecated deprecated})
+    base-query))
+
 (defn- tool-listing-base-query
   "Obtains a listing query for tools, with common fields for tool details and listings."
   []
@@ -154,19 +161,21 @@
 
 (defn get-tool-listing
   "Obtains a listing of tools, with optional search and paging params."
-  [{search-term :search :keys [tool-ids sort-field sort-dir limit offset include-hidden]
+  [{search-term :search :keys [tool-ids deprecated sort-field sort-dir limit offset include-hidden]
     :or {include-hidden false}}]
   (let [sort-field (when sort-field (keyword (str "tools." sort-field)))
         sort-dir (when sort-dir (keyword (upper-case sort-dir)))]
     (-> (tool-listing-base-query)
         (join :container_images {:container_images.id :tools.container_images_id})
         (join :integration_data {:integration_data.id :tools.integration_data_id})
-        (fields [:container_images.name :image_name]
-                [:container_images.tag  :image_tag]
+        (fields [:container_images.name       :image_name]
+                [:container_images.tag        :image_tag]
+                [:container_images.deprecated :image_deprecated]
                 [:integration_data.integrator_name  :implementor]
                 [:integration_data.integrator_email :implementor_email])
         (add-search-where-clauses search-term)
         (add-listing-where-clause tool-ids)
+        (add-deprecated-tools-clause deprecated)
         (add-query-sorting sort-field sort-dir)
         (add-query-limit limit)
         (add-query-offset offset)

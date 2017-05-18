@@ -24,18 +24,6 @@
             [korma.core :as sql])
   (:import java.util.Base64))
 
-(defn containerized?
-  "Returns true if the tool is available in a container."
-  [tool-id]
-  (pos?
-   (count
-    (select tools
-            (fields :container_images_id)
-            (where
-             (and
-              (= :id (uuidify tool-id))
-              (not= :container_images_id nil)))))))
-
 (defn encode-auth [registry]
   (.encodeToString (Base64/getEncoder)
                    (.getBytes
@@ -47,11 +35,11 @@
     (when registry
       (encode-auth registry))))
 
-(defn public-image-info
+(defn- public-image-info
   "Returns a map containing only publicly-permissible image info (no auth)"
   [image-uuid]
   (first (select container-images
-                (fields :name :tag :url :id)
+                (fields :name :tag :url :deprecated :id)
                 (where {:id (uuidify image-uuid)}))))
 
 (defn image-info
@@ -68,7 +56,7 @@
   []
   {:container_images
     (select container-images
-      (fields :name :tag :url :id))})
+      (fields :name :tag :url :deprecated :id))})
 
 (defn image-public-tools
   [id]
@@ -84,54 +72,40 @@
                                  (where {:id (uuidify tool-uuid)}))))]
     (image-info image-id :auth? auth?)))
 
-(defn- get-tag
-  [image-map]
-  (if-not (contains? image-map :tag)
-    "latest"
-    (:tag image-map)))
+(defn find-image-by-name-and-tag
+  "Finds the image matching the given name and tag in the container_images table."
+  [{:keys [name tag] :or {tag "latest"}}]
+  (first (select container-images (where {:name name
+                                          :tag  tag}))))
+
+(defn find-or-add-image-info
+  "Finds or inserts an image with the given name and tag in the container_images table."
+  [{:keys [name tag url] :or {tag "latest"} :as image-map}]
+  (if-let [existing-image (find-image-by-name-and-tag image-map)]
+    existing-image
+    (insert container-images (values {:name name
+                                      :tag  tag
+                                      :url  url}))))
 
 (defn image?
   "Returns true if the given name and tag exist in the container_images table."
   [image-map]
-  (let [tag  (get-tag image-map)
-        name (:name image-map)]
-    (pos?
-     (count
-      (select container-images
-              (where (and (= :name name)
-                          (= :tag tag))))))))
+  (not (nil? (find-image-by-name-and-tag image-map))))
 
 (defn image-id
   "Returns the UUID used as the primary key in the container_images table."
   [image-map]
-  (let [image-values (-> image-map
-                         (select-keys [:name])
-                         (assoc :tag (get-tag image-map)))]
-    (:id (first (select container-images (where image-values))))))
-
-(defn add-image-info
-  [image-map]
-  (let [tag  (get-tag image-map)
-        name (:name image-map)
-        url  (:url image-map)]
-    (if (image? image-map)
-      (first (select container-images
-                     (where {:name name :tag tag})))
-      (insert container-images
-              (values {:name name
-                       :tag tag
-                       :url url})))))
+  (:id (find-image-by-name-and-tag image-map)))
 
 (defn- find-or-add-image-id
   [image]
-  (or (image-id image)
-      (:id (add-image-info image))))
+  (:id (find-or-add-image-info image)))
 
 (defn modify-image-info
   "Updates the record for a container image. Basically, just allows you to set a new URL
    at this point."
   [image-id user overwrite-public image-info]
-  (let [update-info (select-keys image-info [:name :tag :url])]
+  (let [update-info (select-keys image-info [:name :tag :url :deprecated])]
     (when-not (empty? update-info)
       (when-not overwrite-public
         (validate-image-not-public image-id))
@@ -478,7 +452,7 @@
                      (with data-containers
                        (fields :name_prefix :read_only)
                        (with container-images
-                         (fields :name :tag :url))))
+                         (fields :name :tag :url :deprecated))))
                    (where {:tools_id id}))
            first
            (update :container_volumes_from add-data-container-auth :auth? auth?)

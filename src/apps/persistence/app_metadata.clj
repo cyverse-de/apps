@@ -260,9 +260,10 @@
   [app-id]
   (select (get-tool-listing-base-query)
           (join :container_images {:tool_listing.container_images_id :container_images.id})
-          (fields [:container_images.name :image_name]
-                  [:container_images.tag  :image_tag]
-                  [:container_images.url  :image_url])
+          (fields [:container_images.name       :image_name]
+                  [:container_images.tag        :image_tag]
+                  [:container_images.url        :image_url]
+                  [:container_images.deprecated :deprecated])
           (where {:app_id app-id})))
 
 (defn get-tools-by-image-id

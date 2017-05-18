@@ -5,7 +5,8 @@
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as perms-client]
-            [apps.persistence.app-metadata :as persistence]))
+            [apps.persistence.app-metadata :as persistence]
+            [clojure-commons.exception-util :as exception-util]))
 
 (defn missing-json-field-exception
   "Thrown when a required field is missing from a JSON request body."
@@ -184,11 +185,10 @@
 
 (defn verify-tool-name-version
   [tool]
-  (let [existing-tool (first (select tools (where (select-keys tool [:name :version]))))]
-    (when existing-tool
-      (throw+ {:type  :clojure-commons.exception/exists
-               :error "A Tool with that name and version already exists."
-               :tool  tool}))))
+  (when-let [existing-tool (first (select tools
+                                          (fields :id :name :version)
+                                          (where (select-keys tool [:name :version]))))]
+    (exception-util/exists "A Tool with that name and version already exists." :tool existing-tool)))
 
 (defn validate-image-not-public
   [image-id]
