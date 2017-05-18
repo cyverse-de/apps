@@ -81,9 +81,10 @@
 
 (defn- format-perms-listing
   [user perms]
-  (->> (map (juxt (comp :subject_id :subject) :permission_level) (:permissions perms))
+  (->> (map (juxt :subject :permission_level) (:permissions perms))
        (remove (comp (partial = user) first))
-       (map (fn [[subject level]] {:user subject :permission level}))))
+       (map (fn [[{id :subject_id source-id :subject_source_id} level]]
+              {:subject {:id id :source_id source-id} :permission level}))))
 
 (defn- list-resource-permissions
   [resource-type user resource-ids]
