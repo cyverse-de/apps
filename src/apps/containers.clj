@@ -81,11 +81,11 @@
 (defn find-or-add-image-info
   "Finds or inserts an image with the given name and tag in the container_images table."
   [{:keys [name tag url] :or {tag "latest"} :as image-map}]
-  (let [existing-image (find-image-by-name-and-tag image-map)]
-    (or existing-image
-        (insert container-images (values {:name name
-                                          :tag  tag
-                                          :url  url})))))
+  (if-let [existing-image (find-image-by-name-and-tag image-map)]
+    existing-image
+    (insert container-images (values {:name name
+                                      :tag  tag
+                                      :url  url}))))
 
 (defn image?
   "Returns true if the given name and tag exist in the container_images table."
