@@ -452,10 +452,12 @@
     (if admin? (jobs-db/get-job-stats app-id)
                (jobs-db/get-public-job-stats app-id))))
 
-(defn- format-tool-image [tool]
-  (remove-nil-vals {:name (:image_name tool)
-                    :tag  (:image_tag tool)
-                    :url  (:image_url tool)}))
+(defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
+  (remove-nil-vals
+    {:name       image_name
+     :tag        image_tag
+     :url        image_url
+     :deprecated deprecated}))
 
 (defn- format-app-tool [tool]
   (assoc (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution]))
