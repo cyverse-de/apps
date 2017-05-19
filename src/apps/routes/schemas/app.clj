@@ -20,10 +20,11 @@
 (def AppReferencesParam (describe [String] "The App's references"))
 (def AppDeletedParam (describe Boolean "Whether the App is marked as deleted"))
 (def AppDisabledParam (describe Boolean "Whether the App is marked as disabled"))
-(def AppPublicParam (describe Boolean
-                      "Whether the App has been published and is viewable by all users"))
+(def AppPublicParam (describe Boolean "Whether the App has been published and is viewable by all users"))
+(def ToolDeprecatedParam (describe Boolean "Flag indicating if this Tool has been deprecated"))
 
 (def OptionalDebugKey (optional-key :debug))
+(def OptionalDeprecatedKey (optional-key :deprecated))
 (def OptionalGroupsKey (optional-key :groups))
 (def OptionalToolsKey (optional-key :tools))
 (def OptionalParametersKey (optional-key :parameters))
@@ -207,11 +208,7 @@
 
 (defschema App
   (merge AppBase
-         {OptionalToolsKey           (describe [(merge Tool
-                                                       {(optional-key :deprecated)
-                                                        (describe Boolean
-                                                                  "Flag indicating if this Tool has been deprecated")})]
-                                               ToolListDocs)
+         {OptionalToolsKey           (describe [(merge Tool {OptionalDeprecatedKey ToolDeprecatedParam})] ToolListDocs)
           (optional-key :references) AppReferencesParam
           OptionalGroupsKey          (describe [AppGroup] GroupListDocs)}))
 
@@ -527,7 +524,8 @@
       (->optional-param :is_public)
       (->optional-param :permission)
       (->optional-param :implementation)
-      (->optional-param :container)))
+      (->optional-param :container)
+      (assoc OptionalDeprecatedKey ToolDeprecatedParam)))
 
 (defschema AppRequest
   (-> App
