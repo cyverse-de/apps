@@ -19,6 +19,7 @@
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.permissions :as perms]
             [apps.service.util :as svc-util]
+            [apps.tools :as tools]
             [apps.tools.permissions :as tool-perms]
             [cemerick.url :as curl]
             [clojure.string :as string]))
@@ -514,6 +515,7 @@
     (join job_types)
     (fields [:job_types.system_id :system_id]
             [:tasks.id            :id]
+            [:tasks.tool_id       :tool_id]
             [:tasks.name          :name]
             [:tasks.description   :description])
     (with-task-params inputs)
@@ -531,20 +533,23 @@
     format-task-file-param))
 
 (defn- format-task
-  [task]
+  [user {:keys [tool_id] :as task}]
   (-> task
-    (update-in [:inputs] (partial map (comp remove-nil-vals format-task-file-param)))
-    (update-in [:outputs] (partial map (comp remove-nil-vals format-task-output)))))
+      (assoc :tool (when tool_id (tools/get-tool user tool_id)))
+      (dissoc :tool_id)
+      (update-in [:inputs] (partial map (comp remove-nil-vals format-task-file-param)))
+      (update-in [:outputs] (partial map (comp remove-nil-vals format-task-output)))
+      remove-nil-vals))
 
 (defn get-tasks-with-file-params
   "Fetches a formatted list of tasks for the given IDs with their inputs and outputs."
-  [task-ids]
-  (map format-task (get-tasks task-ids)))
+  [user task-ids]
+  (map (partial format-task user) (get-tasks task-ids)))
 
 (defn- format-app-task-listing
-  [{app-id :id :as app}]
+  [user {app-id :id :as app}]
   (let [task-ids (map :task_id (select :app_steps (fields :task_id) (where {:app_id app-id})))
-        tasks    (get-tasks-with-file-params task-ids)]
+        tasks    (get-tasks-with-file-params user task-ids)]
     (-> app
         (select-keys [:id :name :description])
         (assoc :tasks tasks :system_id c/system-id))))
@@ -554,7 +559,7 @@
   [{username :shortUsername} app-id]
   (perms/check-app-permissions username "read" [app-id])
   (let [app (get-app app-id)]
-    (format-app-task-listing app)))
+    (format-app-task-listing username app)))
 
 (defn get-app-tool-listing
   "A service to list the tools used by an app."
