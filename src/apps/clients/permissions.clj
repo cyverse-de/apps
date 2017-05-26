@@ -121,6 +121,11 @@
   [tool-id]
   (pc/grant-permission (client) (rt-tool) tool-id "group" (ipg/grouper-user-group-id) "read"))
 
+(defn make-tool-public
+  [tool-id]
+  (delete-tool-resource tool-id)
+  (register-public-tool tool-id))
+
 (defn- resource-sharing-log-msg
   [action resource-type resource-name subject-type subject-id reason]
   (render "unable to {{action}} {{resource-type}}:{{resource-name}} with {{subject-type}}:{{subject-id}}: {{reason}}"
