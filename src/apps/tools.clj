@@ -127,3 +127,9 @@
     (validate-tool-not-used tool-id)
     (log/warn user "deleting tool" tool-id name version "@" location))
   (delete-tool tool-id))
+
+(defn admin-publish-tool
+  [user {:keys [id] :as tool}]
+  (admin-update-tool user false tool)
+  (perms-client/make-tool-public id)
+  (get-tool user id))

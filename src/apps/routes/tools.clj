@@ -11,6 +11,7 @@
         [apps.tools :only [admin-add-tools
                            admin-delete-tool
                            admin-list-tools
+                           admin-publish-tool
                            admin-update-tool
                            get-tool
                            list-tools
@@ -741,4 +742,20 @@ included in it. Any existing settings not included in the request's `container` 
         :summary "Update the Integration Data Record for a Tool"
         :description "This service allows administrators to change the integration data record
         associated with a tool."
-        (ok (apps/update-tool-integration-data current-user de-system-id tool-id integration-data-id))))
+        (ok (apps/update-tool-integration-data current-user de-system-id tool-id integration-data-id)))
+
+  (POST "/:tool-id/publish" []
+        :path-params [tool-id :- ToolIdParam]
+        :query [{:keys [user]} SecuredQueryParams]
+        :body [body (describe ToolUpdateRequest "The Tool to update.")]
+        :responses (merge CommonResponses
+                          {200 {:schema      ToolDetails
+                                :description "The Tool details."}
+                           400 {:schema      ErrorResponseNotWritable
+                                :description "The Tool is already public."}
+                           404 {:schema      ErrorResponseNotFound
+                                :description "The `tool-id` does not exist."}})
+        :summary "Make a Private Tool Public"
+        :description "This service makes a Private Tool public and available to all users.
+        The request body fields are optional and allow the admin to make updates to the tool in the same request."
+        (ok (admin-publish-tool user (assoc body :id tool-id)))))
