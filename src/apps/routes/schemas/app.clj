@@ -7,7 +7,7 @@
                                           SortFieldOptionalKey]]
         [apps.routes.params]
         [apps.routes.schemas.app.rating]
-        [apps.routes.schemas.tool :only [Tool ToolListingImage ToolListingItem]]
+        [apps.routes.schemas.tool :only [Tool ToolDetails ToolListingImage ToolListingItem]]
         [schema.core :only [Any defschema enum optional-key recursive]])
   (:require [clojure.set :as sets])
   (:import [java.util UUID Date]))
@@ -221,12 +221,13 @@
    :required    (describe Boolean "Whether or not a value is required for this Parameter")})
 
 (defschema AppTask
-  {:system_id   (describe String "The Task's System ID")
-   :id          (describe String "The Task's ID")
-   :name        (describe String "The Task's name")
-   :description (describe String "The Task's description")
-   :inputs      (describe [AppFileParameterDetails] "The Task's input parameters")
-   :outputs     (describe [AppFileParameterDetails] "The Task's output parameters")})
+  {:system_id           (describe String "The Task's System ID")
+   :id                  (describe String "The Task's ID")
+   :name                (describe String "The Task's name")
+   :description         (describe String "The Task's description")
+   (optional-key :tool) ToolDetails
+   :inputs              (describe [AppFileParameterDetails] "The Task's input parameters")
+   :outputs             (describe [AppFileParameterDetails] "The Task's output parameters")})
 
 (defschema AppTaskListing
   (assoc AppBase

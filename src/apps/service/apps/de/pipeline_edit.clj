@@ -102,11 +102,11 @@
 
 (defn- format-workflow
   "Prepares a JSON response for editing a Workflow in the client."
-  [app]
+  [user app]
   (let [steps (get-steps (:id app))
         mappings (get-mappings steps)
         task-ids (set (map :task_id steps))
-        tasks (listings/get-tasks-with-file-params task-ids)
+        tasks (listings/get-tasks-with-file-params user task-ids)
         steps (map format-step steps)]
     (-> app
         (select-keys [:id :name :description])
@@ -133,7 +133,7 @@
   [user app-id]
   (let [app (get-app app-id)]
     (verify-app-editable user app)
-    (format-workflow app)))
+    (format-workflow user app)))
 
 (defn- add-app-mapping
   [app-id steps {:keys [source_step target_step map] :as mapping}]
