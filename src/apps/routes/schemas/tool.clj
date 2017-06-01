@@ -63,11 +63,6 @@
 (defschema ToolListingImage
   {:image (dissoc containers/Image :id)})
 
-(defschema ToolListingItem
-  (merge ToolDetails
-         {:implementation (describe ToolImplementor ToolImplementationDocs)
-          :container      ToolListingImage}))
-
 (defschema ToolImportRequest
   (-> Tool
       (->optional-param :id)
@@ -103,9 +98,6 @@
       (->optional-param :type)
       (->optional-param :implementation)
       (->optional-param :container)))
-
-(defschema ToolListing
-  {:tools (describe [ToolListingItem] "Listing of App Tools")})
 
 (defschema NewTool
   (assoc Tool
@@ -237,6 +229,15 @@
 
 (defschema StatusCodeListing
   {:status_codes (describe [StatusCode] "A listing of known Status Codes")})
+
+(defschema ToolListingItem
+  (merge ToolDetails
+         {:implementation              (describe ToolImplementor ToolImplementationDocs)
+          :container                   ToolListingImage
+          (optional-key :tool_request) (select-keys ToolRequestSummary [:id :status])}))
+
+(defschema ToolListing
+  {:tools (describe [ToolListingItem] "Listing of App Tools")})
 
 (defschema ErrorPrivateToolRequestBadParam
   (assoc ErrorResponse
