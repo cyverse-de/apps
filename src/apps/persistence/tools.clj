@@ -159,6 +159,15 @@
               [:tools.time_limit_seconds :time_limit_seconds])
       (join tool_types)))
 
+(defn- tool-request-status-subselect
+  []
+  (subselect [:tool_request_status_codes :trsc]
+             (fields [:trsc.name :status])
+             (join [:tool_request_statuses :trs] {:trs.tool_request_status_code_id :trsc.id})
+             (where {:trs.tool_request_id :tool_requests.id})
+             (order :date_assigned :DESC)
+             (limit 1)))
+
 (defn get-tool-listing
   "Obtains a listing of tools, with optional search and paging params."
   [{search-term :search :keys [tool-ids deprecated sort-field sort-dir limit offset include-hidden]
@@ -168,11 +177,14 @@
     (-> (tool-listing-base-query)
         (join :container_images {:container_images.id :tools.container_images_id})
         (join :integration_data {:integration_data.id :tools.integration_data_id})
+        (join :tool_requests {:tool_requests.tool_id :tools.id})
         (fields [:container_images.name       :image_name]
                 [:container_images.tag        :image_tag]
                 [:container_images.deprecated :image_deprecated]
                 [:integration_data.integrator_name  :implementor]
-                [:integration_data.integrator_email :implementor_email])
+                [:integration_data.integrator_email :implementor_email]
+                [:tool_requests.id :tool_request_id]
+                [(tool-request-status-subselect) :tool_request_status])
         (add-search-where-clauses search-term)
         (add-listing-where-clause tool-ids)
         (add-deprecated-tools-clause deprecated)
