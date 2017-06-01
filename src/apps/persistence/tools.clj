@@ -162,9 +162,11 @@
 (defn- tool-request-status-subselect
   []
   (subselect [:tool_request_status_codes :trsc]
-             (fields [(sqlfn :last :trsc.name) :status])
+             (fields [:trsc.name :status])
              (join [:tool_request_statuses :trs] {:trs.tool_request_status_code_id :trsc.id})
-             (where {:trs.tool_request_id :tool_requests.id})))
+             (where {:trs.tool_request_id :tool_requests.id})
+             (order :date_assigned :DESC)
+             (limit 1)))
 
 (defn get-tool-listing
   "Obtains a listing of tools, with optional search and paging params."
