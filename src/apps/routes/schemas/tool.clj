@@ -230,11 +230,14 @@
 (defschema StatusCodeListing
   {:status_codes (describe [StatusCode] "A listing of known Status Codes")})
 
+(defschema ToolListingToolRequestSummary
+  (select-keys ToolRequestSummary [:id :status]))
+
 (defschema ToolListingItem
   (merge ToolDetails
          {:implementation              (describe ToolImplementor ToolImplementationDocs)
           :container                   ToolListingImage
-          (optional-key :tool_request) (select-keys ToolRequestSummary [:id :status])}))
+          (optional-key :tool_request) ToolListingToolRequestSummary}))
 
 (defschema ToolListing
   {:tools (describe [ToolListingItem] "Listing of App Tools")})
