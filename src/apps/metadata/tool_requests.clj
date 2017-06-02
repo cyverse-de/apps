@@ -221,13 +221,16 @@
       (get-tool-request)
       (send-tool-request-update-notification)))
 
+(defn- format-tool-request-dates
+  [{:keys [date_submitted date_updated] :as tool-request}]
+  (assoc tool-request :date_submitted (.getTime date_submitted)
+                      :date_updated   (.getTime date_updated)))
+
 (defn list-tool-requests
   "Lists tool requests."
   [params]
   {:tool_requests
-   (map #(assoc %
-           :date_submitted (.getTime (:date_submitted %))
-           :date_updated   (.getTime (:date_updated %)))
+   (map (comp remove-nil-vals format-tool-request-dates)
         (get-tool-request-list params))})
 
 (defn- add-filter

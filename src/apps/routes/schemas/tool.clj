@@ -7,6 +7,7 @@
   (:import [java.util UUID]))
 
 (def ToolRequestIdParam (describe UUID "The Tool Requests's UUID"))
+(def ToolRequestToolIdParam (describe UUID "The ID of the tool the user is requesting to be made public"))
 (def ToolNameParam (describe String "The Tool's name (can be the file name or Docker image)"))
 (def ToolDescriptionParam (describe String "A brief description of the Tool"))
 (def VersionParam (describe String "The Tool's version"))
@@ -135,7 +136,7 @@
    (describe String "The phone number of the user submitting the request")
 
    (optional-key :tool_id)
-   (describe UUID "The ID of the tool the user is requesting to be made public")
+   ToolRequestToolIdParam
 
    :name
    ToolNameParam
@@ -194,15 +195,15 @@
   (dissoc ToolRequestDetails :id :submitted_by :history))
 
 (defschema ToolRequestSummary
-  {:id             ToolRequestIdParam
-   :name           ToolNameParam
-   :version        VersionParam
-   :requested_by   SubmittedByParam
-   :date_submitted (describe Long "The timestamp of the Tool Request submission")
-   :status         (describe String "The current status of the Tool Request")
-   :date_updated   (describe Long "The timestamp of the last Tool Request status update")
-   :updated_by     (describe String
-                     "The username of the user that last updated the Tool Request status")})
+  {:id                     ToolRequestIdParam
+   :name                   ToolNameParam
+   :version                VersionParam
+   :requested_by           SubmittedByParam
+   (optional-key :tool_id) ToolRequestToolIdParam
+   :date_submitted         (describe Long "The timestamp of the Tool Request submission")
+   :status                 (describe String "The current status of the Tool Request")
+   :date_updated           (describe Long "The timestamp of the last Tool Request status update")
+   :updated_by             (describe String "The username of the user that last updated the Tool Request status")})
 
 (defschema ToolRequestListing
   {:tool_requests (describe [ToolRequestSummary]
