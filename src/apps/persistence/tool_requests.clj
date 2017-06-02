@@ -74,6 +74,7 @@
   (subselect [:tool_requests :tr]
              (fields [:tr.id :id]
                      [:tr.tool_name :name]
+                     :tr.tool_id
                      [:tr.version :version]
                      [:trsc.name :status]
                      [:trs.date_assigned :status_date]
@@ -98,12 +99,12 @@
   (let [status-clause (if (nil? statuses) nil ['in statuses])]
     (select
       [(subselect [(list-tool-requests-subselect user) :req]
-                  (fields :id :name :version :requested_by
+                  (fields :id :name :version :requested_by :tool_id
                           [(sqlfn :first :status_date) :date_submitted]
                           [(sqlfn :last :status) :status]
                           [(sqlfn :last :status_date) :date_updated]
                           [(sqlfn :last :updated_by) :updated_by])
-                  (group :id :name :version :requested_by)
+                  (group :id :name :version :requested_by :tool_id)
                   (order (or sort-field :date_submitted) (or sort-order :ASC))
                   (limit row-limit)
                   (offset row-offset))
