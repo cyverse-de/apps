@@ -1,6 +1,5 @@
 (ns apps.routes.tools
   (:use [common-swagger-api.schema]
-        [apps.metadata.tool-requests]
         [apps.constants :only [de-system-id]]
         [apps.containers]
         [apps.routes.params]
@@ -15,6 +14,7 @@
                            admin-update-tool
                            get-tool
                            list-tools
+                           submit-tool-request
                            user-get-tool]]
         [apps.tools.private :only [add-private-tool delete-private-tool update-private-tool]]
         [apps.user :only [current-user]]
@@ -22,7 +22,8 @@
         [apps.util.service]
         [slingshot.slingshot :only [throw+]]
         [ring.util.http-response :only [ok]])
-  (:require [apps.routes.schemas.permission :as permission]
+  (:require [apps.metadata.tool-requests :as tool-requests]
+            [apps.routes.schemas.permission :as permission]
             [apps.service.apps :as apps]
             [apps.service.apps.de.listings :as app-listings]
             [apps.tools.permissions :as tool-permissions]
@@ -447,7 +448,7 @@ for the `cpu_shares` and `memory_limit` fields."
         :summary "List Tool Requests"
         :description "This endpoint lists high level details about tool requests that have been submitted.
         A user may track their own tool requests with this endpoint."
-        (ok (list-tool-requests (assoc params :username (:username current-user)))))
+        (ok (tool-requests/list-tool-requests (assoc params :username (:username current-user)))))
 
   (POST "/" []
          :query [params SecuredQueryParams]
@@ -468,7 +469,7 @@ for the `cpu_shares` and `memory_limit` fields."
         :description "Tool request status codes are largely arbitrary, but once they've been used once,
         they're stored in the database so that they can be reused easily. This endpoint allows the
         caller to list the known status codes."
-        (ok (list-tool-request-status-codes params))))
+        (ok (tool-requests/list-tool-request-status-codes params))))
 
 (defroutes admin-tools
   (GET "/" []
@@ -746,7 +747,7 @@ included in it. Any existing settings not included in the request's `container` 
 
   (POST "/:tool-id/publish" []
         :path-params [tool-id :- ToolIdParam]
-        :query [{:keys [user]} SecuredQueryParams]
+        :query [params SecuredQueryParams]
         :body [body (describe ToolUpdateRequest "The Tool to update.")]
         :responses (merge CommonResponses
                           {200 {:schema      ToolDetails
@@ -758,4 +759,4 @@ included in it. Any existing settings not included in the request's `container` 
         :summary "Make a Private Tool Public"
         :description "This service makes a Private Tool public and available to all users.
         The request body fields are optional and allow the admin to make updates to the tool in the same request."
-        (ok (admin-publish-tool user (assoc body :id tool-id)))))
+        (ok (admin-publish-tool current-user (assoc body :id tool-id)))))
