@@ -9,14 +9,13 @@
   (:require [apps.clients.notifications :as cn]
             [apps.persistence.tool-requests :as queries]
             [apps.persistence.users :as users]
-            [apps.tools :as tools]
-            [apps.tools.permissions :as permissions]
             [apps.util.params :as params]
             [clojure.string :as string])
   (:import [java.util UUID]))
 
 ;; Status codes.
 (def ^:private initial-status-code "Submitted")
+(def ^:private completion-status-code "Completion")
 
 (defn- required-field
   "Extracts a required field from a map."
@@ -43,21 +42,10 @@
              (fields :id)
              (where {:name status-code})))
 
-(defn- validate-tool
-  "Ensures the given tool ID exists, the user has 'own' permission for that tool, and the tool is not deprecated."
-  [user tool-id]
-  (let [image (-> (tools/get-tool user tool-id) :container :image)]
-    (permissions/check-tool-permissions user "own" [tool-id])
-    (when (:deprecated image)
-      (throw+ {:type  :clojure-commons.exception/bad-request-field
-               :error "Tool is using a deprecated image and can not be made public."
-               :image image}))))
-
 (defn- handle-new-tool-request
   "Submits a tool request on behalf of the authenticated user."
-  [{:keys [shortUsername username]} {:keys [tool_id] :as req}]
+  [username {:keys [tool_id] :as req}]
   (transaction
-   (when tool_id (validate-tool shortUsername tool_id))
    (let [user-id         (users/get-user-id username)
          architecture-id (architecture-name-to-id (:architecture req "Others"))
          uuid            (UUID/randomUUID)]
@@ -202,8 +190,8 @@
 
 (defn submit-tool-request
   "Submits a tool request on behalf of a user."
-  [user request]
-  (-> (handle-new-tool-request user request)
+  [{:keys [username] :as user} request]
+  (-> (handle-new-tool-request username request)
       (get-tool-request)
       (send-tool-request-notification user)))
 
@@ -220,6 +208,12 @@
       (handle-tool-request-update uuid uid-domain)
       (get-tool-request)
       (send-tool-request-update-notification)))
+
+(defn complete-tool-request
+  "Updates the status of a tool request associated with the given tool-id to Completion."
+  [tool-id uid-domain user]
+  (if-let [request-id (queries/get-request-id-for-tool tool-id)]
+    (update-tool-request request-id uid-domain user {:status completion-status-code})))
 
 (defn- format-tool-request-dates
   [{:keys [date_submitted date_updated] :as tool-request}]

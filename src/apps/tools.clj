@@ -5,10 +5,14 @@
         [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]]
-        [slingshot.slingshot :only [try+]])
+        [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.tools :as persistence]
+            [apps.persistence.tool-requests :as tool-req-db]
+            [apps.metadata.tool-requests :as tool-requests]
             [apps.tools.permissions :as permissions]
+            [apps.util.config :as config]
+            [clojure-commons.exception-util :as exception-util]
             [clojure.tools.logging :as log]))
 
 (defn format-tool-listing
@@ -147,7 +151,29 @@
   (delete-tool tool-id))
 
 (defn admin-publish-tool
-  [user {:keys [id] :as tool}]
+  [{user :shortUsername :as current-user} {:keys [id] :as tool}]
   (admin-update-tool user false tool)
   (perms-client/make-tool-public id)
+  (tool-requests/complete-tool-request id (config/uid-domain) current-user)
   (get-tool user id))
+
+(defn- validate-tool-for-tool-request
+  "Ensures the given tool ID exists, the user has 'own' permission for that tool, the tool is not deprecated,
+   and a tool request has not already been submitted for the tool."
+  [user tool-id]
+  (let [image (-> (get-tool user tool-id) :container :image)]
+    (permissions/check-tool-permissions user "own" [tool-id])
+    (when (:deprecated image)
+      (throw+ {:type  :clojure-commons.exception/bad-request-field
+               :error "Tool is using a deprecated image and can not be made public."
+               :image image})))
+  (if-let [request-id (tool-req-db/get-request-id-for-tool tool-id)]
+    (exception-util/exists "A tool request has already been submitted for the given tool"
+                           :tool_id tool-id
+                           :tool_request_id request-id)))
+
+(defn submit-tool-request
+  "Validates the tool with the given tool_id in the request, if any, before submitting the new tool request."
+  [{:keys [shortUsername] :as user} {:keys [tool_id] :as request}]
+  (when tool_id (validate-tool-for-tool-request shortUsername tool_id))
+  (tool-requests/submit-tool-request user request))

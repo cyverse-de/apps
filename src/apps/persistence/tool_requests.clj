@@ -110,3 +110,11 @@
                   (offset row-offset))
        :reqs]
       (where-if-defined {:status status-clause}))))
+
+(defn get-request-id-for-tool
+  [tool-id]
+  (-> (select :tool_requests
+              (fields :id)
+              (where {:tool_id tool-id}))
+      first
+      :id))
