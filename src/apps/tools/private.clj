@@ -26,11 +26,11 @@
 
 (defn- restrict-private-tool-container
   "Restrict the networking, CPU shares, and memory limits for the tool's container."
-  [{:keys [cpu_shares memory_limit] :or {cpu_shares   (cfg/private-tool-cpu-shares)
+  [{:keys [pids_limit memory_limit] :or {pids_limit   (cfg/private-tool-pids-limit)
                                          memory_limit (cfg/private-tool-memory-limit)}
     :as container}]
   (assoc container :network_mode "none"
-                   :cpu_shares   (restrict-private-tool-setting cpu_shares   (cfg/private-tool-cpu-shares))
+                   :pids_limit   (restrict-private-tool-setting pids_limit   (cfg/private-tool-pids-limit))
                    :memory_limit (restrict-private-tool-setting memory_limit (cfg/private-tool-memory-limit))))
 
 (defn- restrict-private-tool-time-limit
