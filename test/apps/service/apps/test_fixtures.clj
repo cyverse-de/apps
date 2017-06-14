@@ -40,7 +40,7 @@
                                 :order           1
                                 :required        false
                                 :type            "FileOutput"
-                                :valicators      []
+                                :validators      []
                                 :value           "out.txt"}]}]
    :name  "Permissions Test App"
    :tools [{:attribution ""
@@ -89,6 +89,8 @@
   ([user name]
    (sql/delete :apps (sql/where {:name name}))
    (let [app (apps/add-app user jp/de-client-name (assoc app-definition :name name))]
+     (doseq [tool (:tools app-definition)]
+       (tools/admin-publish-tool user tool))
      (apps/owner-add-app-docs user de-system-id (:id app) {:documentation "This is a test."})
      app)))
 
