@@ -175,11 +175,3 @@
 
 (def get-public-app-ids (partial get-public-resource-ids "app"))
 (def get-public-tool-ids (partial get-public-resource-ids "tool"))
-
-(defn- get-directly-accessible-resource-ids [resource-type user]
-  (->> (pc/get-subject-permissions-for-resource-type (client) "user" user resource-type false)
-       :permissions
-       (map (comp uuidify :name :resource))
-       set))
-
-(def get-directly-accessible-app-ids (partial get-directly-accessible-resource-ids "app"))

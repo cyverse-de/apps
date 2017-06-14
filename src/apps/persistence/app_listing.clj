@@ -59,6 +59,12 @@
       (where query {:id [in app-ids]}))
     query))
 
+(defn- add-omitted-app-id-where-clause
+  [query {:keys [omitted-app-ids]}]
+  (if (seq omitted-app-ids)
+    (where query {:id [not-in omitted-app-ids]})
+    query))
+
 (defn- add-agave-pipeline-where-clause
   [query {agave-enabled? :agave-enabled :or {agave-enaled? "false"}}]
   (let [agave-enabled? (Boolean/parseBoolean agave-enabled?)]
@@ -106,6 +112,7 @@
   (-> (select* app_listing)
       (fields (raw "count(DISTINCT app_listing.id) AS total"))
       (add-app-id-where-clause query-opts)
+      (add-omitted-app-id-where-clause query-opts)
       (add-agave-pipeline-where-clause query-opts)))
 
 (defn- get-app-count-base-query
@@ -190,6 +197,7 @@
         (add-app-listing-is-favorite-field workspace_root_group_id favorites_group_index)
         (add-app-listing-ratings-fields user_id)
         (add-app-id-where-clause query_opts)
+        (add-omitted-app-id-where-clause query_opts)
         (add-agave-pipeline-where-clause query_opts)
         (add-query-limit row_limit)
         (add-query-offset row_offset)
@@ -391,6 +399,7 @@
        (where {:deleted false})
        (add-public-apps-by-user-where-clause username params)
        (add-app-id-where-clause params)
+       (add-omitted-app-id-where-clause params)
        (add-agave-pipeline-where-clause params)
        (select))))
 
@@ -402,29 +411,26 @@
       (select)))
 
 (defn list-shared-apps
-  "Lists apps that have been shared with a user. For the time being, this works by listing all apps
-  that the user did not integrate, but for which the user has direct access permission."
+  "Lists apps that have been shared with a user. For the time being, this works by listing all non-public
+   apps that the user did not integrate."
   [workspace favorites-group-index params]
-  (if (seq (:directly-accessible-app-ids params))
-    (let [params (assoc params :app-ids (:directly-accessible-app-ids params))]
-      (-> (get-app-listing-base-query workspace favorites-group-index params)
-          (where {:integrator_id [not= (:user_id workspace)]})
-          select))
-    []))
+  (let [params (assoc params :omitted-app-ids (:public-app-ids params))]
+    (-> (get-app-listing-base-query workspace favorites-group-index params)
+        (where {:integrator_id [not= (:user_id workspace)]})
+        select)))
 
 (defn count-shared-apps
-  "Counts the number of apps that have been shared with a user. For the time being, this works by
-  counting all apps that the user did not integrate, but for which the has direct access permission."
+  "Lists apps that have been shared with a user. For the time being, this works by counting all non-public
+   apps that the user did not integrate."
   [workspace favorites-group-index params]
-  (if (seq (:directly-accessible-app-ids params))
-    (let [params (assoc params :app-ids (:directly-accessible-app-ids params))]
-      (-> (select* [:app_listing :l])
-          (aggregate (count :*) :count)
-          (where {:deleted false})
-          (where {:integrator_id [not= (:user_id workspace)]})
-          (add-app-id-where-clause params)
-          select first :count))
-    0))
+  (let [params (assoc params :omitted-app-ids (:public-app-ids params))]
+    (-> (select* [:app_listing :l])
+        (aggregate (count :*) :count)
+        (where {:deleted false})
+        (where {:integrator_id [not= (:user_id workspace)]})
+        (add-app-id-where-clause params)
+        (add-omitted-app-id-where-clause params)
+        select first :count)))
 
 (defn list-apps-by-id
   "Lists all apps with an ID in the the given app-ids list."

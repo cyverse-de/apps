@@ -35,9 +35,8 @@
 (defn- augment-listing-params
   ([params short-username perms]
    (assoc params
-          :app-ids                     (set (keys perms))
-          :public-app-ids              (perms-client/get-public-app-ids)
-          :directly-accessible-app-ids (perms-client/get-directly-accessible-app-ids short-username)))
+          :app-ids        (set (keys perms))
+          :public-app-ids (perms-client/get-public-app-ids)))
   ([params short-username]
    (augment-listing-params params short-username (perms-client/load-app-permissions short-username))))
 
