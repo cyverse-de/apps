@@ -102,10 +102,10 @@
   [props config-valid configs]
   "apps.tools.private.time-limit-seconds" (* 24 60 60)) ;; 24 hours
 
-(cc/defprop-optint private-tool-cpu-shares
-  "The cpu shares limit to use when adding new private tools."
+(cc/defprop-optint private-tool-pids-limit
+  "The PIDs limit to use when adding new private tools."
   [props config-valid configs]
-  "apps.tools.private.cpu-shares" 4)
+  "apps.tools.private.pids-limit" 64)
 
 (cc/defprop-optint private-tool-memory-limit
   "The memory limit, in bytes, to use when adding new private tools."

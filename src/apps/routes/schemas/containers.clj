@@ -39,6 +39,7 @@
 (s/defschema Settings
   (describe
    {(s/optional-key :cpu_shares)         Integer
+    (s/optional-key :pids_limit)         Integer
     (s/optional-key :memory_limit)       Long
     (s/optional-key :min_memory_limit)   Long
     (s/optional-key :min_cpu_cores)      Integer

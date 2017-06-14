@@ -157,7 +157,7 @@
 Note that `type` is always set to `executable`, `restricted` is always set to `true`,
 and `container.network_mode` is always set to `none`, even if another value is set in the request.
 
-Configured default values will be used for the `time_limit_seconds`, `container.cpu_shares`, and `container.memory_limit` fields
+Configured default values will be used for the `time_limit_seconds`, `container.pids_limit`, and `container.memory_limit` fields
 The request may include a value less than the configured default if it's also greater than 0,
 otherwise the default value will be used."
         (ok (add-private-tool current-user body)))
@@ -254,7 +254,7 @@ and a configured limit may override the `time_limit_seconds` field set in the re
 but if the `container` object is present in the request, then all container settings must be included in it.
 Any existing settings not included in the request's `container` object will be removed,
 except `network_mode` is always set to `none` and configured limits may override values set (or omitted)
-for the `cpu_shares` and `memory_limit` fields."
+for the `pids_limit` and `memory_limit` fields."
          (ok (update-private-tool user (assoc body :id tool-id))))
 
   (GET "/:tool-id/apps" []
