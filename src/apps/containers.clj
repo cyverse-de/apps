@@ -367,7 +367,8 @@
 (defn- filter-container-settings
   [settings-map]
   (select-keys settings-map
-    [:cpu_shares
+    [:pids_limit
+     :cpu_shares
      :memory_limit
      :min_memory_limit
      :min_cpu_cores
@@ -434,6 +435,7 @@
     (when (tool-has-settings? id)
       (->  (select container-settings
                    (fields :id
+                           :pids_limit
                            :cpu_shares
                            :memory_limit
                            :min_memory_limit
