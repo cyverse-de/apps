@@ -79,6 +79,15 @@
     (replace-access-token api-name username expires-at refresh-token access-token)
     (insert-access-token api-name username expires-at refresh-token access-token)))
 
+(defn remove-access-token
+  "Removes an OAuth access token from the database."
+  [api-name username]
+  (delete :access_tokens
+          (where {:webapp  api-name
+                  :user_id (subselect :users
+                                      (fields :id)
+                                      (where {:username username}))})))
+
 (defn- remove-prior-authorization-requests
   "Removes any previous OAuth authorization requests for the user."
   [username]
