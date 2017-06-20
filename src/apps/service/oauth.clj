@@ -66,6 +66,13 @@
   (or (format-admin-token-info (op/get-access-token api-name username))
       (cxu/not-found "access token not found" :api_name api-name)))
 
+(defn remove-token-info
+  "Removes a user's token information if it exists."
+  [api-name {:keys [username]}]
+  (when-not (op/get-access-token api-name username)
+    (cxu/not-found "access token not found" :api_name api-name))
+  (op/remove-access-token api-name username))
+
 (defn authorization-uri
   "Generates an authorization URI for a remote API."
   [{:keys [api-name] :as server-info} username state-info]

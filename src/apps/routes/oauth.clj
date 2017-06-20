@@ -28,11 +28,21 @@
     (ok (oauth/get-redirect-uris current-user))))
 
 (defroutes admin-oauth
-  (GET "/token-info/:api-name" []
+  (context "/token-info/:api-name" []
     :path-params [api-name :- ApiName]
-    :query       [params SecuredProxyQueryParams]
-    :return      AdminTokenInfo
-    :summary     "Return information about an OAuth access token."
-    (ok (oauth/get-admin-token-info api-name (if (:proxy-user params)
-                                               (load-user (:proxy-user params))
-                                               current-user)))))
+
+    (GET "/" []
+      :query   [params SecuredProxyQueryParams]
+      :return  AdminTokenInfo
+      :summary "Return information about an OAuth access token."
+      (ok (oauth/get-admin-token-info api-name (if (:proxy-user params)
+                                                 (load-user (:proxy-user params))
+                                                 current-user))))
+
+    (DELETE "/" []
+      :query   [params SecuredProxyQueryParams]
+      :summary "Remove a user's OAuth access token from the DE."
+      (oauth/remove-token-info api-name (if (:proxy-user params)
+                                          (load-user (:proxy-user params))
+                                          current-user))
+      (ok))))
