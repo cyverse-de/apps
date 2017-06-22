@@ -1,6 +1,5 @@
 (ns apps.containers
-  (:use [apps.persistence.app-metadata :only [get-public-tools-by-image-id
-                                              get-tools-by-image-id]]
+  (:use [apps.persistence.app-metadata :only [get-public-tools-by-image-id]]
         [apps.persistence.entities :only [tools
                                           container-images
                                           container-settings
