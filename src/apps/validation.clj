@@ -196,9 +196,9 @@
                                first)]
     (exception-util/exists "A Tool with that name and version already exists." :tool existing-tool)))
 
-(defn validate-image-not-public
+(defn validate-image-not-used-in-public-apps
   [image-id]
-  (let [tools (persistence/get-public-tools-by-image-id image-id)]
+  (let [tools (persistence/get-tools-in-public-apps-by-image-id image-id)]
     (when-not (empty? tools)
       (throw+ {:type  :clojure-commons.exception/not-writeable
                :error "Image already used by public tools."

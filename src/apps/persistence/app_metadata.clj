@@ -266,8 +266,8 @@
                   [:container_images.deprecated :deprecated])
           (where {:app_id app-id})))
 
-(defn get-public-tools-by-image-id
-  "Loads information about public tools associated with a Docker image."
+(defn get-tools-in-public-apps-by-image-id
+  "Loads information about tools used by public apps associated with a Docker image."
   [img-id]
   (select (get-tool-listing-base-query)
           (modifier "DISTINCT")

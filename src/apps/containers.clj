@@ -1,5 +1,5 @@
 (ns apps.containers
-  (:use [apps.persistence.app-metadata :only [get-public-tools-by-image-id]]
+  (:use [apps.persistence.app-metadata :only [get-tools-in-public-apps-by-image-id]]
         [apps.persistence.entities :only [tools
                                           container-images
                                           container-settings
@@ -11,7 +11,7 @@
         [apps.persistence.tools :only [update-tool]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals remove-empty-vals]]
-        [apps.validation :only [validate-image-not-public
+        [apps.validation :only [validate-image-not-used-in-public-apps
                                 validate-image-not-used
                                 validate-tool-not-used-in-public-apps]]
         [kameleon.uuids :only [uuidify]]
@@ -60,7 +60,7 @@
 (defn image-public-tools
   [id]
   (assert-not-nil [:image_id id] (image-info id))
-  {:tools (map remove-nil-vals (get-public-tools-by-image-id id))})
+  {:tools (map remove-nil-vals (get-tools-in-public-apps-by-image-id id))})
 
 (defn tool-image-info
   "Returns a map containing information about a container image. Info is looked up by the tool UUID"
@@ -107,7 +107,7 @@
   (let [update-info (select-keys image-info [:name :tag :url :deprecated])]
     (when-not (empty? update-info)
       (when-not overwrite-public
-        (validate-image-not-public image-id))
+        (validate-image-not-used-in-public-apps image-id))
       (log/warn user "updating image" image-id image-info)
       (sql/update container-images
         (set-fields update-info)
