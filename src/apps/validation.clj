@@ -201,13 +201,14 @@
   (let [tools (persistence/get-tools-in-public-apps-by-image-id image-id)]
     (when-not (empty? tools)
       (throw+ {:type  :clojure-commons.exception/not-writeable
-               :error "Image already used by public tools."
+               :error "Image already used by tools in public apps."
                :tools tools}))))
 
 (defn validate-image-not-used
   [image-id]
   (let [tools (-> (brief-tool-details-base-query)
-                  (where {:container_images_id image-id})
+                  (where (or {:container_images_id image-id}
+                             {:id [in (persistence/subselect-tool-ids-using-data-container image-id)]}))
                   select)]
     (when-not (empty? tools)
       (throw+ {:type  :clojure-commons.exception/not-writeable
