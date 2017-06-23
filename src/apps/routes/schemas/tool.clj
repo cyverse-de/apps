@@ -243,6 +243,9 @@
 (defschema ToolListing
   {:tools (describe [ToolListingItem] "Listing of App Tools")})
 
+(defschema ImagePublicAppToolListing
+  {:tools (describe [Tool] "Listing of Public App Tools")})
+
 (defschema ErrorPrivateToolRequestBadParam
   (assoc ErrorResponse
     :error_code (describe (enum ERR_EXISTS ERR_BAD_OR_MISSING_FIELD) "Exists or Bad Field error code")))
