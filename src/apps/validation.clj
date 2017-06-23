@@ -183,24 +183,33 @@
   ([m k path]
      (validate-json-field* m k (add-field path k))))
 
+(defn- brief-tool-details-base-query
+  []
+  (-> (select* tools)
+      (fields :id :name :version)))
+
 (defn verify-tool-name-version
   [tool]
-  (when-let [existing-tool (first (select tools
-                                          (fields :id :name :version)
-                                          (where (select-keys tool [:name :version]))))]
+  (when-let [existing-tool (-> (brief-tool-details-base-query)
+                               (where (select-keys tool [:name :version]))
+                               select
+                               first)]
     (exception-util/exists "A Tool with that name and version already exists." :tool existing-tool)))
 
-(defn validate-image-not-public
+(defn validate-image-not-used-in-public-apps
   [image-id]
-  (let [tools (persistence/get-public-tools-by-image-id image-id)]
+  (let [tools (persistence/get-tools-in-public-apps-by-image-id image-id)]
     (when-not (empty? tools)
       (throw+ {:type  :clojure-commons.exception/not-writeable
-               :error "Image already used by public tools."
+               :error "Image already used by tools in public apps."
                :tools tools}))))
 
 (defn validate-image-not-used
   [image-id]
-  (let [tools (persistence/get-tools-by-image-id image-id)]
+  (let [tools (-> (brief-tool-details-base-query)
+                  (where (or {:container_images_id image-id}
+                             {:id [in (persistence/subselect-tool-ids-using-data-container image-id)]}))
+                  select)]
     (when-not (empty? tools)
       (throw+ {:type  :clojure-commons.exception/not-writeable
                :error "Image already used by tools."

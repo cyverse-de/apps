@@ -266,20 +266,27 @@
                   [:container_images.deprecated :deprecated])
           (where {:app_id app-id})))
 
-(defn get-tools-by-image-id
-  "Loads information about the tools associated with a Docker image."
-  [image-id]
-  (select (get-tool-listing-base-query)
-          (modifier "DISTINCT")
-          (where {:container_images_id image-id})))
+(defn subselect-tool-ids-using-data-container
+  "Query subselect for tool IDs of tools using a Docker image as a data container."
+  [data-container-image-id]
+  (subselect tools
+             (fields :id)
+             (join [:container_settings :settings]
+                   {:settings.tools_id :tools.id})
+             (join [:container_volumes_from :vf]
+                   {:vf.container_settings_id :settings.id})
+             (join [:data_containers :data]
+                   {:data.id :vf.data_containers_id})
+             (where {:data.container_images_id data-container-image-id})))
 
-(defn get-public-tools-by-image-id
-  "Loads information about public tools associated with a Docker image."
+(defn get-tools-in-public-apps-by-image-id
+  "Loads information about tools used by public apps associated with a Docker image."
   [img-id]
   (select (get-tool-listing-base-query)
           (modifier "DISTINCT")
-          (where {:container_images_id img-id
-                  :app_id              [in (perms-client/get-public-app-ids)]})))
+          (where {:app_id [in (perms-client/get-public-app-ids)]})
+          (where (or {:container_images_id img-id}
+                     {:tool_id [in (subselect-tool-ids-using-data-container img-id)]}))))
 
 (defn get-app-ids-by-tool-id
   "Gets a list of IDs of the apps using the tool with the given ID."
