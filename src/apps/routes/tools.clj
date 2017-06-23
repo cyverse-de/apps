@@ -104,7 +104,7 @@
   (GET "/:image-id/public-tools" []
         :path-params [image-id :- ImageId]
         :query [params SecuredQueryParams]
-        :return ToolListing
+        :return ImagePublicAppToolListing
         :summary "Container Image Public Tools"
         :description "Returns a list of a public tools using the given image ID."
         (ok (image-public-tools image-id))))
