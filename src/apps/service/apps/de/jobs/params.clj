@@ -44,7 +44,7 @@
   [config retain? param]
   (let [param-value (config (util/param->qual-key param))
         paths       (if (sequential? param-value) param-value [param-value])]
-    (map (partial build-input retain? param) (remove string/blank? paths))))
+    (map (partial build-input retain? param) (filter fs/absolute? paths))))
 
 (defn build-inputs
   "Builds the list of inputs for a step in an app. The current implementation performs the
