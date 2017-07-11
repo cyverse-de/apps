@@ -31,7 +31,7 @@
   configuration lookup twice (once in build-input and once in build-inputs), but the code seems
   clearest that way."
   [retain? param path]
-  (let [filename (when-not (nil? path) (fs/base-name path))]
+  (let [filename (fs/base-name path)]
     {:id           (:id param)
      :multiplicity (util/input-multiplicities (:type param))
      :name         filename
@@ -44,7 +44,7 @@
   [config retain? param]
   (let [param-value (config (util/param->qual-key param))
         paths       (if (sequential? param-value) param-value [param-value])]
-    (map (partial build-input retain? param) paths)))
+    (map (partial build-input retain? param) (remove string/blank? paths))))
 
 (defn build-inputs
   "Builds the list of inputs for a step in an app. The current implementation performs the
