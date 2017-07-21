@@ -49,6 +49,9 @@
    (s/optional-key :attribute_values)
    (describe [String] "A list of additional attributes applied to the subject.")
 
+   (s/optional-key :description)
+   (describe String "The subject description")
+
    :source_id
    (describe String "The ID of the source of the subject information.")})
 
