@@ -24,9 +24,9 @@
        (into {})))
 
 (defn- get-file-stats
-  [user paths]
+  [user paths & {:keys [filter-include]}]
   (try+
-   (data-info/get-file-stats user paths)
+   (data-info/get-path-info user :paths paths :filter-include filter-include)
    (catch Object _
      (log/error (:throwable &throw-context)
                 "job submission failed: Could not lookup info types of inputs.")
@@ -45,7 +45,7 @@
   [user input-paths-by-id]
   (->> (flatten (vals input-paths-by-id))
        (remove string/blank?)
-       (get-file-stats user)
+       (#(get-file-stats user % :filter-include "infoType,path,file-size"))
        (:paths)
        (map val)
        (filter (comp (partial = (config/path-list-info-type)) :infoType))))
@@ -141,7 +141,7 @@
   [user submission]
   (let [output-dir (ft/build-result-folder-path submission)]
     (try+
-     (data-info/get-file-stats user [output-dir])
+     (data-info/get-path-info user :paths [output-dir] :filter-include "path")
      ; FIXME Update this when data-info's exception handling is updated
      (catch [:status 500] {:keys [body]}
        ;; The caught error can't be rethrown since we parse the body to examine its error code.

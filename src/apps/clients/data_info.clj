@@ -4,6 +4,7 @@
             [cheshire.core :as cheshire]
             [clj-http.client :as http]
             [clojure.string :as string]
+            [medley.core :refer [remove-vals]]
             [apps.util.config :as config]
             [apps.util.service :as service]))
 
@@ -16,20 +17,23 @@
   (str (apply curl/url (config/data-info-base-url)
               (map #(string/replace % #"^/+|/+$" "") components))))
 
-;; currently doesn't support passing UUIDs, but could be changed to
-(defn get-file-stats
-  [user paths]
+(defn get-path-info
+  [user & {:keys [paths ids validation-behavior filter-include filter-exclude]}]
   (when (seq paths)
     (:body
-     (http/post (data-info-url "stat-gatherer")
-                {:query-params (secured-params user)
-                 :body         (cheshire/encode {:paths paths})
+     (http/post (data-info-url "path-info")
+                {:query-params (remove-vals nil?
+                                            (assoc (secured-params user)
+                                                    :validation-behavior validation-behavior
+                                                    :filter-include filter-include
+                                                    :filter-exclude filter-exclude))
+                 :body         (cheshire/encode {:paths paths :ids ids})
                  :content-type :json
                  :as           :json}))))
 
 (defn get-data-ids
   [user paths]
-  (->> (get-file-stats user paths)
+  (->> (get-path-info user :paths paths :filter-include "id")
        :paths
        (map-kv (fn [k v] [k (:id v)]))))
 
