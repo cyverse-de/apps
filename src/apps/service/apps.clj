@@ -1,6 +1,7 @@
 (ns apps.service.apps
   (:use [apps.constants :only [de-system-id]]
         [apps.service.oauth :only [authorization-uri has-access-token]]
+        [apps.util.conversions :only [remove-nil-vals]]
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+ throw+]]
@@ -148,7 +149,8 @@
 
 (defn app-publishable?
   [user system-id app-id]
-  {:publishable (.isAppPublishable (get-apps-client user) system-id app-id)})
+  (let [[publishable? reason] (.isAppPublishable (get-apps-client user) system-id app-id)]
+    (remove-nil-vals {:publishable publishable? :reason reason})))
 
 (defn make-app-public
   [user system-id app]
