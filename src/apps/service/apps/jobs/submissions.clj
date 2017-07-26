@@ -24,9 +24,10 @@
        (into {})))
 
 (defn- get-file-stats
-  [user paths & {:keys [filter-include]}]
+  "Gets information for the provided paths. Filters to only path, infoType, and file size."
+  [user paths]
   (try+
-   (data-info/get-path-info user :paths paths :filter-include filter-include)
+   (data-info/get-path-info user :paths paths :filter-include "infoType,path,file-size")
    (catch Object _
      (log/error (:throwable &throw-context)
                 "job submission failed: Could not lookup info types of inputs.")
@@ -45,7 +46,7 @@
   [user input-paths-by-id]
   (->> (flatten (vals input-paths-by-id))
        (remove string/blank?)
-       (#(get-file-stats user % :filter-include "infoType,path,file-size"))
+       (get-file-stats user)
        (:paths)
        (map val)
        (filter (comp (partial = (config/path-list-info-type)) :infoType))))
