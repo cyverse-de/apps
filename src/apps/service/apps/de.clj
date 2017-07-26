@@ -119,7 +119,7 @@
 
   (isAppPublishable [_ system-id app-id]
     (validate-system-id system-id)
-    (first (app-validation/app-publishable? user (uuidify app-id))))
+    (app-validation/app-publishable? user (uuidify app-id)))
 
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)

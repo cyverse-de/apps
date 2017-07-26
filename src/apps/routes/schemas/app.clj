@@ -565,3 +565,7 @@
            (optional-key :deleted)    AppDeletedParam
            (optional-key :disabled)   AppDisabledParam
            OptionalGroupsKey          (describe [AppGroup] GroupListDocs))))
+
+(defschema AppPublishableResponse
+  {:publishable           (describe Boolean "True if the app is publishable.")
+   (optional-key :reason) (describe String "The reason the app can't be published if it's not publishable.")})

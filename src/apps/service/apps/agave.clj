@@ -27,6 +27,8 @@
 
 (def app-categorization-rejection "HPC apps cannot be placed in DE app categories.")
 
+(def app-publishable-error "HPC apps may not be published via the DE at this time.")
+
 (defn- reject-app-integration-request
   []
   (service/bad-request app-integration-rejection))
@@ -147,7 +149,7 @@
 
   (isAppPublishable [_ system-id app-id]
     (validate-system-id system-id)
-    false)
+    [false app-publishable-error])
 
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)

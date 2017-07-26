@@ -234,6 +234,7 @@
 
       (GET "/is-publishable" []
         :query [params SecuredQueryParams]
+        :return AppPublishableResponse
         :summary "Determine if an App Can be Made Public"
         :description "A multi-step App can't be made public if any of the Tasks that are included in it
         are not public. This endpoint returns a true flag if the App is a single-step App or it's a
