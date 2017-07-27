@@ -56,6 +56,7 @@
                    {:name "reference-genomes", :description "Reference Genome endpoints."}
                    {:name "oauth", :description "OAuth callback and information endpoints."}
                    {:name "collaborator-routes", :description "Collaborator Information Routes"}
+                   {:name "admin-analyses", :description "Admin Analysis Endpoints"}
                    {:name "admin-apps", :description "Admin App endpoints."}
                    {:name "admin-app-metadata", :description "Admin App Metadata endpoints."}
                    {:name "admin-categories", :description "Admin App Category endpoints."}
@@ -134,6 +135,9 @@
     (context "/collaborators" []
       :tags ["collaborator-routes"]
       collaborator-routes/collaborators)
+    (context "/admin/analyses" []
+      :tags ["admin-analyses"]
+      admin-routes/admin-analyses)
     (context "/admin/apps" []
       :tags ["admin-apps"]
       admin-routes/admin-apps)

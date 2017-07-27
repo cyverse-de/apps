@@ -5,6 +5,10 @@
   (:import [java.util UUID]))
 
 (def Timestamp (describe String "A timestamp in milliseconds since the epoch."))
+(def ExternalId (describe NonBlankString "The analysis identifier from the job execution system."))
+
+(defschema ExternalIdList
+  {:external_ids (describe [ExternalId] "The list of external identifiers.")})
 
 (defschema BatchStatus
   {:total     (describe Int "The total number of jobs in the batch.")
@@ -12,12 +16,9 @@
    :running   (describe Int "The number of running jobs in the batch.")
    :submitted (describe Int "The number of submitted jobs in the batch.")})
 
-(defschema Analysis
+(defschema BaseAnalysis
   {(optional-key :app_description)
    (describe String "A description of the app used to perform the analysis.")
-
-   :app_disabled
-   (describe Boolean "Indicates whether the app is currently disabled.")
 
    :app_id
    (describe String "The ID of the app used to perform the analysis.")
@@ -65,10 +66,22 @@
    (describe UUID "The identifier of the parent analysis.")
 
    (optional-key :batch_status)
-   (describe BatchStatus "A summary of the status of the batch.")
+   (describe BatchStatus "A summary of the status of the batch.")})
 
-   :can_share
-   (describe Boolean "Indicates whether or not the analysis can be shared.")})
+(defschema AdminAnalysis
+  (assoc BaseAnalysis
+    :external_ids (describe [ExternalId] "The list of external identifiers.")))
+
+(defschema AdminAnalysisList
+  {:analyses (describe [AdminAnalysis] "The list of anlayses.")})
+
+(defschema Analysis
+  (assoc BaseAnalysis
+    :app_disabled
+    (describe Boolean "Indicates whether the app is currently disabled.")
+
+    :can_share
+    (describe Boolean "Indicates whether or not the analysis can be shared.")))
 
 (defschema AnalysisList
   {:analyses  (describe [Analysis] "The list of analyses.")

@@ -185,6 +185,9 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
+  (adminListJobsWithExternalIds [_ external-ids]
+    (job-listings/admin-list-jobs-with-external-ids external-ids))
+
   (loadAppTables [_ qualified-app-ids]
     (validate-system-ids (set (map :system_id qualified-app-ids)))
     (listings/load-app-tables agave (set (map :app_id qualified-app-ids))))
