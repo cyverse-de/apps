@@ -46,8 +46,8 @@
        (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))
        (= (get perms id) "own")))
 
-(defn format-job
-  [apps-client perms app-tables rep-steps {:keys [parent_id id] :as job}]
+(defn format-base-job
+  [{:keys [parent_id id] :as job}]
   (remove-nil-vals
    {:app_description (:app_description job)
     :app_id          (:app_id job)
@@ -64,11 +64,22 @@
     :deleted         (:deleted job)
     :notify          (:notify job false)
     :wiki_url        (:app_wiki_url job)
-    :app_disabled    (app-disabled? app-tables (:system_id job) (:app_id job))
     :parent_id       parent_id
     :batch           (:is_batch job)
-    :batch_status    (when (:is_batch job) (format-batch-status id))
-    :can_share       (job-supports-sharing? apps-client perms rep-steps job)}))
+    :batch_status    (when (:is_batch job) (format-batch-status id))}))
+
+(defn format-admin-job
+  [job]
+  (remove-nil-vals
+   (assoc (format-base-job job)
+     :external_ids (vec (.getArray (:external_ids job))))))
+
+(defn format-job
+  [apps-client perms app-tables rep-steps job]
+  (remove-nil-vals
+   (assoc (format-base-job job)
+     :app_disabled (app-disabled? app-tables (:system_id job) (:app_id job))
+     :can_share    (job-supports-sharing? apps-client perms rep-steps job))))
 
 (defn- list-jobs*
   [{:keys [username]} search-params types analysis-ids]
@@ -91,6 +102,9 @@
     {:analyses  (mapv (partial format-job apps-client perms app-tables rep-steps) jobs)
      :timestamp (str (System/currentTimeMillis))
      :total     (count-jobs user params types analysis-ids)}))
+
+(defn admin-list-jobs-with-external-ids [external-ids]
+  {:analyses (mapv format-admin-job (jp/list-jobs-by-external-id external-ids))})
 
 (defn list-job
   [apps-client job-id]

@@ -382,3 +382,7 @@
   [user]
   {:de_system_id   de-system-id
    :all_system_ids (.listSystemIds (get-apps-client user))})
+
+(defn admin-list-jobs-with-external-ids
+  [user external-ids]
+  (transaction (.adminListJobsWithExternalIds (get-apps-client user) external-ids)))

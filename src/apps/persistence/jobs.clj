@@ -355,6 +355,20 @@
       (where {:j.id [in (map uuidify job-ids)]})
       (select)))
 
+(defn list-jobs-by-external-id
+  "Gets a listing of jobs with the given external identifiers. The where clause may seem a bit odd here because
+   the job steps are joined in. This is necessary to ensure that all of the external IDs are listed for every
+   job even if only one external ID from a particular job is provided to the query."
+  [external-ids]
+  (-> (select* (job-base-query))
+      (join [:job_steps :s] {:j.id :s.job_id})
+      (fields [(sqlfn :array_agg :s.external_id) :external_ids])
+      (group :j.app_description :j.system_id :j.app_id :j.app_name :j.job_description :j.end_date :j.id :j.job_name
+             :j.result_folder_path :j.start_date :j.status :j.username :j.app_wiki_url :j.job_type :j.parent_id
+             :j.is_batch :j.notify)
+      (where (exists (subselect :job_steps (where {:job_id :j.id :external_id [in external-ids]}))))
+      (select)))
+
 (defn list-child-jobs
   "Lists the child jobs within a batch job."
   [batch-id]

@@ -152,6 +152,9 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
+  (adminListJobsWithExternalIds [_ external-ids]
+    (job-listings/admin-list-jobs-with-external-ids external-ids))
+
   (loadAppTables [_ qualified-app-ids]
     (doall (mapcat (fn [[system-id qual-ids]]
                      (.loadAppTables (util/get-apps-client clients system-id) qual-ids))

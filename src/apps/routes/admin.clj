@@ -8,6 +8,7 @@
                                                 update-reference-genome]]
         [apps.metadata.tool-requests]
         [apps.routes.params]
+        [apps.routes.schemas.analysis.listing]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
         [apps.routes.schemas.reference-genome]
@@ -48,6 +49,26 @@
     :description "This endpoint is used by Discovery Environment administrators to update the status
     of a tool request."
     (ok (update-tool-request request-id (config/uid-domain) current-user body))))
+
+(defroutes admin-analyses
+  (context "/by-external-id" []
+
+    (POST "/" []
+      :query [params SecuredQueryParams]
+      :body [body ExternalIdList]
+      :return AdminAnalysisList
+      :summary "Look Up Analyses by External ID"
+      :description "This endpoint is used to retrieve information about analyses with a given set of external
+      identifiers."
+      (ok (apps/admin-list-jobs-with-external-ids current-user (:external_ids body))))
+
+    (GET "/:external-id" []
+      :path-params [external-id :- ExternalId]
+      :query [params SecuredQueryParams]
+      :return AdminAnalysisList
+      :summary "Look Up an Analysis by External ID"
+      :description "This endpoint is used to retrieve information about an analysis with a given external identifier."
+      (ok (apps/admin-list-jobs-with-external-ids current-user [external-id])))))
 
 (defroutes admin-apps
   (GET "/" []

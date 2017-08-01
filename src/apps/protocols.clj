@@ -41,6 +41,7 @@
   (copyPipeline [_ app-id])
   (editPipeline [_ app-id])
   (listJobs [_ params])
+  (adminListJobsWithExternalIds [_ external-ids])
   (loadAppTables [_ qualified-app-ids])
   (submitJob [_ submission])
   (submitJobStep [_ job-id submission])
