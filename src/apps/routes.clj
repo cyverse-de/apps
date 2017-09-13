@@ -26,152 +26,157 @@
             [apps.routes.tools :as tool-routes]
             [apps.routes.users :as user-routes]
             [apps.routes.workspaces :as workspace-routes]
+            [apps.routes.webhooks :as webhooks-routes]
             [apps.util.config :as config]
             [apps.util.service :as service]
             [clojure-commons.exception :as cx]))
 
 (defapi app
-  {:exceptions cx/exception-handlers}
-  (swagger-routes
-    {:ui config/docs-uri
-     :options {:ui {:validatorUrl nil}}
-     :data {:info {:title "Discovery Environment Apps API"
-                   :description "Documentation for the Discovery Environment Apps REST API"
-                   :version "2.8.1"}
-            :tags [{:name "service-info", :description "Service Status Information"}
-                   {:name "callbacks", :description "General callback endpoints"}
-                   {:name "app-categories", :description "App Category endpoints."}
-                   {:name "app-hierarchies", :description "App Hierarchy endpoints."}
-                   {:name "app-element-types", :description "App Element endpoints."}
-                   {:name "apps", :description "App endpoints."}
-                   {:name "app-metadata", :description "App Metadata endpoints."}
-                   {:name "pipelines", :description "Pipeline endpoints."}
-                   {:name "analyses", :description "Analysis endpoints."}
-                   {:name "bootstrap", :description "Bootstrap endpoints."}
-                   {:name "tool-data-containers", :description "Tool Docker Data Container endpoints."}
-                   {:name "tools", :description "Tool endpoints."}
-                   {:name "workspaces", :description "Workspace endpoints."}
-                   {:name "users", :description "User endpoints."}
-                   {:name "tool-requests", :description "Tool Request endpoints."}
-                   {:name "reference-genomes", :description "Reference Genome endpoints."}
-                   {:name "oauth", :description "OAuth callback and information endpoints."}
-                   {:name "collaborator-routes", :description "Collaborator Information Routes"}
-                   {:name "admin-analyses", :description "Admin Analysis Endpoints"}
-                   {:name "admin-apps", :description "Admin App endpoints."}
-                   {:name "admin-app-metadata", :description "Admin App Metadata endpoints."}
-                   {:name "admin-categories", :description "Admin App Category endpoints."}
-                   {:name "admin-ontologies", :description "Admin App Ontology endpoints."}
-                   {:name "admin-container-images", :description "Admin Tool Docker Images endpoints."}
-                   {:name "admin-data-containers", :description "Admin Docker Data Container endpoints."}
-                   {:name "admin-tools", :description "Admin Tool endpoints."}
-                   {:name "admin-reference-genomes", :description "Admin Reference Genome endpoints."}
-                   {:name "admin-tool-requests", :description "Admin Tool Request endpoints."}
-                   {:name "admin-oauth", :description "Admin OAuth endpoints."}
-                   {:name "admin-integration-data", :description "Admin Integration Data endpoints."}
-                   {:name "admin-groups", :description "Admin Group endpoints."}]}})
-  (middleware
-    [clean-context
-     wrap-keyword-params
-     wrap-query-params
-     [wrap-routes wrap-logging]]
-    (context "/" []
-      :tags ["service-info"]
-      status-routes/status)
-    (context "/callbacks" []
-      :tags ["callbacks"]
-      callback-routes/callbacks))
-  (middleware
-    [clean-context
-     wrap-keyword-params
-     wrap-query-params
-     add-user-to-context
-     store-current-user
-     wrap-logging]
-    (context "/apps/categories" []
-      :tags ["app-categories"]
-      app-category-routes/app-categories)
-    (context "/apps/hierarchies" []
-      :tags ["app-hierarchies"]
-      app-category-routes/app-hierarchies)
-    (context "/apps/elements" []
-      :tags ["app-element-types"]
-      app-element-routes/app-elements)
-    (context "/apps/pipelines" []
-      :tags ["pipelines"]
-      pipeline-routes/pipelines)
-    (context "/apps/:app-id/metadata" []
-      :tags ["app-metadata"]
-      metadata-routes/app-metadata)
-    (context "/apps" []
-      :tags ["apps"]
-      app-routes/apps)
-    (context "/analyses" []
-      :tags ["analyses"]
-      analysis-routes/analyses)
-    (context "/bootstrap" []
-      :tags ["bootstrap"]
-      bootstrap-routes/bootstrap)
-    (context "/tools/data-containers" []
-      :tags ["tool-data-containers"]
-      tool-routes/data-containers)
-    (context "/tools" []
-      :tags ["tools"]
-      tool-routes/tools)
-    (context "/workspaces" []
-      :tags ["workspaces"]
-      workspace-routes/workspaces)
-    (context "/users" []
-      :tags ["users"]
-      user-routes/users)
-    (context "/tool-requests" []
-      :tags ["tool-requests"]
-      tool-routes/tool-requests)
-    (context "/reference-genomes" []
-      :tags ["reference-genomes"]
-      reference-genome-routes/reference-genomes)
-    (context "/oauth" []
-      :tags ["oauth"]
-      oauth-routes/oauth)
-    (context "/collaborators" []
-      :tags ["collaborator-routes"]
-      collaborator-routes/collaborators)
-    (context "/admin/analyses" []
-      :tags ["admin-analyses"]
-      admin-routes/admin-analyses)
-    (context "/admin/apps" []
-      :tags ["admin-apps"]
-      admin-routes/admin-apps)
-    (context "/admin/apps/categories" []
-      :tags ["admin-categories"]
-      admin-routes/admin-categories)
-    (context "/admin/apps/:app-id/metadata" []
-      :tags ["admin-app-metadata"]
-      metadata-routes/admin-app-metadata)
-    (context "/admin/ontologies" []
-      :tags ["admin-ontologies"]
-      admin-routes/admin-ontologies)
-    (context "/admin/reference-genomes" []
-      :tags ["admin-reference-genomes"]
-      admin-routes/reference-genomes)
-    (context "/admin/tools/container-images" []
-      :tags ["admin-container-images"]
-      tool-routes/container-images)
-    (context "/admin/tools/data-containers" []
-      :tags ["admin-data-containers"]
-      tool-routes/admin-data-containers)
-    (context "/admin/tools" []
-      :tags ["admin-tools"]
-      tool-routes/admin-tools)
-    (context "/admin/tool-requests" []
-      :tags ["admin-tool-requests"]
-      admin-routes/admin-tool-requests)
-    (context "/admin/oauth" []
-      :tags ["admin-oauth"]
-      oauth-routes/admin-oauth)
-    (context "/admin/integration-data" []
-      :tags ["admin-integration-data"]
-      integration-data-routes/admin-integration-data)
-    (context "/admin/groups" []
-      :tags ["admin-groups"]
-      group-routes/admin-group-routes)
-    (undocumented (route/not-found (service/unrecognized-path-response)))))
+        {:exceptions cx/exception-handlers}
+        (swagger-routes
+         {:ui config/docs-uri
+          :options {:ui {:validatorUrl nil}}
+          :data {:info {:title "Discovery Environment Apps API"
+                        :description "Documentation for the Discovery Environment Apps REST API"
+                        :version "2.8.1"}
+                 :tags [{:name "service-info", :description "Service Status Information"}
+                        {:name "callbacks", :description "General callback endpoints"}
+                        {:name "app-categories", :description "App Category endpoints."}
+                        {:name "app-hierarchies", :description "App Hierarchy endpoints."}
+                        {:name "app-element-types", :description "App Element endpoints."}
+                        {:name "apps", :description "App endpoints."}
+                        {:name "app-metadata", :description "App Metadata endpoints."}
+                        {:name "pipelines", :description "Pipeline endpoints."}
+                        {:name "analyses", :description "Analysis endpoints."}
+                        {:name "bootstrap", :description "Bootstrap endpoints."}
+                        {:name "tool-data-containers", :description "Tool Docker Data Container endpoints."}
+                        {:name "tools", :description "Tool endpoints."}
+                        {:name "workspaces", :description "Workspace endpoints."}
+                        {:name "webhooks", :description "Webhooks endpoints."}
+                        {:name "users", :description "User endpoints."}
+                        {:name "tool-requests", :description "Tool Request endpoints."}
+                        {:name "reference-genomes", :description "Reference Genome endpoints."}
+                        {:name "oauth", :description "OAuth callback and information endpoints."}
+                        {:name "collaborator-routes", :description "Collaborator Information Routes"}
+                        {:name "admin-analyses", :description "Admin Analysis Endpoints"}
+                        {:name "admin-apps", :description "Admin App endpoints."}
+                        {:name "admin-app-metadata", :description "Admin App Metadata endpoints."}
+                        {:name "admin-categories", :description "Admin App Category endpoints."}
+                        {:name "admin-ontologies", :description "Admin App Ontology endpoints."}
+                        {:name "admin-container-images", :description "Admin Tool Docker Images endpoints."}
+                        {:name "admin-data-containers", :description "Admin Docker Data Container endpoints."}
+                        {:name "admin-tools", :description "Admin Tool endpoints."}
+                        {:name "admin-reference-genomes", :description "Admin Reference Genome endpoints."}
+                        {:name "admin-tool-requests", :description "Admin Tool Request endpoints."}
+                        {:name "admin-oauth", :description "Admin OAuth endpoints."}
+                        {:name "admin-integration-data", :description "Admin Integration Data endpoints."}
+                        {:name "admin-groups", :description "Admin Group endpoints."}]}})
+        (middleware
+         [clean-context
+          wrap-keyword-params
+          wrap-query-params
+          [wrap-routes wrap-logging]]
+         (context "/" []
+                  :tags ["service-info"]
+                  status-routes/status)
+         (context "/callbacks" []
+                  :tags ["callbacks"]
+                  callback-routes/callbacks))
+        (middleware
+         [clean-context
+          wrap-keyword-params
+          wrap-query-params
+          add-user-to-context
+          store-current-user
+          wrap-logging]
+         (context "/apps/categories" []
+                  :tags ["app-categories"]
+                  app-category-routes/app-categories)
+         (context "/apps/hierarchies" []
+                  :tags ["app-hierarchies"]
+                  app-category-routes/app-hierarchies)
+         (context "/apps/elements" []
+                  :tags ["app-element-types"]
+                  app-element-routes/app-elements)
+         (context "/apps/pipelines" []
+                  :tags ["pipelines"]
+                  pipeline-routes/pipelines)
+         (context "/apps/:app-id/metadata" []
+                  :tags ["app-metadata"]
+                  metadata-routes/app-metadata)
+         (context "/apps" []
+                  :tags ["apps"]
+                  app-routes/apps)
+         (context "/analyses" []
+                  :tags ["analyses"]
+                  analysis-routes/analyses)
+         (context "/bootstrap" []
+                  :tags ["bootstrap"]
+                  bootstrap-routes/bootstrap)
+         (context "/tools/data-containers" []
+                  :tags ["tool-data-containers"]
+                  tool-routes/data-containers)
+         (context "/tools" []
+                  :tags ["tools"]
+                  tool-routes/tools)
+         (context "/workspaces" []
+                  :tags ["workspaces"]
+                  workspace-routes/workspaces)
+         (context "/webhooks" []
+                  :tags ["webhooks"]
+                  webhooks-routes/webhooks)
+         (context "/users" []
+                  :tags ["users"]
+                  user-routes/users)
+         (context "/tool-requests" []
+                  :tags ["tool-requests"]
+                  tool-routes/tool-requests)
+         (context "/reference-genomes" []
+                  :tags ["reference-genomes"]
+                  reference-genome-routes/reference-genomes)
+         (context "/oauth" []
+                  :tags ["oauth"]
+                  oauth-routes/oauth)
+         (context "/collaborators" []
+                  :tags ["collaborator-routes"]
+                  collaborator-routes/collaborators)
+         (context "/admin/analyses" []
+                  :tags ["admin-analyses"]
+                  admin-routes/admin-analyses)
+         (context "/admin/apps" []
+                  :tags ["admin-apps"]
+                  admin-routes/admin-apps)
+         (context "/admin/apps/categories" []
+                  :tags ["admin-categories"]
+                  admin-routes/admin-categories)
+         (context "/admin/apps/:app-id/metadata" []
+                  :tags ["admin-app-metadata"]
+                  metadata-routes/admin-app-metadata)
+         (context "/admin/ontologies" []
+                  :tags ["admin-ontologies"]
+                  admin-routes/admin-ontologies)
+         (context "/admin/reference-genomes" []
+                  :tags ["admin-reference-genomes"]
+                  admin-routes/reference-genomes)
+         (context "/admin/tools/container-images" []
+                  :tags ["admin-container-images"]
+                  tool-routes/container-images)
+         (context "/admin/tools/data-containers" []
+                  :tags ["admin-data-containers"]
+                  tool-routes/admin-data-containers)
+         (context "/admin/tools" []
+                  :tags ["admin-tools"]
+                  tool-routes/admin-tools)
+         (context "/admin/tool-requests" []
+                  :tags ["admin-tool-requests"]
+                  admin-routes/admin-tool-requests)
+         (context "/admin/oauth" []
+                  :tags ["admin-oauth"]
+                  oauth-routes/admin-oauth)
+         (context "/admin/integration-data" []
+                  :tags ["admin-integration-data"]
+                  integration-data-routes/admin-integration-data)
+         (context "/admin/groups" []
+                  :tags ["admin-groups"]
+                  group-routes/admin-group-routes)
+         (undocumented (route/not-found (service/unrecognized-path-response)))))
