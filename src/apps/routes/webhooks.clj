@@ -14,34 +14,34 @@
                 :summary "List Webhooks"
                 :description "Returns all of the webhooks defined for the user."
                 (ok (list-webhooks user)))
-           (POST "/" []
+           (PUT "/" []
                  :query [{:keys [user]} SecuredQueryParams]
-                 :body [body Webhook]
-                 :return Webhook
+                 :body [body WebhookList]
+                 :return WebhookList
                  :summary "Add a Webhook"
                  :description "Adds a new webhook to the system."
-                 (transaction (ok (add-webhook user body))))
-           (DELETE "/:id" []
-                   :path-params [id :- WebhookIdParam]
-                   :query [{:keys [user]} SecuredQueryParams]
-                   :summary "Delete Webhook"
-                   :description "Deletes a webhook from the system."
-                   (ok (delete-webhook id user)))
-           (PUT "/:id" []
-                    :path-params [id :- WebhookIdParam]
-                    :query [{:keys [user]} SecuredQueryParams]
-                    :body [body Webhook]
-                    :return Webhook
-                    :summary "Update Webhook Information"
-                    :description "Updates webhook url and topic subscriptions"
-                     (ok (update-webhook id user body)))
-           (GET "/:id/subscriptions" []
-                :path-params [id :- WebhookIdParam]
-                :query [{:keys [user]} SecuredQueryParams]
-                :return TopicList
-                :summary "List user subscriptions to topics for given webhook"
-                :description "Returns user subscriptions to topics for given webhook"
-                (ok (get-subscriptions id user)))
+                 (transaction (ok (add-webhooks user body))))
+           ;;(DELETE "/:id" []
+           ;;        :path-params [id :- WebhookIdParam]
+           ;;        :query [{:keys [user]} SecuredQueryParams]
+           ;;        :summary "Delete Webhook"
+           ;;        :description "Deletes a webhook from the system."
+           ;;        (ok (delete-webhook id user)))
+           ;;(PUT "/:id" []
+           ;;         :path-params [id :- WebhookIdParam]
+           ;;         :query [{:keys [user]} SecuredQueryParams]
+           ;;         :body [body Webhook]
+           ;;         :return Webhook
+           ;;         :summary "Update Webhook Information"
+           ;;         :description "Updates webhook url and topic subscriptions"
+           ;;          (ok (update-webhook id user body)))
+           ;;(GET "/:id/subscriptions" []
+           ;;     :path-params [id :- WebhookIdParam]
+           ;;     :query [{:keys [user]} SecuredQueryParams]
+           ;;     :return TopicList
+           ;;     :summary "List user subscriptions to topics for given webhook"
+           ;;     :description "Returns user subscriptions to topics for given webhook"
+           ;;     (ok (get-subscriptions id user)))
            (context "/topics" []
                     (GET "/" []
                          :query [params SecuredQueryParams]
