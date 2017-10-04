@@ -3,8 +3,7 @@
         [apps.routes.params]
         [apps.routes.schemas.webhooks]
         [apps.webhooks]
-        [ring.util.http-response :only [ok]]
-        [korma.db :only [transaction]]))
+        [ring.util.http-response :only [ok]]))
 
 (defroutes webhooks
            (GET "/" []
