@@ -6,12 +6,12 @@
 (def WebhookIdParam (describe UUID "A UUID that is used to identify the Webhook"))
 
 (defschema Webhook
-           {(optional-key :id) WebhookIdParam
-            :type (describe NonBlankString "Type of webhook subscription")
-            :url (describe NonBlankString "Url to post the notification")
-            :topics (describe [NonBlankString] "A List of topic names")})
+  {(optional-key :id) WebhookIdParam
+   :type              (describe NonBlankString "Type of webhook subscription")
+   :url               (describe NonBlankString "Url to post the notification")
+   :topics            (describe [NonBlankString] "A List of topic names")})
 (defschema WebhookList
-           {:webhooks (describe [Webhook] "A List of webhooks")})
+  {:webhooks (describe [Webhook] "A List of webhooks")})
 
 (defschema Topic
   {:id    (describe UUID "A UUID for the topic")

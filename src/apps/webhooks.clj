@@ -37,15 +37,14 @@
 (defn- add-topic-subscription [webhook_id topic_name]
   (let [topic_id (:id (first (select :webhooks_topic (fields :id) (where {:topic topic_name}))))]
     (when topic_id
-      (insert :webhooks_subscription (values {:webhook_id (log/spy webhook_id)
+      (insert :webhooks_subscription (values {:webhook_id webhook_id
                                               :topic_id   topic_id})))))
-(defn add-webhook [user url type topics]
-  (let [user_id (get-user-id (str user "@" (config/uid-domain)))
-        type_id (get-type-id type)
+
+(defn add-webhook [user_id url type topics]
+  (let [type_id (get-type-id type)
         id (:id (insert :webhooks (values {:user_id user_id
                                            :url     url
                                            :type_id type_id})))]
-    (println "type_id: " type_id)
     (doseq [topic_name topics]
       (add-topic-subscription id topic_name))))
 
@@ -54,7 +53,7 @@
     (transaction
       (delete :webhooks (where {:user_id user_id}))
       (doseq [{:keys [url type topics]} webhooks]
-        (add-webhook user url type topics))))
+        (add-webhook user_id url type topics))))
   (list-webhooks user))
 
 (defn list-topics []

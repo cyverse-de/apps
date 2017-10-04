@@ -4,8 +4,7 @@
         [apps.routes.schemas.webhooks]
         [apps.webhooks]
         [ring.util.http-response :only [ok]]
-        [korma.db :only [transaction]])
-  (:import (org.postgresql.util GT)))
+        [korma.db :only [transaction]]))
 
 (defroutes webhooks
            (GET "/" []
@@ -20,7 +19,7 @@
                  :return WebhookList
                  :summary "Add a Webhook"
                  :description "Adds a new webhook to the system."
-                 (transaction (ok (add-webhooks user body))))
+                (ok (add-webhooks user body)))
            (context "/topics" []
                     (GET "/" []
                          :query [params SecuredQueryParams]
