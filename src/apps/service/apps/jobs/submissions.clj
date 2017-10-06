@@ -215,6 +215,15 @@
       (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
       job-info)))
 
+(defn- async-submit-batch-jobs
+  [apps-client user path-list-stats submission]
+  (future
+    (let [ht-paths     (set (map :path path-list-stats))
+          path-lists   (get-path-list-contents-map user ht-paths)
+          paths-exist  (validate-path-lists user path-lists)
+          path-maps    (map-slices path-lists)]
+      (dorun (map-indexed (partial submit-job-in-batch apps-client user submission paths-exist) path-maps)))))
+
 (defn- preprocess-batch-submission
   [submission output-dir parent-id]
   (assoc submission
@@ -222,22 +231,25 @@
     :parent_id            parent-id
     :create_output_subdir false))
 
+(defn- pre-submit-batch-validation
+  [input-params-by-id input-paths-by-id path-list-stats]
+  (doseq [path-stat path-list-stats]
+    (validate-path-list-stats path-stat))
+
+  (->> (extract-ht-param-ids path-list-stats input-paths-by-id)
+       (select-keys input-params-by-id)
+       vals
+       validate-ht-params))
+
 (defn- submit-batch-job
   [apps-client user input-params-by-id input-paths-by-id path-list-stats job-types app submission]
-  (dorun (map validate-path-list-stats path-list-stats))
-  (let [ht-param-ids (extract-ht-param-ids path-list-stats input-paths-by-id)
-        _            (validate-ht-params (vals (select-keys input-params-by-id ht-param-ids)))
-        ht-paths     (set (map :path path-list-stats))
-        path-lists   (get-path-list-contents-map user ht-paths)
-        paths-exist  (validate-path-lists user path-lists)
-        path-maps    (map-slices path-lists)
-        output-dir   (get-batch-output-dir user submission)
-        batch-id     (save-batch user job-types app submission output-dir)
-        submission   (preprocess-batch-submission submission output-dir batch-id)]
-    (dorun (map-indexed (partial submit-job-in-batch apps-client user submission paths-exist) path-maps))
-    (-> (job-listings/list-job apps-client batch-id)
-        (assoc :missing-paths (extract-missing-paths paths-exist))
-        remove-nil-values)))
+  (pre-submit-batch-validation input-params-by-id input-paths-by-id path-list-stats)
+
+  (let [output-dir (get-batch-output-dir user submission)
+        batch-id   (save-batch user job-types app submission output-dir)
+        submission (preprocess-batch-submission submission output-dir batch-id)]
+    (async-submit-batch-jobs apps-client user path-list-stats submission)
+    (job-listings/list-job apps-client batch-id)))
 
 (defn submit
   [apps-client user {app-id :app_id system-id :system_id :as submission}]
