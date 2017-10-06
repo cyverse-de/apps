@@ -1,7 +1,8 @@
 (ns apps.service.apps.jobs.submissions
   (:use [clojure-commons.core :only [remove-nil-values]]
         [slingshot.slingshot :only [try+ throw+]]
-        [kameleon.uuids :only [uuid]])
+        [kameleon.uuids :only [uuid]]
+        [korma.db :only [transaction]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clojure-commons.error-codes :as ce]
@@ -22,6 +23,13 @@
        (filter (comp type-set :type))
        (map (juxt (comp keyword :id) identity))
        (into {})))
+
+(defn- submit-and-register-private-job
+  [apps-client user submission]
+  (transaction
+    (let [job-info (.submitJob apps-client submission)]
+      (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
+      job-info)))
 
 (defn- get-file-stats
   "Gets information for the provided paths. Filters to only path, infoType, and file size."
@@ -179,9 +187,11 @@
 
 (defn- save-batch
   [user job-types app submission output-dir]
-  (let [batch-id (save-batch* user app submission output-dir)]
-    (save-batch-step batch-id (first job-types))
-    batch-id))
+  (transaction
+    (let [batch-id (save-batch* user app submission output-dir)]
+      (save-batch-step batch-id (first job-types))
+      (perms-client/register-private-analysis (:shortUsername user) batch-id)
+      batch-id)))
 
 (defn- map-slice
   [m n]
@@ -211,9 +221,7 @@
 (defn- submit-job-in-batch
   [apps-client user submission paths-exist job-number path-map]
   (when (every? (partial get paths-exist) (map keyword (vals path-map)))
-    (let [job-info (.submitJob apps-client (format-submission-in-batch submission job-number path-map))]
-      (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
-      job-info)))
+    (submit-and-register-private-job apps-client user (format-submission-in-batch submission job-number path-map))))
 
 (defn- async-submit-batch-jobs
   [apps-client user path-list-stats submission]
@@ -259,4 +267,4 @@
     (if-let [path-list-stats (seq (load-path-list-stats user input-paths-by-id))]
       (submit-batch-job apps-client user input-params-by-id input-paths-by-id
                         path-list-stats job-types app submission)
-      (.submitJob apps-client submission))))
+      (submit-and-register-private-job apps-client user submission))))

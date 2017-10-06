@@ -1,12 +1,8 @@
 (ns apps.service.apps.jobs
-  (:use [korma.db :only [transaction]]
-        [slingshot.slingshot :only [try+]])
+  (:use [slingshot.slingshot :only [try+]])
   (:require [clojure.tools.logging :as log]
-            [clojure-commons.error-codes :as ce]
-            [clojure-commons.exception-util :as cxu]
             [kameleon.db :as db]
             [apps.clients.notifications :as cn]
-            [apps.clients.permissions :as perms-client]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.job-listings :as listings]
             [apps.service.apps.jobs.params :as job-params]
@@ -15,10 +11,6 @@
             [apps.service.apps.jobs.submissions :as submissions]
             [apps.service.apps.jobs.util :as ju]
             [apps.util.service :as service]))
-
-(defn supports-job-type
-  [apps-client job-type]
-  (contains? (set (.getJobTypes apps-client)) job-type))
 
 (defn get-unique-job-step
   "Gets a unique job step for an external ID. An exception is thrown if no job step
@@ -181,10 +173,7 @@
 
 (defn submit
   [apps-client user submission]
-  (transaction
-   (let [job-info (submissions/submit apps-client user submission)]
-     (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
-     job-info)))
+  (submissions/submit apps-client user submission))
 
 (defn list-job-permissions
   [apps-client user job-ids]
