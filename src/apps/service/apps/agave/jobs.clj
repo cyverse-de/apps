@@ -126,7 +126,7 @@
     :notify          (:notify job)
     :resultfolderid  (:resultfolderid job)
     :startdate       (str (.getTime (:startdate job)))
-    :status          jp/submitted-status
+    :status          (:status job)
     :username        (:username job)
     :wiki_url        (:wiki_url job)
     :parent_id       (:parent_id submission)}))

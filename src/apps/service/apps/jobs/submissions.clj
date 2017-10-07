@@ -9,6 +9,7 @@
             [clojure-commons.file-utils :as ft]
             [kameleon.db :as db]
             [apps.clients.data-info :as data-info]
+            [apps.clients.notifications :as notifications]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
@@ -221,16 +222,33 @@
 (defn- submit-job-in-batch
   [apps-client user submission paths-exist job-number path-map]
   (when (every? (partial get paths-exist) (map keyword (vals path-map)))
-    (submit-and-register-private-job apps-client user (format-submission-in-batch submission job-number path-map))))
+    (try+
+      (submit-and-register-private-job apps-client user (format-submission-in-batch submission job-number path-map))
+      (catch Object _
+        (log/error (:throwable &throw-context)
+                   "batch job submission failed.")
+        {:status jp/failed-status}))))
 
 (defn- async-submit-batch-jobs
-  [apps-client user path-list-stats submission]
+  [apps-client user path-list-stats {job-id :parent_id :as submission}]
   (future
-    (let [ht-paths     (set (map :path path-list-stats))
-          path-lists   (get-path-list-contents-map user ht-paths)
-          paths-exist  (validate-path-lists user path-lists)
-          path-maps    (map-slices path-lists)]
-      (dorun (map-indexed (partial submit-job-in-batch apps-client user submission paths-exist) path-maps)))))
+    (try+
+      (let [ht-paths    (set (map :path path-list-stats))
+            path-lists  (get-path-list-contents-map user ht-paths)
+            paths-exist (validate-path-lists user path-lists)
+            path-maps   (map-slices path-lists)
+            job-stats   (doall (map-indexed (partial submit-job-in-batch apps-client user submission paths-exist)
+                                            path-maps))]
+        (when-not (some (partial = jp/submitted-status)
+                        (map :status job-stats))
+          (throw+ "all batch sub-job submissions failed.")))
+      (catch Object _
+        (log/error (:throwable &throw-context)
+                   "batch job submission failed.")
+        (jp/update-job job-id jp/failed-status nil)
+        (notifications/send-job-status-update (:shortUsername user)
+                                              (:email user)
+                                              (job-listings/list-job apps-client job-id))))))
 
 (defn- preprocess-batch-submission
   [submission output-dir parent-id]
