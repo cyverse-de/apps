@@ -233,22 +233,24 @@
   [apps-client user path-list-stats {job-id :parent_id :as submission}]
   (future
     (try+
-      (let [ht-paths    (set (map :path path-list-stats))
-            path-lists  (get-path-list-contents-map user ht-paths)
-            paths-exist (validate-path-lists user path-lists)
-            path-maps   (map-slices path-lists)
-            job-stats   (doall (map-indexed (partial submit-job-in-batch apps-client user submission paths-exist)
-                                            path-maps))]
-        (when-not (some (partial = jp/submitted-status)
-                        (map :status job-stats))
+      (let [ht-paths      (set (map :path path-list-stats))
+            path-lists    (get-path-list-contents-map user ht-paths)
+            paths-exist   (validate-path-lists user path-lists)
+            path-maps     (map-slices path-lists)
+            job-stats     (->> path-maps
+                               (map-indexed (partial submit-job-in-batch apps-client user submission paths-exist))
+                               doall)
+            success-count (->> job-stats
+                               (filter (comp (partial = jp/submitted-status) :status))
+                               count)]
+        (if (> success-count 0)
+          (notifications/send-batch-submission-completed user (job-listings/list-job apps-client job-id) success-count)
           (throw+ "all batch sub-job submissions failed.")))
       (catch Object _
         (log/error (:throwable &throw-context)
                    "batch job submission failed.")
         (jp/update-job job-id jp/failed-status nil)
-        (notifications/send-job-status-update (:shortUsername user)
-                                              (:email user)
-                                              (job-listings/list-job apps-client job-id))))))
+        (notifications/send-job-status-update user (job-listings/list-job apps-client job-id))))))
 
 (defn- preprocess-batch-submission
   [submission output-dir parent-id]

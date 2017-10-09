@@ -78,6 +78,15 @@
   ([{username :shortUsername email-address :email} job-info]
      (send-job-status-update username email-address job-info)))
 
+(defn send-batch-submission-completed
+  [{username :shortUsername email-address :email} {job-name :name :as job-info} sub-job-count]
+  (try
+    (-> (format-job-status-update username email-address job-info)
+        (assoc :message (str job-name " successfully submitted " sub-job-count " analyses"))
+        send-notification)
+    (catch Exception e
+      (log/warn e "unable to send batch job status update notification for" (:id job-info)))))
+
 (defn- format-tool-request-notification
   [tool-req user-details]
   (let [{:keys [comments]} (last (:history tool-req))]
