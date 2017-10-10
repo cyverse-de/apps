@@ -42,15 +42,6 @@
                 "job submission failed: Could not lookup info types of inputs.")
      (throw+))))
 
-(defn- get-paths-exist
-  [user paths]
-  (try+
-    (:paths (data-info/get-paths-exist user paths))
-    (catch Object _
-      (log/error (:throwable &throw-context)
-                 "job submission failed: Could not lookup existence of HT paths.")
-      (throw+))))
-
 (defn- load-path-list-stats
   [user input-paths-by-id]
   (->> (flatten (vals input-paths-by-id))
@@ -100,39 +91,16 @@
     (throw+ {:type  :clojure-commons.exception/illegal-argument
              :error "HT Analysis Path List files are not supported in multi-file inputs."})))
 
-(defn- path-exists?
-  [[path exists?]]
-  exists?)
-
-(defn- every-input-exists?
-  [paths-exist-map & job-inputs]
-  (every? #(get paths-exist-map (keyword %)) job-inputs))
-
-(defn- extract-missing-paths
-  [paths-exist]
-  (map name (keys (remove path-exists? paths-exist))))
-
 (defn- validate-path-lists
-  [user path-lists]
+  [path-lists]
   (let [[first-list-path first-list] (first path-lists)
-        first-list-count             (count first-list)
-        path-lists-vals              (vals path-lists)
-        paths-exist-list             (map (partial get-paths-exist user) path-lists-vals)
-        paths-exist                  (apply merge paths-exist-list)]
+        first-list-count             (count first-list)]
     (when (> first-list-count (config/path-list-max-paths))
       (max-batch-paths-exceeded (config/path-list-max-paths) first-list-path first-list-count))
     (when-not (every? (comp (partial = first-list-count) count second) path-lists)
       (throw+ {:type  :clojure-commons.exception/illegal-argument
                :error "All HT Analysis Path Lists must have the same number of paths."}))
-    (when-not (every? (partial some path-exists?) paths-exist-list)
-      (throw+ {:type  :clojure-commons.exception/not-found
-               :error "One or more HT Analysis Path List inputs contain paths that no longer exist."
-               :missing-paths (extract-missing-paths paths-exist)}))
-    (when-not (some true? (apply map (partial every-input-exists? paths-exist) path-lists-vals))
-      (throw+ {:type  :clojure-commons.exception/not-found
-               :error "No jobs could be submitted for existing inputs in given HT Analysis Path Lists."
-               :missing-paths (extract-missing-paths paths-exist)}))
-    paths-exist))
+    path-lists))
 
 (defn- get-path-list-contents
   [user path]
@@ -220,24 +188,22 @@
       :output_dir (ft/path-join (:output_dir submission) job-suffix))))
 
 (defn- submit-job-in-batch
-  [apps-client user submission paths-exist job-number path-map]
-  (when (every? (partial get paths-exist) (map keyword (vals path-map)))
-    (try+
-      (submit-and-register-private-job apps-client user (format-submission-in-batch submission job-number path-map))
-      (catch Object _
-        (log/error (:throwable &throw-context)
-                   "batch job submission failed.")
-        {:status jp/failed-status}))))
+  [apps-client user submission job-number path-map]
+  (try+
+    (submit-and-register-private-job apps-client user (format-submission-in-batch submission job-number path-map))
+    (catch Object _
+      (log/error (:throwable &throw-context)
+                 "batch job submission failed.")
+      {:status jp/failed-status})))
 
 (defn- async-submit-batch-jobs
   [apps-client user ht-paths {job-id :parent_id :as submission}]
   (future
     (try+
-      (let [path-lists    (get-path-list-contents-map user ht-paths)
-            paths-exist   (validate-path-lists user path-lists)
+      (let [path-lists    (validate-path-lists (get-path-list-contents-map user ht-paths))
             path-maps     (map-slices path-lists)
             job-stats     (->> path-maps
-                               (map-indexed (partial submit-job-in-batch apps-client user submission paths-exist))
+                               (map-indexed (partial submit-job-in-batch apps-client user submission))
                                doall)
             success-count (->> job-stats
                                (filter (comp (partial = jp/submitted-status) :status))
