@@ -14,6 +14,8 @@
             [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.job-listings :as job-listings]
+            [apps.service.apps.jobs.submissions.async :as async]
+            [apps.service.apps.jobs.submissions.submit :as submit]
             [apps.util.config :as config]
             [apps.util.service :as service]))
 
@@ -24,13 +26,6 @@
        (filter (comp type-set :type))
        (map (juxt (comp keyword :id) identity))
        (into {})))
-
-(defn- submit-and-register-private-job
-  [apps-client user submission]
-  (transaction
-    (let [job-info (.submitJob apps-client submission)]
-      (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
-      job-info)))
 
 (defn- get-file-stats
   "Gets information for the provided paths. Filters to only path, infoType, and file size."
@@ -70,16 +65,6 @@
      :path      path
      :file-size actual-size}))
 
-(defn- max-batch-paths-exceeded
-  [max-paths first-list-path first-list-count]
-  (throw+
-    {:type       :clojure-commons.exception/illegal-argument
-     :error      (str "The HT Analysis Path List exceeds the maximum of "
-                      max-paths
-                      " allowed paths.")
-     :path       first-list-path
-     :path-count first-list-count}))
-
 (defn- validate-path-list-stats
   [{path :path actual-size :file-size}]
   (when (> actual-size (config/path-list-max-size))
@@ -90,30 +75,6 @@
   (when (some (comp (partial = ap/param-multi-input-type) :type) ht-params)
     (throw+ {:type  :clojure-commons.exception/illegal-argument
              :error "HT Analysis Path List files are not supported in multi-file inputs."})))
-
-(defn- validate-path-lists
-  [path-lists]
-  (let [[first-list-path first-list] (first path-lists)
-        first-list-count             (count first-list)]
-    (when (> first-list-count (config/path-list-max-paths))
-      (max-batch-paths-exceeded (config/path-list-max-paths) first-list-path first-list-count))
-    (when-not (every? (comp (partial = first-list-count) count second) path-lists)
-      (throw+ {:type  :clojure-commons.exception/illegal-argument
-               :error "All HT Analysis Path Lists must have the same number of paths."}))
-    path-lists))
-
-(defn- get-path-list-contents
-  [user path]
-  (try+
-   (when (seq path) (data-info/get-path-list-contents user path))
-   (catch Object _
-     (log/error (:throwable &throw-context)
-                "job submission failed: Could not get file contents of path list input.")
-     (throw+))))
-
-(defn- get-path-list-contents-map
-  [user paths]
-  (into {} (map (juxt identity (partial get-path-list-contents user)) paths)))
 
 (defn- get-batch-output-dir
   [user submission]
@@ -162,68 +123,6 @@
       (perms-client/register-private-analysis (:shortUsername user) batch-id)
       batch-id)))
 
-(defn- map-slice
-  [m n]
-  (->> (map (fn [[k v]] (vector k (nth v n))) m)
-       (into {})
-       (remove-nil-values)))
-
-(defn- map-slices
-  [m]
-  (let [max-count (apply max (map (comp count val) m))]
-    (mapv (partial map-slice m) (range max-count))))
-
-
-(defn- substitute-param-values
-  [path-map config]
-  (->> (map (fn [[k v]] (vector k (get path-map v v))) config)
-       (into {})))
-
-(defn- format-submission-in-batch
-  [submission job-number path-map]
-  (let [job-suffix (str "analysis-" (inc job-number))]
-    (assoc (update-in submission [:config] (partial substitute-param-values path-map))
-      :group      (config/jex-batch-group-name)
-      :name       (str (:name submission) "-" job-suffix)
-      :output_dir (ft/path-join (:output_dir submission) job-suffix))))
-
-(defn- submit-job-in-batch
-  [apps-client user submission job-number path-map]
-  (try+
-    (submit-and-register-private-job apps-client user (format-submission-in-batch submission job-number path-map))
-    (catch Object _
-      (log/error (:throwable &throw-context)
-                 "batch job submission failed.")
-      {:status jp/failed-status})))
-
-(defn- async-submit-batch-jobs
-  [apps-client user ht-paths {job-id :parent_id :as submission}]
-  (future
-    (try+
-      (let [path-lists    (validate-path-lists (get-path-list-contents-map user ht-paths))
-            path-maps     (map-slices path-lists)
-            job-stats     (->> path-maps
-                               (map-indexed (partial submit-job-in-batch apps-client user submission))
-                               doall)
-            success-count (->> job-stats
-                               (filter (comp (partial = jp/submitted-status) :status))
-                               count)]
-        (if (> success-count 0)
-          (notifications/send-batch-submission-completed user (job-listings/list-job apps-client job-id) success-count)
-          (throw+ "all batch sub-job submissions failed.")))
-      (catch Object _
-        (log/error (:throwable &throw-context)
-                   "batch job submission failed.")
-        (jp/update-job job-id jp/failed-status nil)
-        (notifications/send-job-status-update user (job-listings/list-job apps-client job-id))))))
-
-(defn- preprocess-batch-submission
-  [submission output-dir parent-id]
-  (assoc submission
-    :output_dir           output-dir
-    :parent_id            parent-id
-    :create_output_subdir false))
-
 (defn- pre-submit-batch-validation
   [input-params-by-id input-paths-by-id path-list-stats]
   (doseq [path-stat path-list-stats]
@@ -240,9 +139,8 @@
 
   (let [ht-paths   (set (map :path path-list-stats))
         output-dir (get-batch-output-dir user submission)
-        batch-id   (save-batch user job-types app submission output-dir)
-        submission (preprocess-batch-submission submission output-dir batch-id)]
-    (async-submit-batch-jobs apps-client user ht-paths submission)
+        batch-id   (save-batch user job-types app submission output-dir)]
+    (async/submit-batch-jobs apps-client user ht-paths submission output-dir batch-id)
     (job-listings/list-job apps-client batch-id)))
 
 (defn submit
@@ -253,4 +151,4 @@
     (if-let [path-list-stats (seq (load-path-list-stats user input-paths-by-id))]
       (submit-batch-job apps-client user input-params-by-id input-paths-by-id
                         path-list-stats job-types app submission)
-      (submit-and-register-private-job apps-client user submission))))
+      (submit/submit-and-register-private-job apps-client user submission))))
