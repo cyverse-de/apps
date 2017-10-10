@@ -230,11 +230,10 @@
         {:status jp/failed-status}))))
 
 (defn- async-submit-batch-jobs
-  [apps-client user path-list-stats {job-id :parent_id :as submission}]
+  [apps-client user ht-paths {job-id :parent_id :as submission}]
   (future
     (try+
-      (let [ht-paths      (set (map :path path-list-stats))
-            path-lists    (get-path-list-contents-map user ht-paths)
+      (let [path-lists    (get-path-list-contents-map user ht-paths)
             paths-exist   (validate-path-lists user path-lists)
             path-maps     (map-slices path-lists)
             job-stats     (->> path-maps
@@ -273,10 +272,11 @@
   [apps-client user input-params-by-id input-paths-by-id path-list-stats job-types app submission]
   (pre-submit-batch-validation input-params-by-id input-paths-by-id path-list-stats)
 
-  (let [output-dir (get-batch-output-dir user submission)
+  (let [ht-paths   (set (map :path path-list-stats))
+        output-dir (get-batch-output-dir user submission)
         batch-id   (save-batch user job-types app submission output-dir)
         submission (preprocess-batch-submission submission output-dir batch-id)]
-    (async-submit-batch-jobs apps-client user path-list-stats submission)
+    (async-submit-batch-jobs apps-client user ht-paths submission)
     (job-listings/list-job apps-client batch-id)))
 
 (defn submit
