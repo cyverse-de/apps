@@ -1,7 +1,8 @@
 (ns apps.service.apps.jobs.submissions.async
   (:use [clojure-commons.core :only [remove-nil-values]]
         [slingshot.slingshot :only [try+ throw+]])
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clojure-commons.file-utils :as ft]
             [apps.clients.data-info :as data-info]
             [apps.clients.notifications :as notifications]
@@ -94,22 +95,25 @@
    `output-dir` is the path to the output folder created for the parent job,
    and `parent-id` is the parent job's ID to use for each sub-job's `parent_id` field.
    A notification will be sent to the user on success or on failure to submit all sub-jobs."
-  [apps-client user ht-paths submission output-dir parent-id]
+  [apps-client {username :shortUsername email-address :email :as user} ht-paths submission output-dir parent-id]
   (future
     (try+
       (let [path-lists    (validate-path-lists (get-path-list-contents-map user ht-paths))
             path-maps     (map-slices path-lists)
             submission    (preprocess-batch-submission submission output-dir parent-id)
-            job-stats     (->> path-maps
-                               (map-indexed (partial submit-job-in-batch apps-client user submission))
-                               doall)
+            job-stats     (map-indexed (partial submit-job-in-batch apps-client user submission) path-maps)
+            total-jobs    (count job-stats)
             success-count (->> job-stats
                                (filter (comp (partial = jp/submitted-status) :status))
-                               count)]
+                               count)
+            parent-job    (job-listings/list-job apps-client parent-id)
+            message       (format "%s %d analyses of %d %s"
+                                  (:name parent-job)
+                                  success-count
+                                  total-jobs
+                                  (string/lower-case jp/submitted-status))]
         (if (> success-count 0)
-          (notifications/send-batch-submission-completed user
-                                                         (job-listings/list-job apps-client parent-id)
-                                                         success-count)
+          (notifications/send-job-status-update username email-address parent-job message)
           (throw+ "all batch sub-job submissions failed.")))
       (catch Object _
         (log/error (:throwable &throw-context)
