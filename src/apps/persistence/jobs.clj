@@ -201,6 +201,12 @@
       {:status "Failed"
        :enddate (now-str)})))
 
+(defn get-job-status
+  [job-id]
+  (-> (select :job_listings (fields :status) (where {:id job-id}))
+      first
+      :status))
+
 (defn save-job
   "Saves information about a job in the database."
   [{system-id :system_id username :username :as job-info} submission]

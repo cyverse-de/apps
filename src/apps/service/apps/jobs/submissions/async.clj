@@ -1,5 +1,6 @@
 (ns apps.service.apps.jobs.submissions.async
   (:use [clojure-commons.core :only [remove-nil-values]]
+        [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
@@ -73,13 +74,27 @@
 (defn- submit-job-in-batch
   [apps-client user submission job-number path-map]
   (try+
-    (submit/submit-and-register-private-job apps-client
-                                            user
-                                            (format-submission-in-batch submission job-number path-map))
+    (->> (format-submission-in-batch submission job-number path-map)
+         (submit/submit-and-register-private-job apps-client user)
+         :status)
     (catch Object _
       (log/error (:throwable &throw-context)
                  "batch job submission failed.")
-      {:status jp/failed-status})))
+      jp/failed-status)))
+
+(defn- batch-job-reducer
+  [apps-client user {:keys [parent-id parent-status total submission batch-status] :as results} path-map]
+  (transaction
+    ;; re-check for completed parent status before each submission
+    (let [parent-status (if (jp/completed? parent-status)
+                          parent-status
+                          (jp/get-job-status parent-id))
+          job-status    (if (jp/completed? parent-status)
+                          jp/canceled-status
+                          (submit-job-in-batch apps-client user submission total path-map))]
+      (assoc results :parent-status parent-status
+                     :total         (inc total)
+                     :batch-status  (update batch-status job-status (fnil inc 0))))))
 
 (defn- preprocess-batch-submission
   [submission output-dir parent-id]
@@ -101,11 +116,15 @@
       (let [path-lists    (validate-path-lists (get-path-list-contents-map user ht-paths))
             path-maps     (map-slices path-lists)
             submission    (preprocess-batch-submission submission output-dir parent-id)
-            job-stats     (map-indexed (partial submit-job-in-batch apps-client user submission) path-maps)
-            total-jobs    (count job-stats)
-            success-count (->> job-stats
-                               (filter (comp (partial = jp/submitted-status) :status))
-                               count)
+            job-stats     (reduce (partial batch-job-reducer apps-client user)
+                                  {:parent-id     parent-id
+                                   :parent-status jp/submitted-status
+                                   :total         0
+                                   :submission    submission
+                                   :batch-status  {jp/submitted-status 0}}
+                                  path-maps)
+            total-jobs    (:total job-stats)
+            success-count (get (:batch-status job-stats) jp/submitted-status)
             parent-job    (job-listings/list-job apps-client parent-id)
             message       (format "%s %d analyses of %d %s"
                                   (:name parent-job)
