@@ -39,7 +39,8 @@
     (when (seq path) (data-info/get-path-list-contents user path))
     (catch Object _
       (log/error (:throwable &throw-context)
-                 "job submission failed: Could not get file contents of path list input.")
+                 "job submission failed: Could not get file contents of HT Path List input"
+                 path)
       (throw+))))
 
 (defn- get-path-list-contents-map
