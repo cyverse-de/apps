@@ -26,6 +26,7 @@
             [apps.routes.tools :as tool-routes]
             [apps.routes.users :as user-routes]
             [apps.routes.workspaces :as workspace-routes]
+            [apps.routes.webhooks :as webhooks-routes]
             [apps.util.config :as config]
             [apps.util.service :as service]
             [clojure-commons.exception :as cx]))
@@ -51,6 +52,7 @@
                    {:name "tool-data-containers", :description "Tool Docker Data Container endpoints."}
                    {:name "tools", :description "Tool endpoints."}
                    {:name "workspaces", :description "Workspace endpoints."}
+                   {:name "webhooks", :description "Webhooks endpoints."}
                    {:name "users", :description "User endpoints."}
                    {:name "tool-requests", :description "Tool Request endpoints."}
                    {:name "reference-genomes", :description "Reference Genome endpoints."}
@@ -120,6 +122,9 @@
     (context "/workspaces" []
       :tags ["workspaces"]
       workspace-routes/workspaces)
+    (context "/webhooks" []
+      :tags ["webhooks"]
+      webhooks-routes/webhooks)
     (context "/users" []
       :tags ["users"]
       user-routes/users)
