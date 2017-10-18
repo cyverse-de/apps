@@ -67,8 +67,12 @@
 
 (defn- validate-path-list-stats
   [{path :path actual-size :file-size}]
-  (when (> actual-size (config/path-list-max-size))
-    (max-path-list-size-exceeded (config/path-list-max-size) path actual-size)))
+  ;; Ensure the file size is within a reasonable limit, based on the iRODS max path length:
+  ;; the iRODS max path length + 1 (for newlines) * the path limit + 1 (for some file header overhead).
+  (let [path-list-max-size (* (+ 1 (config/irods-path-max-len))
+                              (+ 1 (config/path-list-max-paths)))]
+    (when (> actual-size path-list-max-size)
+      (max-path-list-size-exceeded path-list-max-size path actual-size))))
 
 (defn- validate-ht-params
   [ht-params]
