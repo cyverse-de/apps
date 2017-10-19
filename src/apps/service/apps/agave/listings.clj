@@ -58,10 +58,14 @@
       (log/error (:throwable &throw-context) "HTTP error returned by Agave")
       nil)))
 
+(defn- fix-search-params
+  [params admin?]
+  (remove-nil-vals {:app-subset (when admin? (:app-subset params :public))}))
+
 (defn search-apps
   [agave search-term params admin?]
   (try+
-   (-> (.searchApps agave search-term (select-keys params [:app-subset]))
+   (-> (.searchApps agave search-term (fix-search-params params admin?))
        (add-app-listing-job-stats admin?)
        (sort-apps params {:default-sort-field "name"})
        (apply-offset params)
