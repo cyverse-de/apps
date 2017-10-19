@@ -22,6 +22,7 @@
             [apps.tools :as tools]
             [apps.tools.permissions :as tool-perms]
             [cemerick.url :as curl]
+            [clojure.set :as set]
             [clojure.string :as string]))
 
 (def my-public-apps-id (uuidify "00000000-0000-0000-0000-000000000000"))
@@ -40,10 +41,22 @@
   ([params short-username]
    (augment-listing-params params short-username (perms-client/load-app-permissions short-username))))
 
+(defn- app-search-candidates
+  [admin? public-app-ids accessible-app-ids app-subset]
+  (if admin?
+    (case app-subset
+      :all     (get-all-app-ids)
+      :private (set/difference (get-all-app-ids) public-app-ids)
+      public-app-ids)
+    accessible-app-ids))
+
+(defn- admin-search-app-ids
+  [public-app-ids])
+
 (defn- augment-search-params
-  [search_term {:keys [app-ids public-app-ids] :as params} short-username admin?]
+  [search_term {:keys [app-ids public-app-ids app-subset] :as params} short-username admin?]
   (let [category-attrs (set (workspace-metadata-category-attrs))
-        app-ids        (if admin? public-app-ids app-ids)]
+        app-ids        (app-search-candidates admin? public-app-ids app-ids app-subset)]
     (-> params
         (assoc :app-ids             app-ids
                :pre-matched-app-ids (when-not (some empty? [search_term app-ids category-attrs])

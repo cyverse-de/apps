@@ -61,7 +61,7 @@
 (defn search-apps
   [agave search-term params admin?]
   (try+
-   (-> (.searchApps agave search-term)
+   (-> (.searchApps agave search-term (select-keys params [:app-subset]))
        (add-app-listing-job-stats admin?)
        (sort-apps params {:default-sort-field "name"})
        (apply-offset params)
@@ -77,7 +77,7 @@
 (defn load-app-tables
   [agave app-ids]
   (try+
-   (->> (.listApps agave app-ids)
+   (->> (.listApps agave app-ids {})
         (:apps)
         (map (juxt to-qualified-app-id identity))
         (into {})
