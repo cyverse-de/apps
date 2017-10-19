@@ -468,10 +468,15 @@
           SortFieldOptionalKey
           (describe (apply enum AppSearchValidSortFields) SortFieldDocs)}))
 
+(def AppSubsets (enum :public :private :all))
+
 (defschema AdminAppSearchParams
   (merge AppSearchParams
          {SortFieldOptionalKey
-          (describe (apply enum AdminAppSearchValidSortFields) SortFieldDocs)}))
+          (describe (apply enum AdminAppSearchValidSortFields) SortFieldDocs)
+
+          (optional-key :app-subset)
+          (describe AppSubsets "The subset of apps to search." :default :public)}))
 
 (defschema AdminAppDetails
   (merge AppDetails
