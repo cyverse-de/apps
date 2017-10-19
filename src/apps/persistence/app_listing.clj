@@ -448,3 +448,10 @@
         (get-job-stats-fields)
         (get-admin-job-stats-fields)
         select)))
+
+(defn get-all-app-ids
+  "Lists all app IDs in the database."
+  []
+  (->> (select :apps (fields :id))
+       (map :id)
+       set))
