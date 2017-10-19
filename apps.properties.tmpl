@@ -39,11 +39,14 @@ apps.uid.domain = {{ (key (printf "%s/de/cas-uid-domain" $base)) }}
 # The path to the home directory in iRODS.
 {{ with $v := (key (printf "%s/de/irods-home" $base)) }}apps.irods.home = {{ $v }}{{ end }}
 
+# The maximum length of an iRODS path, used in max HT Path List file size calculations.
+# See https://github.com/irods/irods/blob/805c01f55ea23a141cb0fa3f449f5172b3a19657/lib/core/include/rodsDef.h#L59-L61
+{{ with $v := (key (printf "%s/irods/path-max-len" $base)) }}apps.irods.path-max-len = {{ $v }}{{ end }}
+
 # Batch job settings.
 {{ with $v := (key (printf "%s/jex/batch-group" $base)) }}apps.batch.group               = {{ $v }}{{ end }}
 {{ with $v := (key (printf "%s/apps/path-list-info-type" $base)) }}apps.batch.path-list.info-type = {{ $v }}{{ end }}
 {{ with $v := (key (printf "%s/apps/path-list-max-paths" $base)) }}apps.batch.path-list.max-paths = {{ $v }}{{ end }}
-{{ with $v := (key (printf "%s/apps/path-list-max-size" $base)) }}apps.batch.path-list.max-size  = {{ $v }}{{ end }}
 
 # Agave connection settings.
 {{ with $v := (key (printf "%s/agave/base" $base)) }}apps.agave.base-url             = {{ $v }}{{ end }}

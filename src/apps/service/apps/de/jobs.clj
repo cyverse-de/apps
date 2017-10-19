@@ -64,15 +64,16 @@
 (defn- save-job-submission
   "Saves a DE job and its job-step in the database."
   ([user job submission]
-     (save-job-submission user job submission "Submitted"))
+     (save-job-submission user job submission jp/submitted-status))
   ([user job submission status]
      (transaction
       (let [job-id (:id (store-submitted-job user job submission status))]
         (store-job-step job-id job status)
-        job-id))))
+        {:id     job-id
+         :status status}))))
 
 (defn- format-job-submission-response
-  [user jex-submission batch? job-id]
+  [user jex-submission batch? {job-id :id status :status}]
   (remove-nil-vals
    {:app_description (:app_description jex-submission)
     :app_disabled    false
@@ -86,7 +87,7 @@
     :notify          (:notify jex-submission)
     :resultfolderid  (:output_dir jex-submission)
     :startdate       (str (.getTime (db/now)))
-    :status          jp/submitted-status
+    :status          status
     :username        (:username user)
     :wiki_url        (:wiki_url jex-submission)}))
 
@@ -96,7 +97,7 @@
         (do-jex-submission job)
         (save-job-submission user job submission)
         (catch Object _
-          (save-job-submission user job submission "Failed")))
+          (save-job-submission user job submission jp/failed-status)))
        (format-job-submission-response user job true)))
 
 (defn- submit-standalone-job

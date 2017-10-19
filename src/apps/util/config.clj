@@ -182,12 +182,13 @@
 (cc/defprop-optint path-list-max-paths
   "The maximum number of paths to process per HT Analysis Path Lists."
   [props config-valid configs]
-  "apps.batch.path-list.max-paths" 16)
+  "apps.batch.path-list.max-paths" 1000)
 
-(cc/defprop-optint path-list-max-size
-  "The maximum size of each HT Analysis Path List that can be fetched from the data-info service."
+(cc/defprop-optint irods-path-max-len
+  "The maximum length of an iRODS path, used in max HT Path List file size calculations.
+   See https://github.com/irods/irods/blob/805c01f55ea23a141cb0fa3f449f5172b3a19657/lib/core/include/rodsDef.h#L59-L61"
   [props config-valid configs]
-  "apps.batch.path-list.max-size" 1048576)
+  "apps.irods.path-max-len" 1067)
 
 (cc/defprop-optstr agave-base-url
   "The base URL to use when connecting to Agave."

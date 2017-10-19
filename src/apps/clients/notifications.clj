@@ -51,11 +51,11 @@
 
 (defn- format-job-status-update
   "Formats a job status update notification to send to the notification agent."
-  [username email-address {job-name :name :as job-info}]
+  [username email-address {job-name :name :as job-info} message]
   {:type           "analysis"
    :user           username
    :subject        (str job-name " status changed.")
-   :message        (str job-name " " (string/lower-case (:status job-info)))
+   :message        message
    :email          (send-email? job-info)
    :email_template "analysis_status_change"
    :payload        (assoc job-info
@@ -70,11 +70,13 @@
 
 (defn send-job-status-update
   "Sends notification of an Agave or DE job status update to the user."
-  ([username email-address job-info]
+  ([username email-address job-info message]
      (try
-       (send-notification (format-job-status-update username email-address job-info))
+       (send-notification (format-job-status-update username email-address job-info message))
        (catch Exception e
          (log/warn e "unable to send job status update notification for" (:id job-info)))))
+  ([username email-address {job-name :name :as job-info}]
+   (send-job-status-update username email-address job-info (str job-name " " (string/lower-case (:status job-info)))))
   ([{username :shortUsername email-address :email} job-info]
      (send-job-status-update username email-address job-info)))
 
