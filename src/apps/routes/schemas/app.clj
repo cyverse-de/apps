@@ -549,15 +549,15 @@
            OptionalToolsKey  (describe [AppToolRequest] ToolListDocs))))
 
 (defschema AppCategoryMetadata
-  {:avus (describe [Any] "A listing of App Category metadata")})
+  {(optional-key :avus) (describe [Any] "A listing of App Category metadata")})
 
 (defschema PublishAppRequest
   (-> AppBase
     (->optional-param :id)
     (->optional-param :name)
     (->optional-param :description)
-    (assoc :documentation AppDocParam
-           :references AppReferencesParam)
+    (assoc (optional-key :documentation) AppDocParam
+           (optional-key :references) AppReferencesParam)
     (merge AppCategoryMetadata)))
 
 (defschema AdminAppPatchRequest
