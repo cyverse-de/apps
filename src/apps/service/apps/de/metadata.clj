@@ -162,20 +162,31 @@
   [{:keys [shortUsername] :as user} {app-id :id :keys [references avus] :as app}]
   (transaction
     (amp/update-app app true)
-    (app-docs/add-app-docs user app-id app)
-    (amp/set-app-references app-id references)
+    (when (:documentation app) (app-docs/add-app-docs user app-id app))
+    (when references (amp/set-app-references app-id references))
     (decategorize-app app-id)
     (publish-app-metadata shortUsername app-id avus)
     (perms-client/make-app-public shortUsername app-id))
   nil)
 
-(defn make-app-public
-  [user {app-id :id :as app}]
+(defn- verify-app-publishable
+  [user {app-id :id}]
   (let [[publishable? reason] (app-publishable? user app-id)]
-    (if publishable?
-      (publish-app user app)
+    (when-not publishable?
       (throw+ {:type  :clojure-commons.exception/bad-request-field
                :error reason}))))
+
+(defn- verify-app-documentation
+  [user {app-id :id docs :documentation}]
+  (when-not (or docs (app-docs/has-docs? app-id))
+    (throw+ {:type  :clojure-commons.exception/bad-request-field
+             :error (str "App " app-id " does not have documentation.")})))
+
+(defn make-app-public
+  [user app]
+  (verify-app-publishable user app)
+  (verify-app-documentation user app)
+  (publish-app user app))
 
 (defn get-app
   "This service obtains an app description that can be used to build a job submission form in

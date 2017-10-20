@@ -58,3 +58,16 @@
     (when-not (cv/user-owns-app? user app)
       (de-validation/verify-app-permission user (ap/get-app app-id) "write")))
   (add-app-docs user app-id docs))
+
+(defn upsert-app-docs
+  "Either updates or adds app documentation."
+  [{:keys [username]} app-id {docs :documentation}]
+  (if-let [current-docs (dp/get-documentation app-id)]
+    (dp/edit-documentation (v/get-valid-user-id username) docs app-id)
+    (dp/add-documentation (v/get-valid-user-id username) docs app-id)))
+
+(defn has-docs?
+  "Determines whether or not an app has docs already."
+  [app-id]
+  (when (dp/get-documentation app-id)
+    true))
