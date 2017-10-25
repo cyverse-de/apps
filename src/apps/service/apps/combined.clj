@@ -209,6 +209,9 @@
   (getAdminAppCategories [_ params]
     (mapcat #(.getAdminAppCategories % params) clients))
 
+  (searchAdminAppCategories [_ params]
+    (mapcat #(.searchAdminAppCategories % params) clients))
+
   (adminAddCategory [_ system-id body]
     (.adminAddCategory (util/get-apps-client clients system-id) system-id body))
 

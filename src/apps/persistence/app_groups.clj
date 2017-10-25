@@ -34,6 +34,16 @@
                  (fields :id :name :is_public)
                  (where {:id app_group_id}))))
 
+(defn search-app-groups
+  "Searches for app category information by name."
+  [names]
+  (-> (select* [:app_categories :c])
+      (join [:workspace :w] {:c.workspace_id :w.id})
+      (join [:users :u] {:w.user_id :u.id})
+      (fields :c.id :c.name [(sqlfn regexp_replace :u.username "@.*" "") :owner])
+      (where {:c.name [in names]})
+      (select)))
+
 (defn get-app-subcategory-id
   "Gets the ID of the child category at the given index under the parent category with the given ID."
   [parent-category-id child-index]

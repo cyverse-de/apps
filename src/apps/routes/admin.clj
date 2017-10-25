@@ -196,6 +196,14 @@
     with the 'Trash' virtual category."
     (ok (apps/get-admin-app-categories current-user params)))
 
+  (GET "/search" []
+    :query [params AdminCategorySearchParams]
+    :return (describe AppCategorySearchResults "The matching app category information.")
+    :summary "Search for App Categories"
+    :description "This service allows the caller to search for categories by name. The name search is exact for the
+    time being."
+    (ok (apps/search-admin-app-categories current-user params)))
+
   (context "/:system-id" []
     :path-params [system-id :- SystemId]
 

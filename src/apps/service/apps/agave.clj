@@ -244,6 +244,9 @@
   (getAdminAppCategories [_ _]
     [])
 
+  (searchAdminAppCategories [_ _]
+    [])
+
   (adminAddCategory [_ system-id _]
     (validate-system-id system-id)
     (reject-categorization-request))

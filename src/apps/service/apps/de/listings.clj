@@ -217,6 +217,17 @@
     (conj (vec (get-app-groups user params))
           (format-trash-category nil nil params))))
 
+(defn- format-app-group-info
+  "Formats app category information for the admin app category search."
+  [category]
+  (assoc (select-keys category [:id :name :owner])
+    :system_id de-system-id))
+
+(defn search-admin-app-groups
+  "Searches for admin app categories by name."
+  [{names :name}]
+  (mapv format-app-group-info (search-app-groups names)))
+
 (defn- validate-app-pipeline-eligibility
   "Validates an App for pipeline eligibility, throwing a slingshot stone ."
   [app]
