@@ -24,6 +24,11 @@
         are in the user's workspace are returned. If not set, then both public and the user's
         private categories are returned.")}))
 
+(defschema AdminCategorySearchParams
+  (assoc SecuredQueryParams
+    (optional-key :name)
+    (describe [String] "Category names to search for.")))
+
 (defschema AppCategoryId
   {:system_id
    SystemId
@@ -31,12 +36,22 @@
    :id
    AppCategoryIdPathParam})
 
-(defschema AppCategory
+(defschema AppCategoryBase
   (merge AppCategoryId
          {:name
-          AppCategoryNameParam
+          AppCategoryNameParam}))
 
-          :total
+(defschema AppCategoryInfo
+  (merge AppCategoryBase
+         {:owner
+          (describe String "The name of the category owner or 'public' if the category is public.")}))
+
+(defschema AppCategorySearchResults
+  {:categories (describe [AppCategoryInfo] "The list of matching app categories.")})
+
+(defschema AppCategory
+  (merge AppCategoryBase
+         {:total
           (describe Long "The number of Apps under this Category and all of its children")
 
           :is_public

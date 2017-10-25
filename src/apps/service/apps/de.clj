@@ -232,6 +232,9 @@
   (getAdminAppCategories [_ params]
     (listings/get-admin-app-groups user params))
 
+  (searchAdminAppCategories [_ params]
+    (listings/search-admin-app-groups params))
+
   (adminAddCategory [_ system-id {parent-system-id :system_id :as body}]
     (validate-system-id system-id)
     (apps-util/reject-mixed-system-ids system-id parent-system-id)

@@ -303,6 +303,10 @@
   [user params]
   {:categories (.getAdminAppCategories (get-apps-client user) params)})
 
+(defn search-admin-app-categories
+  [user params]
+  {:categories (.searchAdminAppCategories (get-apps-client user) params)})
+
 (defn admin-add-category
   [user system-id body]
   (let [apps-client (get-apps-client user)]
