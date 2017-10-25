@@ -382,6 +382,14 @@
           (fields :submission)
           (where {:parent_id batch-id})))
 
+(defn list-running-child-jobs
+  "Lists the child jobs within a batch job that have not yet completed."
+  [batch-id]
+  (select (job-base-query)
+          (where {:parent_id batch-id
+                  :status    [not-in (conj completed-status-codes
+                                           impending-cancellation-status)]})))
+
 (defn- add-job-type-clause
   "Adds a where clause for a set of job types if the set of job types provided is not nil
    or empty."

@@ -1,6 +1,8 @@
 (ns apps.service.apps.jobs
-  (:use [slingshot.slingshot :only [try+]])
-  (:require [clojure.tools.logging :as log]
+  (:use [korma.db :only [transaction]]
+        [slingshot.slingshot :only [try+]])
+  (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [kameleon.db :as db]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
@@ -32,16 +34,19 @@
   [job-id]
   (service/assert-found (jp/lock-job job-id) "job" job-id))
 
+(defn- format-job-for-status-update
+  [apps-client job-id]
+  (let [job        (jp/get-job-by-id job-id)
+        app-tables (.loadAppTables apps-client [job])
+        rep-steps  (jp/list-representative-job-steps [job-id])
+        rep-steps  (group-by (some-fn :parent_id :job_id) rep-steps)]
+    (listings/format-job apps-client nil app-tables rep-steps job)))
+
 (defn- send-job-status-update
-  [apps-client {job-id :id prev-status :status :as job}]
-  (let [{curr-status :status :as job} (jp/get-job-by-id job-id)
-        app-tables                    (.loadAppTables apps-client [job])
-        rep-steps                     (jp/list-representative-job-steps [job-id])
-        rep-steps                     (group-by (some-fn :parent_id :job_id) rep-steps)]
+  [apps-client {job-id :id prev-status :status}]
+  (let [{curr-status :status :as job} (format-job-for-status-update apps-client job-id)]
     (when-not (= prev-status curr-status)
-      (cn/send-job-status-update
-       (.getUser apps-client)
-       (listings/format-job apps-client nil app-tables rep-steps job)))))
+      (cn/send-job-status-update (.getUser apps-client) job))))
 
 (defn- determine-batch-status
   [{:keys [id]}]
@@ -147,24 +152,69 @@
 
 (defn- stop-job-steps
   "Stops an individual step in a job."
-  [apps-client {:keys [id] :as job} steps]
+  [apps-client {:keys [id] :as job} steps notify?]
   (.stopJobStep apps-client (first steps))
   (jp/cancel-job-step-numbers id (mapv :step_number steps))
-  (send-job-status-update apps-client job))
+  (when notify?
+    (send-job-status-update apps-client job)))
+
+(defn- stop-single-job
+  [apps-client {job-id :id :as job} notify?]
+  (jp/update-job job-id jp/canceled-status (db/now))
+  (try+
+    (stop-job-steps apps-client job (find-incomplete-job-steps job-id) notify?)
+    (catch Throwable t
+      (log/warn t "unable to cancel the most recent step of job, " job-id))
+    (catch Object _
+      (log/warn "unable to cancel the most recent step of job, " job-id))))
+
+(defn stop-child-job
+  [apps-client {job-id :id}]
+  (transaction
+    (let [{:keys [status] :as job} (jp/get-job-by-id job-id)]
+      (when (jp/not-completed? status)
+        (stop-single-job apps-client job false)
+        jp/canceled-status))))
+
+(defn- stop-batch-jobs-thread
+  [apps-client parent-id]
+  (try+
+    (log/info "batch job cancellation starting...")
+    ;; Re-list running children after the parent has been cancelled, to catch any new submissions.
+    (let [children         (jp/list-running-child-jobs parent-id)
+          stopped-sub-jobs (->> children
+                                (map (partial stop-child-job apps-client))
+                                (remove nil?))
+          sub-job-count    (count stopped-sub-jobs)
+          user             (.getUser apps-client)
+          parent-job       (format-job-for-status-update apps-client parent-id)
+          message          (format "%s %d analyses %s"
+                                   (:name parent-job)
+                                   sub-job-count
+                                   (string/lower-case jp/canceled-status))]
+      (cn/send-job-status-update (:shortUsername user) (:email user) parent-job message)
+      (log/info "batch job cancellation complete:" sub-job-count "stopped."))
+    (catch Object _
+      (log/error (:throwable &throw-context)
+                 "unable to cancel batch jobs," parent-id))))
+
+(defn- async-stop-batch-jobs
+  [apps-client parent-id]
+  (let [^Runnable target #(stop-batch-jobs-thread apps-client parent-id)]
+    (.start (Thread. target (str "batch_stop_" parent-id)))))
 
 (defn stop-job
   [apps-client user job-id]
   (validate-jobs-for-user user [job-id] "write")
-  (let [{:keys [status] :as job} (jp/get-job-by-id job-id)]
-    (when (jp/completed? status)
+  (let [{:keys [status] :as job} (jp/get-job-by-id job-id)
+        running-children (jp/list-running-child-jobs job-id)]
+    (when (and (jp/completed? status) (empty? running-children))
       (service/bad-request (str "job, " job-id ", is already completed or canceled")))
-    (jp/update-job job-id jp/canceled-status (db/now))
-    (try+
-     (stop-job-steps apps-client job (find-incomplete-job-steps job-id))
-     (catch Throwable t
-       (log/warn t "unable to cancel the most recent step of job, " job-id))
-     (catch Object _
-       (log/warn "unable to cancel the most recent step of job, " job-id)))))
+
+    ;; A parent job should be stopped right away, to prevent further child jobs from submitting.
+    (stop-single-job apps-client job true)
+    (if (not (empty? running-children))
+      (async-stop-batch-jobs apps-client job-id))))
 
 (defn list-job-steps
   [user job-id]
