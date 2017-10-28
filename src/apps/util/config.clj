@@ -174,7 +174,12 @@
   [props config-valid configs]
   "apps.batch.group" "batch_processing")
 
-(cc/defprop-optstr path-list-info-type
+(cc/defprop-optstr multi-input-path-list-info-type
+  "The info type for Multi-Input Path Lists."
+  [props config-valid configs]
+  "apps.batch.multi-input-path-list.info-type" "multi-input-path-list")
+
+(cc/defprop-optstr ht-path-list-info-type
   "The info type for HT Analysis Path Lists."
   [props config-valid configs]
   "apps.batch.path-list.info-type" "ht-analysis-path-list")

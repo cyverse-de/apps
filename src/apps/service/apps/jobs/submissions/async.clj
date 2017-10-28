@@ -5,11 +5,11 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clojure-commons.file-utils :as ft]
-            [apps.clients.data-info :as data-info]
             [apps.clients.notifications :as notifications]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.job-listings :as job-listings]
             [apps.service.apps.jobs.submissions.submit :as submit]
+            [apps.service.apps.jobs.util :as util]
             [apps.util.config :as config]))
 
 (defn- max-batch-paths-exceeded
@@ -32,20 +32,6 @@
       (throw+ {:type  :clojure-commons.exception/illegal-argument
                :error "All HT Analysis Path Lists must have the same number of paths."}))
     path-lists))
-
-(defn- get-path-list-contents
-  [user path]
-  (try+
-    (when (seq path) (data-info/get-path-list-contents user path))
-    (catch Object _
-      (log/error (:throwable &throw-context)
-                 "job submission failed: Could not get file contents of HT Path List input"
-                 path)
-      (throw+))))
-
-(defn- get-path-list-contents-map
-  [user paths]
-  (into {} (map (juxt identity (partial get-path-list-contents user)) paths)))
 
 (defn- map-slice
   [m n]
@@ -108,7 +94,7 @@
   [apps-client {username :shortUsername email-address :email :as user} ht-paths submission output-dir parent-id]
   (try+
     (log/info "batch job submissions starting...")
-    (let [path-lists    (validate-path-lists (get-path-list-contents-map user ht-paths))
+    (let [path-lists    (validate-path-lists (util/get-path-list-contents-map user ht-paths))
           path-maps     (map-slices path-lists)
           submission    (preprocess-batch-submission submission output-dir parent-id)
           job-stats     (reduce (partial batch-job-reducer apps-client user)

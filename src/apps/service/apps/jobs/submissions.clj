@@ -17,7 +17,8 @@
             [apps.service.apps.jobs.submissions.async :as async]
             [apps.service.apps.jobs.submissions.submit :as submit]
             [apps.util.config :as config]
-            [apps.util.service :as service]))
+            [apps.util.service :as service]
+            [apps.service.apps.jobs.util :as util]))
 
 (defn- get-app-params
   [app type-set]
@@ -37,14 +38,17 @@
                 "job submission failed: Could not lookup info types of inputs.")
      (throw+))))
 
-(defn- load-path-list-stats
+(defn- load-input-path-stats
   [user input-paths-by-id]
   (->> (flatten (vals input-paths-by-id))
        (remove string/blank?)
        (get-file-stats user)
-       (:paths)
-       (map val)
-       (filter (comp (partial = (config/path-list-info-type)) :infoType))))
+       :paths
+       (map val)))
+
+(defn- filter-stats-by-info-type
+  [info-type path-stats]
+  (filter (comp (partial = info-type) :infoType) path-stats))
 
 (defn- param-value-contains-paths?
   [paths [_ v]]
@@ -147,12 +151,48 @@
     (async/submit-batch-jobs apps-client user ht-paths submission output-dir batch-id)
     (job-listings/list-job apps-client batch-id)))
 
+(defn- substitute-multi-input-param-values
+  [path-list-map config multi-input-param-id]
+  (assoc config multi-input-param-id (->> (get config multi-input-param-id) ;; get current multi-input path values
+                                          (map #(get path-list-map % %)) ;; expand path-list for each matched value
+                                          flatten)))
+
+(defn- config->expand-multi-input-path-lists
+  [config user param-id->input-param path-list-stats]
+  (let [path-list-paths       (set (map :path path-list-stats))
+        path-list-map         (util/get-path-list-contents-map user path-list-paths)
+        multi-input-param-ids (->> param-id->input-param
+                                   (filter (comp (partial = ap/param-multi-input-type) :type second))
+                                   (map first)
+                                   set)]
+    (reduce (partial substitute-multi-input-param-values path-list-map)
+            config
+            multi-input-param-ids)))
+
+(defn- pre-process-config
+  [config user input-params-by-id path-stats]
+  (if-let [multi-input-path-list-stats (->> path-stats
+                                            (filter-stats-by-info-type (config/multi-input-path-list-info-type))
+                                            seq)]
+    (config->expand-multi-input-path-lists config
+                                           user
+                                           input-params-by-id
+                                           multi-input-path-list-stats)
+    config))
+
+(defn- pre-process-submission
+  [{:keys [config] :as submission} user input-params-by-id path-stats]
+  (assoc submission :config (pre-process-config config user input-params-by-id path-stats)))
+
 (defn submit
   [apps-client user {app-id :app_id system-id :system_id :as submission}]
   (let [[job-types app]    (.getAppSubmissionInfo apps-client system-id app-id)
         input-params-by-id (get-app-params app ap/param-ds-input-types)
-        input-paths-by-id  (select-keys (:config submission) (keys input-params-by-id))]
-    (if-let [path-list-stats (seq (load-path-list-stats user input-paths-by-id))]
+        input-paths-by-id  (select-keys (:config submission) (keys input-params-by-id))
+        path-stats         (load-input-path-stats user input-paths-by-id)
+        ht-path-list-stats (filter-stats-by-info-type (config/ht-path-list-info-type) path-stats)
+        submission         (pre-process-submission submission user input-params-by-id path-stats)]
+    (if (empty? ht-path-list-stats)
+      (submit/submit-and-register-private-job apps-client user submission)
       (submit-batch-job apps-client user input-params-by-id input-paths-by-id
-                        path-list-stats job-types app submission)
-      (submit/submit-and-register-private-job apps-client user submission))))
+                        ht-path-list-stats job-types app submission))))
