@@ -16,6 +16,11 @@
      (optional-key :created_by)
      (describe String "Filters the Reference Genome listing by the user that added them.")}))
 
+(defschema ReferenceGenomeDeletionParams
+  (assoc SecuredQueryParams
+    (optional-key :permanent)
+    (describe Boolean "If true, completely remove the reference genome from the database.")))
+
 (defschema ReferenceGenome
   {:id
    ReferenceGenomeIdParam
