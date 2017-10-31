@@ -113,8 +113,9 @@
     (submit-standalone-job user submission job)))
 
 (defn- prep-submission
-  [submission]
+  [{:keys [config] :as submission}]
   (assoc submission
+    :config               (:job_config submission config)
     :output_dir           (build-result-folder-path submission)
     :create_output_subdir false))
 

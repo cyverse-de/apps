@@ -177,7 +177,7 @@
             config
             multi-input-param-ids)))
 
-(defn- pre-process-config
+(defn- process-job-config
   [config user input-params-by-id input-paths-by-id path-stats]
   (if-let [multi-input-path-list-stats (->> path-stats
                                             (filter-stats-by-info-type (config/multi-input-path-list-info-type))
@@ -191,7 +191,7 @@
 
 (defn- pre-process-submission
   [{:keys [config] :as submission} user input-params-by-id input-paths-by-id path-stats]
-  (assoc submission :config (pre-process-config config user input-params-by-id input-paths-by-id path-stats)))
+  (assoc submission :job_config (process-job-config config user input-params-by-id input-paths-by-id path-stats)))
 
 (defn submit
   [apps-client user {app-id :app_id system-id :system_id :as submission}]
