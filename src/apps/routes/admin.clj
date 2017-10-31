@@ -333,11 +333,11 @@
 
   (DELETE "/:reference-genome-id" []
     :path-params [reference-genome-id :- ReferenceGenomeIdParam]
-    :query [params SecuredQueryParams]
+    :query [params ReferenceGenomeDeletionParams]
     :summary "Delete a Reference Genome."
     :description "A Reference Genome can be marked as deleted in the DE without being completely
     removed from the database using this service. <b>Note</b>: an attempt to delete a
     Reference Genome that is already marked as deleted is treated as a no-op rather than an
     error condition. If the Reference Genome doesn't exist in the database at all, however,
     then that is treated as an error condition."
-    (ok (delete-reference-genome reference-genome-id))))
+    (ok (delete-reference-genome reference-genome-id params))))

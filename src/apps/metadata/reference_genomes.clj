@@ -87,9 +87,11 @@
 
 (defn delete-reference-genome
   "Logically deletes a reference genome by setting its 'deleted' flag to true."
-  [reference-genome-id]
+  [reference-genome-id {:keys [permanent] :or {permanent false}}]
   (get-valid-reference-genome reference-genome-id)
-  (sql/update genome_reference (set-fields {:deleted true}) (where {:id reference-genome-id}))
+  (if permanent
+    (sql/delete genome_reference (where {:id reference-genome-id}))
+    (sql/update genome_reference (set-fields {:deleted true}) (where {:id reference-genome-id})))
   nil)
 
 (defn update-reference-genome
