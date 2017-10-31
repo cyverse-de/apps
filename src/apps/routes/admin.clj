@@ -4,7 +4,6 @@
         [common-swagger-api.schema.ontologies]
         [apps.metadata.reference-genomes :only [add-reference-genome
                                                 delete-reference-genome
-                                                replace-reference-genomes
                                                 update-reference-genome]]
         [apps.metadata.tool-requests]
         [apps.routes.params]
@@ -321,15 +320,6 @@
     :summary "Add a Reference Genome."
     :description "This endpoint adds a Reference Genome to the Discovery Environment."
     (ok (add-reference-genome body)))
-
-  (PUT "/" []
-    :query [params SecuredQueryParams]
-    :body [body (describe ReferenceGenomesSetRequest "List of Reference Genomes to set.")]
-    :return ReferenceGenomesList
-    :summary "Replace Reference Genomes."
-    :description "This endpoint replaces ALL the Reference Genomes in the Discovery Environment,
-    so if a genome is not listed in the request, it will not show up in the DE."
-    (ok (replace-reference-genomes body)))
 
   (PATCH "/:reference-genome-id" []
     :path-params [reference-genome-id :- ReferenceGenomeIdParam]
