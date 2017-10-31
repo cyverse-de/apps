@@ -56,10 +56,20 @@
     (some (set paths) v)
     ((set paths) v)))
 
-(defn- extract-ht-param-ids
-  [path-list-stats input-paths-by-id]
-  (let [ht-paths (set (map :path path-list-stats))]
-    (map key (filter (partial param-value-contains-paths? ht-paths) input-paths-by-id))))
+(defn- extract-path-list-params
+  [path-list-stats input-paths-by-id input-params-by-id]
+  (let [paths (set (map :path path-list-stats))]
+    (->> input-paths-by-id
+         (filter (partial param-value-contains-paths? paths))
+         (map key)
+         (select-keys input-params-by-id)
+         vals)))
+
+(defn- validate-multi-input-params
+  [multi-input-params]
+  (when-not (every? (comp (partial = ap/param-multi-input-type) :type) multi-input-params)
+    (throw+ {:type  :clojure-commons.exception/illegal-argument
+             :error "Multi-Input Path List files are only supported in multi-file inputs."})))
 
 (defn- max-path-list-size-exceeded
   [max-size path actual-size]
@@ -136,10 +146,7 @@
   (doseq [path-stat path-list-stats]
     (validate-path-list-stats path-stat))
 
-  (->> (extract-ht-param-ids path-list-stats input-paths-by-id)
-       (select-keys input-params-by-id)
-       vals
-       validate-ht-params))
+  (validate-ht-params (extract-path-list-params path-list-stats input-paths-by-id input-params-by-id)))
 
 (defn- submit-batch-job
   [apps-client user input-params-by-id input-paths-by-id path-list-stats job-types app submission]
@@ -158,10 +165,11 @@
                                           flatten)))
 
 (defn- config->expand-multi-input-path-lists
-  [config user param-id->input-param path-list-stats]
+  [config user input-params-by-id input-paths-by-id path-list-stats]
+  (validate-multi-input-params (extract-path-list-params path-list-stats input-paths-by-id input-params-by-id))
   (let [path-list-paths       (set (map :path path-list-stats))
         path-list-map         (util/get-path-list-contents-map user path-list-paths)
-        multi-input-param-ids (->> param-id->input-param
+        multi-input-param-ids (->> input-params-by-id
                                    (filter (comp (partial = ap/param-multi-input-type) :type second))
                                    (map first)
                                    set)]
@@ -170,19 +178,20 @@
             multi-input-param-ids)))
 
 (defn- pre-process-config
-  [config user input-params-by-id path-stats]
+  [config user input-params-by-id input-paths-by-id path-stats]
   (if-let [multi-input-path-list-stats (->> path-stats
                                             (filter-stats-by-info-type (config/multi-input-path-list-info-type))
                                             seq)]
     (config->expand-multi-input-path-lists config
                                            user
                                            input-params-by-id
+                                           input-paths-by-id
                                            multi-input-path-list-stats)
     config))
 
 (defn- pre-process-submission
-  [{:keys [config] :as submission} user input-params-by-id path-stats]
-  (assoc submission :config (pre-process-config config user input-params-by-id path-stats)))
+  [{:keys [config] :as submission} user input-params-by-id input-paths-by-id path-stats]
+  (assoc submission :config (pre-process-config config user input-params-by-id input-paths-by-id path-stats)))
 
 (defn submit
   [apps-client user {app-id :app_id system-id :system_id :as submission}]
@@ -191,7 +200,7 @@
         input-paths-by-id  (select-keys (:config submission) (keys input-params-by-id))
         path-stats         (load-input-path-stats user input-paths-by-id)
         ht-path-list-stats (filter-stats-by-info-type (config/ht-path-list-info-type) path-stats)
-        submission         (pre-process-submission submission user input-params-by-id path-stats)]
+        submission         (pre-process-submission submission user input-params-by-id input-paths-by-id path-stats)]
     (if (empty? ht-path-list-stats)
       (submit/submit-and-register-private-job apps-client user submission)
       (submit-batch-job apps-client user input-params-by-id input-paths-by-id
