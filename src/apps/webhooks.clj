@@ -14,7 +14,7 @@
                       (where {:ws.webhook_id webhook-id}))))
 
 (defn- get-webhook-type [type]
-  (first (select [:webhooks_type :wt] (where {:type type}))))
+  (first (select :webhooks_type (where {:type type}))))
 
 (defn- format-webhook [{:keys [id type] :as webhook}]
   (assoc webhook
@@ -62,7 +62,7 @@
   (list-webhooks user))
 
 (defn list-topics []
-  {:topics (select [:webhooks_topic])})
+  {:topics (select :webhooks_topic)})
 
 (defn list-types []
-  {:webhooktypes (select [:webhooks_type])})
+  {:webhooktypes (select :webhooks_type)})
