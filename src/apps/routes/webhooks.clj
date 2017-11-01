@@ -25,8 +25,7 @@
                          :return TopicList
                          :summary "List notification topics"
                          :description "Returns all of the notification topics defined"
-                         (ok (list-topics)))
-                    )
+                         (ok (list-topics))))
            (context "/types" []
                     (GET "/" []
                          :query [params SecuredQueryParams]
