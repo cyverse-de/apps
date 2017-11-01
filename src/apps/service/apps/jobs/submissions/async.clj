@@ -26,8 +26,8 @@
   [path-lists]
   (let [[first-list-path first-list] (first path-lists)
         first-list-count             (count first-list)]
-    (when (> first-list-count (config/path-list-max-paths))
-      (max-batch-paths-exceeded (config/path-list-max-paths) first-list-path first-list-count))
+    (when (> first-list-count (config/ht-path-list-max-paths))
+      (max-batch-paths-exceeded (config/ht-path-list-max-paths) first-list-path first-list-count))
     (when-not (every? (comp (partial = first-list-count) count second) path-lists)
       (throw+ {:type  :clojure-commons.exception/illegal-argument
                :error "All HT Analysis Path Lists must have the same number of paths."}))

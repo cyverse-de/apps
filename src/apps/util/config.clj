@@ -184,8 +184,13 @@
   [props config-valid configs]
   "apps.batch.path-list.info-type" "ht-analysis-path-list")
 
-(cc/defprop-optint path-list-max-paths
-  "The maximum number of paths to process per HT Analysis Path Lists."
+(cc/defprop-optint multi-input-path-list-max-paths
+  "The maximum number of paths to process per Multi-Input Path List."
+  [props config-valid configs]
+  "apps.batch.multi-input-path-list.max-paths" 1000)
+
+(cc/defprop-optint ht-path-list-max-paths
+  "The maximum number of paths to process per HT Analysis Path List."
   [props config-valid configs]
   "apps.batch.path-list.max-paths" 1000)
 

@@ -71,28 +71,46 @@
     (throw+ {:type  :clojure-commons.exception/illegal-argument
              :error "Multi-Input Path List files are only supported in multi-file inputs."})))
 
+(defn- multi-input-max-paths-exceeded
+  [max-paths path path-count]
+  (throw+
+    {:type       :clojure-commons.exception/illegal-argument
+     :error      (format "Multi-Input Path List exceeds the maximum of %d allowed paths." max-paths)
+     :path       path
+     :path-count path-count}))
+
 (defn- max-path-list-size-exceeded
-  [max-size path actual-size]
+  [list-type max-size path actual-size]
   (throw+
     {:type      :clojure-commons.exception/illegal-argument
-     :error     (str "HT Analysis Path List file exceeds maximum size of " max-size " bytes.")
+     :error     (format "%s file exceeds maximum size of %d bytes." list-type max-size)
      :path      path
      :file-size actual-size}))
 
 (defn- validate-path-list-stats
-  [{path :path actual-size :file-size}]
+  [list-type max-paths path-list-stats]
   ;; Ensure the file size is within a reasonable limit, based on the iRODS max path length:
   ;; the iRODS max path length + 1 (for newlines) * the path limit + 1 (for some file header overhead).
   (let [path-list-max-size (* (+ 1 (config/irods-path-max-len))
-                              (+ 1 (config/path-list-max-paths)))]
-    (when (> actual-size path-list-max-size)
-      (max-path-list-size-exceeded path-list-max-size path actual-size))))
+                              (+ 1 max-paths))]
+    (doseq [{path :path actual-size :file-size} path-list-stats]
+      (when (> actual-size path-list-max-size)
+        (max-path-list-size-exceeded list-type path-list-max-size path actual-size)))))
 
 (defn- validate-ht-params
   [ht-params]
   (when (some (comp (partial = ap/param-multi-input-type) :type) ht-params)
     (throw+ {:type  :clojure-commons.exception/illegal-argument
              :error "HT Analysis Path List files are not supported in multi-file inputs."})))
+
+(defn- validate-multi-input-path-lists
+  [path-lists]
+  (doseq [[path list] path-lists]
+    (let [list-count (count list)
+          max-paths  (config/multi-input-path-list-max-paths)]
+      (when (> list-count max-paths)
+        (multi-input-max-paths-exceeded max-paths path list-count))))
+  path-lists)
 
 (defn- get-batch-output-dir
   [user submission]
@@ -143,10 +161,12 @@
 
 (defn- pre-submit-batch-validation
   [input-params-by-id input-paths-by-id path-list-stats]
-  (doseq [path-stat path-list-stats]
-    (validate-path-list-stats path-stat))
-
-  (validate-ht-params (extract-path-list-params path-list-stats input-paths-by-id input-params-by-id)))
+  (validate-path-list-stats "HT Analysis Path List"
+                            (config/ht-path-list-max-paths)
+                            path-list-stats)
+  (validate-ht-params (extract-path-list-params path-list-stats
+                                                input-paths-by-id
+                                                input-params-by-id)))
 
 (defn- submit-batch-job
   [apps-client user input-params-by-id input-paths-by-id path-list-stats job-types app submission]
@@ -164,11 +184,21 @@
                                           (map #(get path-list-map % %)) ;; expand path-list for each matched value
                                           flatten)))
 
+(defn- pre-expand-multi-input-validation
+  [path-list-stats input-paths-by-id input-params-by-id]
+  (validate-path-list-stats "Multi-Input Path List"
+                            (config/multi-input-path-list-max-paths)
+                            path-list-stats)
+  (validate-multi-input-params (extract-path-list-params path-list-stats
+                                                         input-paths-by-id
+                                                         input-params-by-id)))
+
 (defn- config->expand-multi-input-path-lists
   [config user input-params-by-id input-paths-by-id path-list-stats]
-  (validate-multi-input-params (extract-path-list-params path-list-stats input-paths-by-id input-params-by-id))
+  (pre-expand-multi-input-validation path-list-stats input-paths-by-id input-params-by-id)
+
   (let [path-list-paths       (set (map :path path-list-stats))
-        path-list-map         (util/get-path-list-contents-map user path-list-paths)
+        path-list-map         (validate-multi-input-path-lists (util/get-path-list-contents-map user path-list-paths))
         multi-input-param-ids (->> input-params-by-id
                                    (filter (comp (partial = ap/param-multi-input-type) :type second))
                                    (map first)

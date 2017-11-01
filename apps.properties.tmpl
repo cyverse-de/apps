@@ -46,6 +46,7 @@ apps.uid.domain = {{ (key (printf "%s/de/cas-uid-domain" $base)) }}
 # Batch job settings.
 {{ with $v := (key (printf "%s/jex/batch-group" $base))                      }}apps.batch.group                           = {{ $v }}{{ end }}
 {{ with $v := (key (printf "%s/apps/multi-input-path-list-info-type" $base)) }}apps.batch.multi-input-path-list.info-type = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/multi-input-path-list-max-paths" $base)) }}apps.batch.multi-input-path-list.max-paths = {{ $v }}{{ end }}
 {{ with $v := (key (printf "%s/apps/path-list-info-type" $base))             }}apps.batch.path-list.info-type             = {{ $v }}{{ end }}
 {{ with $v := (key (printf "%s/apps/path-list-max-paths" $base))             }}apps.batch.path-list.max-paths             = {{ $v }}{{ end }}
 
