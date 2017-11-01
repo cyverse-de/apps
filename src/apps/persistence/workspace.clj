@@ -5,15 +5,26 @@
   (:require [apps.persistence.app-groups :as app-groups]
             [apps.persistence.users :as users]
             [apps.util.config :as config]
+            [clojure.tools.logging :as log]
             [korma.core :as sql]))
+
+(defn- workspace-base-query
+  []
+  (-> (select* [:workspace :w])
+      (join [:users :u] {:w.user_id :u.id})
+      (fields :w.id :w.user_id :w.root_category_id :w.is_public)))
+
+(defn- add-usernames-filter
+  [query usernames]
+  (when-not (empty? usernames)
+    (where query {:u.username [in usernames]})))
 
 (defn get-workspace
   [username]
-  (->> (select [:workspace :w]
-               (join [:users :u] {:w.user_id :u.id})
-               (fields :w.id :w.user_id :w.root_category_id :w.is_public)
-               (where {:u.username username}))
-       (first)))
+  (-> (workspace-base-query)
+      (add-usernames-filter [username])
+      select
+      first))
 
 (defn- create-root-app-category
   [workspace-id]
@@ -57,3 +68,11 @@
         (create-workspace*)
         (add-root-app-category)))
   (get-workspace username))
+
+(defn list-workspaces
+  "Lists workspaces, optionally filtered by username."
+  [usernames]
+  (log/warn usernames)
+  (-> (workspace-base-query)
+      (add-usernames-filter usernames)
+      select))
