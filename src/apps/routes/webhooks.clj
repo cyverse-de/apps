@@ -33,8 +33,7 @@
                          :return WebhookTypeList
                          :summary "List webhooks types"
                          :description "Returns all webhook types defined"
-                         (ok (list-types)))
-                    ))
+                         (ok (list-types)))))
 
 
 
