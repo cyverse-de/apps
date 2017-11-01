@@ -5,7 +5,6 @@
   (:require [apps.persistence.app-groups :as app-groups]
             [apps.persistence.users :as users]
             [apps.util.config :as config]
-            [clojure.tools.logging :as log]
             [korma.core :as sql]))
 
 (defn- workspace-base-query
@@ -72,7 +71,16 @@
 (defn list-workspaces
   "Lists workspaces, optionally filtered by username."
   [usernames]
-  (log/warn usernames)
   (-> (workspace-base-query)
       (add-usernames-filter usernames)
       select))
+
+(defn- user-id-subselect
+  [usernames]
+  (subselect :users (fields :id) (where {:username [in usernames]})))
+
+(defn delete-workspaces
+  "Deletes the workspaces for selected usernames."
+  [usernames]
+  (when-not (empty? usernames)
+    (delete :workspace (where {:user_id [in (user-id-subselect usernames)]}))))

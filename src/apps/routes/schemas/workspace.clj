@@ -1,6 +1,6 @@
 (ns apps.routes.schemas.workspace
   (:use [apps.routes.params :only [SecuredQueryParams]]
-        [common-swagger-api.schema :only [describe]]
+        [common-swagger-api.schema :only [describe ->optional-param]]
         [schema.core :only [defschema optional-key]])
   (:import [java.util UUID]))
 
@@ -16,7 +16,10 @@
 (defschema WorkspaceListing
   {:workspaces (describe [Workspace] "The list of workspaces.")})
 
-(defschema WorkspaceListingParams
+(defschema WorkspaceDeletionParams
   (assoc SecuredQueryParams
-    (optional-key :username)
+    :username
     (describe [String] "The username to search for. Can be repeated to search for multiple usernames")))
+
+(defschema WorkspaceListingParams
+  (->optional-param WorkspaceDeletionParams :username))

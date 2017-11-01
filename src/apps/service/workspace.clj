@@ -20,3 +20,8 @@
   "Lists workspaces matching the provided parameters."
   [{usernames :username}]
   {:workspaces (map format-workspace (wp/list-workspaces usernames))})
+
+(defn delete-workspaces
+  "Deletes workspaces matching the provided parameters."
+  [{usernames :username}]
+  (wp/delete-workspaces usernames))

@@ -350,4 +350,11 @@
     :return WorkspaceListing
     :summary "List Workspaces"
     :description "This endpoint allows an administrator to list workspaces in the DE."
-    (ok (workspace/list-workspaces params))))
+    (ok (workspace/list-workspaces params)))
+
+  (DELETE "/" []
+    :query [params WorkspaceDeletionParams]
+    :summary "Delete Workspaces"
+    :description "This endpoint allows an administrator to delete workspaces in the DE."
+    (workspace/delete-workspaces params)
+    (ok)))
