@@ -70,7 +70,8 @@
                    {:name "admin-tool-requests", :description "Admin Tool Request endpoints."}
                    {:name "admin-oauth", :description "Admin OAuth endpoints."}
                    {:name "admin-integration-data", :description "Admin Integration Data endpoints."}
-                   {:name "admin-groups", :description "Admin Group endpoints."}]}})
+                   {:name "admin-groups", :description "Admin Group endpoints."}
+                   {:name "admin-workspaces", :description "Admin Workspace endpoints"}]}})
   (middleware
     [clean-context
      wrap-keyword-params
@@ -179,4 +180,7 @@
     (context "/admin/groups" []
       :tags ["admin-groups"]
       group-routes/admin-group-routes)
+    (context "/admin/workspaces" []
+      :tags ["admin-workspaces"]
+      admin-routes/admin-workspaces)
     (undocumented (route/not-found (service/unrecognized-path-response)))))

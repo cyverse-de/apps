@@ -13,12 +13,14 @@
         [apps.routes.schemas.reference-genome]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
+        [apps.routes.schemas.workspace]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [ring.util.http-response :only [ok]])
   (:require [apps.service.apps :as apps]
             [apps.service.apps.de.admin :as admin]
             [apps.service.apps.de.listings :as listings]
+            [apps.service.workspace :as workspace]
             [apps.util.config :as config]))
 
 (defroutes admin-tool-requests
@@ -317,7 +319,7 @@
     :query [params SecuredQueryParams]
     :body [body (describe ReferenceGenomeRequest "The Reference Genome to add.")]
     :return ReferenceGenome
-    :summary "Add a Reference Genome."
+    :summary "Add a Reference Genome"
     :description "This endpoint adds a Reference Genome to the Discovery Environment."
     (ok (add-reference-genome body)))
 
@@ -326,7 +328,7 @@
     :query [params SecuredQueryParams]
     :body [body (describe ReferenceGenomeRequest "The Reference Genome fields to update.")]
     :return ReferenceGenome
-    :summary "Update a Reference Genome."
+    :summary "Update a Reference Genome"
     :description "This endpoint modifies the name, path, and deleted fields of a Reference Genome in
     the Discovery Environment."
     (ok (update-reference-genome (assoc body :id reference-genome-id))))
@@ -334,10 +336,25 @@
   (DELETE "/:reference-genome-id" []
     :path-params [reference-genome-id :- ReferenceGenomeIdParam]
     :query [params ReferenceGenomeDeletionParams]
-    :summary "Delete a Reference Genome."
+    :summary "Delete a Reference Genome"
     :description "A Reference Genome can be marked as deleted in the DE without being completely
     removed from the database using this service. <b>Note</b>: an attempt to delete a
     Reference Genome that is already marked as deleted is treated as a no-op rather than an
     error condition. If the Reference Genome doesn't exist in the database at all, however,
     then that is treated as an error condition."
     (ok (delete-reference-genome reference-genome-id params))))
+
+(defroutes admin-workspaces
+  (GET "/" []
+    :query [params WorkspaceListingParams]
+    :return WorkspaceListing
+    :summary "List Workspaces"
+    :description "This endpoint allows an administrator to list workspaces in the DE."
+    (ok (workspace/list-workspaces params)))
+
+  (DELETE "/" []
+    :query [params WorkspaceDeletionParams]
+    :summary "Delete Workspaces"
+    :description "This endpoint allows an administrator to delete workspaces in the DE."
+    (workspace/delete-workspaces params)
+    (ok)))
