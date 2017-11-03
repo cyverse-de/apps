@@ -174,25 +174,25 @@
   [props config-valid configs]
   "apps.batch.group" "batch_processing")
 
-(cc/defprop-optstr multi-input-path-list-info-type
-  "The info type for Multi-Input Path Lists."
-  [props config-valid configs]
-  "apps.batch.multi-input-path-list.info-type" "multi-input-path-list")
-
 (cc/defprop-optstr ht-path-list-info-type
   "The info type for HT Analysis Path Lists."
   [props config-valid configs]
-  "apps.batch.path-list.info-type" "ht-analysis-path-list")
-
-(cc/defprop-optint multi-input-path-list-max-paths
-  "The maximum number of paths to process per Multi-Input Path List."
-  [props config-valid configs]
-  "apps.batch.multi-input-path-list.max-paths" 1000)
+  "apps.batch.path-list.ht.info-type" "ht-analysis-path-list")
 
 (cc/defprop-optint ht-path-list-max-paths
   "The maximum number of paths to process per HT Analysis Path List."
   [props config-valid configs]
-  "apps.batch.path-list.max-paths" 1000)
+  "apps.batch.path-list.ht.max-paths" 1000)
+
+(cc/defprop-optstr multi-input-path-list-info-type
+  "The info type for Multi-Input Path Lists."
+  [props config-valid configs]
+  "apps.batch.path-list.multi-input.info-type" "multi-input-path-list")
+
+(cc/defprop-optint multi-input-path-list-max-paths
+  "The maximum number of paths to process per Multi-Input Path List."
+  [props config-valid configs]
+  "apps.batch.path-list.multi-input.max-paths" 1000)
 
 (cc/defprop-optint irods-path-max-len
   "The maximum length of an iRODS path, used in max HT Path List file size calculations.

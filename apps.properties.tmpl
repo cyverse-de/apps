@@ -44,11 +44,11 @@ apps.uid.domain = {{ (key (printf "%s/de/cas-uid-domain" $base)) }}
 {{ with $v := (key (printf "%s/irods/path-max-len" $base)) }}apps.irods.path-max-len = {{ $v }}{{ end }}
 
 # Batch job settings.
-{{ with $v := (key (printf "%s/jex/batch-group" $base))                      }}apps.batch.group                           = {{ $v }}{{ end }}
-{{ with $v := (key (printf "%s/apps/multi-input-path-list-info-type" $base)) }}apps.batch.multi-input-path-list.info-type = {{ $v }}{{ end }}
-{{ with $v := (key (printf "%s/apps/multi-input-path-list-max-paths" $base)) }}apps.batch.multi-input-path-list.max-paths = {{ $v }}{{ end }}
-{{ with $v := (key (printf "%s/apps/path-list-info-type" $base))             }}apps.batch.path-list.info-type             = {{ $v }}{{ end }}
-{{ with $v := (key (printf "%s/apps/path-list-max-paths" $base))             }}apps.batch.path-list.max-paths             = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/jex/batch-group" $base))                           }}apps.batch.group                           = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/data-info/ht-path-list-info-type" $base))          }}apps.batch.path-list.ht.info-type          = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/ht-path-list-max-paths" $base))               }}apps.batch.path-list.ht.max-paths          = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/data-info/multi-input-path-list-info-type" $base)) }}apps.batch.path-list.multi-input.info-type = {{ $v }}{{ end }}
+{{ with $v := (key (printf "%s/apps/multi-input-path-list-max-paths" $base))      }}apps.batch.path-list.multi-input.max-paths = {{ $v }}{{ end }}
 
 # Agave connection settings.
 {{ with $v := (key (printf "%s/agave/base" $base)) }}apps.agave.base-url             = {{ $v }}{{ end }}
