@@ -25,8 +25,14 @@
                          :return TopicList
                          :summary "List notification topics"
                          :description "Returns all of the notification topics defined"
-                         (ok (list-topics)))
-                    ))
+                         (ok (list-topics))))
+           (context "/types" []
+                    (GET "/" []
+                         :query [params SecuredQueryParams]
+                         :return WebhookTypeList
+                         :summary "List webhooks types"
+                         :description "Returns all webhook types defined"
+                         (ok (list-types)))))
 
 
 

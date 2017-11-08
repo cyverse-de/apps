@@ -13,8 +13,13 @@
                       (fields [:wt.topic])
                       (where {:ws.webhook_id webhook-id}))))
 
-(defn- format-webhook [{:keys [id] :as webhook}]
-  (assoc webhook :topics (get-webhook-topics id)))
+(defn- get-webhook-type [type]
+  (first (select :webhooks_type (where {:type type}))))
+
+(defn- format-webhook [{:keys [id type] :as webhook}]
+  (assoc webhook
+    :topics (get-webhook-topics id)
+    :type (get-webhook-type type)))
 
 (defn get-webhooks [user]
   (transaction
@@ -29,7 +34,7 @@
 (defn list-webhooks [user]
   {:webhooks (get-webhooks user)})
 
-(defn get-type-id [type]
+(defn get-type-id [{:keys [type]}]
   (if-let [type_id (:id (first (select :webhooks_type (fields :id) (where {:type type}))))]
     type_id
     (cxu/bad-request (str "Unable to find webhook type: " type))))
@@ -57,4 +62,7 @@
   (list-webhooks user))
 
 (defn list-topics []
-  {:topics (select [:webhooks_topic :wt])})
+  {:topics (select :webhooks_topic)})
+
+(defn list-types []
+  {:webhooktypes (select :webhooks_type)})
