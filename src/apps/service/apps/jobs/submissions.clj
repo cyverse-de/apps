@@ -17,7 +17,8 @@
             [apps.service.apps.jobs.submissions.async :as async]
             [apps.service.apps.jobs.submissions.submit :as submit]
             [apps.util.config :as config]
-            [apps.util.service :as service]))
+            [apps.util.service :as service]
+            [apps.service.apps.jobs.util :as util]))
 
 (defn- get-app-params
   [app type-set]
@@ -37,14 +38,17 @@
                 "job submission failed: Could not lookup info types of inputs.")
      (throw+))))
 
-(defn- load-path-list-stats
+(defn- load-input-path-stats
   [user input-paths-by-id]
   (->> (flatten (vals input-paths-by-id))
        (remove string/blank?)
        (get-file-stats user)
-       (:paths)
-       (map val)
-       (filter (comp (partial = (config/path-list-info-type)) :infoType))))
+       :paths
+       (map val)))
+
+(defn- filter-stats-by-info-type
+  [info-type path-stats]
+  (filter (comp (partial = info-type) :infoType) path-stats))
 
 (defn- param-value-contains-paths?
   [paths [_ v]]
@@ -52,33 +56,61 @@
     (some (set paths) v)
     ((set paths) v)))
 
-(defn- extract-ht-param-ids
-  [path-list-stats input-paths-by-id]
-  (let [ht-paths (set (map :path path-list-stats))]
-    (map key (filter (partial param-value-contains-paths? ht-paths) input-paths-by-id))))
+(defn- extract-path-list-params
+  [path-list-stats input-paths-by-id input-params-by-id]
+  (let [paths (set (map :path path-list-stats))]
+    (->> input-paths-by-id
+         (filter (partial param-value-contains-paths? paths))
+         (map key)
+         (select-keys input-params-by-id)
+         vals)))
+
+(defn- validate-multi-input-params
+  [multi-input-params]
+  (when-not (every? (comp (partial = ap/param-multi-input-type) :type) multi-input-params)
+    (throw+ {:type  :clojure-commons.exception/illegal-argument
+             :error "Multi-Input Path List files are only supported in multi-file inputs."})))
+
+(defn- multi-input-max-paths-exceeded
+  [max-paths path path-count]
+  (throw+
+    {:type       :clojure-commons.exception/illegal-argument
+     :error      (format "Multi-Input Path List exceeds the maximum of %d allowed paths." max-paths)
+     :path       path
+     :path-count path-count}))
 
 (defn- max-path-list-size-exceeded
-  [max-size path actual-size]
+  [list-type max-size path actual-size]
   (throw+
     {:type      :clojure-commons.exception/illegal-argument
-     :error     (str "HT Analysis Path List file exceeds maximum size of " max-size " bytes.")
+     :error     (format "%s file exceeds maximum size of %d bytes." list-type max-size)
      :path      path
      :file-size actual-size}))
 
 (defn- validate-path-list-stats
-  [{path :path actual-size :file-size}]
+  [list-type max-paths path-list-stats]
   ;; Ensure the file size is within a reasonable limit, based on the iRODS max path length:
   ;; the iRODS max path length + 1 (for newlines) * the path limit + 1 (for some file header overhead).
   (let [path-list-max-size (* (+ 1 (config/irods-path-max-len))
-                              (+ 1 (config/path-list-max-paths)))]
-    (when (> actual-size path-list-max-size)
-      (max-path-list-size-exceeded path-list-max-size path actual-size))))
+                              (+ 1 max-paths))]
+    (doseq [{path :path actual-size :file-size} path-list-stats]
+      (when (> actual-size path-list-max-size)
+        (max-path-list-size-exceeded list-type path-list-max-size path actual-size)))))
 
 (defn- validate-ht-params
   [ht-params]
   (when (some (comp (partial = ap/param-multi-input-type) :type) ht-params)
     (throw+ {:type  :clojure-commons.exception/illegal-argument
              :error "HT Analysis Path List files are not supported in multi-file inputs."})))
+
+(defn- validate-multi-input-path-lists
+  [path-lists]
+  (doseq [[path list] path-lists]
+    (let [list-count (count list)
+          max-paths  (config/multi-input-path-list-max-paths)]
+      (when (> list-count max-paths)
+        (multi-input-max-paths-exceeded max-paths path list-count))))
+  path-lists)
 
 (defn- get-batch-output-dir
   [user submission]
@@ -129,13 +161,12 @@
 
 (defn- pre-submit-batch-validation
   [input-params-by-id input-paths-by-id path-list-stats]
-  (doseq [path-stat path-list-stats]
-    (validate-path-list-stats path-stat))
-
-  (->> (extract-ht-param-ids path-list-stats input-paths-by-id)
-       (select-keys input-params-by-id)
-       vals
-       validate-ht-params))
+  (validate-path-list-stats "HT Analysis Path List"
+                            (config/ht-path-list-max-paths)
+                            path-list-stats)
+  (validate-ht-params (extract-path-list-params path-list-stats
+                                                input-paths-by-id
+                                                input-params-by-id)))
 
 (defn- submit-batch-job
   [apps-client user input-params-by-id input-paths-by-id path-list-stats job-types app submission]
@@ -147,12 +178,60 @@
     (async/submit-batch-jobs apps-client user ht-paths submission output-dir batch-id)
     (job-listings/list-job apps-client batch-id)))
 
+(defn- substitute-multi-input-param-values
+  [path-list-map config multi-input-param-id]
+  (assoc config multi-input-param-id (->> (get config multi-input-param-id) ;; get current multi-input path values
+                                          (map #(get path-list-map % %)) ;; expand path-list for each matched value
+                                          flatten)))
+
+(defn- pre-expand-multi-input-validation
+  [path-list-stats input-paths-by-id input-params-by-id]
+  (validate-path-list-stats "Multi-Input Path List"
+                            (config/multi-input-path-list-max-paths)
+                            path-list-stats)
+  (validate-multi-input-params (extract-path-list-params path-list-stats
+                                                         input-paths-by-id
+                                                         input-params-by-id)))
+
+(defn- config->expand-multi-input-path-lists
+  [config user input-params-by-id input-paths-by-id path-list-stats]
+  (pre-expand-multi-input-validation path-list-stats input-paths-by-id input-params-by-id)
+
+  (let [path-list-paths       (set (map :path path-list-stats))
+        path-list-map         (validate-multi-input-path-lists (util/get-path-list-contents-map user path-list-paths))
+        multi-input-param-ids (->> input-params-by-id
+                                   (filter (comp (partial = ap/param-multi-input-type) :type second))
+                                   (map first)
+                                   set)]
+    (reduce (partial substitute-multi-input-param-values path-list-map)
+            config
+            multi-input-param-ids)))
+
+(defn- process-job-config
+  [config user input-params-by-id input-paths-by-id path-stats]
+  (if-let [multi-input-path-list-stats (->> path-stats
+                                            (filter-stats-by-info-type (config/multi-input-path-list-info-type))
+                                            seq)]
+    (config->expand-multi-input-path-lists config
+                                           user
+                                           input-params-by-id
+                                           input-paths-by-id
+                                           multi-input-path-list-stats)
+    config))
+
+(defn- pre-process-submission
+  [{:keys [config] :as submission} user input-params-by-id input-paths-by-id path-stats]
+  (assoc submission :job_config (process-job-config config user input-params-by-id input-paths-by-id path-stats)))
+
 (defn submit
   [apps-client user {app-id :app_id system-id :system_id :as submission}]
   (let [[job-types app]    (.getAppSubmissionInfo apps-client system-id app-id)
         input-params-by-id (get-app-params app ap/param-ds-input-types)
-        input-paths-by-id  (select-keys (:config submission) (keys input-params-by-id))]
-    (if-let [path-list-stats (seq (load-path-list-stats user input-paths-by-id))]
+        input-paths-by-id  (select-keys (:config submission) (keys input-params-by-id))
+        path-stats         (load-input-path-stats user input-paths-by-id)
+        ht-path-list-stats (filter-stats-by-info-type (config/ht-path-list-info-type) path-stats)
+        submission         (pre-process-submission submission user input-params-by-id input-paths-by-id path-stats)]
+    (if (empty? ht-path-list-stats)
+      (submit/submit-and-register-private-job apps-client user submission)
       (submit-batch-job apps-client user input-params-by-id input-paths-by-id
-                        path-list-stats job-types app submission)
-      (submit/submit-and-register-private-job apps-client user submission))))
+                        ht-path-list-stats job-types app submission))))

@@ -21,13 +21,15 @@
          :query "status=${JOB_STATUS}&external-id=${JOB_ID}&end-time=${JOB_END_TIME}")))
 
 (defn- format-submission
-  [agave job-id result-folder-path submission]
-  (->> (assoc (dissoc submission :starting_step :step_number)
-         :callbackUrl          (build-callback-url job-id)
-         :job_id               job-id
-         :step_number          (:step_number submission 1)
-         :output_dir           result-folder-path
-         :create_output_subdir false)))
+  [agave job-id result-folder-path {:keys [config] :as submission}]
+  (-> submission
+      (dissoc :starting_step :step_number :job_config)
+      (assoc :config               (:job_config submission config)
+             :callbackUrl          (build-callback-url job-id)
+             :job_id               job-id
+             :step_number          (:step_number submission 1)
+             :output_dir           result-folder-path
+             :create_output_subdir false)))
 
 (defn- prepare-submission
   [agave job-id submission]

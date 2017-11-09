@@ -74,13 +74,16 @@
        (validate-job-steps app-id)
        (map (partial build-job-step-save-info job-id))))
 
-(defn- prepare-de-job-step-submission
-  [job-info job-step submission]
+(defn- prepare-common-job-step-submission
+  [job-info job-step {:keys [config] :as submission}]
   (assoc submission
+    :config               (:job_config submission config)
     :create_output_subdir false
     :output_dir           (:result_folder_path job-info)
     :starting_step        (:app_step_number job-step)
     :step_number          (:step_number job-step)))
+
+(def prepare-de-job-step-submission prepare-common-job-step-submission)
 
 (defn- get-current-app-step
   [{app-id :app_id} {app-step-number :app_step_number}]
@@ -88,14 +91,11 @@
 
 (defn- prepare-agave-job-step-submission
   [job-info job-step submission]
-  (let [app-step (get-current-app-step job-info job-step)]
+  (let [app-step   (get-current-app-step job-info job-step)
+        submission (prepare-common-job-step-submission job-info job-step submission)]
     (assoc submission
-      :create_output_subdir false
-      :output_dir           (:result_folder_path job-info)
-      :app_id               (:external_app_id app-step)
-      :paramPrefix          (:step_id app-step)
-      :starting_step        (:app_step_number job-step)
-      :step_number          (:step_number job-step))))
+      :app_id      (:external_app_id app-step)
+      :paramPrefix (:step_id app-step))))
 
 (defn- prepare-job-step-submission
   [job-info job-step submission]
