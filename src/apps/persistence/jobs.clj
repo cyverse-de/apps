@@ -207,12 +207,6 @@
       first
       :status))
 
-(defn- submission->save-format
-  [submission]
-  (-> submission
-      (dissoc :job_config)
-      cheshire/encode))
-
 (defn save-job
   "Saves information about a job in the database."
   [{system-id :system_id username :username :as job-info} submission]
@@ -220,7 +214,7 @@
       (assoc :job_type_id (job-type-id-from-system-id system-id)
              :user_id     (get-user-id username))
       remove-nil-values
-      (save-job-with-submission (submission->save-format submission))))
+      (save-job-with-submission (cheshire/encode submission))))
 
 (defn save-job-step
   "Saves a single job step in the database."
