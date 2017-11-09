@@ -32,6 +32,15 @@
     Administrators may use this endpoint to track tool requests for all users."
     (ok (list-tool-requests params)))
 
+  (DELETE "/status-codes/:status-code-id" []
+    :path-params [:status-code-id :- StatusCodeId]
+    :query [params SecuredQueryParams]
+    :summary "Delete a Tool Request Status Code"
+    :description "This service allows administrators to delete a tool request status code provided that
+    the status code isn't in use in a tool request."
+    ;; TODO: implement me
+    (ok))
+
   (GET "/:request-id" []
     :path-params [request-id :- ToolRequestIdParam]
     :query [params SecuredQueryParams]

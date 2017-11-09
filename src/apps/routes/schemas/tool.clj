@@ -16,6 +16,7 @@
 (def ToolImplementationDocs "Information about the user who integrated the Tool into the DE")
 (def ToolRestricted (describe Boolean "Determines whether a time limit is applied and whether network access is granted"))
 (def ToolTimeLimit (describe Integer "The number of seconds that a tool is allowed to execute. A value of 0 means the time limit is disabled."))
+(def StatusCodeId (describe UUID "The Status Code's UUID"))
 
 (defschema ToolIdsList
   {:tool_ids (describe [UUID] "A List of Tool IDs")})
@@ -224,7 +225,7 @@
         query parameter will be listed. This is a case-insensitive search")}))
 
 (defschema StatusCode
-  {:id          (describe UUID "The Status Code's UUID")
+  {:id          StatusCodeId
    :name        (describe String "The Status Code")
    :description (describe String "A brief description of the Status Code")})
 
