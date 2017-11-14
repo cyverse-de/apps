@@ -10,7 +10,8 @@
             [apps.persistence.tool-requests :as queries]
             [apps.persistence.users :as users]
             [apps.util.params :as params]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure-commons.exception-util :as cxu])
   (:import [java.util UUID]))
 
 ;; Status codes.
@@ -79,9 +80,12 @@
   [uuid]
   (let [req (queries/get-tool-request-details uuid)]
     (when (nil? req)
-      (throw+ {:type :clojure-commons.exception/not-found
-               :error (str "Could not locate tool with the following id: " (string/upper-case (.toString uuid)))}))
+      (let [msg (str "Could not locate tool request with the following id: " (string/upper-case (.toString uuid)))]
+        (throw+ {:type  :clojure-commons.exception/not-found
+                 :error msg})))
     req))
+
+(def ^:private verify-tool-req-exists get-tool-req)
 
 (defn- get-most-recent-status
   "Gets the most recent status for a tool request."
@@ -183,6 +187,12 @@
   [uuid]
   (remove-nil-vals (get-tool-request-details uuid)))
 
+(defn delete-tool-request
+  "Deletes a tool request."
+  [uuid]
+  (verify-tool-req-exists uuid)
+  (queries/delete-tool-request uuid))
+
 (defn- send-tool-request-notification
   [tool-request user]
   (cn/send-tool-request-notification tool-request user)
@@ -242,3 +252,12 @@
        (order :name :ASC)
        (add-filter :name filter)
        (select))})
+
+(defn delete-tool-request-status-code
+  "Deletes a tool request status code as long as it's not referenced by a tool request."
+  [status-code-id]
+  (when-not (queries/get-tool-request-status-code status-code-id)
+    (cxu/not-found (str "could not find tool request status code with id: " status-code-id)))
+  (when-not (zero? (queries/count-tool-requests-for-status-code status-code-id))
+    (cxu/bad-request (str "status code " status-code-id " is used in one or more tool requests")))
+  (queries/delete-tool-request-status-code status-code-id))
