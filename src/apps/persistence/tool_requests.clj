@@ -118,3 +118,37 @@
               (where {:tool_id tool-id}))
       first
       :id))
+
+(defn delete-tool-request
+  "Removes a tool request from the database."
+  [tool-request-id]
+  (delete :tool_requests
+          (where {:id tool-request-id})))
+
+(defn get-tool-request-status-code
+  "Retrieves a tool request status code."
+  [id]
+  (-> (select* :tool_request_status_codes)
+      (fields :id :name :description)
+      (where {:id id})
+      select first))
+
+(defn- status-code-subselect
+  [status-code-id]
+  (subselect [:tool_request_statuses :trs]
+             (where {:tr.id                           :trs.tool_request_id
+                     :trs.tool_request_status_code_id status-code-id})))
+
+(defn count-tool-requests-for-status-code
+  "Counts the number of tool requests that have the given status code."
+  [status-code-id]
+  (-> (select* [:tool_requests :tr])
+      (aggregate (count :tr.id) :count)
+      (where (exists (status-code-subselect status-code-id)))
+      select first :count))
+
+(defn delete-tool-request-status-code
+  "Deletes a tool request status code."
+  [id]
+  (delete :tool_request_status_codes
+          (where {:id id})))

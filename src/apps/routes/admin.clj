@@ -32,6 +32,24 @@
     Administrators may use this endpoint to track tool requests for all users."
     (ok (list-tool-requests params)))
 
+  (DELETE "/status-codes/:status-code-id" []
+    :path-params [status-code-id :- StatusCodeId]
+    :query [params SecuredQueryParams]
+    :summary "Delete a Tool Request Status Code"
+    :description "This service allows administrators to delete a tool request status code provided that
+    the status code isn't in use in a tool request."
+    (delete-tool-request-status-code status-code-id)
+    (ok))
+
+  (DELETE "/:request-id" []
+    :path-params [request-id :- ToolRequestIdParam]
+    :query [params SecuredQueryParams]
+    :summary "Delete a Tool Request"
+    :description "This service allows administrators to delete a tool request. This endpoint is primarily
+    intended for use in the QA cleanup suite."
+    (delete-tool-request request-id)
+    (ok))
+
   (GET "/:request-id" []
     :path-params [request-id :- ToolRequestIdParam]
     :query [params SecuredQueryParams]
