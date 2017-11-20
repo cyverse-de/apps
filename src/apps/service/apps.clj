@@ -359,8 +359,8 @@
   (.adminAddAppDocs (get-apps-client user) system-id app-id body))
 
 (defn list-app-permissions
-  [user qualified-app-ids]
-  {:apps (.listAppPermissions (get-apps-client user) qualified-app-ids)})
+  [user qualified-app-ids params]
+  {:apps (.listAppPermissions (get-apps-client user) qualified-app-ids params)})
 
 (defn share-apps
   [user sharing-requests]
@@ -371,8 +371,8 @@
   {:unsharing (.unshareApps (get-apps-client user) unsharing-requests)})
 
 (defn list-job-permissions
-  [user job-ids]
-  (jobs/list-job-permissions (get-apps-client user) user job-ids))
+  [user job-ids params]
+  (jobs/list-job-permissions (get-apps-client user) user job-ids params))
 
 (defn share-jobs
   [user sharing-requests]

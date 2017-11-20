@@ -40,14 +40,14 @@
                   (apps/submit-job current-user body))))
 
   (POST "/permission-lister" []
-         :query [params SecuredQueryParams]
+         :query [params perms/PermissionListerQueryParams]
          :body [body (describe perms/AnalysisIdList "The analysis permission listing request.")]
          :return perms/AnalysisPermissionListing
          :summary "List App Permissions"
          :description "This endpoint allows the caller to list the permissions for one or more analyses.
          The authenticated user must have read permission on every analysis in the request body for this
          endpoint to succeed."
-         (ok (apps/list-job-permissions current-user (:analyses body))))
+         (ok (apps/list-job-permissions current-user (:analyses body) params)))
 
   (POST "/sharing" []
          :query [params SecuredQueryParams]

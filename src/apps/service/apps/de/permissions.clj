@@ -28,10 +28,10 @@
        (into {})))
 
 (defn list-app-permissions
-  [{user :shortUsername} app-ids]
+  [{user :shortUsername} app-ids params]
   (check-app-permissions user "read" app-ids)
   (map (partial format-app-permissions (build-app-name-table app-ids))
-       (perms-client/list-app-permissions user app-ids)))
+       (perms-client/list-app-permissions user app-ids params)))
 
 (defn has-app-permission
   [user app-id required-level]

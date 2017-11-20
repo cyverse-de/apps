@@ -163,7 +163,7 @@ otherwise the default value will be used."
         (ok (add-private-tool current-user body)))
 
   (POST "/permission-lister" []
-        :query [params SecuredQueryParams]
+        :query [params permission/PermissionListerQueryParams]
         :body [{:keys [tools]} (describe permission/ToolIdList "The Tool permission listing request.")]
         :responses (merge CommonResponses
                           {200 {:schema      permission/ToolPermissionListing
@@ -175,7 +175,7 @@ otherwise the default value will be used."
         :summary "List Tool Permissions"
         :description "This endpoint allows the caller to list the permissions for one or more Tools.
         The authenticated user must have read permission on every Tool in the request body for this endpoint to succeed."
-        (ok (tool-permissions/list-tool-permissions current-user tools)))
+        (ok (tool-permissions/list-tool-permissions current-user tools params)))
 
   (POST "/sharing" []
         :query [params SecuredQueryParams]

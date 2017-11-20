@@ -1,5 +1,5 @@
 (ns apps.routes.schemas.permission
-  (:use [apps.routes.params :only [SystemId]]
+  (:use [apps.routes.params :only [SystemId SecuredQueryParams]]
         [common-swagger-api.schema :only [describe ErrorResponse NonBlankString]]
         [schema.core :only [defschema optional-key enum]])
   (:import [java.util UUID]))
@@ -7,6 +7,11 @@
 (def AppPermissionEnum (enum "read" "write" "own" ""))
 (def AnalysisPermissionEnum (enum "read" "own" ""))
 (def ToolPermissionEnum AppPermissionEnum)
+
+(defschema PermissionListerQueryParams
+  (assoc SecuredQueryParams
+    (optional-key :full-listing)
+    (describe Boolean "If true, include permissions for the authenticated user as well.")))
 
 (defschema Subject
   {:source_id (describe NonBlankString "The identifier of the subject source (for exmaple, 'ldap').")

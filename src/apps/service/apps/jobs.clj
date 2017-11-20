@@ -226,8 +226,8 @@
   (submissions/submit apps-client user submission))
 
 (defn list-job-permissions
-  [apps-client user job-ids]
-  (job-permissions/list-job-permissions apps-client user job-ids))
+  [apps-client user job-ids params]
+  (job-permissions/list-job-permissions apps-client user job-ids params))
 
 (defn share-jobs
   [apps-client user sharing-requests]

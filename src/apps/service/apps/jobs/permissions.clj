@@ -39,12 +39,12 @@
    :permissions (perms id)})
 
 (defn list-job-permissions
-  [apps-client {username :shortUsername :as user} job-ids]
+  [apps-client {username :shortUsername :as user} job-ids params]
   (ju/validate-job-existence job-ids)
   (transaction
    (let [jobs (jp/list-jobs-by-id job-ids)]
      (verify-not-subjobs jobs)
      (validate-job-permissions user "read" job-ids)
      (validate-job-sharing-support apps-client job-ids)
-     (let [perms (perms-client/list-analysis-permissions username job-ids)]
+     (let [perms (perms-client/list-analysis-permissions username job-ids params)]
        {:analyses (mapv (partial format-job-permissions username perms) jobs)}))))
