@@ -71,7 +71,7 @@
   (ownerAddAppDocs [_ system-id app-id body])
   (adminEditAppDocs [_ system-id app-id body])
   (adminAddAppDocs [_ system-id app-id body])
-  (listAppPermissions [_ qualified-app-ids])
+  (listAppPermissions [_ qualified-app-ids params])
   (shareApps [_ sharing-requests])
   (shareAppsWithSubject [_ app-names sharee user-app-sharing-requests])
   (shareAppWithSubject [_ app-names sharee system-id app-id level])

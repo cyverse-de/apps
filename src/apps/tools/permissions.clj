@@ -41,9 +41,9 @@
    :permissions (perms id)})
 
 (defn list-tool-permissions
-  [{user :shortUsername} tool-ids]
+  [{user :shortUsername} tool-ids params]
   (validate-tools-existence tool-ids)
   (check-tool-permissions user "read" tool-ids)
-  (let [perms (permissions/list-tool-permissions user tool-ids)
+  (let [perms (permissions/list-tool-permissions user tool-ids params)
         tools (tools-db/get-tools-by-id tool-ids)]
     {:tools (mapv (partial format-tool-permissions perms) tools)}))

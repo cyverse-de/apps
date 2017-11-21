@@ -79,19 +79,25 @@
 (def load-analysis-permissions (partial load-resource-permissions (rt-analysis)))
 (def load-tool-permissions (partial load-resource-permissions (rt-tool)))
 
+(defn- get-perm-filter-fn [user full-listing?]
+  (if full-listing?
+    identity
+    (partial remove (comp (partial = user) :subject_id first))))
+
 (defn- format-perms-listing
-  [user perms]
-  (->> (map (juxt :subject :permission_level) (:permissions perms))
-       (remove (comp (partial = user) :subject_id first))
-       (map (fn [[{id :subject_id source-id :subject_source_id} level]]
-              {:subject {:id id :source_id source-id} :permission level}))))
+  [user perms & [{:keys [full-listing] :or {full-listing false}}]]
+  (let [filter-perms (get-perm-filter-fn user full-listing)]
+    (->> (map (juxt :subject :permission_level) (:permissions perms))
+         filter-perms
+         (map (fn [[{id :subject_id source-id :subject_source_id} level]]
+                {:subject {:id id :source_id source-id} :permission level})))))
 
 (defn- list-resource-permissions
-  [resource-type user resource-ids]
+  [resource-type user resource-ids & [params]]
   (into {}
         (for [resource-id resource-ids]
           [(uuidify resource-id)
-           (format-perms-listing user (pc/list-resource-permissions (client) resource-type resource-id))])))
+           (format-perms-listing user (pc/list-resource-permissions (client) resource-type resource-id) params)])))
 
 (def list-app-permissions (partial list-resource-permissions (rt-app)))
 (def list-analysis-permissions (partial list-resource-permissions (rt-analysis)))

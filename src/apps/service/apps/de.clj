@@ -286,9 +286,9 @@
     (validate-system-id system-id)
     (docs/add-app-docs user (uuidify app-id) body))
 
-  (listAppPermissions [_ qualified-app-ids]
+  (listAppPermissions [_ qualified-app-ids params]
     (validate-system-ids (set (map :system_id qualified-app-ids)))
-    (perms/list-app-permissions user (mapv (comp uuidify :app_id) qualified-app-ids)))
+    (perms/list-app-permissions user (mapv (comp uuidify :app_id) qualified-app-ids) params))
 
   (shareApps [self sharing-requests]
     (app-permissions/process-app-sharing-requests self sharing-requests))

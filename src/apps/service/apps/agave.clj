@@ -295,7 +295,7 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
-  (listAppPermissions [_ qualified-app-ids]
+  (listAppPermissions [_ qualified-app-ids _]
     (validate-system-ids (set (map :system_id qualified-app-ids)))
     (.listAppPermissions agave (map :app_id qualified-app-ids)))
 
