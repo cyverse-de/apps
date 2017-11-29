@@ -9,6 +9,7 @@
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.constants :as c]
+            [apps.persistence.util :as util]
             [cheshire.core :as cheshire]
             [clojure.set :as set]
             [clojure.string :as string]
@@ -265,7 +266,7 @@
   ((comp :count first)
    (select (add-job-query-filter-clause (count-jobs-base include-hidden) username filter)
            (where {:j.deleted false})
-           (where {:j.id [in accessible-ids]})
+           (where {:j.id (util/sqlfn-any-array "uuid" accessible-ids)})
            (where (not (exists (job-type-subselect types)))))))
 
 (defn- translate-sort-field
@@ -346,7 +347,7 @@
   [username search-params types accessible-ids]
   (-> (select* (add-job-query-filter-clause (job-base-query) username (:filter search-params)))
       (where {:j.deleted false})
-      (where {:j.id [in accessible-ids]})
+      (where {:j.id (util/sqlfn-any-array "uuid" accessible-ids)})
       (where (not (exists (job-type-subselect types))))
       (add-internal-app-clause (:include-hidden search-params))
       (add-order search-params)
