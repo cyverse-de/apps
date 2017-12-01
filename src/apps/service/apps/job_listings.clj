@@ -34,11 +34,11 @@
 (defn- format-batch-status
   [batch-id]
   (merge empty-batch-child-status
-         (let [children (jp/list-child-jobs batch-id)]
-           (assoc (->> (group-by batch-child-status children)
-                       (map (fn [[k v]] [k (count v)]))
-                       (into {}))
-                  :total (count children)))))
+         (->> (jp/list-child-job-statuses batch-id)
+              (group-by batch-child-status)
+              (map (fn [[status counts]] [status (reduce #(+ %1 (:count %2)) 0 counts)]))
+              (into {}))
+         {:total (jp/count-child-jobs batch-id)}))
 
 (defn- job-supports-sharing?
   [apps-client perms rep-steps {:keys [parent_id id]}]

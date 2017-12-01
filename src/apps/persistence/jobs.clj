@@ -391,6 +391,26 @@
                   :status    [not-in (conj completed-status-codes
                                            impending-cancellation-status)]})))
 
+(defn list-child-job-statuses
+  "Lists the child job statuses within a batch job."
+  [batch-id]
+  (-> (select* :job_listings)
+      (fields :status)
+      (aggregate (count :id) :count)
+      (where {:parent_id batch-id})
+      (group :status)
+      (select)))
+
+(defn count-child-jobs
+  "Counts the child jobs of a batch job."
+  [batch-id]
+  (-> (select* :job_listings)
+      (aggregate (count :id) :count)
+      (where {:parent_id batch-id})
+      (select)
+      first
+      :count))
+
 (defn- add-job-type-clause
   "Adds a where clause for a set of job types if the set of job types provided is not nil
    or empty."
