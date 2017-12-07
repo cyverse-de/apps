@@ -51,12 +51,15 @@
        (into {})))
 
 (defn- format-submission-in-batch
-  [submission job-number path-map]
-  (let [job-suffix (str "analysis-" (inc job-number))]
-    (assoc (update-in submission [:config] (partial substitute-param-values path-map))
-      :group      (config/jex-batch-group-name)
-      :name       (str (:name submission) "-" job-suffix)
-      :output_dir (ft/path-join (:output_dir submission) job-suffix))))
+  [{:keys [config] :as submission} job-number path-map]
+  (let [job-suffix (str "analysis-" (inc job-number))
+        job-config (substitute-param-values path-map (:job_config submission config))
+        config     (substitute-param-values path-map config)]
+    (assoc submission :job_config job-config
+                      :config     config
+                      :group      (config/jex-batch-group-name)
+                      :name       (str (:name submission) "-" job-suffix)
+                      :output_dir (ft/path-join (:output_dir submission) job-suffix))))
 
 (defn- submit-job-in-batch
   [apps-client user submission job-number path-map]
