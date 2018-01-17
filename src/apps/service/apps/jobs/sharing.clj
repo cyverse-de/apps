@@ -26,11 +26,12 @@
    :is-group      "sharing an analysis with a group is not supported at this time"})
 
 (defn- job-sharing-success
-  [job-id job level output-share-err-msg app-share-err-msg]
+  [job-id job level input-share-errs output-share-err-msg app-share-err-msg]
   (remove-nil-values
     {:analysis_id   job-id
      :analysis_name (get-job-name job-id job)
      :permission    level
+     :input_errors  input-share-errs
      :outputs_error output-share-err-msg
      :app_error     app-share-err-msg
      :success       true}))
@@ -45,10 +46,11 @@
                    :reason     reason}})
 
 (defn- job-unsharing-success
-  [job-id job output-unshare-err-msg]
+  [job-id job input-unshare-errs output-unshare-err-msg]
   (remove-nil-values
     {:analysis_id   job-id
      :analysis_name (get-job-name job-id job)
+     :input_errors  input-unshare-errs
      :outputs_error output-unshare-err-msg
      :success       true}))
 
@@ -68,6 +70,12 @@
            {:analysis-id job-id
             :detail (or detail "unexpected error")})))
 
+(defn- job-sharing-error
+  [failure-reason]
+  (throw+
+   {:type           ::job-sharing-failure
+    :failure-reason failure-reason}))
+
 (defn- has-analysis-permission
   [user job-id required-level]
   (seq (perms-client/load-analysis-permissions user [job-id] required-level)))
@@ -75,22 +83,22 @@
 (defn- verify-accessible
   [sharer job-id]
   (when-not (has-analysis-permission (:shortUsername sharer) job-id "own")
-    (job-sharing-msg :not-allowed job-id)))
+    (job-sharing-error (job-sharing-msg :not-allowed job-id))))
 
 (defn- verify-not-subjob
   [{:keys [id parent_id]}]
   (when parent_id
-    (job-sharing-msg :is-subjob id)))
+    (job-sharing-error (job-sharing-msg :is-subjob id))))
 
 (defn- verify-support
   [apps-client job-id]
   (when-not (job-permissions/job-supports-job-sharing? apps-client job-id)
-    (job-sharing-msg :not-supported job-id)))
+    (job-sharing-error (job-sharing-msg :not-supported job-id))))
 
 (defn- verify-not-group
   [{subject-source-id :source_id subject-id :id} job-id]
   (when-not (ipg/user-source? subject-source-id)
-    (job-sharing-msg :is-group job-id (str subject-id " is a group"))))
+    (job-sharing-error (job-sharing-msg :is-group job-id (str subject-id " is a group")))))
 
 (defn- share-app-for-job
   [apps-client sharer sharee job-id {system-id :system_id app-id :app_id}]
@@ -117,7 +125,7 @@
 
 (defn- process-child-jobs
   [f job-id]
-  (first (remove nil? (map f (jp/list-child-jobs job-id)))))
+  (remove nil? (mapcat f (jp/list-child-jobs job-id))))
 
 (defn- list-job-inputs
   [apps-client {system-id :system_id app-id :app_id :as job}]
@@ -129,32 +137,41 @@
 
 (defn- process-job-inputs
   [f apps-client job]
-  (first (remove nil? (map f (list-job-inputs apps-client job)))))
+  (remove nil? (map f (list-job-inputs apps-client job))))
+
+(defn- share-analysis
+  [job-id sharee level]
+  (if-let [share-error (perms-client/share-analysis job-id sharee level)]
+    (job-sharing-error share-error)))
 
 (defn- share-child-job
   [apps-client sharer sharee level job]
-  (or (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
-      (perms-client/share-analysis (:id job) sharee level)))
-
-(defn- share-job*
-  [apps-client sharer sharee job-id job level]
-  (or (verify-not-subjob job)
-      (verify-accessible sharer job-id)
-      (verify-support apps-client job-id)
-      (verify-not-group sharee job-id)
-      (perms-client/share-analysis job-id sharee level)
-      (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
-      (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)))
+  (share-analysis (:id job) sharee level)
+  (process-job-inputs (partial share-input-file sharer sharee) apps-client job))
 
 (defn- share-job
   [apps-client sharer sharee {job-id :analysis_id level :permission}]
   (if-let [job (jp/get-job-by-id job-id)]
     (try+
-     (if-let [failure-reason (share-job* apps-client sharer sharee job-id job level)]
-       (job-sharing-failure job-id job level failure-reason)
-       (job-sharing-success job-id job level
-                            (share-output-folder sharer sharee job)
-                            (share-app-for-job apps-client sharer sharee job-id job)))
+     (verify-not-subjob job)
+     (verify-accessible sharer job-id)
+     (verify-support apps-client job-id)
+     (verify-not-group sharee job-id)
+
+     (share-analysis job-id sharee level)
+
+     (let [child-input-share-errs (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)
+           input-share-errs       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
+           output-share-err-msg   (share-output-folder sharer sharee job)
+           app-share-err-msg      (share-app-for-job apps-client sharer sharee job-id job)]
+       (job-sharing-success job-id
+                            job
+                            level
+                            (concat input-share-errs child-input-share-errs)
+                            output-share-err-msg
+                            app-share-err-msg))
+     (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (job-sharing-failure job-id job level failure-reason))
      (catch [:type ::permission-load-failure] {:keys [reason]}
        (job-sharing-failure job-id job level (job-sharing-msg :load-failure job-id reason))))
     (job-sharing-failure job-id nil level (job-sharing-msg :not-found job-id))))
@@ -184,34 +201,38 @@
    (data-info/unshare-path sharer path sharee)
    nil
    (catch ce/clj-http-error? {:keys [body]}
-     (str "unable to unshare input file: " (:error_code (service/parse-json body))))))
+     (str "unable to unshare input file, " path ": " (:error_code (service/parse-json body))))))
 
 (defn- unshare-analysis
   [job-id sharee]
-  (perms-client/unshare-analysis job-id sharee))
+  (if-let [unshare-error (perms-client/unshare-analysis job-id sharee)]
+    (job-sharing-error unshare-error)))
 
 (defn- unshare-child-job
   [apps-client sharer sharee job]
-  (or (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
-      (perms-client/unshare-analysis (:id job) sharee)))
-
-(defn- unshare-job*
-  [apps-client sharer sharee job-id job]
-  (or (verify-not-subjob job)
-      (verify-accessible sharer job-id)
-      (verify-support apps-client job-id)
-      (verify-not-group sharee job-id)
-      (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
-      (perms-client/unshare-analysis job-id sharee)
-      (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)))
+  (unshare-analysis (:id job) sharee)
+  (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job))
 
 (defn- unshare-job
   [apps-client sharer sharee job-id]
   (if-let [job (jp/get-job-by-id job-id)]
     (try+
-     (if-let [failure-reason (unshare-job* apps-client sharer sharee job-id job)]
-       (job-unsharing-failure job-id job failure-reason)
-       (job-unsharing-success job-id job (unshare-output-folder sharer sharee job)))
+     (verify-not-subjob job)
+     (verify-accessible sharer job-id)
+     (verify-support apps-client job-id)
+     (verify-not-group sharee job-id)
+
+     (unshare-analysis job-id sharee)
+
+     (let [child-input-unshare-errs (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)
+           input-unshare-errs       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
+           output-unshare-err-msg   (unshare-output-folder sharer sharee job)]
+       (job-unsharing-success job-id
+                              job
+                              (concat input-unshare-errs child-input-unshare-errs)
+                              output-unshare-err-msg))
+     (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (job-unsharing-failure job-id job failure-reason))
      (catch [:type ::permission-load-failure] {:keys [reason]}
        (job-unsharing-failure job-id job (job-sharing-msg :load-failure job-id reason))))
     (job-unsharing-failure job-id nil (job-sharing-msg :not-found job-id))))
