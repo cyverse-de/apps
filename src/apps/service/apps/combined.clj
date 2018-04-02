@@ -57,7 +57,7 @@
          (util/combine-app-listings params)))
 
   (adminSearchApps [_ search-term params]
-    (->> (map #(.adminSearchApps % search-term (select-keys params [:search :app-subset])) clients)
+    (->> (map #(.adminSearchApps % search-term (select-keys params [:search :app-subset :start_date :end_date])) clients)
          (remove nil?)
          (util/combine-app-listings params)))
 

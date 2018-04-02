@@ -464,7 +464,10 @@
          {(optional-key :search)
           (describe String
             "The pattern to match in an App's Name, Description, Integrator Name, or Tool Name.")
-
+          (optional-key :start_date)
+          (describe Date "The App's stat start date")
+          (optional-key :end_date)
+          (describe Date "The App's stat end date")
           SortFieldOptionalKey
           (describe (apply enum AppSearchValidSortFields) SortFieldDocs)}))
 
