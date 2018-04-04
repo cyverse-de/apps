@@ -463,11 +463,14 @@
   (merge SecuredPagingParams
          {(optional-key :search)
           (describe String
-            "The pattern to match in an App's Name, Description, Integrator Name, or Tool Name.")
+                    "The pattern to match in an App's Name, Description, Integrator Name, or Tool Name.")
+
           (optional-key :start_date)
-          (describe Date "The App's stat start date")
+          (describe Date "Filters out the app stats before this start date")
+
           (optional-key :end_date)
-          (describe Date "The App's stat end date")
+          (describe Date "Filters out the apps stats after this end date")
+
           SortFieldOptionalKey
           (describe (apply enum AppSearchValidSortFields) SortFieldDocs)}))
 

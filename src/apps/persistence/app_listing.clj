@@ -227,7 +227,8 @@
 (defn- add-date-limits-where-clause
   [query {:keys [start_date end_date]}]
   (if (and start_date end_date)
-    (where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]}) query)
+    (where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
+    query)
   )
 
 (defn- get-job-stats-fields
