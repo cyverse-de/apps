@@ -226,11 +226,13 @@
 
 (defn- add-date-limits-where-clause
   [query {:keys [start_date end_date]}]
-  (if (and start_date end_date)
-    (where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
-    query)
+  (cond
+    (and start_date end_date) (where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
+    (and (not start_date) end_date) (where query {:end_date [<= (date->timestamp end_date)]})
+    (and (not end_date) start_date) (where query {:end_date [>= (date->timestamp start_date)]})
+    :else query
+    )
   )
-
 (defn- get-job-stats-fields
   "Adds query fields via subselects for an app's job_count_completed and job_last_completed timestamp."
   [query query-ops]
