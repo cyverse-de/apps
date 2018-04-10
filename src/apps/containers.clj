@@ -74,9 +74,9 @@
 (defn find-matching-image
   "Finds the image matching the given name and tag in the container_images table."
   [{:keys [name tag osg_image_path] :or {tag "latest"}}]
-  (first (select container-images (where (remove-nil-vals {:name           name
-                                                           :tag            tag
-                                                           :osg_image_path osg_image_path})))))
+  (first (select container-images (where {:name           name
+                                          :tag            tag
+                                          :osg_image_path osg_image_path}))))
 
 (defn find-or-add-image-info
   "Finds or inserts an image with the given name and tag in the container_images table."
