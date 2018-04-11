@@ -1,12 +1,14 @@
 (ns apps.persistence.app-listing
   (:use [apps.persistence.app-groups :only [get-visible-root-app-group-ids]]
         [apps.persistence.entities]
+        [apps.util.conversions :only [date->timestamp]]
         [kameleon.queries]
         [kameleon.util :only [query-spy]]
         [kameleon.util.search]
         [korma.core :exclude [update]])
   (:require [apps.constants :as c]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [apps.persistence.util :as util]))
 
 (defn get-app-listing
   "Retrieves all app listing fields from the database for the given App ID."
@@ -223,15 +225,15 @@
       (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
       (select))))
 
-
 (defn- get-job-stats-fields
   "Adds query fields via subselects for an app's job_count_completed and job_last_completed timestamp."
-  [query]
+  [query query-opts]
   (fields query
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count_completed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Completed"})
+                      (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_completed]
           [(subselect :jobs
@@ -242,17 +244,19 @@
 
 (defn- get-admin-job-stats-fields
   "Adds query fields via subselects for an app's job_count, job_count_failed, and last_used timestamp."
-  [query]
+  [query query-opts]
   (fields query
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count)
                       (where {:app_id (raw "app_listing.id::varchar")})
+                      (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count]
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count_failed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Failed"})
+                      (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_failed]
           [(subselect :jobs
@@ -356,8 +360,8 @@
   (-> (get-all-apps-listing-base-query workspace favorites_group_index query_opts)
       (add-search-term-where-clauses search_term (:pre-matched-app-ids query_opts))
       (add-app-category-where-clause workspace_id query_opts)
-      (get-job-stats-fields)
-      (get-admin-job-stats-fields)
+      (get-job-stats-fields query_opts)
+      (get-admin-job-stats-fields query_opts)
       ((partial query-spy "get-apps-for-admin::search_query:"))
       select))
 
@@ -445,8 +449,8 @@
   [workspace favorites-group-index app-ids params]
   (when-not (empty? app-ids)
     (-> (get-app-listing-base-query workspace favorites-group-index (assoc params :app-ids app-ids))
-        (get-job-stats-fields)
-        (get-admin-job-stats-fields)
+        (get-job-stats-fields params)
+        (get-admin-job-stats-fields params)
         select)))
 
 (defn get-all-app-ids

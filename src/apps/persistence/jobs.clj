@@ -693,18 +693,20 @@
       (group :app_id)))
 
 (defn get-job-stats
-  [^String app-id]
+  [^String app-id params]
   (merge {:job_count 0
           :job_count_failed 0
           :job_count_completed 0}
          (-> (get-job-stats-base-query app-id)
+             (util/add-date-limits-where-clause params)
              get-job-stats-fields
              select
              first)))
 
 (defn get-public-job-stats
-  [^String app-id]
+  [^String app-id params]
   (merge {:job_count_completed 0}
-         (-> (get-job-stats-base-query app-id)
+         (-> (get-job-stats-base-query app-id )
+             (util/add-date-limits-where-clause params)
              select
              first)))
