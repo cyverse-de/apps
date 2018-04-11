@@ -112,22 +112,6 @@
         (multi-input-max-paths-exceeded max-paths path list-count))))
   path-lists)
 
-(defn- get-batch-output-dir
-  [user submission]
-  (let [output-dir (ft/build-result-folder-path submission)]
-    (try+
-     (data-info/get-path-info user :paths [output-dir] :filter-include "path")
-     ; FIXME Update this when data-info's exception handling is updated
-     (catch [:status 500] {:keys [body]}
-       ;; The caught error can't be rethrown since we parse the body to examine its error code.
-       ;; So we must throw the parsed body, but also clear out the `cause` in our `throw+` call,
-       ;; since the transaction wrapping these functions will try to only rethrow this caught error.
-       (let [error (service/parse-json body)]
-         (if (= (:error_code error) ce/ERR_DOES_NOT_EXIST)
-           (data-info/create-directory user output-dir)
-           (throw+ error nil)))))
-    output-dir))
-
 (defn- save-batch*
   [user app submission output-dir]
   (:id (jp/save-job {:job_name           (:name submission)
@@ -173,7 +157,7 @@
   (pre-submit-batch-validation input-params-by-id input-paths-by-id path-list-stats)
 
   (let [ht-paths   (set (map :path path-list-stats))
-        output-dir (get-batch-output-dir user submission)
+        output-dir (util/create-output-dir user submission)
         batch-id   (save-batch user job-types app submission output-dir)]
     (async/submit-batch-jobs apps-client user ht-paths submission output-dir batch-id)
     (job-listings/list-job apps-client batch-id)))

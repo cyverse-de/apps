@@ -94,3 +94,15 @@
 (defn unshare-path
   [user path unshare-with]
   (unshare-data-item user (get-data-id user path) unshare-with))
+
+(defn create-tickets
+  [user paths & {:as ticket-params}]
+  (when (seq paths)
+    (:body
+      (http/post (data-info-url "tickets")
+                 {:query-params (merge (secured-params user)
+                                       {:public true}
+                                       ticket-params)
+                  :body         (cheshire/encode {:paths paths})
+                  :content-type :json
+                  :as           :json}))))
