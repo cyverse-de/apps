@@ -12,7 +12,7 @@
 
 (defn- validate-image-not-deprecated
   [image-info]
-  (let [image (containers/find-image-by-name-and-tag image-info)]
+  (let [image (containers/find-matching-image image-info)]
     (when (:deprecated image)
     (throw+ {:type  :clojure-commons.exception/bad-request-field
              :error "Image is deprecated and should not be used in new tools."

@@ -38,7 +38,7 @@
   "Returns a map containing only publicly-permissible image info (no auth)"
   [image-uuid]
   (first (select container-images
-                (fields :name :tag :url :deprecated :id)
+                (fields :name :tag :url :deprecated :id :osg_image_path)
                 (where {:id (uuidify image-uuid)}))))
 
 (defn image-info
@@ -55,7 +55,7 @@
   []
   {:container_images
     (select container-images
-      (fields :name :tag :url :deprecated :id))})
+      (fields :name :tag :url :deprecated :id :osg_image_path))})
 
 (defn image-public-tools
   [id]
@@ -71,30 +71,32 @@
                                  (where {:id (uuidify tool-uuid)}))))]
     (image-info image-id :auth? auth?)))
 
-(defn find-image-by-name-and-tag
+(defn find-matching-image
   "Finds the image matching the given name and tag in the container_images table."
-  [{:keys [name tag] :or {tag "latest"}}]
-  (first (select container-images (where {:name name
-                                          :tag  tag}))))
+  [{:keys [name tag osg_image_path] :or {tag "latest"}}]
+  (first (select container-images (where {:name           name
+                                          :tag            tag
+                                          :osg_image_path osg_image_path}))))
 
 (defn find-or-add-image-info
   "Finds or inserts an image with the given name and tag in the container_images table."
-  [{:keys [name tag url] :or {tag "latest"} :as image-map}]
-  (if-let [existing-image (find-image-by-name-and-tag image-map)]
+  [{:keys [name tag url osg_image_path] :or {tag "latest"} :as image-map}]
+  (if-let [existing-image (find-matching-image image-map)]
     existing-image
-    (insert container-images (values {:name name
-                                      :tag  tag
-                                      :url  url}))))
+    (insert container-images (values {:name           name
+                                      :tag            tag
+                                      :url            url
+                                      :osg_image_path osg_image_path}))))
 
 (defn image?
   "Returns true if the given name and tag exist in the container_images table."
   [image-map]
-  (not (nil? (find-image-by-name-and-tag image-map))))
+  (not (nil? (find-matching-image image-map))))
 
 (defn image-id
   "Returns the UUID used as the primary key in the container_images table."
   [image-map]
-  (:id (find-image-by-name-and-tag image-map)))
+  (:id (find-matching-image image-map)))
 
 (defn- find-or-add-image-id
   [image]
@@ -104,7 +106,7 @@
   "Updates the record for a container image. Basically, just allows you to set a new URL
    at this point."
   [image-id user overwrite-public image-info]
-  (let [update-info (select-keys image-info [:name :tag :url :deprecated])]
+  (let [update-info (select-keys image-info [:name :tag :url :deprecated :osg_image_path])]
     (when-not (empty? update-info)
       (when-not overwrite-public
         (validate-image-not-used-in-public-apps image-id))
@@ -453,7 +455,7 @@
                      (with data-containers
                        (fields :name_prefix :read_only)
                        (with container-images
-                         (fields :name :tag :url :deprecated))))
+                         (fields :name :tag :url :deprecated :osg_image_path))))
                    (where {:tools_id id}))
            first
            (update :container_volumes_from add-data-container-auth :auth? auth?)
