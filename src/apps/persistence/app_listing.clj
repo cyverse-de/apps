@@ -227,13 +227,13 @@
 
 (defn- get-job-stats-fields
   "Adds query fields via subselects for an app's job_count_completed and job_last_completed timestamp."
-  [query query-ops]
+  [query query-opts]
   (fields query
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count_completed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Completed"})
-                      (util/add-date-limits-where-clause query-ops)
+                      (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_completed]
           [(subselect :jobs
@@ -244,19 +244,19 @@
 
 (defn- get-admin-job-stats-fields
   "Adds query fields via subselects for an app's job_count, job_count_failed, and last_used timestamp."
-  [query query-ops]
+  [query query-opts]
   (fields query
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count)
                       (where {:app_id (raw "app_listing.id::varchar")})
-                      (util/add-date-limits-where-clause query-ops)
+                      (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count]
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count_failed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Failed"})
-                      (util/add-date-limits-where-clause query-ops)
+                      (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_failed]
           [(subselect :jobs

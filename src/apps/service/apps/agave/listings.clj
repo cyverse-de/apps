@@ -29,7 +29,7 @@
 (defn get-app-details
   [agave app-id admin?]
   (-> (.getAppDetails agave app-id)
-      (add-agave-job-stats () admin?)
+      (add-agave-job-stats nil admin?)
       (format-job-stats admin?)
       remove-nil-vals))
 

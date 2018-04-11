@@ -498,7 +498,7 @@
              :description          (:description details "")
              :references           (map :reference_text (:app_references details))
              :tools                (map format-app-tool tools)
-             :job_stats            (format-app-details-job-stats (str app-id) () admin?)
+             :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
              :categories           (get-groups-for-app app-id)
              :suggested_categories (get-suggested-groups-for-app app-id)
              :system_id            c/system-id)
