@@ -7,7 +7,8 @@
         [kameleon.util.search]
         [korma.core :exclude [update]])
   (:require [apps.constants :as c]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [apps.persistence.util :as util]))
 
 (defn get-app-listing
   "Retrieves all app listing fields from the database for the given App ID."
@@ -224,15 +225,6 @@
       (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
       (select))))
 
-(defn- add-date-limits-where-clause
-  [query {:keys [start_date end_date]}]
-  (cond
-    (and start_date end_date) (where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
-    (and (not start_date) end_date) (where query {:end_date [<= (date->timestamp end_date)]})
-    (and (not end_date) start_date) (where query {:end_date [>= (date->timestamp start_date)]})
-    :else query
-    )
-  )
 (defn- get-job-stats-fields
   "Adds query fields via subselects for an app's job_count_completed and job_last_completed timestamp."
   [query query-ops]
@@ -241,7 +233,7 @@
                       (aggregate (count :id) :job_count_completed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Completed"})
-                      (add-date-limits-where-clause query-ops)
+                      (util/add-date-limits-where-clause query-ops)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_completed]
           [(subselect :jobs
@@ -257,14 +249,14 @@
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count)
                       (where {:app_id (raw "app_listing.id::varchar")})
-                      (add-date-limits-where-clause query-ops)
+                      (util/add-date-limits-where-clause query-ops)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count]
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count_failed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Failed"})
-                      (add-date-limits-where-clause query-ops)
+                      (util/add-date-limits-where-clause query-ops)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_failed]
           [(subselect :jobs

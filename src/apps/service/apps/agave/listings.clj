@@ -9,15 +9,15 @@
             [apps.persistence.jobs :as jobs-db]))
 
 (defn- add-agave-job-stats
-  [{:keys [id] :as app} admin?]
+  [{:keys [id] :as app} params admin?]
   (merge app (if admin?
-               (jobs-db/get-job-stats id)
-               (jobs-db/get-public-job-stats id))))
+               (jobs-db/get-job-stats id params)
+               (jobs-db/get-public-job-stats id params))))
 
 (defn- add-app-listing-job-stats
-  [app-listing admin?]
+  [app-listing params admin?]
   (if admin?
-    (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % admin?))))
+    (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % params admin?))))
     app-listing))
 
 (defn- format-app-listing-job-stats
@@ -29,14 +29,14 @@
 (defn get-app-details
   [agave app-id admin?]
   (-> (.getAppDetails agave app-id)
-      (add-agave-job-stats admin?)
+      (add-agave-job-stats () admin?)
       (format-job-stats admin?)
       remove-nil-vals))
 
 (defn list-apps
   [agave category-id params]
   (-> (.listApps agave)
-      (add-app-listing-job-stats false)
+      (add-app-listing-job-stats params false)
       (sort-apps params {:default-sort-field "name"})
       (apply-offset params)
       (apply-limit params)
@@ -46,7 +46,7 @@
   [agave term params admin?]
   (try+
     (-> (select-keys (.listAppsWithOntology agave term) [:total :apps])
-        (add-app-listing-job-stats admin?)
+        (add-app-listing-job-stats params admin?)
         (sort-apps params {:default-sort-field "name"})
         (apply-offset params)
         (apply-limit params)
@@ -66,7 +66,7 @@
   [agave search-term params admin?]
   (try+
    (-> (.searchApps agave search-term (fix-search-params params admin?))
-       (add-app-listing-job-stats admin?)
+       (add-app-listing-job-stats params admin?)
        (sort-apps params {:default-sort-field "name"})
        (apply-offset params)
        (apply-limit params)

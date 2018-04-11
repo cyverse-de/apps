@@ -1,5 +1,6 @@
 (ns apps.persistence.util
-  (:use [korma.db :only [transaction *current-conn*]])
+  (:use [korma.db :only [transaction *current-conn*]]
+        [apps.util.conversions :only [date->timestamp]])
   (:require [korma.core :as sql]))
 
 (defn sql-array
@@ -23,3 +24,13 @@
    array-items: the elements that populate the SQL ARRAY passed to the ANY function."
   [array-type array-items]
   (sql/sqlfn :any (sql-array array-type array-items)))
+
+(defn add-date-limits-where-clause
+  [query {:keys [start_date end_date]}]
+  (cond
+    (and start_date end_date) (sql/where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
+    (and (not start_date) end_date) (sql/where query {:end_date [<= (date->timestamp end_date)]})
+    (and (not end_date) start_date) (sql/where query {:end_date [>= (date->timestamp start_date)]})
+    :else query
+    )
+  )

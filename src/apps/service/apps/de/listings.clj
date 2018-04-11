@@ -471,10 +471,10 @@
     (merge app hierarchies)))
 
 (defn- format-app-details-job-stats
-  [^String app-id admin?]
+  [^String app-id params admin?]
   (remove-nil-vals
-    (if admin? (jobs-db/get-job-stats app-id)
-               (jobs-db/get-public-job-stats app-id))))
+    (if admin? (jobs-db/get-job-stats app-id params)
+               (jobs-db/get-public-job-stats app-id params))))
 
 (defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
   (remove-nil-vals
@@ -498,7 +498,7 @@
              :description          (:description details "")
              :references           (map :reference_text (:app_references details))
              :tools                (map format-app-tool tools)
-             :job_stats            (format-app-details-job-stats (str app-id) admin?)
+             :job_stats            (format-app-details-job-stats (str app-id) () admin?)
              :categories           (get-groups-for-app app-id)
              :suggested_categories (get-suggested-groups-for-app app-id)
              :system_id            c/system-id)
