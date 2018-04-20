@@ -15,7 +15,7 @@
                                                     paths
                                                     :mode       "read"
                                                     :public     false
-                                                    :uses-limit 1)
+                                                    :uses-limit 0)
                           :tickets
                           (map (juxt :path :ticket-id))
                           (into {}))]
