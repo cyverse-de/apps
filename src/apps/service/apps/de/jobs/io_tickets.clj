@@ -1,6 +1,6 @@
 (ns apps.service.apps.de.jobs.io-tickets
   (:require [apps.clients.data-info :as data-info]
-            [apps.service.apps.jobs.util :as util]))
+            [apps.service.apps.jobs.util :as job-util]))
 
 (defn update-with-download-tickets
   "Takes a list if input params,
@@ -27,7 +27,7 @@
    containting an upload ticket for :output_dir (which will also be created if necessary).
    For use with apps.service.apps.de.jobs.protocol/buildSubmission"
   [user submission]
-  (let [output-dir (util/create-output-dir user submission)
+  (let [output-dir (job-util/create-output-dir user submission)
         ticket     (->> (data-info/create-tickets user
                                                   [output-dir]
                                                   :mode             "write"
