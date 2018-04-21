@@ -2,6 +2,7 @@
   (:require [clojure.string :as string]
             [me.raynes.fs :as fs]
             [apps.service.apps.de.jobs.common :as ca]
+            [apps.service.apps.de.jobs.io-tickets :as io-tickets]
             [apps.service.apps.de.jobs.params :as params]
             [apps.service.apps.de.jobs.protocol]))
 
@@ -71,4 +72,8 @@
     (ca/build-steps this app submission))
 
   (buildSubmission [this]
-    (ca/build-submission this user email submission app)))
+    (let [submission  (ca/build-submission this user email submission app)
+          osg-compat? (fn [step] (not (string/blank? (some-> step :component :osg_image_path))))]
+      (if (every? osg-compat? (:steps submission))
+        (io-tickets/add-tickets user submission)
+        submission))))
