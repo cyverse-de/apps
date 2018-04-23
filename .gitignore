@@ -31,3 +31,5 @@ build.xml
 GIT_COMMIT
 VERSION
 Dockerfile.local
+profiles.clj
+/repl/
