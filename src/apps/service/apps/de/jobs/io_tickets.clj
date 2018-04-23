@@ -58,7 +58,8 @@
                               (into [] extract-input-paths (:steps submission)))
         input-tickets (get-input-tickets user input-paths)
         output-ticket (get-output-ticket user output-path)
-        ticket-map    (map (juxt :path :ticket-id) (conj input-tickets output-ticket))]
+        ticket-map    (into {} (map (juxt :path :ticket-id) (conj input-tickets output-ticket)))]
     (assoc (update submission :steps add-tickets-to-steps ticket-map)
       :output_dir        output-path
-      :output_dir_ticket output-ticket)))
+      :output_dir_ticket (:ticket-id output-ticket)
+      :ticket_map        ticket-map)))
