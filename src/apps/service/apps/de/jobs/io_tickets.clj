@@ -63,3 +63,8 @@
       :output_dir        output-path
       :output_dir_ticket (:ticket-id output-ticket)
       :ticket_map        ticket-map)))
+
+(defn delete-tickets
+  "Deletes the tickets in a map from iRODS path to ticket string."
+  [user ticket-map]
+  (data-info/delete-tickets user (vals ticket-map)))

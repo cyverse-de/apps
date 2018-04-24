@@ -12,6 +12,7 @@
             [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.jobs.base :as jb]
+            [apps.service.apps.de.jobs.io-tickets :as io-tickets]
             [apps.util.json :as json-util]))
 
 (defn- pre-process-jex-step
@@ -65,12 +66,17 @@
   "Saves a DE job and its job-step in the database."
   ([user job submission]
      (save-job-submission user job submission jp/submitted-status))
-  ([user job submission status]
+  ([user job {ticket-map :ticket_map :as submission} status]
      (transaction
-      (let [job-id (:id (store-submitted-job user job submission status))]
-        (store-job-step job-id job status)
-        {:id     job-id
-         :status status}))))
+      (try+
+       (let [job-id (:id (store-submitted-job user job submission status))]
+         (store-job-step job-id job status)
+         (jp/record-tickets job-id ticket-map)
+         {:id     job-id
+          :status status})
+       (catch Object _
+         (io-tickets/delete-tickets user ticket-map)
+         (throw+))))))
 
 (defn- format-job-submission-response
   [user jex-submission batch? {job-id :id status :status}]
@@ -131,18 +137,31 @@
        (submit-job user submission)))
 
 (defn submit-step
-  [user submission]
-  (let [job-step (build-submission user submission)]
+  [user job-id submission]
+  (let [{ticket-map :ticket_map :as job-step} (build-submission user submission)]
     (json-util/log-json "job step" job-step)
-    (do-jex-submission job-step)
+    (try+
+     (do-jex-submission job-step)
+     (jp/record-tickets job-id ticket-map)
+     (catch Object _
+       (io-tickets/delete-tickets user ticket-map)
+       (jp/mark-tickets-deleted ticket-map)
+       (throw+)))
     (:uuid job-step)))
 
+(defn- delete-job-tickets
+  [user job-id]
+  (let [ticket-map (jp/load-job-ticket-map job-id)]
+    (io-tickets/delete-tickets user ticket-map)
+    (jp/mark-tickets-deleted ticket-map)))
+
 (defn update-job-status
-  [{:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
+  [user {:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
   (let [end-date (when (jp/completed? status) end-date)]
     (when (jp/status-follows? status (:status job-step))
       (jp/update-job-step job-id external_id status end-date)
-      (jp/update-job job-id status end-date))))
+      (jp/update-job job-id status end-date)
+      (when end-date (delete-job-tickets user job-id)))))
 
 (defn get-default-output-name
   [{output-id :output_id :as io-map} {task-id :task_id :as source-step}]

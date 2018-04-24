@@ -710,3 +710,24 @@
              (util/add-date-limits-where-clause params)
              select
              first)))
+
+(defn record-tickets
+  "Records tickets for a job."
+  [job-id ticket-map]
+  (let [format-row (fn [[path ticket-id]] {:job_id job-id :ticket ticket-id :irods_path path})]
+    (insert :job_tickets (values (mapv format-row ticket-map)))))
+
+(defn mark-tickets-deleted
+  "Marks a set of tickets as deleted."
+  [ticket-map]
+  (when-not (empty? ticket-map)
+    (sql/update :job_tickets
+                (set-fields {:deleted true})
+                (where {:ticket [in (keys ticket-map)]}))))
+
+(defn load-job-ticket-map
+  "Loads the ticket map for the given job ID."
+  [job-id]
+  (->> (select :job_tickets (fields :irods_path :ticket) (where {:job_id job-id}))
+       (map (juxt :irods_path :ticket))
+       (into {})))
