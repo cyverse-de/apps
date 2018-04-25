@@ -106,3 +106,13 @@
                   :body         (cheshire/encode {:paths paths})
                   :content-type :json
                   :as           :json}))))
+
+(defn delete-tickets
+  [user tickets]
+  (when (seq tickets)
+    (->> (http/post (data-info-url "ticket-deleter")
+                    {:query-params (secured-params user)
+                     :body         (cheshire/encode {:tickets tickets})
+                     :content-type :json
+                     :as           :json})
+         :body)))

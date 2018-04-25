@@ -30,7 +30,7 @@
 (defn build-default-values-map
   [params]
   (remove-vals #(string/blank? (str %))
-    (into {} (map (juxt util/param->qual-id :default_value) params))))
+               (into {} (map (juxt util/param->qual-id :default_value) params))))
 
 (defn build-config
   [inputs outputs params]
@@ -115,25 +115,26 @@
 
 (defn build-submission
   [request-builder user email submission app]
-  {:app_description      (:description app)
-   :app_id               (:id app)
-   :app_name             (:name app)
-   :archive_logs         (:archive_logs submission)
-   :callback             (:callback submission)
-   :create_output_subdir (:create_output_subdir submission true)
-   :description          (:description submission "")
-   :email                email
-   :execution_target     "condor"
-   :group                (:group submission "")
-   :name                 (:name submission)
-   :notify               (:notify submission)
-   :output_dir           (:output_dir submission)
-   :request_type         "submit"
-   :steps                (.buildSteps request-builder)
-   :username             (:shortUsername user)
-   :user_id              (get-user-id (:username user))
-   :user_groups          (map (comp ipg/remove-environment-from-group :name) (:groups (ipg/lookup-subject-groups (:shortUsername user))))
-   :uuid                 (or (:uuid submission) (uuid))
-   :wiki_url             (:wiki_url app)
-   :skip-parent-meta     (:skip-parent-meta submission)
-   :file-metadata        (:file-metadata submission)})
+  (let [groups (:groups (ipg/lookup-subject-groups (:shortUsername user)))]
+    {:app_description      (:description app)
+     :app_id               (:id app)
+     :app_name             (:name app)
+     :archive_logs         (:archive_logs submission)
+     :callback             (:callback submission)
+     :create_output_subdir (:create_output_subdir submission true)
+     :description          (:description submission "")
+     :email                email
+     :execution_target     "condor"
+     :group                (:group submission "")
+     :name                 (:name submission)
+     :notify               (:notify submission)
+     :output_dir           (:output_dir submission)
+     :request_type         "submit"
+     :steps                (.buildSteps request-builder)
+     :username             (:shortUsername user)
+     :user_id              (get-user-id (:username user))
+     :user_groups          (map (comp ipg/remove-environment-from-group :name) groups)
+     :uuid                 (or (:uuid submission) (uuid))
+     :wiki_url             (:wiki_url app)
+     :skip-parent-meta     (:skip-parent-meta submission)
+     :file-metadata        (:file-metadata submission)}))

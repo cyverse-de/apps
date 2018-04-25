@@ -44,6 +44,7 @@
   :profiles {:dev {:dependencies   [[ring "1.5.0"]]
                    :plugins        [[lein-ring "0.9.7"]]
                    :resource-paths ["conf/test"]}
+             :repl {:source-paths ["repl"]}
              :uberjar {:aot :all}}
   :repl-options {:timeout 120000}
   :main ^:skip-aot apps.core

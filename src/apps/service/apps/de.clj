@@ -183,8 +183,8 @@
     (validate-system-id (:system_id submission))
     (de-jobs/submit user (update-in submission [:app_id] uuidify)))
 
-  (submitJobStep [_ _ submission]
-    (de-jobs/submit-step user (update-in submission [:app_id] uuidify)))
+  (submitJobStep [_ job-id submission]
+    (de-jobs/submit-step user job-id (update-in submission [:app_id] uuidify)))
 
   (translateJobStatus [self job-type status]
     (when (apps-util/supports-job-type? self job-type)
@@ -192,7 +192,7 @@
 
   (updateJobStatus [self job-step job status end-date]
     (when (apps-util/supports-job-type? self (:job_type job-step))
-      (de-jobs/update-job-status job-step job status end-date)))
+      (de-jobs/update-job-status user job-step job status end-date)))
 
   (getDefaultOutputName [_ io-map source-step]
     (de-jobs/get-default-output-name io-map source-step))
