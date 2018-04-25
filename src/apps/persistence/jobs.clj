@@ -714,8 +714,9 @@
 (defn record-tickets
   "Records tickets for a job."
   [job-id ticket-map]
-  (let [format-row (fn [[path ticket-id]] {:job_id job-id :ticket ticket-id :irods_path path})]
-    (insert :job_tickets (values (mapv format-row ticket-map)))))
+  (when (seq ticket-map)
+    (let [format-row (fn [[path ticket-id]] {:job_id job-id :ticket ticket-id :irods_path path})]
+      (insert :job_tickets (values (mapv format-row ticket-map))))))
 
 (defn mark-tickets-deleted
   "Marks a set of tickets as deleted."
