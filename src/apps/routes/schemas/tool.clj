@@ -17,6 +17,7 @@
 (def ToolRestricted (describe Boolean "Determines whether a time limit is applied and whether network access is granted"))
 (def ToolTimeLimit (describe Integer "The number of seconds that a tool is allowed to execute. A value of 0 means the time limit is disabled."))
 (def StatusCodeId (describe UUID "The Status Code's UUID"))
+(def Interactive (describe Boolean "Determines whether the tool is interactive."))
 
 (defschema ToolIdsList
   {:tool_ids (describe [UUID] "A List of Tool IDs")})
@@ -53,7 +54,8 @@
    :version                           VersionParam
    :type                              (describe String "The Tool Type name")
    (optional-key :restricted)         ToolRestricted
-   (optional-key :time_limit_seconds) ToolTimeLimit})
+   (optional-key :time_limit_seconds) ToolTimeLimit
+   (optional-key :interactive)        Interactive})
 
 (defschema ToolDetails
   (merge Tool
@@ -190,7 +192,10 @@
       `Don't know` if the user requesting the tool doesn't know what the architecture is")
 
    :history
-   (describe [ToolRequestStatus] "A history of status updates for this Tool Request")})
+   (describe [ToolRequestStatus] "A history of status updates for this Tool Request")
+
+   :interactive
+   Interactive})
 
 (defschema ToolRequest
   (dissoc ToolRequestDetails :id :submitted_by :history))
