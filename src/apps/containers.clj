@@ -634,7 +634,7 @@
         bind-to-host   (:bind_to_host port-map)]
     (if (port-mapping? settings-uuid host-port container-port bind-to-host)
       (throw (Exception. (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host))))
-    (insert container-port
+    (insert container-ports
             (values (merge
                      (select-keys port-map [:host_port :container_port :bind_to_host])
                      {:container_settings_id (uuidify settings-uuid)})))))
