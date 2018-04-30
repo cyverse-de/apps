@@ -12,7 +12,7 @@
     (s/optional-key :deprecated)     Boolean
     (s/optional-key :auth)           (s/maybe s/Str)
     (s/optional-key :osg_image_path) (s/maybe s/Str)}
-    "A map describing a container image."))
+   "A map describing a container image."))
 
 (s/defschema Images
   (describe
@@ -210,9 +210,38 @@
    {:container_volumes_from [VolumesFrom]}
    "The list of VolumeFroms associated with a tool's container."))
 
+(s/defschema Port
+  (describe
+   {:id             s/Uuid
+    :host_port      Integer
+    :container_port Integer
+    :bind_to_host   Boolean}
+   "Port information for a tool container."))
+
+(s/defschema NewPort
+  (describe
+   (dissoc Port :id)
+   "A map for adding a new port configuration to a tool container."))
+
+(s/defschema HostPort
+  (describe
+   {:host_port Integer}
+   "The port on the host system from which requests are forwarded."))
+
+(s/defschema ContainerPort
+  (describe
+   {:container_port Integer}
+   "The port that the container is listening on. Info is forwarded to it from the host."))
+
+(s/defschema BindToHost
+  (describe
+   {:bind_to_host Boolean}
+   "Whether or not to forward info from the host port to the container port."))
+
 (def DevicesParamOptional     (s/optional-key :container_devices))
 (def VolumesParamOptional     (s/optional-key :container_volumes))
 (def VolumesFromParamOptional (s/optional-key :container_volumes_from))
+(def PortsParamOptional       (s/optional-key :container_ports))
 
 (s/defschema ToolContainerSettings
   (describe
@@ -220,7 +249,8 @@
     Settings
     {DevicesParamOptional     [Device]
      VolumesParamOptional     [Volume]
-     VolumesFromParamOptional [VolumesFrom]})
+     VolumesFromParamOptional [VolumesFrom]
+     PortsParamOptional       [Port]})
    "Bare minimum map containing all of the container settings."))
 
 (s/defschema ToolContainer
@@ -237,5 +267,6 @@
     {DevicesParamOptional     [NewDevice]
      VolumesParamOptional     [NewVolume]
      VolumesFromParamOptional [NewVolumesFrom]
+     PortsParamOptional       [NewPort]
      :image                   NewImage})
    "The settings for adding a new full container definition to a tool."))

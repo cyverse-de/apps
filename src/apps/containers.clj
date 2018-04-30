@@ -6,6 +6,7 @@
                                           container-devices
                                           container-volumes
                                           container-volumes-from
+                                          container-ports
                                           data-containers]]
         [apps.persistence.docker-registries :only [get-registry]]
         [apps.persistence.tools :only [update-tool]]
@@ -456,6 +457,8 @@
                        (fields :name_prefix :read_only)
                        (with container-images
                          (fields :name :tag :url :deprecated :osg_image_path))))
+                   (with container-ports
+                     (fields :host_port :container_port :bind_to_host :id))
                    (where {:tools_id id}))
            first
            (update :container_volumes_from add-data-container-auth :auth? auth?)
@@ -585,6 +588,104 @@
     (if-not (nil? container-info)
       {:container_volumes_from (:container_volumes_from container-info)})))
 
+(defn ports
+  "Returns the port informationfor the given container_settings uuid."
+  [settings-uuid]
+  (select container-ports (where {:container_settings_id (uuidify settings-uuid)})))
+
+(defn port
+  "Returns a specific port indicated by the port UUID."
+  [port-uuid]
+  (first (select container-ports (where {:id (uuidify port-uuid)}))))
+
+(defn port?
+  "Returns true if the port exists."
+  [port-uuid]
+  (pos? (count (select container-ports (where {:id (uuidify port-uuid)})))))
+
+(defn port-mapping?
+  "Returns true if the the specific combination of fields exists in the
+   database."
+  [settings-uuid host-port container-port bind-to-host]
+  (pos? (count (select container-ports
+                      (where (and (= :container_settings_id (uuidify settings-uuid))
+                                  (= :host_port host-port)
+                                  (= :container_port container-port)
+                                  (= :bind_to_host bind-to-host)))))))
+
+(defn port-mapping
+  [settings-uuid host-port container-port bind-to-host]
+  (first (select container-ports
+                 (where (and (= :container_settings_id (uuidify settings-uuid))
+                             (= :host_port host-port)
+                             (= :container_port container-port)
+                             (= :bind_to_host bind-to-host))))))
+
+(defn settings-has-port?
+  [settings-uuid port-uuid]
+  (pos? (count (select container-ports
+                       (where {:container_settings_id (uuidify settings-uuid)
+                               :id                    (uuidify port-uuid)})))))
+
+(defn add-port
+  [settings-uuid port-map]
+  (let [host-port      (:host_port port-map)
+        container-port (:container_port port-map)
+        bind-to-host   (:bind_to_host port-map)]
+    (if (port-mapping? settings-uuid host-port container-port bind-to-host)
+      (throw (Exception. (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host))))
+    (insert container-port
+            (values (merge
+                     (select-keys port-map [:host_port :container_port :bind_to_host])
+                     {:container_settings_id (uuidify settings-uuid)})))))
+
+(defn modify-port
+  [settings-uuid port-uuid port-map]
+  (if-not (port? port-uuid)
+    (throw (Exception. (str "port does not exist: " port-uuid))))
+  (sql/update container-ports
+    (set-fields (merge {:container_settings_id (uuidify settings-uuid)}
+                       (select-keys port-map [:host_port :container_port :bind_to_host])))
+    (where {:id (uuidify port-uuid)})))
+
+(defn delete-port
+  [port-uuid]
+  (when (port? port-uuid)
+    (delete container-ports (where {:id (uuidify port-uuid)}))))
+
+(defn tool-port
+  "Returns a map containing port information."
+  [tool-uuid port-uuid]
+  (when (tool-has-settings? tool-uuid)
+    (let [settings-uuid (tool-settings-uuid tool-uuid)]
+      (when (settings-has-port? settings-uuid port-uuid)
+        (dissoc (port port-uuid) :container_settings_id)))))
+
+(defn add-tool-port
+  [tool-uuid port-map]
+  (when-not (tool-has-settings? tool-uuid)
+    (throw (Exception. (str "Tool " tool-uuid " does not have a container."))))
+  (let [settings-uuid (tool-settings-uuid tool-uuid)]
+    (dissoc
+     (if-not (port-mapping? settings-uuid (:host_port port-map) (:container_port port-map) (:bind_to_host port-map))
+       (add-port settings-uuid port-map)
+       (port-mapping settings-uuid (:host_port port-map) (:container_port port-map) (:bind_to_host port-map))))
+    :container_settings_id))
+
+(defn port-field
+  [tool-uuid port-uuid field-kw]
+  (or (select-keys (tool-port tool-uuid port-uuid) [field-kw] nil)))
+
+(defn update-port-field
+  [tool-uuid port-uuid field-kw new-value]
+  (when (tool-has-settings? tool-uuid)
+    (let [settings-uuid (tool-settings-uuid tool-uuid)]
+      (when (and (port? port-uuid)
+                 (settings-has-port? settings-uuid port-uuid))
+        (modify-port settings-uuid port-uuid {field-kw new-value})
+        (volume-field tool-uuid port-uuid field-kw)))))
+
+
 (defn add-tool-container
   [tool-uuid info-map]
   (when (tool-has-settings? tool-uuid)
@@ -592,6 +693,7 @@
   (let [devices  (:container_devices info-map)
         volumes  (:container_volumes info-map)
         vfs      (:container_volumes_from info-map)
+        ports    (:container_ports info-map)
         settings (dissoc info-map :container_devices :container_volumes :container_volumes_from)
         info-map (assoc info-map :tools_id (uuidify tool-uuid))]
     (log/warn "adding container information for tool" tool-uuid ":" info-map)
@@ -606,13 +708,15 @@
          (add-volume settings-uuid v))
        (doseq [vf vfs]
          (add-settings-volumes-from settings-uuid vf))
+       (doseq [p ports]
+         (add-port settings-uuid p))
        (tool-container-info tool-uuid)))))
 
 (defn set-tool-container
   "Removes all existing container settings for the given tool-id, replacing them with the given settings."
   [tool-id
    overwrite-public
-   {:keys [container_devices container_volumes container_volumes_from] :as settings}]
+   {:keys [container_devices container_volumes container_volumes_from container_ports] :as settings}]
   (when-not overwrite-public
     (validate-tool-not-used-in-public-apps tool-id))
   (transaction
@@ -628,6 +732,8 @@
         (add-volume settings-id volume))
       (doseq [volume container_volumes_from]
         (add-settings-volumes-from settings-id volume))
+      (doseq [port container_ports]
+        (add-port settings-id port))
 
       (tool-container-info tool-id))))
 
@@ -656,4 +762,13 @@
       (when (settings-has-volumes-from? settings-uuid vf-uuid)
         (log/warn "deleting volumes-from" vf-uuid "for tool" tool-uuid)
         (delete-volumes-from vf-uuid)
+        nil))))
+
+(defn delete-tool-port
+  [tool-uuid port-uuid]
+  (when (tool-has-settings? tool-uuid)
+    (let [settings-uuid (tool-settings-uuid tool-uuid)]
+      (when (settings-has-port? settings-uuid port-uuid)
+        (log/warn "delete port " port-uuid "for tool" tool-uuid)
+        (delete-port port-uuid)
         nil))))
