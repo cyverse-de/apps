@@ -75,5 +75,5 @@
     (let [submission  (ca/build-submission this user email submission app)
           osg-compat? (fn [step] (not (string/blank? (some-> step :component :container :image :osg_image_path))))]
       (if (every? osg-compat? (:steps submission))
-        (io-tickets/add-tickets user submission)
+        (assoc (io-tickets/add-tickets user submission) :execution_target "osg")
         submission))))
