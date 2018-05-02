@@ -212,10 +212,10 @@
 
 (s/defschema Port
   (describe
-   {:id             s/Uuid
-    :host_port      Integer
-    :container_port Integer
-    :bind_to_host   Boolean}
+   {:id                              s/Uuid
+    (s/optional-key :host_port)      Integer
+    :container_port                  Integer
+    (s/optional-key :bind_to_host)   Boolean}
    "Port information for a tool container."))
 
 (s/defschema NewPort
@@ -225,7 +225,7 @@
 
 (s/defschema HostPort
   (describe
-   {:host_port Integer}
+   {:host_port (s/maybe Integer)}
    "The port on the host system from which requests are forwarded."))
 
 (s/defschema ContainerPort
@@ -235,22 +235,76 @@
 
 (s/defschema BindToHost
   (describe
-   {:bind_to_host Boolean}
+   {:bind_to_host (s/maybe Boolean)}
    "Whether or not to forward info from the host port to the container port."))
 
-(def DevicesParamOptional     (s/optional-key :container_devices))
-(def VolumesParamOptional     (s/optional-key :container_volumes))
-(def VolumesFromParamOptional (s/optional-key :container_volumes_from))
-(def PortsParamOptional       (s/optional-key :container_ports))
+(s/defschema ProxySettings
+  (describe
+   {:id                             s/Uuid
+    :image                          String
+    :name                           String
+    (s/optional-key :frontend_url)  String
+    (s/optional-key :cas_url)       String
+    (s/optional-key :cas_validate)  String
+    (s/optional-key :ssl_cert_path) String
+    (s/optional-key :ssl_key_path)  String}
+   "Interactive app settings for the reverse proxy that runs on the HTCondor nodes for each job."))
+
+(s/defschema NewProxySettings
+  (describe
+   (dissoc ProxySettings :id)
+   "A map for adding new interactive app reverse proxy settings."))
+
+(s/defschema ProxySettingsImage
+  (describe
+   {:image String}
+   "The Docker image to use for the reverse proxy. Should include the tag."))
+
+(s/defschema ProxySettingsName
+  (describe
+   {:name String}
+   "The name of the Docker container created for the reverse proxy."))
+
+(s/defschema ProxySettingsFrontendURL
+  (describe
+   {:frontend_url (s/maybe String)}
+   "The user-facing URL that all requests come through."))
+
+(s/defschema ProxySettingsCASURL
+  (describe
+   {:cas_url (s/maybe String)}
+   "The URL for the CAS host used to authenticate the interactive app."))
+
+(s/defschema ProxySettingsCASValidate
+  (describe
+   {:cas_validate (s/maybe String)}
+   "The path portion of the CAS URL used to validate CAS tickets."))
+
+(s/defschema ProxySettingsSSLCertPath
+  (describe
+   {:ssl_cert_path (s/maybe String)}
+   "The path to the SSL cert on the interactive apps host."))
+
+(s/defschema ProxySettingsSSLKeyPath
+  (describe
+   {:ssl_key_path (s/maybe String)}
+   "The path to the SSL key on the interactive apps host."))
+
+(def DevicesParamOptional       (s/optional-key :container_devices))
+(def VolumesParamOptional       (s/optional-key :container_volumes))
+(def VolumesFromParamOptional   (s/optional-key :container_volumes_from))
+(def PortsParamOptional         (s/optional-key :container_ports))
+(def ProxySettingsParamOptional (s/optional-key :interactive_apps))
 
 (s/defschema ToolContainerSettings
   (describe
    (merge
     Settings
-    {DevicesParamOptional     [Device]
-     VolumesParamOptional     [Volume]
-     VolumesFromParamOptional [VolumesFrom]
-     PortsParamOptional       [Port]})
+    {DevicesParamOptional       [Device]
+     VolumesParamOptional       [Volume]
+     VolumesFromParamOptional   [VolumesFrom]
+     PortsParamOptional         [Port]
+     ProxySettingsParamOptional ProxySettings})
    "Bare minimum map containing all of the container settings."))
 
 (s/defschema ToolContainer
@@ -264,9 +318,10 @@
   (describe
    (merge
     NewSettings
-    {DevicesParamOptional     [NewDevice]
-     VolumesParamOptional     [NewVolume]
-     VolumesFromParamOptional [NewVolumesFrom]
-     PortsParamOptional       [NewPort]
-     :image                   NewImage})
+    {DevicesParamOptional       [NewDevice]
+     VolumesParamOptional       [NewVolume]
+     VolumesFromParamOptional   [NewVolumesFrom]
+     PortsParamOptional         [NewPort]
+     ProxySettingsParamOptional NewProxySettings
+     :image                     NewImage})
    "The settings for adding a new full container definition to a tool."))

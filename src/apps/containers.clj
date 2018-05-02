@@ -7,7 +7,8 @@
                                           container-volumes
                                           container-volumes-from
                                           container-ports
-                                          data-containers]]
+                                          data-containers
+                                          interapps-proxy-settings]]
         [apps.persistence.docker-registries :only [get-registry]]
         [apps.persistence.tools :only [update-tool]]
         [apps.util.assertions :only [assert-not-nil]]
@@ -380,6 +381,7 @@
      :name
      :entrypoint
      :tools_id
+     :interactive_apps_proxy_settings_id
      :id]))
 
 (defn add-settings
@@ -405,6 +407,7 @@
   (if-not (settings? settings-uuid)
     (throw (Exception. (str "Container settings do not exist for UUID: " settings-uuid))))
   (let [values (filter-container-settings settings-map)]
+    (log/warn values)
     (sql/update container-settings
       (set-fields values)
       (where {:id (uuidify settings-uuid)}))))
@@ -426,6 +429,8 @@
             (filter-returns (assoc container :auth (auth-info registry-name))))
           containers)
     containers))
+
+
 
 (defn tool-container-info
   "Returns container info associated with a tool or nil. This is used to build
@@ -589,7 +594,7 @@
       {:container_volumes_from (:container_volumes_from container-info)})))
 
 (defn ports
-  "Returns the port informationfor the given container_settings uuid."
+  "Returns the port information for the given container_settings uuid."
   [settings-uuid]
   (select container-ports (where {:container_settings_id (uuidify settings-uuid)})))
 
@@ -685,23 +690,98 @@
         (modify-port settings-uuid port-uuid {field-kw new-value})
         (volume-field tool-uuid port-uuid field-kw)))))
 
+(defn proxy-settings
+  "Returns the interactive app proxy settings associated with the given
+   proxy-settings UUID."
+  [proxy-settings-uuid]
+  (first (select interapps-proxy-settings (where {:id (uuidify proxy-settings-uuid)}))))
+
+(defn proxy-settings?
+  "Returns true if the given UUID is associated with a proxy settings record
+   for a container."
+  [proxy-settings-uuid]
+  (pos? (count (select interapps-proxy-settings (where {:id (uuidify proxy-settings-uuid)})))))
+
+(defn- filter-proxy-settings
+  [proxy-settings]
+  (select-keys proxy-settings
+               [:id
+                :image
+                :name
+                :frontend_url
+                :cas_url
+                :cas_validate
+                :ssl_cert_path
+                :ssl_key_path]))
+
+(defn add-proxy-settings
+  "Adds a new proxy settings record to the database based on the parameter map"
+  [proxy-settings]
+  (insert interapps-proxy-settings
+          (values (filter-proxy-settings proxy-settings))))
+
+(defn container-has-proxy-settings?
+  "Returns true if the given container UUID has proxy settings associated with
+   it."
+  [container-settings-uuid]
+  (pos? (count (select container-settings
+                       (where {:id (uuidify container-settings-uuid)
+                               :interactive_apps_proxy_settings_id [not nil]})))))
+
+(defn container-proxy-settings-uuid
+  "Returns the interapps-proxy-settings uuid for the given container-settings
+   UUID."
+  [container-settings-uuid]
+  (:interactive_apps_proxy_settings_id
+   (first (select container-settings
+                  (where {:id (uuidify container-settings-uuid)})))))
+
+(defn modify-proxy-settings
+  "Modifies an existing set of proxy settings. Needs the proxy-settings-uuid
+   and a new map of values for the proxy settings."
+  [proxy-settings-uuid proxy-settings]
+  (if-not (proxy-settings? proxy-settings-uuid)
+    (throw (Exception. (str "proxy settings not found:" proxy-settings-uuid))))
+  (sql/update interapps-proxy-settings
+              (set-fields (filter-proxy-settings proxy-settings))
+              (where {:id (uuidify proxy-settings-uuid)})))
+
+(defn container-proxy-settings
+  "Returns the proxy-settings for the given container-settings UUID."
+  [container-settings-uuid]
+  (first (select container-settings
+                 (with interapps-proxy-settings)
+                 (fields :interactive_apps_proxy_settings.id
+                         :interactive_apps_proxy_settings.image
+                         :interactive_apps_proxy_settings.name
+                         :interactive_apps_proxy_settings.frontend_url
+                         :interactive_apps_proxy_settings.cas_url
+                         :interactive_apps_proxy_settings.cas_validate
+                         :interactive_apps_proxy_settings.ssl_cert_path
+                         :interactive_apps_proxy_settings.ssl_key_path)
+                 (where {:id (uuidify container-settings-uuid)}))))
 
 (defn add-tool-container
   [tool-uuid info-map]
   (when (tool-has-settings? tool-uuid)
     (throw (Exception. (str "Tool " tool-uuid " already has container settings."))))
-  (let [devices  (:container_devices info-map)
-        volumes  (:container_volumes info-map)
-        vfs      (:container_volumes_from info-map)
-        ports    (:container_ports info-map)
-        settings (dissoc info-map :container_devices :container_volumes :container_volumes_from)
-        info-map (assoc info-map :tools_id (uuidify tool-uuid))]
+  (let [devices        (:container_devices info-map)
+        volumes        (:container_volumes info-map)
+        vfs            (:container_volumes_from info-map)
+        ports          (:container_ports info-map)
+        proxy-settings (:interactive_apps info-map)
+        settings       (dissoc info-map :container_devices :container_volumes :container_volumes_from)
+        info-map       (assoc info-map :tools_id (uuidify tool-uuid))]
     (log/warn "adding container information for tool" tool-uuid ":" info-map)
     (transaction
      (let [img-id        (find-or-add-image-id (:image info-map))
            settings-map  (add-settings info-map)
            settings-uuid (:id settings-map)]
        (update-tool {:id tool-uuid :container_images_id img-id})
+       (if-not (nil? proxy-settings)
+         (modify-settings settings-uuid
+                          {:interactive_apps_proxy_settings_id
+                           (uuidify (:id (add-proxy-settings proxy-settings)))}))
        (doseq [d devices]
          (add-device settings-uuid d))
        (doseq [v volumes]
@@ -716,7 +796,7 @@
   "Removes all existing container settings for the given tool-id, replacing them with the given settings."
   [tool-id
    overwrite-public
-   {:keys [container_devices container_volumes container_volumes_from container_ports] :as settings}]
+   {:keys [container_devices container_volumes container_volumes_from container_ports interactive_apps] :as settings}]
   (when-not overwrite-public
     (validate-tool-not-used-in-public-apps tool-id))
   (transaction
@@ -725,7 +805,10 @@
           settings    (assoc settings :tools_id tool-id)
           settings-id (:id (add-settings settings))]
       (update-tool {:id tool-id :container_images_id img-id})
-
+      (if-not (nil? interactive_apps)
+        (modify-settings settings-id
+                         {:interactive_apps_proxy_settings_id
+                          (uuidify (:id (add-proxy-settings interactive_apps)))}))
       (doseq [device container_devices]
         (add-device settings-id device))
       (doseq [volume container_volumes]
