@@ -471,7 +471,7 @@
                      (fields :host_port :container_port :bind_to_host :id))
                    (where {:tools_id id}))
            first
-           (add-interapps-info)
+           add-interapps-info
            (update :container_volumes_from add-data-container-auth :auth? auth?)
            (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
