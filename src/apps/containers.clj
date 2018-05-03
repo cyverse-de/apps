@@ -671,14 +671,14 @@
         (dissoc (port port-uuid) :container_settings_id)))))
 
 (defn add-tool-port
-  [tool-uuid port-map]
+  [tool-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
   (when-not (tool-has-settings? tool-uuid)
     (throw (Exception. (str "Tool " tool-uuid " does not have a container."))))
   (let [settings-uuid (tool-settings-uuid tool-uuid)]
     (dissoc
-     (if-not (port-mapping? settings-uuid (:host_port port-map) (:container_port port-map) (:bind_to_host port-map))
+     (if-not (port-mapping? settings-uuid host-port container-port bind-to-host)
        (add-port settings-uuid port-map)
-       (port-mapping settings-uuid (:host_port port-map) (:container_port port-map) (:bind_to_host port-map))))
+       (port-mapping settings-uuid host-port container-port bind-to-host)))
     :container_settings_id))
 
 (defn port-field
