@@ -430,7 +430,12 @@
           containers)
     containers))
 
-
+(defn- add-interapps-info
+  [container-settings]
+  (-> container-settings
+      (assoc :interactive_apps (first (select interapps-proxy-settings
+                                              (where {:id (:interactive_apps_proxy_settings_id container-settings)}))))
+      (dissoc :interactive_apps_proxy_settings_id)))
 
 (defn tool-container-info
   "Returns container info associated with a tool or nil. This is used to build
@@ -451,6 +456,7 @@
                            :network_mode
                            :name
                            :working_directory
+                           :interactive_apps_proxy_settings_id
                            :entrypoint)
                    (with container-devices
                      (fields :host_path :container_path :id))
@@ -466,6 +472,7 @@
                      (fields :host_port :container_port :bind_to_host :id))
                    (where {:tools_id id}))
            first
+           (add-interapps-info)
            (update :container_volumes_from add-data-container-auth :auth? auth?)
            (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
