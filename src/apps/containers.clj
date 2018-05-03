@@ -809,7 +809,7 @@
           settings    (assoc settings :tools_id tool-id)
           settings-id (:id (add-settings settings))]
       (update-tool {:id tool-id :container_images_id img-id})
-      (if-not (nil? interactive_apps)
+      (when-not (nil? interactive_apps)
         (modify-settings settings-id
                          {:interactive_apps_proxy_settings_id
                           (uuidify (:id (add-proxy-settings interactive_apps)))}))
