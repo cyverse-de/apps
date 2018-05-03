@@ -639,16 +639,14 @@
                                :id                    (uuidify port-uuid)})))))
 
 (defn add-port
-  [settings-uuid port-map]
-  (let [host-port      (:host_port port-map)
-        container-port (:container_port port-map)
-        bind-to-host   (:bind_to_host port-map)]
-    (if (port-mapping? settings-uuid host-port container-port bind-to-host)
-      (throw (Exception. (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host))))
-    (insert container-ports
-            (values (merge
-                     (select-keys port-map [:host_port :container_port :bind_to_host])
-                     {:container_settings_id (uuidify settings-uuid)})))))
+  [settings-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
+  (if (port-mapping? settings-uuid host-port container-port bind-to-host)
+    (throw (Exception. (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host))))
+  (insert container-ports
+          (values (merge
+                   (select-keys port-map [:host_port :container_port :bind_to_host])
+                   {:container_settings_id (uuidify settings-uuid)}))))
+
 
 (defn modify-port
   [settings-uuid port-uuid port-map]
