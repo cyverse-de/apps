@@ -407,7 +407,6 @@
   (if-not (settings? settings-uuid)
     (throw (Exception. (str "Container settings do not exist for UUID: " settings-uuid))))
   (let [values (filter-container-settings settings-map)]
-    (log/warn values)
     (sql/update container-settings
       (set-fields values)
       (where {:id (uuidify settings-uuid)}))))
