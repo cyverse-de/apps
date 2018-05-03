@@ -782,7 +782,7 @@
            settings-map  (add-settings info-map)
            settings-uuid (:id settings-map)]
        (update-tool {:id tool-uuid :container_images_id img-id})
-       (if-not (nil? proxy-settings)
+       (when-not (nil? proxy-settings)
          (modify-settings settings-uuid
                           {:interactive_apps_proxy_settings_id
                            (uuidify (:id (add-proxy-settings proxy-settings)))}))
