@@ -223,21 +223,6 @@
    (dissoc Port :id)
    "A map for adding a new port configuration to a tool container."))
 
-(s/defschema HostPort
-  (describe
-   {:host_port (s/maybe Integer)}
-   "The port on the host system from which requests are forwarded."))
-
-(s/defschema ContainerPort
-  (describe
-   {:container_port Integer}
-   "The port that the container is listening on. Info is forwarded to it from the host."))
-
-(s/defschema BindToHost
-  (describe
-   {:bind_to_host (s/maybe Boolean)}
-   "Whether or not to forward info from the host port to the container port."))
-
 (s/defschema ProxySettings
   (describe
    {:id                             s/Uuid
@@ -254,41 +239,6 @@
   (describe
    (dissoc ProxySettings :id)
    "A map for adding new interactive app reverse proxy settings."))
-
-(s/defschema ProxySettingsImage
-  (describe
-   {:image String}
-   "The Docker image to use for the reverse proxy. Should include the tag."))
-
-(s/defschema ProxySettingsName
-  (describe
-   {:name String}
-   "The name of the Docker container created for the reverse proxy."))
-
-(s/defschema ProxySettingsFrontendURL
-  (describe
-   {:frontend_url (s/maybe String)}
-   "The user-facing URL that all requests come through."))
-
-(s/defschema ProxySettingsCASURL
-  (describe
-   {:cas_url (s/maybe String)}
-   "The URL for the CAS host used to authenticate the interactive app."))
-
-(s/defschema ProxySettingsCASValidate
-  (describe
-   {:cas_validate (s/maybe String)}
-   "The path portion of the CAS URL used to validate CAS tickets."))
-
-(s/defschema ProxySettingsSSLCertPath
-  (describe
-   {:ssl_cert_path (s/maybe String)}
-   "The path to the SSL cert on the interactive apps host."))
-
-(s/defschema ProxySettingsSSLKeyPath
-  (describe
-   {:ssl_key_path (s/maybe String)}
-   "The path to the SSL key on the interactive apps host."))
 
 (def DevicesParamOptional       (s/optional-key :container_devices))
 (def VolumesParamOptional       (s/optional-key :container_volumes))
