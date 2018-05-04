@@ -599,21 +599,6 @@
     (if-not (nil? container-info)
       {:container_volumes_from (:container_volumes_from container-info)})))
 
-(defn ports
-  "Returns the port information for the given container_settings uuid."
-  [settings-uuid]
-  (select container-ports (where {:container_settings_id (uuidify settings-uuid)})))
-
-(defn port
-  "Returns a specific port indicated by the port UUID."
-  [port-uuid]
-  (first (select container-ports (where {:id (uuidify port-uuid)}))))
-
-(defn port?
-  "Returns true if the port exists."
-  [port-uuid]
-  (pos? (count (select container-ports (where {:id (uuidify port-uuid)})))))
-
 (defn port-mapping?
   "Returns true if the the specific combination of fields exists in the
    database."
@@ -624,20 +609,6 @@
                                   (= :container_port container-port)
                                   (= :bind_to_host bind-to-host)))))))
 
-(defn port-mapping
-  [settings-uuid host-port container-port bind-to-host]
-  (first (select container-ports
-                 (where (and (= :container_settings_id (uuidify settings-uuid))
-                             (= :host_port host-port)
-                             (= :container_port container-port)
-                             (= :bind_to_host bind-to-host))))))
-
-(defn settings-has-port?
-  [settings-uuid port-uuid]
-  (pos? (count (select container-ports
-                       (where {:container_settings_id (uuidify settings-uuid)
-                               :id                    (uuidify port-uuid)})))))
-
 (defn add-port
   [settings-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
   (if (port-mapping? settings-uuid host-port container-port bind-to-host)
@@ -646,65 +617,6 @@
           (values (merge
                    (select-keys port-map [:host_port :container_port :bind_to_host])
                    {:container_settings_id (uuidify settings-uuid)}))))
-
-
-(defn modify-port
-  [settings-uuid port-uuid port-map]
-  (if-not (port? port-uuid)
-    (throw (Exception. (str "port does not exist: " port-uuid))))
-  (sql/update container-ports
-    (set-fields (merge {:container_settings_id (uuidify settings-uuid)}
-                       (select-keys port-map [:host_port :container_port :bind_to_host])))
-    (where {:id (uuidify port-uuid)})))
-
-(defn delete-port
-  [port-uuid]
-  (when (port? port-uuid)
-    (delete container-ports (where {:id (uuidify port-uuid)}))))
-
-(defn tool-port
-  "Returns a map containing port information."
-  [tool-uuid port-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-port? settings-uuid port-uuid)
-        (dissoc (port port-uuid) :container_settings_id)))))
-
-(defn add-tool-port
-  [tool-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
-  (when-not (tool-has-settings? tool-uuid)
-    (throw (Exception. (str "Tool " tool-uuid " does not have a container."))))
-  (let [settings-uuid (tool-settings-uuid tool-uuid)]
-    (dissoc
-     (if-not (port-mapping? settings-uuid host-port container-port bind-to-host)
-       (add-port settings-uuid port-map)
-       (port-mapping settings-uuid host-port container-port bind-to-host)))
-    :container_settings_id))
-
-(defn port-field
-  [tool-uuid port-uuid field-kw]
-  (or (select-keys (tool-port tool-uuid port-uuid) [field-kw] nil)))
-
-(defn update-port-field
-  [tool-uuid port-uuid field-kw new-value]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (and (port? port-uuid)
-                 (settings-has-port? settings-uuid port-uuid))
-        (modify-port settings-uuid port-uuid {field-kw new-value})
-        (volume-field tool-uuid port-uuid field-kw)))))
-
-(defn proxy-settings
-  "Returns the interactive app proxy settings associated with the given
-   proxy-settings UUID."
-  [proxy-settings-uuid]
-  (first (select interapps-proxy-settings (where {:id (uuidify proxy-settings-uuid)}))))
-
-(defn proxy-settings?
-  "Returns true if the given UUID is associated with a proxy settings record
-   for a container."
-  [proxy-settings-uuid]
-  (pos? (count (select interapps-proxy-settings (where {:id (uuidify proxy-settings-uuid)})))))
 
 (defn- filter-proxy-settings
   [proxy-settings]
@@ -723,47 +635,6 @@
   [proxy-settings]
   (insert interapps-proxy-settings
           (values (filter-proxy-settings proxy-settings))))
-
-(defn container-has-proxy-settings?
-  "Returns true if the given container UUID has proxy settings associated with
-   it."
-  [container-settings-uuid]
-  (pos? (count (select container-settings
-                       (where {:id (uuidify container-settings-uuid)
-                               :interactive_apps_proxy_settings_id [not nil]})))))
-
-(defn container-proxy-settings-uuid
-  "Returns the interapps-proxy-settings uuid for the given container-settings
-   UUID."
-  [container-settings-uuid]
-  (:interactive_apps_proxy_settings_id
-   (first (select container-settings
-                  (where {:id (uuidify container-settings-uuid)})))))
-
-(defn modify-proxy-settings
-  "Modifies an existing set of proxy settings. Needs the proxy-settings-uuid
-   and a new map of values for the proxy settings."
-  [proxy-settings-uuid proxy-settings]
-  (if-not (proxy-settings? proxy-settings-uuid)
-    (throw (Exception. (str "proxy settings not found:" proxy-settings-uuid))))
-  (sql/update interapps-proxy-settings
-              (set-fields (filter-proxy-settings proxy-settings))
-              (where {:id (uuidify proxy-settings-uuid)})))
-
-(defn container-proxy-settings
-  "Returns the proxy-settings for the given container-settings UUID."
-  [container-settings-uuid]
-  (first (select container-settings
-                 (with interapps-proxy-settings)
-                 (fields :interactive_apps_proxy_settings.id
-                         :interactive_apps_proxy_settings.image
-                         :interactive_apps_proxy_settings.name
-                         :interactive_apps_proxy_settings.frontend_url
-                         :interactive_apps_proxy_settings.cas_url
-                         :interactive_apps_proxy_settings.cas_validate
-                         :interactive_apps_proxy_settings.ssl_cert_path
-                         :interactive_apps_proxy_settings.ssl_key_path)
-                 (where {:id (uuidify container-settings-uuid)}))))
 
 (defn add-tool-container
   [tool-uuid info-map]
@@ -849,13 +720,4 @@
       (when (settings-has-volumes-from? settings-uuid vf-uuid)
         (log/warn "deleting volumes-from" vf-uuid "for tool" tool-uuid)
         (delete-volumes-from vf-uuid)
-        nil))))
-
-(defn delete-tool-port
-  [tool-uuid port-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-port? settings-uuid port-uuid)
-        (log/warn "delete port " port-uuid "for tool" tool-uuid)
-        (delete-port port-uuid)
         nil))))
