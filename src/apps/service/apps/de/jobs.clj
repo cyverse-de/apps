@@ -65,9 +65,8 @@
 (defn- save-job-submission
   "Saves a DE job and its job-step in the database."
   ([user job submission]
-     (save-job-submission user job submission jp/submitted-status))
+   (save-job-submission user job submission jp/submitted-status))
   ([user {ticket-map :ticket_map :as job} submission status]
-   (log/spy :warn job)
    (transaction
     (try+
      (let [job-id (:id (store-submitted-job user job submission status))]
