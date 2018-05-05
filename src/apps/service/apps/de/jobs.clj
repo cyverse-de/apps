@@ -151,7 +151,9 @@
 
 (defn- delete-job-tickets
   [user job-id]
+  (log/warn "Deleting tickets for job" job-id)
   (let [ticket-map (jp/load-job-ticket-map job-id)]
+    (log/spy :warn ticket-map)
     (io-tickets/delete-tickets user ticket-map)
     (jp/mark-tickets-deleted ticket-map)))
 
@@ -160,8 +162,8 @@
   (let [end-date (when (jp/completed? status) end-date)]
     (when (jp/status-follows? status (:status job-step))
       (jp/update-job-step job-id external_id status end-date)
-      (jp/update-job job-id status end-date)
-      (when end-date (delete-job-tickets user job-id)))))
+      (jp/update-job job-id status end-date))
+    (when end-date (delete-job-tickets user job-id))))
 
 (defn get-default-output-name
   [{output-id :output_id :as io-map} {task-id :task_id :as source-step}]
