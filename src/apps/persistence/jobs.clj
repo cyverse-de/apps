@@ -724,7 +724,7 @@
   (when-not (empty? ticket-map)
     (sql/update :job_tickets
                 (set-fields {:deleted true})
-                (where {:ticket [in (keys ticket-map)]}))))
+                (where {:ticket [in (vals ticket-map)]}))))
 
 (defn load-job-ticket-map
   "Loads the ticket map for the given job ID."
