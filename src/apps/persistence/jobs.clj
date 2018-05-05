@@ -13,6 +13,7 @@
             [cheshire.core :as cheshire]
             [clojure.set :as set]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
             [korma.core :as sql]))
 
@@ -714,6 +715,7 @@
 (defn record-tickets
   "Records tickets for a job."
   [job-id ticket-map]
+  (log/spy :warn ticket-map)
   (when (seq ticket-map)
     (let [format-row (fn [[path ticket-id]] {:job_id job-id :ticket ticket-id :irods_path path})]
       (insert :job_tickets (values (mapv format-row ticket-map))))))
