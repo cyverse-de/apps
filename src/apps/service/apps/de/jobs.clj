@@ -67,16 +67,17 @@
   ([user job submission]
      (save-job-submission user job submission jp/submitted-status))
   ([user job {ticket-map :ticket_map :as submission} status]
-     (transaction
-      (try+
-       (let [job-id (:id (store-submitted-job user job submission status))]
-         (store-job-step job-id job status)
-         (jp/record-tickets job-id ticket-map)
-         {:id     job-id
-          :status status})
-       (catch Object _
-         (io-tickets/delete-tickets user ticket-map)
-         (throw+))))))
+   (log/spy :warn submission)
+   (transaction
+    (try+
+     (let [job-id (:id (store-submitted-job user job submission status))]
+       (store-job-step job-id job status)
+       (jp/record-tickets job-id ticket-map)
+       {:id     job-id
+        :status status})
+     (catch Object _
+       (io-tickets/delete-tickets user ticket-map)
+       (throw+))))))
 
 (defn- format-job-submission-response
   [user jex-submission batch? {job-id :id status :status}]
