@@ -113,6 +113,18 @@
        (take-while (comp nil? :external_app_id))
        (reduce #(.buildStep request-builder %1 %2) [])))
 
+(defn- interactive?
+  "Returns true if the given submission is for an interactive job."
+  [submission]
+  (some true? (map #(get-in %1 [:component :container :interactive]) (:steps submission))))
+
+(defn- execution-target
+  "Returns the execution-target value based on info in the submission."
+  [submission]
+  (cond
+    (interactive? submission) "interapps"
+    :else "condor"))
+
 (defn build-submission
   [request-builder user email submission app]
   (let [groups (:groups (ipg/lookup-subject-groups (:shortUsername user)))]
@@ -124,7 +136,7 @@
      :create_output_subdir (:create_output_subdir submission true)
      :description          (:description submission "")
      :email                email
-     :execution_target     "condor"
+     :execution_target     (execution-target submission)
      :group                (:group submission "")
      :name                 (:name submission)
      :notify               (:notify submission)
