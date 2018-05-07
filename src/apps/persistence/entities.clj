@@ -65,12 +65,22 @@
   (table :container_images)
   (has-one data-containers))
 
+(defentity container-ports
+  (table :container_ports)
+  (belongs-to container-settings))
+
+(defentity interapps-proxy-settings
+  (table :interactive_apps_proxy_settings)
+  (belongs-to container-settings))
+
 (defentity container-settings
   (table :container_settings)
   (belongs-to tools)
   (has-many container-devices)
   (has-many container-volumes)
-  (has-many container-volumes-from))
+  (has-many container-volumes-from)
+  (has-many container-ports)
+  (has-one interapps-proxy-settings))
 
 (defentity container-devices
   (table :container_devices)

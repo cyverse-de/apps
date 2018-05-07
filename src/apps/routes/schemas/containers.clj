@@ -12,7 +12,7 @@
     (s/optional-key :deprecated)     Boolean
     (s/optional-key :auth)           (s/maybe s/Str)
     (s/optional-key :osg_image_path) (s/maybe s/Str)}
-    "A map describing a container image."))
+   "A map describing a container image."))
 
 (s/defschema Images
   (describe
@@ -210,17 +210,51 @@
    {:container_volumes_from [VolumesFrom]}
    "The list of VolumeFroms associated with a tool's container."))
 
-(def DevicesParamOptional     (s/optional-key :container_devices))
-(def VolumesParamOptional     (s/optional-key :container_volumes))
-(def VolumesFromParamOptional (s/optional-key :container_volumes_from))
+(s/defschema Port
+  (describe
+   {:id                              s/Uuid
+    (s/optional-key :host_port)      Integer
+    :container_port                  Integer
+    (s/optional-key :bind_to_host)   Boolean}
+   "Port information for a tool container."))
+
+(s/defschema NewPort
+  (describe
+   (dissoc Port :id)
+   "A map for adding a new port configuration to a tool container."))
+
+(s/defschema ProxySettings
+  (describe
+   {:id                             s/Uuid
+    :image                          String
+    :name                           String
+    (s/optional-key :frontend_url)  String
+    (s/optional-key :cas_url)       String
+    (s/optional-key :cas_validate)  String
+    (s/optional-key :ssl_cert_path) String
+    (s/optional-key :ssl_key_path)  String}
+   "Interactive app settings for the reverse proxy that runs on the HTCondor nodes for each job."))
+
+(s/defschema NewProxySettings
+  (describe
+   (dissoc ProxySettings :id)
+   "A map for adding new interactive app reverse proxy settings."))
+
+(def DevicesParamOptional       (s/optional-key :container_devices))
+(def VolumesParamOptional       (s/optional-key :container_volumes))
+(def VolumesFromParamOptional   (s/optional-key :container_volumes_from))
+(def PortsParamOptional         (s/optional-key :container_ports))
+(def ProxySettingsParamOptional (s/optional-key :interactive_apps))
 
 (s/defschema ToolContainerSettings
   (describe
    (merge
     Settings
-    {DevicesParamOptional     [Device]
-     VolumesParamOptional     [Volume]
-     VolumesFromParamOptional [VolumesFrom]})
+    {DevicesParamOptional       [Device]
+     VolumesParamOptional       [Volume]
+     VolumesFromParamOptional   [VolumesFrom]
+     PortsParamOptional         [Port]
+     ProxySettingsParamOptional ProxySettings})
    "Bare minimum map containing all of the container settings."))
 
 (s/defschema ToolContainer
@@ -234,8 +268,10 @@
   (describe
    (merge
     NewSettings
-    {DevicesParamOptional     [NewDevice]
-     VolumesParamOptional     [NewVolume]
-     VolumesFromParamOptional [NewVolumesFrom]
-     :image                   NewImage})
+    {DevicesParamOptional       [NewDevice]
+     VolumesParamOptional       [NewVolume]
+     VolumesFromParamOptional   [NewVolumesFrom]
+     PortsParamOptional         [NewPort]
+     ProxySettingsParamOptional NewProxySettings
+     :image                     NewImage})
    "The settings for adding a new full container definition to a tool."))

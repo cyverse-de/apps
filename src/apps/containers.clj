@@ -6,7 +6,9 @@
                                           container-devices
                                           container-volumes
                                           container-volumes-from
-                                          data-containers]]
+                                          container-ports
+                                          data-containers
+                                          interapps-proxy-settings]]
         [apps.persistence.docker-registries :only [get-registry]]
         [apps.persistence.tools :only [update-tool]]
         [apps.util.assertions :only [assert-not-nil]]
@@ -379,6 +381,7 @@
      :name
      :entrypoint
      :tools_id
+     :interactive_apps_proxy_settings_id
      :id]))
 
 (defn add-settings
@@ -426,6 +429,13 @@
           containers)
     containers))
 
+(defn- add-interapps-info
+  [container-settings]
+  (-> container-settings
+      (assoc :interactive_apps (first (select interapps-proxy-settings
+                                              (where {:id (:interactive_apps_proxy_settings_id container-settings)}))))
+      (dissoc :interactive_apps_proxy_settings_id)))
+
 (defn tool-container-info
   "Returns container info associated with a tool or nil. This is used to build
   the JSON map that is passed down to the JEX. If you make changes to the
@@ -445,6 +455,7 @@
                            :network_mode
                            :name
                            :working_directory
+                           :interactive_apps_proxy_settings_id
                            :entrypoint)
                    (with container-devices
                      (fields :host_path :container_path :id))
@@ -456,8 +467,11 @@
                        (fields :name_prefix :read_only)
                        (with container-images
                          (fields :name :tag :url :deprecated :osg_image_path))))
+                   (with container-ports
+                     (fields :host_port :container_port :bind_to_host :id))
                    (where {:tools_id id}))
            first
+           add-interapps-info
            (update :container_volumes_from add-data-container-auth :auth? auth?)
            (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
@@ -585,34 +599,79 @@
     (if-not (nil? container-info)
       {:container_volumes_from (:container_volumes_from container-info)})))
 
+(defn port-mapping?
+  "Returns true if the the specific combination of fields exists in the
+   database."
+  [settings-uuid host-port container-port bind-to-host]
+  (pos? (count (select container-ports
+                      (where (and (= :container_settings_id (uuidify settings-uuid))
+                                  (= :host_port host-port)
+                                  (= :container_port container-port)
+                                  (= :bind_to_host bind-to-host)))))))
+
+(defn add-port
+  [settings-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
+  (if (port-mapping? settings-uuid host-port container-port bind-to-host)
+    (throw (Exception. (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host))))
+  (insert container-ports
+          (values (merge
+                   (select-keys port-map [:host_port :container_port :bind_to_host])
+                   {:container_settings_id (uuidify settings-uuid)}))))
+
+(defn- filter-proxy-settings
+  [proxy-settings]
+  (select-keys proxy-settings
+               [:id
+                :image
+                :name
+                :frontend_url
+                :cas_url
+                :cas_validate
+                :ssl_cert_path
+                :ssl_key_path]))
+
+(defn add-proxy-settings
+  "Adds a new proxy settings record to the database based on the parameter map"
+  [proxy-settings]
+  (insert interapps-proxy-settings
+          (values (filter-proxy-settings proxy-settings))))
+
 (defn add-tool-container
   [tool-uuid info-map]
   (when (tool-has-settings? tool-uuid)
     (throw (Exception. (str "Tool " tool-uuid " already has container settings."))))
-  (let [devices  (:container_devices info-map)
-        volumes  (:container_volumes info-map)
-        vfs      (:container_volumes_from info-map)
-        settings (dissoc info-map :container_devices :container_volumes :container_volumes_from)
-        info-map (assoc info-map :tools_id (uuidify tool-uuid))]
+  (let [devices        (:container_devices info-map)
+        volumes        (:container_volumes info-map)
+        vfs            (:container_volumes_from info-map)
+        ports          (:container_ports info-map)
+        proxy-settings (:interactive_apps info-map)
+        settings       (dissoc info-map :container_devices :container_volumes :container_volumes_from)
+        info-map       (assoc info-map :tools_id (uuidify tool-uuid))]
     (log/warn "adding container information for tool" tool-uuid ":" info-map)
     (transaction
      (let [img-id        (find-or-add-image-id (:image info-map))
            settings-map  (add-settings info-map)
            settings-uuid (:id settings-map)]
        (update-tool {:id tool-uuid :container_images_id img-id})
+       (when-not (nil? proxy-settings)
+         (modify-settings settings-uuid
+                          {:interactive_apps_proxy_settings_id
+                           (uuidify (:id (add-proxy-settings proxy-settings)))}))
        (doseq [d devices]
          (add-device settings-uuid d))
        (doseq [v volumes]
          (add-volume settings-uuid v))
        (doseq [vf vfs]
          (add-settings-volumes-from settings-uuid vf))
+       (doseq [p ports]
+         (add-port settings-uuid p))
        (tool-container-info tool-uuid)))))
 
 (defn set-tool-container
   "Removes all existing container settings for the given tool-id, replacing them with the given settings."
   [tool-id
    overwrite-public
-   {:keys [container_devices container_volumes container_volumes_from] :as settings}]
+   {:keys [container_devices container_volumes container_volumes_from container_ports interactive_apps] :as settings}]
   (when-not overwrite-public
     (validate-tool-not-used-in-public-apps tool-id))
   (transaction
@@ -621,13 +680,18 @@
           settings    (assoc settings :tools_id tool-id)
           settings-id (:id (add-settings settings))]
       (update-tool {:id tool-id :container_images_id img-id})
-
+      (when-not (nil? interactive_apps)
+        (modify-settings settings-id
+                         {:interactive_apps_proxy_settings_id
+                          (uuidify (:id (add-proxy-settings interactive_apps)))}))
       (doseq [device container_devices]
         (add-device settings-id device))
       (doseq [volume container_volumes]
         (add-volume settings-id volume))
       (doseq [volume container_volumes_from]
         (add-settings-volumes-from settings-id volume))
+      (doseq [port container_ports]
+        (add-port settings-id port))
 
       (tool-container-info tool-id))))
 

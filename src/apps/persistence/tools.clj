@@ -29,7 +29,8 @@
                      :integration_data_id
                      :restricted
                      :time_limit_seconds
-                     :tool_type_id]))
+                     :tool_type_id
+                     :interactive]))
 
 (defn- get-tool-type-id
   "Gets the ID of the given tool type name."
@@ -156,7 +157,8 @@
               [:tools.version :version]
               [:tools.attribution :attribution]
               [:tools.restricted :restricted]
-              [:tools.time_limit_seconds :time_limit_seconds])
+              [:tools.time_limit_seconds :time_limit_seconds]
+              [:tools.interactive :interactive])
       (join tool_types)))
 
 (defn- tool-request-status-subselect
