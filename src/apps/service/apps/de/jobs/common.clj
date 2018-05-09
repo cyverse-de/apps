@@ -70,6 +70,7 @@
               [:tool_types.name :type]
               :tools.id
               :tools.restricted
+              :tools.interactive
               :tools.time_limit_seconds)
       (where {:tasks.id task-id})
       (select)
@@ -116,7 +117,7 @@
 (defn- interactive?
   "Returns true if the given submission is for an interactive job."
   [submission]
-  (some true? (map #(get-in %1 [:component :container :interactive]) (:steps submission))))
+  (some true? (map :interactive (:steps submission))))
 
 (defn- execution-target
   "Returns the execution-target value based on info in the submission."
