@@ -65,7 +65,7 @@
   (table :container_images)
   (has-one data-containers))
 
-(defentity container-ports
+(defentity ports
   (table :container_ports)
   (belongs-to container-settings))
 
@@ -79,7 +79,7 @@
   (has-many container-devices)
   (has-many container-volumes)
   (has-many container-volumes-from)
-  (has-many container-ports)
+  (has-many ports)
   (has-one interapps-proxy-settings))
 
 (defentity container-devices

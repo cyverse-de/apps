@@ -6,7 +6,7 @@
                                           container-devices
                                           container-volumes
                                           container-volumes-from
-                                          container-ports
+                                          ports
                                           data-containers
                                           interapps-proxy-settings]]
         [apps.persistence.docker-registries :only [get-registry]]
@@ -467,7 +467,7 @@
                        (fields :name_prefix :read_only)
                        (with container-images
                          (fields :name :tag :url :deprecated :osg_image_path))))
-                   (with container-ports
+                   (with ports
                      (fields :host_port :container_port :bind_to_host :id))
                    (where {:tools_id id}))
            first
@@ -603,7 +603,7 @@
   "Returns true if the the specific combination of fields exists in the
    database."
   [settings-uuid host-port container-port bind-to-host]
-  (pos? (count (select container-ports
+  (pos? (count (select ports
                       (where (and (= :container_settings_id (uuidify settings-uuid))
                                   (= :host_port host-port)
                                   (= :container_port container-port)
@@ -613,7 +613,7 @@
   [settings-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
   (if (port-mapping? settings-uuid host-port container-port bind-to-host)
     (throw (Exception. (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host))))
-  (insert container-ports
+  (insert ports
           (values (merge
                    (select-keys port-map [:host_port :container_port :bind_to_host])
                    {:container_settings_id (uuidify settings-uuid)}))))
