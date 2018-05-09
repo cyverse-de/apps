@@ -66,7 +66,7 @@
   (has-one data-containers))
 
 (defentity ports
-  (table :container_ports)
+  (table :container_ports :ports)
   (belongs-to container-settings))
 
 (defentity interapps-proxy-settings
