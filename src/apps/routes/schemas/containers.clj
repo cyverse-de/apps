@@ -213,9 +213,9 @@
 (s/defschema Port
   (describe
    {:id                              s/Uuid
-    (s/optional-key :host_port)      Integer
+    (s/optional-key :host_port)      (s/maybe Integer)
     :container_port                  Integer
-    (s/optional-key :bind_to_host)   Boolean}
+    (s/optional-key :bind_to_host)   (s/maybe Boolean)}
    "Port information for a tool container."))
 
 (s/defschema NewPort
@@ -228,11 +228,11 @@
    {:id                             s/Uuid
     :image                          String
     :name                           String
-    (s/optional-key :frontend_url)  String
-    (s/optional-key :cas_url)       String
-    (s/optional-key :cas_validate)  String
-    (s/optional-key :ssl_cert_path) String
-    (s/optional-key :ssl_key_path)  String}
+    (s/optional-key :frontend_url)  (s/maybe String)
+    (s/optional-key :cas_url)       (s/maybe String)
+    (s/optional-key :cas_validate)  (s/maybe String)
+    (s/optional-key :ssl_cert_path) (s/maybe String)
+    (s/optional-key :ssl_key_path)  (s/maybe String)}
    "Interactive app settings for the reverse proxy that runs on the HTCondor nodes for each job."))
 
 (s/defschema NewProxySettings
