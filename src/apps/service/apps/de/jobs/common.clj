@@ -117,7 +117,7 @@
 (defn- interactive?
   "Returns true if the given submission is for an interactive job."
   [job]
-  (some true? (map #(get-in %1 :component :interactive) (:steps job))))
+  (some true? (map #(get-in %1 [:component :interactive]) (:steps job))))
 
 (defn- execution-target
   "Returns the execution-target value based on info in the submission."
