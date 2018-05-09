@@ -194,7 +194,7 @@
    :history
    (describe [ToolRequestStatus] "A history of status updates for this Tool Request")
 
-   :interactive
+   (optional-key :interactive)
    Interactive})
 
 (defschema ToolRequest
