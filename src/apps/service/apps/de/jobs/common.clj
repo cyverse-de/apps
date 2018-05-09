@@ -116,38 +116,38 @@
 
 (defn- interactive?
   "Returns true if the given submission is for an interactive job."
-  [submission]
-  (some true? (map #(get-in %1 :component :interactive) (:steps submission))))
+  [job]
+  (some true? (map #(get-in %1 :component :interactive) (:steps job))))
 
 (defn- execution-target
   "Returns the execution-target value based on info in the submission."
-  [submission]
-  (cond
-    (interactive? submission) "interapps"
-    :else "condor"))
+  [job]
+  (assoc job :execution_target (cond
+                                 (interactive? job) "interapps"
+                                 :else "condor")))
 
 (defn build-submission
   [request-builder user email submission app]
   (let [groups (:groups (ipg/lookup-subject-groups (:shortUsername user)))]
-    {:app_description      (:description app)
-     :app_id               (:id app)
-     :app_name             (:name app)
-     :archive_logs         (:archive_logs submission)
-     :callback             (:callback submission)
-     :create_output_subdir (:create_output_subdir submission true)
-     :description          (:description submission "")
-     :email                email
-     :execution_target     (execution-target submission)
-     :group                (:group submission "")
-     :name                 (:name submission)
-     :notify               (:notify submission)
-     :output_dir           (:output_dir submission)
-     :request_type         "submit"
-     :steps                (.buildSteps request-builder)
-     :username             (:shortUsername user)
-     :user_id              (get-user-id (:username user))
-     :user_groups          (map (comp ipg/remove-environment-from-group :name) groups)
-     :uuid                 (or (:uuid submission) (uuid))
-     :wiki_url             (:wiki_url app)
-     :skip-parent-meta     (:skip-parent-meta submission)
-     :file-metadata        (:file-metadata submission)}))
+    (-> {:app_description      (:description app)
+         :app_id               (:id app)
+         :app_name             (:name app)
+         :archive_logs         (:archive_logs submission)
+         :callback             (:callback submission)
+         :create_output_subdir (:create_output_subdir submission true)
+         :description          (:description submission "")
+         :email                email
+         :group                (:group submission "")
+         :name                 (:name submission)
+         :notify               (:notify submission)
+         :output_dir           (:output_dir submission)
+         :request_type         "submit"
+         :steps                (.buildSteps request-builder)
+         :username             (:shortUsername user)
+         :user_id              (get-user-id (:username user))
+         :user_groups          (map (comp ipg/remove-environment-from-group :name) groups)
+         :uuid                 (or (:uuid submission) (uuid))
+         :wiki_url             (:wiki_url app)
+         :skip-parent-meta     (:skip-parent-meta submission)
+         :file-metadata        (:file-metadata submission)}
+        execution-target)))
