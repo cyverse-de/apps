@@ -75,11 +75,11 @@
   (let [tool           (->> (persistence/get-tool tool-id)
                             (format-tool-listing (perms-client/load-tool-permissions user)
                                                  (perms-client/get-public-tool-ids)))
-        container      (tool-container-info tool-id)
+        container      (clojure.set/rename-keys (tool-container-info tool-id) {:ports :container_ports})
         implementation (persistence/get-tool-implementation-details tool-id)]
     (assoc tool
-      :container container
-      :implementation implementation)))
+         :container container
+         :implementation implementation)))
 
 (defn user-get-tool
   "Obtains tool details for a user."
