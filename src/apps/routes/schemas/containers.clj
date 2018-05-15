@@ -49,6 +49,7 @@
     (s/optional-key :working_directory)  s/Str
     (s/optional-key :name)               s/Str
     (s/optional-key :entrypoint)         s/Str
+    (s/optional-key :skip_tmp_mount)     Boolean
     :id                 s/Uuid}
    "The group of settings for a container."))
 
