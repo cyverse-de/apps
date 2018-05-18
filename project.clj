@@ -35,7 +35,8 @@
                  [org.cyverse/event-messages "0.0.1"]
                  [com.novemberain/langohr "3.7.0"]
                  [me.raynes/fs "1.4.6"]
-                 [mvxcvi/clj-pgp "0.8.0"]]
+                 [mvxcvi/clj-pgp "0.8.0"]
+                 [pandect "0.6.1"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :plugins [[lein-swank "1.4.4"]

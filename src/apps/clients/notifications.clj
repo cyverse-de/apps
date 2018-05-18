@@ -11,7 +11,9 @@
             [apps.clients.notifications.tool-sharing :as tool-notifications]
             [apps.persistence.jobs :as jp]
             [apps.persistence.tool-requests :as tp]
-            [apps.util.config :as config]))
+            [apps.util.config :as config])
+  (:use [pandect.algo.sha256 :only [sha256]]
+        [cemerick.url :only [url]]))
 
 (def ^:private emailable-job-statuses
   #{jp/completed-status
@@ -48,6 +50,18 @@
   [job-info]
   (boolean (and (:notify job-info false)
                 (emailable-job-statuses (:status job-info)))))
+
+
+(defn- interapps-url
+  "Returns the externally accessible URL to the interactive app as a URL from
+   cemerick.url.
+
+   Example usage:
+       (str (interapps-url (url (config/interapps-base)) job-info))
+     Returns:
+       https://abb9730df.cyverse.run"
+  [{host :host :as base} {user-id :user_id analysis-id :uuid}]
+  (assoc base :host (str "a" (-> (str user-id analysis-id) sha256 (subs 0 8)) "." host)))
 
 (defn- format-job-status-update
   "Formats a job status update notification to send to the notification agent."
