@@ -162,11 +162,11 @@
   [params]
   (reduce merge {} (map #(% params) (vals listing-fns))))
 
-  (defn list-elements "Lists selected workflow elements.  This function handles requests to list
+(defn list-elements "Lists selected workflow elements.  This function handles requests to list
    various different types of workflow elements."
-  [elm-type params]
-    (cond
-      (= elm-type "all")               (list-all params)
-      (contains? listing-fns elm-type) ((listing-fns elm-type) params)
-      :else (throw+ {:type ::unrecognized_workflow_component_type
-                     :name elm-type})))
+ [elm-type params]
+ (cond
+   (= elm-type "all")               (list-all params)
+   (contains? listing-fns elm-type) ((listing-fns elm-type) params)
+   :else (throw+ {:type ::unrecognized_workflow_component_type
+                  :name elm-type})))

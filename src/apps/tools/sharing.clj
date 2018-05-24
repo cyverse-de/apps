@@ -85,7 +85,7 @@
 (defn- share-tools-with-subject
   [sharer {sharee :subject :keys [tools]}]
   (let [responses (for [{:keys [tool_id permission]} tools]
-                    (share-tool-with-subject sharer sharee tool_id permission) )]
+                    (share-tool-with-subject sharer sharee tool_id permission))]
     (cn/send-tool-sharing-notifications (:shortUsername sharer) sharee responses)
     {:subject sharee
      :tools   responses}))

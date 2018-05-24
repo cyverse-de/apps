@@ -26,9 +26,9 @@
        (throw+ {:type  :clojure-commons.exception/internal-system-error
                 :error "default system ID not found"})))
   ([clients system-id]
-     (or (first (filter #(.supportsSystemId % system-id) clients))
-         (throw+ {:type  :clojure-commons.exception/bad-request-field
-                  :error (str "unrecognized system ID " system-id)}))))
+   (or (first (filter #(.supportsSystemId % system-id) clients))
+       (throw+ {:type  :clojure-commons.exception/bad-request-field
+                :error (str "unrecognized system ID " system-id)}))))
 
 (defn apps-client-for-job
   [{app-id :app_id system-id :system_id} clients]

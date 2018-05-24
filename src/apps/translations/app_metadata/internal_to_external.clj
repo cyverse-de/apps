@@ -44,18 +44,18 @@
 (defn get-default-value
   "Gets the default value for a property and a set of list of selectable arguments."
   ([{default-value :value prop-type :type} args]
-     (cond
-      (ref-genome-property-types prop-type) (ref-gen-info default-value)
-      (not (seq args))                      default-value
-      (map? default-value)                  default-value
-      (vector? default-value)               default-value
-      :else                                 (find-default-arg args)))
+   (cond
+    (ref-genome-property-types prop-type) (ref-gen-info default-value)
+    (not (seq args))                      default-value
+    (map? default-value)                  default-value
+    (vector? default-value)               default-value
+    :else                                 (find-default-arg args)))
   ([property args data-object]
-     (let [info-type       (:file_info_type data-object)
-           output-filename (:output_filename data-object)]
-       (cond (ref-genome-property-types info-type) (ref-gen-info (:value property))
-             (string/blank? output-filename)       (get-default-value property args)
-             :else                                 output-filename))))
+   (let [info-type       (:file_info_type data-object)
+         output-filename (:output_filename data-object)]
+     (cond (ref-genome-property-types info-type) (ref-gen-info (:value property))
+           (string/blank? output-filename)       (get-default-value property args)
+           :else                                 output-filename))))
 
 (defn translate-property
   "Translates a property from its internal format to its external format."

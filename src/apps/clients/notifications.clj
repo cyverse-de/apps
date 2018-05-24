@@ -85,14 +85,14 @@
 (defn send-job-status-update
   "Sends notification of an Agave or DE job status update to the user."
   ([username email-address job-info message]
-     (try
-       (send-notification (format-job-status-update username email-address job-info message))
-       (catch Exception e
-         (log/warn e "unable to send job status update notification for" (:id job-info)))))
+   (try
+     (send-notification (format-job-status-update username email-address job-info message))
+     (catch Exception e
+       (log/warn e "unable to send job status update notification for" (:id job-info)))))
   ([username email-address {job-name :name :as job-info}]
    (send-job-status-update username email-address job-info (str job-name " " (string/lower-case (:status job-info)))))
   ([{username :shortUsername email-address :email} job-info]
-     (send-job-status-update username email-address job-info)))
+   (send-job-status-update username email-address job-info)))
 
 (defn- format-tool-request-notification
   [tool-req user-details]

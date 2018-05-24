@@ -39,13 +39,13 @@
 
 (defn- format-tree-values
   ([param-values]
-     (let [values-map (group-by :parent_id param-values)
-           root       (format-tree-root (first (values-map nil)))]
-       (format-tree-values values-map root)))
+   (let [values-map (group-by :parent_id param-values)
+         root       (format-tree-root (first (values-map nil)))]
+     (format-tree-values values-map root)))
   ([values-map {:keys [id] :as node}]
-     (->> (values-map id)
-          (mapv (comp format-param-value (partial format-tree-values values-map)))
-          (format-tree-node values-map node))))
+   (->> (values-map id)
+        (mapv (comp format-param-value (partial format-tree-values values-map)))
+        (format-tree-node values-map node))))
 
 (defn format-param-values
   [type param-values]

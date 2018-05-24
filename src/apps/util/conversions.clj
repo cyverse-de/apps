@@ -16,9 +16,9 @@
 (defn date->long
   "Converts a Date object to a Long representation of its timestamp."
   ([date]
-     (date->long date nil))
+   (date->long date nil))
   ([date default]
-     (if (nil? date) default (.getTime date))))
+   (if (nil? date) default (.getTime date))))
 
 (defn long->timestamp
   "Converts a long value, which may contain an empty string, into an instance
