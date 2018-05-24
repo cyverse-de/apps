@@ -96,16 +96,16 @@
     :return AdminAppListing
     :description
     (str
-"This service allows admins to list all public apps, including apps listed under the `Trash` category:
+     "This service allows admins to list all public apps, including apps listed under the `Trash` category:
  deleted public apps and private apps that are 'orphaned' (not categorized in any user's workspace).
  If the `search` parameter is included, then the results are filtered by the App name, description,
  integrator's name, tool name, or category name the app is under."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /avus/filter-targets")
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/filter-targets"))
+     (get-endpoint-delegate-block
+       "metadata"
+       "POST /avus/filter-targets")
+     (get-endpoint-delegate-block
+       "metadata"
+       "POST /ontologies/{ontology-version}/filter-targets"))
     (ok (coerce! AdminAppListing
                  (apps/admin-search-apps current-user params))))
 
@@ -143,7 +143,7 @@
       :return AdminAppDetails
       :summary "Update App Details and Labels"
       :description (str
-"This service is capable of updating high-level information of an App,
+                    "This service is capable of updating high-level information of an App,
  including 'deleted' and 'disabled' flags, as well as just the labels within a single-step app that has
  already been made available for public use.
  The app's name must not duplicate the name of any other app (visible to the requesting user)
@@ -151,17 +151,17 @@
 <b>Note</b>: Although this endpoint accepts all App Group and Parameter fields within the 'groups' array,
  only their 'description', 'label', and 'display' (only in parameter arguments)
  fields will be processed and updated by this endpoint."
-(get-endpoint-delegate-block
-  "metadata"
-  "GET /avus/{target-type}/{target-id}")
-"Where `{target-type}` is `app`."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /avus/filter-targets")
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/filter")
-"Please see the metadata service documentation for information about the `hierarchies` response field.")
+                    (get-endpoint-delegate-block
+                      "metadata"
+                      "GET /avus/{target-type}/{target-id}")
+                    "Where `{target-type}` is `app`."
+                    (get-endpoint-delegate-block
+                      "metadata"
+                      "POST /avus/filter-targets")
+                    (get-endpoint-delegate-block
+                      "metadata"
+                      "POST /ontologies/{ontology-version}/filter")
+                    "Please see the metadata service documentation for information about the `hierarchies` response field.")
       (ok (coerce! AdminAppDetails
                    (apps/admin-update-app current-user system-id (assoc body :id app-id)))))
 
@@ -170,11 +170,11 @@
       :return AdminAppDetails
       :summary "Get App Details"
       :description (str
-"This service allows administrative users to view detailed informaiton about private apps."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/filter")
-"Please see the metadata service documentation for information about the `hierarchies` response field.")
+                    "This service allows administrative users to view detailed informaiton about private apps."
+                    (get-endpoint-delegate-block
+                      "metadata"
+                      "POST /ontologies/{ontology-version}/filter")
+                    "Please see the metadata service documentation for information about the `hierarchies` response field.")
       (ok (coerce! AdminAppDetails
                    (apps/admin-get-app-details current-user system-id app-id))))
 
@@ -260,10 +260,10 @@
     :return ActiveOntologyDetailsList
     :summary "List Ontology Details"
     :description (str
-"Lists Ontology details saved in the metadata service."
-(get-endpoint-delegate-block
-  "metadata"
-  "GET /ontologies"))
+                  "Lists Ontology details saved in the metadata service."
+                  (get-endpoint-delegate-block
+                    "metadata"
+                    "GET /ontologies"))
     (ok (admin/list-ontologies current-user)))
 
   (DELETE "/:ontology-version" []
@@ -271,11 +271,11 @@
     :query [params SecuredQueryParams]
     :summary "Delete an Ontology"
     :description (str
-"Marks an Ontology as deleted in the metadata service.
+                  "Marks an Ontology as deleted in the metadata service.
  Returns `ERR_ILLEGAL_ARGUMENT` when attempting to delete the active `ontology-version`."
-(get-endpoint-delegate-block
-  "metadata"
-  "DELETE /admin/ontologies/{ontology-version}"))
+                  (get-endpoint-delegate-block
+                    "metadata"
+                    "DELETE /admin/ontologies/{ontology-version}"))
     (admin/delete-ontology current-user ontology-version))
 
   (POST "/:ontology-version" []
@@ -294,12 +294,12 @@
     :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
     :summary "Get App Category Hierarchy"
     :description (str
-"Gets the list of app categories that are visible to the user for the given `ontology-version`,
+                  "Gets the list of app categories that are visible to the user for the given `ontology-version`,
  rooted at the given `root-iri`."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter")
-"Please see the metadata service documentation for response information.")
+                  (get-endpoint-delegate-block
+                    "metadata"
+                    "POST /ontologies/{ontology-version}/{root-iri}/filter")
+                  "Please see the metadata service documentation for response information.")
     (listings/get-app-hierarchy current-user ontology-version root-iri attr))
 
   (GET "/:ontology-version/:root-iri/apps" []
@@ -309,11 +309,11 @@
     :return AdminAppListing
     :summary "List Apps in a Category"
     :description (str
-"Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
+                  "Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
  that are visible to the user."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
+                  (get-endpoint-delegate-block
+                    "metadata"
+                    "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
     (ok (coerce! AdminAppListing
                  (apps/admin-list-apps-under-hierarchy current-user ontology-version root-iri attr params))))
 
@@ -324,11 +324,11 @@
     :return AdminAppListing
     :summary "List Unclassified Apps"
     :description (str
-"Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
+                  "Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
  its subcategories, for the given `ontology-version`."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
+                  (get-endpoint-delegate-block
+                    "metadata"
+                    "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
     (ok (coerce! AdminAppListing
                  (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params true)))))
 

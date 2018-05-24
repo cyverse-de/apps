@@ -27,7 +27,7 @@
    username isn't found in the database."
   [username]
   ((comp :id first)
-    (select :users (where {:username username}))))
+   (select :users (where {:username username}))))
 
 (defn- get-new-user-id
   "Gets a new user identifier for a fully qualified username."

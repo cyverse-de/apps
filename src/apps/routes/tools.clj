@@ -43,15 +43,15 @@
 
 #### Warning: Use caution with Volumes settings!
     Do not add `volumes` or `volumes_from` settings to tools unless it is certain that tool"
-  " is authorized to access that data."))
+   " is authorized to access that data."))
 
 (defn requester
   "Handles wrapping request maps or throwing a not-found error if no containers are found for a tool."
   [tool-id retval]
   (if (nil? retval)
-         (throw+ {:type  :clojure-commons.exception/not-found
-                  :error (str "A container for " tool-id " was not found.")})
-         (ok retval)))
+      (throw+ {:type  :clojure-commons.exception/not-found
+               :error (str "A container for " tool-id " was not found.")})
+      (ok retval)))
 
 (defroutes container-images
   (GET "/" []
@@ -91,7 +91,7 @@
           :return Image
           :summary "Update Container Image Info"
           :description
-"Updates a container's image settings.
+   "Updates a container's image settings.
 
 #### Danger Zone
 
@@ -109,21 +109,21 @@
         :description "Returns a list of a public tools using the given image ID."
         (ok (image-public-tools image-id))))
 
- (defroutes data-containers
-   (GET "/" []
-         :query [params SecuredQueryParams]
-         :return DataContainers
-         :summary "List Data Containers"
-         :description "Lists all of the available data containers."
-         (ok (list-data-containers)))
+(defroutes data-containers
+  (GET "/" []
+        :query [params SecuredQueryParams]
+        :return DataContainers
+        :summary "List Data Containers"
+        :description "Lists all of the available data containers."
+        (ok (list-data-containers)))
 
-   (GET "/:data-container-id" []
-         :path-params [data-container-id :- DataContainerIdParam]
-         :query [params SecuredQueryParams]
-         :return DataContainer
-         :summary "Data Container"
-         :description "Returns a JSON description of a data container."
-         (ok (data-container data-container-id))))
+  (GET "/:data-container-id" []
+        :path-params [data-container-id :- DataContainerIdParam]
+        :query [params SecuredQueryParams]
+        :return DataContainer
+        :summary "Data Container"
+        :description "Returns a JSON description of a data container."
+        (ok (data-container data-container-id))))
 
 (defroutes admin-data-containers
   (PATCH "/:data-container-id" []
@@ -152,7 +152,7 @@
                            400 PrivateToolImportResponse400})
         :summary "Add Private Tool"
         :description
-"This service adds a new private Tool to the DE for the requesting user.
+   "This service adds a new private Tool to the DE for the requesting user.
 
 Note that `type` is always set to `executable`, `restricted` is always set to `true`,
 and `container.network_mode` is always set to `none`, even if another value is set in the request.
@@ -532,7 +532,7 @@ for the `pids_limit` and `memory_limit` fields."
                                  :description "The `tool-id` does not exist."}})
          :summary "Update a Tool"
          :description
-"This service updates a Tool definition in the DE.
+   "This service updates a Tool definition in the DE.
 
 **Note**: If the `container` object is omitted in the request, then existing container settings will not
 be modified, but if the `container` object is present in the request, then all container settings must be

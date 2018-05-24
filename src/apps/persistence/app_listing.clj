@@ -127,15 +127,15 @@
 (defn count-apps-in-group-for-user
   "Counts all of the apps in an app group and all of its descendents."
   ([app-group-id query-opts]
-    ((comp :total first)
-      (-> (get-app-count-base-query query-opts)
-        (add-app-group-where-clause app-group-id)
-        (select))))
+   ((comp :total first)
+    (-> (get-app-count-base-query query-opts)
+      (add-app-group-where-clause app-group-id)
+      (select))))
   ([app-group-id username {:keys [public-app-ids] :as query-opts}]
-    ((comp :total first)
-      (-> (get-app-count-base-query query-opts)
-        (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
-        (select)))))
+   ((comp :total first)
+    (-> (get-app-count-base-query query-opts)
+      (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
+      (select)))))
 
 (defn- add-app-listing-base-query-fields
   "Add minimum required columns to apps listing query results"
@@ -217,13 +217,13 @@
    given workspace (as returned by fetch-workspace-by-user-id) to mark
    whether each app is a favorite and to include the user's rating in each app."
   ([app-group-id workspace faves-index query-opts]
-    (-> (get-app-listing-base-query workspace faves-index query-opts)
-      (add-app-group-where-clause app-group-id)
-      (select)))
+   (-> (get-app-listing-base-query workspace faves-index query-opts)
+     (add-app-group-where-clause app-group-id)
+     (select)))
   ([app-group-id workspace faves-index {:keys [public-app-ids] :as query-opts} username]
-    (-> (get-app-listing-base-query workspace faves-index query-opts)
-      (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
-      (select))))
+   (-> (get-app-listing-base-query workspace faves-index query-opts)
+     (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
+     (select))))
 
 (defn- get-job-stats-fields
   "Adds query fields via subselects for an app's job_count_completed and job_last_completed timestamp."

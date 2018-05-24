@@ -37,6 +37,6 @@
   [user app-id required-level]
   (try+
    (seq (perms-client/load-app-permissions user [app-id] required-level))
-    (catch clj-http-error? {:keys [body]}
-      (throw+ {:type   ::permission-load-failure
-               :reason (perms-client/extract-error-message body)}))))
+   (catch clj-http-error? {:keys [body]}
+     (throw+ {:type   ::permission-load-failure
+              :reason (perms-client/extract-error-message body)}))))

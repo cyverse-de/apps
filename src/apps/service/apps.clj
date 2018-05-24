@@ -60,17 +60,17 @@
 
 (defn- get-apps-client
   ([user]
-     (get-apps-client user ""))
+   (get-apps-client user ""))
   ([user state-info]
-     (apps.service.apps.combined.CombinedApps.
-      (remove nil? (get-apps-client-list user state-info))
-      user)))
+   (apps.service.apps.combined.CombinedApps.
+    (remove nil? (get-apps-client-list user state-info))
+    user)))
 
 (defn- get-apps-client-for-username
   ([username]
-     (get-apps-client-for-username username ""))
+   (get-apps-client-for-username username ""))
   ([username state-info]
-     (get-apps-client (user/load-user-as-user username username) state-info)))
+   (get-apps-client (user/load-user-as-user username username) state-info)))
 
 (defn get-app-categories
   [user params]
@@ -211,15 +211,15 @@
 
 (defn update-job-status
   ([external-id status end-date]
-     (let [{job-id :job_id} (jobs/get-unique-job-step external-id)]
-       (update-job-status job-id external-id status end-date)))
+   (let [{job-id :job_id} (jobs/get-unique-job-step external-id)]
+     (update-job-status job-id external-id status end-date)))
   ([job-id external-id status end-date]
-     (transaction
-      (let [job-step (jobs/lock-job-step job-id external-id)
-            job      (jobs/lock-job job-id)
-            batch    (when-let [parent-id (:parent_id job)] (jobs/lock-job parent-id))]
-        (-> (get-apps-client-for-username (:username job))
-            (jobs/update-job-status job-step job batch status end-date))))))
+   (transaction
+    (let [job-step (jobs/lock-job-step job-id external-id)
+          job      (jobs/lock-job job-id)
+          batch    (when-let [parent-id (:parent_id job)] (jobs/lock-job parent-id))]
+      (-> (get-apps-client-for-username (:username job))
+          (jobs/update-job-status job-step job batch status end-date))))))
 
 (def logging-context-map (ref {}))
 

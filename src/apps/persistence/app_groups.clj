@@ -70,12 +70,12 @@
      (let [index (:index (first (select :app_category_group
                                         (aggregate (max :child_index) :index)
                                         (where {:parent_category_id parent-group-id}))))]
-     (add-subgroup parent-group-id (if (not (nil? index)) (inc index) 0) subgroup-id))))
+      (add-subgroup parent-group-id (if (not (nil? index)) (inc index) 0) subgroup-id))))
   ([parent-group-id index subgroup-id]
-  (insert :app_category_group
-          (values {:parent_category_id parent-group-id
-                   :child_category_id subgroup-id
-                   :child_index index}))))
+   (insert :app_category_group
+           (values {:parent_category_id parent-group-id
+                    :child_category_id subgroup-id
+                    :child_index index}))))
 
 (defn delete-app-category
   "Deletes an App Category and all of its subcategories from the database. Delete will cascade to

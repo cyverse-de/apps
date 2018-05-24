@@ -22,28 +22,28 @@
 (defn optional-string
   "Extracts an optional string argument from a map."
   ([ks m]
-     (optional-string ks m nil))
+   (optional-string ks m nil))
   ([ks m d]
-     (let [v (first (remove blank? (map m ks)))]
-       (if-not (nil? v) v d))))
+   (let [v (first (remove blank? (map m ks)))]
+     (if-not (nil? v) v d))))
 
 (defn optional-long
   "Extracts an optional long argument from a map."
   ([ks m]
-     (optional-long ks m nil))
+   (optional-long ks m nil))
   ([ks m d]
-     (let [v (first (remove blank? (map m ks)))]
-       (if-not (nil? v)
-         (if (string? v) (to-long v) v)
-         d))))
+   (let [v (first (remove blank? (map m ks)))]
+     (if-not (nil? v)
+       (if (string? v) (to-long v) v)
+       d))))
 
 (defn optional-boolean
   "Extracts an optional Boolean argument from a map."
   ([ks m]
-     (optional-boolean ks m nil))
+   (optional-boolean ks m nil))
   ([ks m d]
-     (let [v (first (remove blank? (map m ks)))]
-       (if (nil? v) d (Boolean/valueOf v)))))
+   (let [v (first (remove blank? (map m ks)))]
+     (if (nil? v) d (Boolean/valueOf v)))))
 
 (defn as-keyword
   "Converts a string to a lower-case keyword."
@@ -53,17 +53,17 @@
 (defn optional-keyword
   "Extracts an optional keyword argument from a map."
   ([ks m]
-     (optional-keyword ks m nil))
+   (optional-keyword ks m nil))
   ([ks m d]
-     (let [v (first (remove blank? (map m ks)))]
-       (if (nil? v) d (as-keyword v)))))
+   (let [v (first (remove blank? (map m ks)))]
+     (if (nil? v) d (as-keyword v)))))
 
 (defn optional-vector
   "Extracts an optional vector argument from a map."
   ([ks m]
-     (optional-vector ks m nil))
+   (optional-vector ks m nil))
   ([ks m d]
-     (let [v (first (remove blank? (map m ks)))]
-       (cond (vector? v) v
-             (nil? v)    d
-             :else       [v]))))
+   (let [v (first (remove blank? (map m ks)))]
+     (cond (vector? v) v
+           (nil? v)    d
+           :else       [v]))))

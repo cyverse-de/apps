@@ -140,7 +140,7 @@
   [user app-id]
   (let [app (amp/get-app app-id)
         fav-category-id (get-favorite-category-id user)]
-  (remove-app-from-category app-id fav-category-id))
+   (remove-app-from-category app-id fav-category-id))
   nil)
 
 (defn- beta-avu

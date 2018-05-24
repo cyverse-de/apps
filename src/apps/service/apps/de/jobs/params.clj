@@ -93,14 +93,14 @@
 
 (defn value-for-param
   ([config io-maps output-value-map default-values param]
-     (let [qual-id  (util/param->qual-id param)
-           qual-key (keyword qual-id)]
-       (cond (contains? io-maps qual-id)        (output-value-map (io-maps qual-id))
-             (contains? config qual-key)        (config qual-key)
-             (contains? default-values qual-id) (default-values qual-id)
-             :else                              nil)))
+   (let [qual-id  (util/param->qual-id param)
+         qual-key (keyword qual-id)]
+     (cond (contains? io-maps qual-id)        (output-value-map (io-maps qual-id))
+           (contains? config qual-key)        (config qual-key)
+           (contains? default-values qual-id) (default-values qual-id)
+           :else                              nil)))
   ([config default-values param]
-     (value-for-param config {} {} default-values param)))
+   (value-for-param config {} {} default-values param)))
 
 (defn- determine-opt-arg
   [param-name param-value]
@@ -111,15 +111,15 @@
 
 (defn- build-arg
   ([param param-name param-value]
-     (let [param-name        (string/trim param-name)
-           param-value       (string/trim (str param-value))
-           [opt-arg opt-val] (determine-opt-arg param-name param-value)]
-       {:id    (:id param)
-        :name  opt-arg
-        :order (:order param 0)
-        :value (stringify opt-val)}))
+   (let [param-name        (string/trim param-name)
+         param-value       (string/trim (str param-value))
+         [opt-arg opt-val] (determine-opt-arg param-name param-value)]
+     {:id    (:id param)
+      :name  opt-arg
+      :order (:order param 0)
+      :value (stringify opt-val)}))
   ([param param-value]
-     (build-arg param (or (:name param) "") param-value)))
+   (build-arg param (or (:name param) "") param-value)))
 
 (defn generic-args
   [param param-value]

@@ -31,6 +31,4 @@
     (and start_date end_date) (sql/where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
     (and (not start_date) end_date) (sql/where query {:end_date [<= (date->timestamp end_date)]})
     (and (not end_date) start_date) (sql/where query {:end_date [>= (date->timestamp start_date)]})
-    :else query
-    )
-  )
+    :else query))

@@ -22,11 +22,11 @@
 
 (defn- default-prop-translation
   ([prop]
-     (default-prop-translation prop default-prop-value-fn))
+   (default-prop-translation prop default-prop-value-fn))
   ([prop f]
-     [{:name  (:name prop "--unnamed-parameter")
-       :value (str (f prop))
-       :order (:order prop 0)}]))
+   [{:name  (:name prop "--unnamed-parameter")
+     :value (str (f prop))
+     :order (:order prop 0)}]))
 
 (defn- flag-prop-translation
   [prop]
@@ -57,11 +57,11 @@
 
 (defn- input-prop-translation
   ([prop]
-     (input-prop-translation prop default-prop-value-fn))
+   (input-prop-translation prop default-prop-value-fn))
   ([prop f]
-     (let [path (base-name (:path (f prop)))]
-       (when-not (or (implicit? prop) (string/blank? path))
-         (default-prop-translation prop (constantly path))))))
+   (let [path (base-name (:path (f prop)))]
+     (when-not (or (implicit? prop) (string/blank? path))
+       (default-prop-translation prop (constantly path))))))
 
 (defn- multi-file-input-prop-translation
   [prop]
