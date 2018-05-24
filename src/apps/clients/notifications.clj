@@ -77,6 +77,7 @@
                      :analysisdescription   (:description job-info)
                      :analysisstatus        (:status job-info)
                      :analysisstartdate     (format-timestamp (:startdate job-info))
+                     :analysisresultsfolder (:resultfolderid job-info)
                      :email_address         email-address
                      :action                "job_status_change"
                      :user                  username)})
