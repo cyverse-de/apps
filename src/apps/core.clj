@@ -52,10 +52,10 @@
 (defn load-config-from-file
   "Loads the configuration settings from a properties file."
   ([]
-     (load-config-from-file (find-config-file)))
+   (load-config-from-file (find-config-file)))
   ([cfg-path]
-     (config/load-config-from-file cfg-path)
-     (init-service)))
+   (config/load-config-from-file cfg-path)
+   (init-service)))
 
 (defn listen-for-events
   []
