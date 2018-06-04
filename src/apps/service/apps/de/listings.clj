@@ -1,5 +1,5 @@
 (ns apps.service.apps.de.listings
-  (:use [apps.constants :only [de-system-id]]
+  (:use [apps.constants :only [de-system-id executable-tool-type]]
         [apps.persistence.app-documentation :only [get-documentation]]
         [apps.persistence.app-groups]
         [apps.persistence.app-listing]
@@ -244,7 +244,7 @@
                (str "Analysis, "
                     app_id
                     ", has too many steps for a pipeline.")}))
-    (if-not (= overall_job_type "executable")
+    (if-not (= overall_job_type executable-tool-type)
       (throw+ {:reason
                (str "Job type, "
                     overall_job_type

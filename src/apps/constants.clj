@@ -8,3 +8,7 @@
 (def system-ids [de-system-id hpc-system-id interactive-system-id])
 
 (def internal-app-integrator "Internal DE Tools")
+
+(def executable-tool-type "executable")
+(def internal-tool-type "internal")
+(def interactive-tool-type "interactive")

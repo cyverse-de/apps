@@ -14,7 +14,8 @@
         [kameleon.util.search :only [format-query-wildcards]]
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
-  (:require [korma.core :as sql]))
+  (:require [apps.constants :as c]
+            [korma.core :as sql]))
 
 (defn- filter-valid-tool-values
   "Filters valid keys from the given Tool for inserting or updating in the database."
@@ -32,10 +33,11 @@
                      :tool_type_id
                      :interactive]))
 
-(defn- get-tool-type-id
-  "Gets the ID of the given tool type name."
-  [tool-type]
-  (:id (first (select tool_types (fields :id) (where {:name tool-type})))))
+(defn- get-tool-type-id-for-tool
+  "Gets the tool type ID to use for a tool."
+  [{:keys [interactive type]}]
+  (when-let [tool-type (if interactive c/interactive-tool-type type)]
+    (:id (first (select tool_types (fields :id) (where {:name tool-type}))))))
 
 (defn- get-tool-data-files
   "Fetches a tool's test data files."
@@ -65,28 +67,27 @@
 
 (defn add-tool
   "Adds a new tool and its test data files to the database"
-  [{type :type {:keys [implementor_email implementor test]} :implementation :as tool}]
+  [{{:keys [implementor_email implementor test]} :implementation :as tool}]
   (transaction
-    (let [integration-data-id (:id (get-integration-data implementor_email implementor))
-          tool (-> tool
-                   (assoc :integration_data_id integration-data-id
-                          :tool_type_id (get-tool-type-id type))
-                   (filter-valid-tool-values))
-          tool-id (:id (insert tools (values tool)))]
-      (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
-      (dorun (map (partial add-tool-data-file tool-id false) (:output_files test)))
-      tool-id)))
+   (let [integration-data-id (:id (get-integration-data implementor_email implementor))
+         tool (-> tool
+                  (assoc :integration_data_id integration-data-id
+                    :tool_type_id (get-tool-type-id-for-tool tool))
+                  (filter-valid-tool-values))
+         tool-id (:id (insert tools (values tool)))]
+     (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
+     (dorun (map (partial add-tool-data-file tool-id false) (:output_files test)))
+     tool-id)))
 
 (defn update-tool
   "Updates a tool and its test data files in the database"
   [{tool-id :id
-    type :type
     {:keys [implementor_email implementor test] :as implementation} :implementation
     :as tool}]
   (transaction
     (let [integration-data-id (when implementation
                                 (:id (get-integration-data implementor_email implementor)))
-          type-id (when type (get-tool-type-id type))
+          type-id (get-tool-type-id-for-tool tool)
           tool (-> tool
                    (assoc :integration_data_id integration-data-id
                           :tool_type_id        type-id)
