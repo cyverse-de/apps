@@ -72,7 +72,7 @@
    (let [integration-data-id (:id (get-integration-data implementor_email implementor))
          tool (-> tool
                   (assoc :integration_data_id integration-data-id
-                    :tool_type_id (get-tool-type-id-for-tool tool))
+                         :tool_type_id        (get-tool-type-id-for-tool tool))
                   (filter-valid-tool-values))
          tool-id (:id (insert tools (values tool)))]
      (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
