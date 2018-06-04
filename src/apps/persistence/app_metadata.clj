@@ -681,6 +681,7 @@
           (fields [:s.id              :step_id]
                   [:t.id              :task_id]
                   [:t.tool_id         :tool_id]
+                  [:jt.name           :job_type]
                   [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
           (where {:a.id (uuidify app-id)})))

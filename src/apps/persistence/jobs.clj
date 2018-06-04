@@ -18,9 +18,11 @@
 
 (def de-job-type "DE")
 (def agave-job-type "Agave")
+(def interactive-job-type "Interactive")
 
 (def de-client-name c/de-system-id)
 (def agave-client-name c/hpc-system-id)
+(def interactive-client-name c/interactive-system-id)
 (def combined-client-name "combined")
 
 (def pending-status "Pending")

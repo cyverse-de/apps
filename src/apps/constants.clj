@@ -3,7 +3,8 @@
 
 (def de-system-id "de")
 (def hpc-system-id c/hpc-system-id)
+(def interactive-system-id "interactive")
 
-(def system-ids [de-system-id hpc-system-id])
+(def system-ids [de-system-id hpc-system-id interactive-system-id])
 
 (def internal-app-integrator "Internal DE Tools")
