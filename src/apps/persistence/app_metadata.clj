@@ -407,6 +407,7 @@
   (-> (select* [:tools :t])
       (join [:tool_types :tt] {:t.tool_type_id :tt.id})
       (fields [:tt.name :tool_type])
+      (where {:t.id tool-id})
       select
       first
       :tool_type))
