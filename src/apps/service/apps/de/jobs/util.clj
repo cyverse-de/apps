@@ -46,7 +46,3 @@
 (defn output?
   [{:keys [type]}]
   (output-types type))
-
-(defn fapi-app?
-  [{job-type :overall_job_type}]
-  (= job-type "fAPI"))

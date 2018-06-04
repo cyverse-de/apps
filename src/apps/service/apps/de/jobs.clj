@@ -15,22 +15,10 @@
             [apps.service.apps.de.jobs.io-tickets :as io-tickets]
             [apps.util.json :as json-util]))
 
-(defn- pre-process-jex-step
-  "Removes the input array of a fAPI step's config."
-  [{{step-type :type} :component :as step}]
-  (if (= step-type "fAPI")
-    (dissoc-in step [:config :input])
-    step))
-
-(defn- pre-process-jex-submission
-  "Finalizes the job for submission to the JEX."
-  [job]
-  (update-in job [:steps] (partial map pre-process-jex-step)))
-
 (defn- do-jex-submission
   [job]
   (try+
-   (jex/submit-job (pre-process-jex-submission job))
+   (jex/submit-job job)
    (catch Object _
      (log/error (:throwable &throw-context) "job submission failed")
      (throw+ {:type  :clojure-commons.exception/request-failed
