@@ -43,7 +43,8 @@
     (s/optional-key :pids_limit)         Integer
     (s/optional-key :memory_limit)       Long
     (s/optional-key :min_memory_limit)   Long
-    (s/optional-key :min_cpu_cores)      Integer
+    (s/optional-key :min_cpu_cores)      Double
+    (s/optional-key :max_cpu_cores)      Double
     (s/optional-key :min_disk_space)     Long
     (s/optional-key :network_mode)       s/Str
     (s/optional-key :working_directory)  s/Str
