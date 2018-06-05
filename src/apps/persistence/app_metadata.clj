@@ -414,7 +414,12 @@
 
 ;; FIXME: this association between tool types and job types is kind of flimsy. We can't do it now,
 ;; but it would be a good idea to rethink tool types and job types.
-(defn- get-job-type-id-for-tool [tool-id]
+(defn- get-job-type-id-for-tool
+  "Determines the job type to use for a specific tool ID. Job types and tool types are associated by
+   system name. If the tool type name happens to be the name of an existing system ID then the job
+   type associated with that system ID is used. Otherwise, the default job type (the one associated
+   with the `de` system) is used."
+  [tool-id]
   (let [tool-type (assert-not-nil [:tool-id tool-id] (tool-type-for tool-id))]
     (or (get-job-type-id-for-system* tool-type)
         (get-job-type-id-for-system de-system-id))))

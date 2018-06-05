@@ -6,7 +6,8 @@
         [korma.db :only [transaction]]
         [medley.core :only [dissoc-in]]
         [slingshot.slingshot :only [try+ throw+]])
-  (:require [clojure.tools.logging :as log]
+  (:require [apps.constants :as c]
+            [clojure.tools.logging :as log]
             [kameleon.db :as db]
             [apps.clients.jex :as jex]
             [apps.persistence.app-metadata :as ap]
@@ -39,6 +40,13 @@
              :parent_id          (:parent_id submission))
       (jp/save-job submission)))
 
+(defn- job-type-for-step
+  "Determines the job type to use for a single job step."
+  [{{tool-type :type} :component}]
+  (if (= tool-type c/interactive-tool-type)
+    jp/interactive-job-type
+    jp/de-job-type))
+
 (defn- store-job-step
   "Saves a single job step in the database."
   [job-id job status]
@@ -47,7 +55,7 @@
                      :external_id     (:uuid job)
                      :start_date      (sqlfn now)
                      :status          status
-                     :job_type        jp/de-job-type
+                     :job_type        (job-type-for-step (-> job :steps first))
                      :app_step_number 1}))
 
 (defn- save-job-submission
