@@ -65,7 +65,8 @@
           :container      containers/ToolContainer}))
 
 (defschema ToolListingImage
-  {:image (dissoc containers/Image :id)})
+  (assoc (dissoc containers/Settings :id)
+    :image (dissoc containers/Image :id)))
 
 (defschema ToolImportRequest
   (-> Tool

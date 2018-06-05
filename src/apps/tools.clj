@@ -21,6 +21,8 @@
            image_name
            image_deprecated
            image_tag
+           image_url
+           container_entrypoint
            implementor
            implementor_email
            tool_request_id
@@ -31,15 +33,21 @@
              :permission     (or (perms id) "")
              :implementation {:implementor       implementor
                               :implementor_email implementor_email}
-             :container      {:image {:name       image_name
-                                      :tag        image_tag
-                                      :deprecated image_deprecated}}
+             :container      (remove-nil-vals
+                              {:entrypoint container_entrypoint
+                               :image      (remove-nil-vals
+                                            {:name       image_name
+                                             :tag        image_tag
+                                             :deprecated image_deprecated
+                                             :url        image_url})})
              :tool_request   (when tool_request_id (remove-nil-vals
                                                      {:id     tool_request_id
                                                       :status tool_request_status})))
-      (dissoc :image_name
+      (dissoc :container_entrypoint
+              :image_name
               :image_deprecated
               :image_tag
+              :image_url
               :implementor
               :implementor_email
               :tool_request_id

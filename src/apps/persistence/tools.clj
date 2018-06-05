@@ -178,16 +178,19 @@
   (let [sort-field (when sort-field (keyword (str "tools." sort-field)))
         sort-dir (when sort-dir (keyword (upper-case sort-dir)))]
     (-> (tool-listing-base-query)
+        (join :container_settings {:container_settings.tools_id :tools.id})
         (join :container_images {:container_images.id :tools.container_images_id})
         (join :integration_data {:integration_data.id :tools.integration_data_id})
         (join :tool_requests {:tool_requests.tool_id :tools.id})
-        (fields [:container_images.name       :image_name]
-                [:container_images.tag        :image_tag]
-                [:container_images.deprecated :image_deprecated]
+        (fields [:container_images.name             :image_name]
+                [:container_images.tag              :image_tag]
+                [:container_images.deprecated       :image_deprecated]
+                [:container_images.url              :image_url]
+                [:container_settings.entrypoint     :container_entrypoint]
                 [:integration_data.integrator_name  :implementor]
                 [:integration_data.integrator_email :implementor_email]
-                [:tool_requests.id :tool_request_id]
-                [(tool-request-status-subselect) :tool_request_status])
+                [:tool_requests.id                  :tool_request_id]
+                [(tool-request-status-subselect)    :tool_request_status])
         (add-search-where-clauses search-term)
         (add-listing-where-clause tool-ids)
         (add-deprecated-tools-clause deprecated)
