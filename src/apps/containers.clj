@@ -376,7 +376,6 @@
      :min_memory_limit
      :min_cpu_cores
      :max_cpu_cores
-     :memory_limit
      :min_disk_space
      :network_mode
      :working_directory
