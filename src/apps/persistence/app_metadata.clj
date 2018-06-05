@@ -1,6 +1,7 @@
 (ns apps.persistence.app-metadata
   "Persistence layer for app metadata."
-  (:use [apps.persistence.entities]
+  (:use [apps.constants :only [de-system-id]]
+        [apps.persistence.entities]
         [apps.persistence.users :only [get-user-id]]
         [apps.user :only [current-user]]
         [apps.util.assertions]
@@ -393,24 +394,53 @@
    (delete app_references (where {:app_id app-id}))
    (dorun (map (partial add-app-reference app-id) references))))
 
+(defn- get-job-type-id-for-system* [system-id]
+  (:id (first (select :job_types (fields :id) (where {:system_id system-id})))))
+
 (defn- get-job-type-id-for-system [system-id]
-  (let [job-type-id (:id (first (select :job_types (fields :id) (where {:system_id system-id}))))]
+  (let [job-type-id (get-job-type-id-for-system* system-id)]
     (when (nil? job-type-id)
       (cxu/bad-request (str "unrecognized system ID: " system-id)))
     job-type-id))
+
+(defn- tool-type-for [tool-id]
+  (-> (select* [:tools :t])
+      (join [:tool_types :tt] {:t.tool_type_id :tt.id})
+      (fields [:tt.name :tool_type])
+      (where {:t.id tool-id})
+      select
+      first
+      :tool_type))
+
+;; FIXME: this association between tool types and job types is kind of flimsy. We can't do it now,
+;; but it would be a good idea to rethink tool types and job types.
+(defn- get-job-type-id-for-tool
+  "Determines the job type to use for a specific tool ID. Job types and tool types are associated by
+   system name. If the tool type name happens to be the name of an existing system ID then the job
+   type associated with that system ID is used. Otherwise, the default job type (the one associated
+   with the `de` system) is used."
+  [tool-id]
+  (let [tool-type (assert-not-nil [:tool-id tool-id] (tool-type-for tool-id))]
+    (or (get-job-type-id-for-system* tool-type)
+        (get-job-type-id-for-system de-system-id))))
+
+(defn- get-job-type-id-for-task [system-id {tool-id :tool_id}]
+  (if tool-id
+    (get-job-type-id-for-tool tool-id)
+    (get-job-type-id-for-system system-id)))
 
 (defn add-task
   "Adds a task to the database."
   ([task]
    (add-task (:system_id task) task))
   ([system-id task]
-   (let [job-type-id (get-job-type-id-for-system system-id)]
+   (let [job-type-id (get-job-type-id-for-task system-id task)]
      (insert tasks (values (assoc (filter-valid-task-values task) :job_type_id job-type-id))))))
 
 (defn update-task
   "Updates a task in the database."
   [system-id {task-id :id :as task}]
-  (let [job-type-id (get-job-type-id-for-system system-id)]
+  (let [job-type-id (get-job-type-id-for-task system-id task)]
     (sql/update tasks
                 (set-fields (assoc (filter-valid-task-values task) :job_type_id job-type-id))
                 (where {:id task-id}))))
@@ -681,6 +711,7 @@
           (fields [:s.id              :step_id]
                   [:t.id              :task_id]
                   [:t.tool_id         :tool_id]
+                  [:jt.name           :job_type]
                   [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
           (where {:a.id (uuidify app-id)})))

@@ -60,7 +60,7 @@
               steps
               (inc step-number))
 
-       ;; The current step is a DE step.
+       ;; The current step is a regular or interactive DE step.
        :else
        (recur (concat acc (take-while before-current-step groups))
               (drop-while before-current-step groups)

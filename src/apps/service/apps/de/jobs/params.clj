@@ -244,26 +244,3 @@
   (let [output-value-map (into {} (map (juxt :qual-id :name) outputs))]
     (mapcat (partial args-for-param formatter config io-maps output-value-map default-values)
             (remove util/ignored-param? params))))
-
-(def ^:private generated-param-ids
-  {:archive      (uuidify "06F127BB-0599-4343-89CB-DD15BD0163DE")
-   :archive-path (uuidify "21039F17-3D4B-4E33-BD10-2904408826F8")
-   :command      (uuidify "3046E5B2-F617-49BE-9C26-57D257F2331B")
-   :job-name     (uuidify "0D1DB50C-C930-4CDA-8FEC-2E7326B26849")
-   :proxy-user   (uuidify "616D8815-C42A-4E53-885B-E7A594D4BDBD")})
-
-(defn- generate-extra-arg
-  [order param-name param-value id-key]
-  (let [[opt-arg opt-val] (determine-opt-arg param-name param-value)]
-    {:id    (generated-param-ids id-key)
-     :name  opt-arg
-     :order order
-     :value (stringify opt-val)}))
-
-(defn build-extra-fapi-args
-  [user job-name output-dir]
-  [(generate-extra-arg 0 "run" "" :command)
-   (generate-extra-arg 1 "--proxy_user=" user :proxy-user)
-   (generate-extra-arg 1 "--jobName=" job-name :job-name)
-   (generate-extra-arg 1 "--archive" "" :archive)
-   (generate-extra-arg 1 "--archivePath=" (remove-irods-home output-dir) :archive-path)])

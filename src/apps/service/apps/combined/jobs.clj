@@ -1,5 +1,6 @@
 (ns apps.service.apps.combined.jobs
-  (:use [slingshot.slingshot :only [try+ throw+]])
+  (:use [apps.constants :only [de-system-id]]
+        [slingshot.slingshot :only [try+ throw+]])
   (:require [cheshire.core :as cheshire]
             [clojure.tools.logging :as log]
             [clojure-commons.file-utils :as ft]
@@ -11,17 +12,12 @@
             [apps.util.service :as service]))
 
 (defn- app-step-partitioner
-  "Partitions app steps into units of execution. Each external app step has to run by itself.
-  Consecutive DE app steps can be combined into a single step."
-  [{external-app-id :external_app_id step-number :app_step_number}]
-  (when-not (nil? external-app-id)
-    (str external-app-id "/" step-number)))
-
-(defn- add-job-step-type
-  "Determines the type of a job step."
-  [job-step]
-  (assoc job-step
-    :job_type (if (nil? (:external_app_id job-step)) jp/de-job-type jp/agave-job-type)))
+  "Partitions app steps into units of execution. Each external app step and each interactive app step has to run by
+  itself. Consecutive DE app steps can be combined into a single step."
+  [{system-id :system_id step-number :app_step_number}]
+  (if (= system-id de-system-id)
+    system-id
+    (str system-id "/" step-number)))
 
 (defn- load-job-steps
   "Loads the app steps from the database, grouping consecutive DE steps into a single step."
@@ -32,8 +28,7 @@
        (partition-by app-step-partitioner)
        (map first)
        (map (fn [n step] (assoc step :step_number n))
-            (iterate inc 1))
-       (map add-job-step-type)))
+            (iterate inc 1))))
 
 (defn- validate-job-steps
   "Verifies that at least one step is associated with a job submission."

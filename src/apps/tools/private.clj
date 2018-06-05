@@ -1,5 +1,6 @@
 (ns apps.tools.private
-  (:use [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
+  (:use [apps.constants :only [executable-tool-type]]
+        [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as perms-client]
@@ -42,10 +43,11 @@
 
 (defn- restrict-private-tool
   "Set restricted flag, time limit, and default type."
-  [tool]
+  [{:keys [type] :as tool}]
   (-> tool
-      (assoc :restricted true
-             :type       "executable")
+      (assoc
+        :restricted true
+        :type       (or type executable-tool-type))
       restrict-private-tool-time-limit))
 
 (defn- ensure-default-implementation
