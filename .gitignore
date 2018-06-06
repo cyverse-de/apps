@@ -33,3 +33,4 @@ VERSION
 Dockerfile.local
 profiles.clj
 /repl/
+telepresence.log
