@@ -471,7 +471,8 @@
               :j.notify
               :j.app_wiki_url
               [:j.submission         :submission]
-              :j.parent_id)
+              :j.parent_id
+              :j.user_id)
       (where {:j.id id})
       (#(str (as-sql %) " for update"))
       (#(exec-raw [% [id]] :results))
@@ -487,11 +488,10 @@
 
 (defn- add-job-username
   "Determines the username of the user who submitted a job."
-  [{job-id :id :as job}]
-  (merge job (first (select [:jobs :j]
-                            (join [:users :u] {:j.user_id :u.id})
+  [{user-id :user_id :as job}]
+  (merge job (first (select [:users :u]
                             (fields :u.username)
-                            (where {:j.id job-id})))))
+                            (where {:u.id user-id})))))
 
 (defn lock-job
   "Retrieves a job by its internal identifier, placing a lock on the row. For-update queries
