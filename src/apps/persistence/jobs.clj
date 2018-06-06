@@ -147,7 +147,7 @@
 (defn- apply-type-filter
   "Applies a job type filter to a query. The type filter is not based on the overall type of the job,
    but rather on the types of its steps. A job falls under a specific type if at least one of its
-   steps is of that type. Also note that jobs are already filterded by type based on the current DE
+   steps is of that type. Also note that jobs are already filtered by type based on the current DE
    settings. For example, Agave jobs will never be displayed if Agave support is currently disabled
    even if Agave appears in one of the job type filters."
   [query type-filters]
