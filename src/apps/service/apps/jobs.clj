@@ -43,10 +43,12 @@
     (listings/format-job apps-client nil app-tables rep-steps job)))
 
 (defn- send-job-status-update
-  [apps-client {job-id :id prev-status :status}]
+  [apps-client {job-id :id prev-status :status} {step-type :job_type :as job-step}]
   (let [{curr-status :status :as job} (format-job-for-status-update apps-client job-id)]
     (when-not (= prev-status curr-status)
-      (cn/send-job-status-update (.getUser apps-client) job))))
+      (if (= step-type jp/interactive-job-type)
+        (cn/send-interactive-job-status-update (.getUser apps-client) job job-step)
+        (cn/send-job-status-update (.getUser apps-client) job)))))
 
 (defn- determine-batch-status
   [{:keys [id]}]
@@ -71,7 +73,7 @@
   (let [end-date (db/timestamp-from-str end-date)]
     (.updateJobStatus apps-client job-step job status end-date)
     (when batch (update-batch-status batch end-date))
-    (send-job-status-update apps-client (or batch job))))
+    (send-job-status-update apps-client (or batch job) job-step)))
 
 (defn- find-incomplete-job-steps
   [job-id]
@@ -156,7 +158,7 @@
   (.stopJobStep apps-client (first steps))
   (jp/cancel-job-step-numbers id (mapv :step_number steps))
   (when notify?
-    (send-job-status-update apps-client job)))
+    (send-job-status-update apps-client job (first steps))))
 
 (defn- stop-single-job
   [apps-client {job-id :id :as job} notify?]

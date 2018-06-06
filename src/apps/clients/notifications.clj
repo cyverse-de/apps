@@ -57,11 +57,11 @@
    cemerick.url.
 
    Example usage:
-       (str (interapps-url (url (config/interapps-base)) job-info))
+       (str (interapps-url (url (config/interapps-base)) username external-id))
      Returns:
        https://abb9730df.cyverse.run"
-  [{host :host :as base} {user-id :user_id analysis-id :uuid}]
-  (assoc base :host (str "a" (-> (str user-id analysis-id) sha256 (subs 0 8)) "." host)))
+  [{host :host :as base} username external-id]
+  (assoc base :host (str "a" (-> (str username external-id) sha256 (subs 0 8)) "." host)))
 
 (defn- format-job-status-update
   "Formats a job status update notification to send to the notification agent."
@@ -93,6 +93,14 @@
    (send-job-status-update username email-address job-info (str job-name " " (string/lower-case (:status job-info)))))
   ([{username :shortUsername email-address :email} job-info]
      (send-job-status-update username email-address job-info)))
+
+(defn send-interactive-job-status-update
+  "Sends notification of an interactive job status update to the user."
+  ([username email-address job-info {external-id :external_id :as job-step-info}]
+   (let [access-url (interapps-url (url (config/interapps-base)) username external-id)]
+     (send-job-status-update username email-address (assoc job-info :access_url access-url))))
+  ([{username :shortUsername email-address :email} job-info job-step-info]
+   (send-interactive-job-status-update username email-address job-info job-step-info)))
 
 (defn- format-tool-request-notification
   [tool-req user-details]
