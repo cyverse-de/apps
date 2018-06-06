@@ -144,13 +144,38 @@
       (cxu/bad-request (str "invalid ownership filter value: " (:value ownership-filter))))
     query))
 
+(defn- apply-type-filter
+  "Applies a job type filter to a query. The type filter is not based on the overall type of the job,
+   but rather on the types of its steps. A job falls under a specific type if at least one of its
+   steps is of that type. Also note that jobs are already filterded by type based on the current DE
+   settings. For example, Agave jobs will never be displayed if Agave support is currently disabled
+   even if Agave appears in one of the job type filters."
+  [query type-filters]
+  (if (seq type-filters)
+    (let [types (mapv :value type-filters)]
+      (where query (exists (subselect [:job_steps :s]
+                                      (join [:job_types :t] {:s.job_type_id :t.id})
+                                      (where {:j.id   :s.job_id
+                                              :t.name [in types]})))))
+    query))
+
+(defn- get-filter-type-category
+  "Obtains the basic filter type category for a job query filter. The filter type category is dictated
+   by the type of clause that needs to be applied in order for the filter to be applied. If a simple
+   where clause will do then the filter type will be `standard` otherwise, a custom filter type will
+   be used instead. The custom filter types are generally named after the `field` member of the filter."
+  [{:keys [field]}]
+  (let [custom-filter-fields #{"ownership" "type"}]
+    (keyword (or (custom-filter-fields field) "standard"))))
+
 (defn- add-job-query-filter-clause
   "Filters results returned by the given job query by adding a (where (or ...)) clause based on the
    given filter map."
   [query username query-filter]
-  (let [ownership-filter? (fn [{:keys [field]}] (= field "ownership"))]
-    (-> (apply-standard-filter query (remove ownership-filter? query-filter))
-        (apply-ownership-filter username (filter ownership-filter? query-filter)))))
+  (let [categorized-filters (group-by get-filter-type-category query-filter)]
+    (-> (apply-standard-filter query (:standard categorized-filters))
+        (apply-ownership-filter username (:ownership categorized-filters))
+        (apply-type-filter (:type categorized-filters)))))
 
 (defn- job-type-id-from-system-id [system-id]
   (or ((comp :id first) (select :job_types (where {:system_id system-id})))
