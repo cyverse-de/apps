@@ -1,8 +1,10 @@
 (ns apps.service.apps.combined.util
   (:use [apps.service.util :only [sort-apps apply-offset apply-limit uuid?]]
+        [apps.service.apps.util :only [supports-job-type?]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jp]))
+            [apps.persistence.jobs :as jp]
+            [clojure-commons.exception-util :as cxu]))
 
 (defn apply-default-search-params
   [params]
@@ -23,30 +25,24 @@
 (defn get-apps-client
   ([clients]
    (or (first (filter #(.supportsSystemId % jp/de-client-name) clients))
-       (throw+ {:type  :clojure-commons.exception/internal-system-error
-                :error "default system ID not found"})))
+       (cxu/internal-system-error "default system ID not found")))
   ([clients system-id]
-     (or (first (filter #(.supportsSystemId % system-id) clients))
-         (throw+ {:type  :clojure-commons.exception/bad-request-field
-                  :error (str "unrecognized system ID " system-id)}))))
+   (or (first (filter #(.supportsSystemId % system-id) clients))
+       (cxu/bad-request (str "unrecognized system ID " system-id)))))
 
 (defn apps-client-for-job
   [{app-id :app_id system-id :system_id} clients]
   (when (or (not= system-id jp/de-client-name) (zero? (ap/count-external-steps app-id)))
     (get-apps-client clients system-id)))
 
-(defn apps-client-for-app-step
-  [clients job-step]
-  (if (:external_app_id job-step)
-    (get-apps-client clients jp/agave-client-name)
-    (get-apps-client clients jp/de-client-name)))
-
 (defn is-de-job-step?
   [job-step]
   (= (:job_type job-step) jp/de-job-type))
 
 (defn apps-client-for-job-step
-  [clients job-step]
-  (if (is-de-job-step? job-step)
-    (get-apps-client clients jp/de-client-name)
-    (get-apps-client clients jp/agave-client-name)))
+  [clients {job-type :job_type :as step}]
+  (or (first (filter #(supports-job-type? % job-type) clients))
+      (cxu/internal-system-error (str "unsupported job type, " job-type ", found in job step"))))
+
+;; The same field is used for the job type in app steps and job steps.
+(def apps-client-for-app-step apps-client-for-job-step)
