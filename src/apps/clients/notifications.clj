@@ -97,7 +97,7 @@
 (defn send-interactive-job-status-update
   "Sends notification of an interactive job status update to the user."
   ([username email-address {user-id :user_id :as job-info} {external-id :external_id :as job-step-info}]
-   (let [access-url (interapps-url (url (config/interapps-base)) user-id external-id)]
+   (let [access-url (str (interapps-url (url (config/interapps-base)) user-id external-id))]
      (send-job-status-update username email-address (assoc job-info :access_url access-url))))
   ([{username :shortUsername email-address :email} job-info job-step-info]
    (send-interactive-job-status-update username email-address job-info job-step-info)))
