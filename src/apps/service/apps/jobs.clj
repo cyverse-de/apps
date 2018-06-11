@@ -35,16 +35,16 @@
   (service/assert-found (jp/lock-job job-id) "job" job-id))
 
 (defn- format-job-for-status-update
-  [apps-client job-id]
+  [apps-client {job-id :id user-id :user_id}]
   (let [job        (jp/get-job-by-id job-id)
         app-tables (.loadAppTables apps-client [job])
         rep-steps  (jp/list-representative-job-steps [job-id])
         rep-steps  (group-by (some-fn :parent_id :job_id) rep-steps)]
-    (listings/format-job apps-client nil app-tables rep-steps job)))
+    (assoc (listings/format-job apps-client nil app-tables rep-steps job) :user_id user-id)))
 
 (defn- send-job-status-update
-  [apps-client {job-id :id prev-status :status} {step-type :job_type :as job-step}]
-  (let [{curr-status :status :as job} (format-job-for-status-update apps-client job-id)]
+  [apps-client {prev-status :status :as original-job} {step-type :job_type :as job-step}]
+  (let [{curr-status :status :as job} (format-job-for-status-update apps-client original-job)]
     (when-not (= prev-status curr-status)
       (if (= step-type jp/interactive-job-type)
         (cn/send-interactive-job-status-update (.getUser apps-client) job job-step)
@@ -178,6 +178,18 @@
         (stop-single-job apps-client job false)
         jp/canceled-status))))
 
+(defn- stop-parent-job
+  [apps-client parent-id sub-job-count]
+  (transaction
+   (let [user       (.getUser apps-client)
+         parent-job (format-job-for-status-update apps-client (lock-job parent-id))
+         message    (format "%s %d analyses %s"
+                            (:name parent-job)
+                            sub-job-count
+                            (string/lower-case jp/canceled-status))]
+     (cn/send-job-status-update (:shortUsername user) (:email user) parent-job message)
+     (log/info "batch job cancellation complete:" sub-job-count "stopped."))))
+
 (defn- stop-batch-jobs-thread
   [apps-client parent-id]
   (try+
@@ -186,16 +198,8 @@
     (let [children         (jp/list-running-child-jobs parent-id)
           stopped-sub-jobs (->> children
                                 (map (partial stop-child-job apps-client))
-                                (remove nil?))
-          sub-job-count    (count stopped-sub-jobs)
-          user             (.getUser apps-client)
-          parent-job       (format-job-for-status-update apps-client parent-id)
-          message          (format "%s %d analyses %s"
-                                   (:name parent-job)
-                                   sub-job-count
-                                   (string/lower-case jp/canceled-status))]
-      (cn/send-job-status-update (:shortUsername user) (:email user) parent-job message)
-      (log/info "batch job cancellation complete:" sub-job-count "stopped."))
+                                (remove nil?))]
+      (stop-parent-job apps-client parent-id (count stopped-sub-jobs)))
     (catch Object _
       (log/error (:throwable &throw-context)
                  "unable to cancel batch jobs," parent-id))))
