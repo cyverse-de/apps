@@ -37,7 +37,7 @@
     jp/de-client-name)
 
   (getJobTypes [_]
-    [jp/de-job-type jp/interactive-job-type])
+    [jp/de-job-type jp/interactive-job-type jp/osg-job-type])
 
   (listSystemIds [_]
     (vec supported-system-ids))
