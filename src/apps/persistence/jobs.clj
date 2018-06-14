@@ -19,6 +19,7 @@
 (def de-job-type "DE")
 (def agave-job-type "Agave")
 (def interactive-job-type "Interactive")
+(def osg-job-type "OSG")
 
 (def de-client-name c/de-system-id)
 (def agave-client-name c/hpc-system-id)

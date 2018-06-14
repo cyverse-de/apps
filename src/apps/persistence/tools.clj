@@ -7,7 +7,7 @@
                                               remove-tool-from-tasks]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals]]
-        [clojure.string :only [upper-case]]
+        [clojure.string :only [upper-case blank?]]
         [kameleon.queries :only [add-query-limit
                                  add-query-offset
                                  add-query-sorting]]
@@ -15,6 +15,7 @@
         [korma.core :exclude [update]]
         [korma.db :only [transaction]])
   (:require [apps.constants :as c]
+            [clojure.tools.logging :as log]
             [korma.core :as sql]))
 
 (defn- filter-valid-tool-values
@@ -33,10 +34,17 @@
                      :tool_type_id
                      :interactive]))
 
+(defn- get-tool-type-name
+  "Determines the correct tool type name to use for a tool."
+  [tool]
+  (cond (not (blank? (get-in tool [:container :image :osg_image_path]))) c/osg-tool-type
+        (:interactive tool)                                              c/interactive-tool-type
+        :else                                                            (:type tool)))
+
 (defn- get-tool-type-id-for-tool
   "Gets the tool type ID to use for a tool."
-  [{:keys [interactive type]}]
-  (when-let [tool-type (if interactive c/interactive-tool-type type)]
+  [tool]
+  (when-let [tool-type (get-tool-type-name tool)]
     (:id (first (select tool_types (fields :id) (where {:name tool-type}))))))
 
 (defn- get-tool-data-files
