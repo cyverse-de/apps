@@ -23,7 +23,7 @@
             [apps.service.integration-data :as integration-data]
             [apps.service.util :as util :refer [uuidify]]))
 
-(def ^:private supported-system-ids #{jp/de-client-name jp/interactive-client-name})
+(def ^:private supported-system-ids #{jp/de-client-name jp/interactive-client-name jp/osg-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
 (def ^:private validate-system-ids (partial apps-util/validate-system-ids supported-system-ids))
 

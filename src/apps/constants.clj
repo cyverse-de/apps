@@ -6,7 +6,7 @@
 (def interactive-system-id "interactive")
 (def osg-system-id "osg")
 
-(def system-ids [de-system-id hpc-system-id interactive-system-id])
+(def system-ids [de-system-id hpc-system-id interactive-system-id osg-system-id])
 
 (def internal-app-integrator "Internal DE Tools")
 
