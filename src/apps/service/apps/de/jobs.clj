@@ -43,8 +43,9 @@
 (defn- job-type-for-step
   "Determines the job type to use for a single job step."
   [{{tool-type :type} :component}]
-  (if (= tool-type c/interactive-tool-type)
-    jp/interactive-job-type
+  (condp = tool-type
+    c/interactive-tool-type jp/interactive-job-type
+    c/osg-tool-type         jp/osg-job-type
     jp/de-job-type))
 
 (defn- store-job-step
