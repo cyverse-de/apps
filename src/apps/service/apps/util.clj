@@ -43,3 +43,12 @@
     (cxu/bad-request "System IDs may not be mixed for this request."
                      :original-system-id   original-system-id
                      :associated-system-id system-id)))
+
+(defn app-type-qualifies?
+  "Determines if an app type parameter qualifies for an apps client. The app type is really just the
+   job type in a different context, so an apps client supports an app type if it supports the job type
+   with the same name. One caveat is that the DE apps client has to be able to support mixed pipelines,
+   and must always perform a database search regardless of the requested app type. Because of this, the
+   DE apps client will not call this function."
+  [apps-client {:keys [app-type]}]
+  (or (nil? app-type) (supports-job-type? apps-client app-type)))

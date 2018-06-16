@@ -76,25 +76,35 @@
     (when-not (and hpc (.equalsIgnoreCase hpc "false"))
       [(.hpcAppGroup agave)]))
 
-  (listAppsInCategory [_ system-id category-id params]
+  (listAppsInCategory [self system-id category-id params]
     (validate-system-id system-id)
-    (listings/list-apps agave category-id params))
+    (if (apps-util/app-type-qualifies? self params)
+      (listings/list-apps agave category-id params)
+      (.emptyAppListing agave)))
 
-  (listAppsUnderHierarchy [_ root-iri attr params]
+  (listAppsUnderHierarchy [self root-iri attr params]
     (when (user-has-access-token?)
-      (listings/list-apps-with-ontology agave root-iri params false)))
+      (if (apps-util/app-type-qualifies? self params)
+        (listings/list-apps-with-ontology agave root-iri params false)
+        (.emptyAppListing agave))))
 
-  (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params]
+  (adminListAppsUnderHierarchy [self ontology-version root-iri attr params]
     (when (user-has-access-token?)
-      (listings/list-apps-with-ontology agave root-iri params true)))
+      (if (apps-util/app-type-qualifies? self params)
+        (listings/list-apps-with-ontology agave root-iri params true)
+        (.emptyAppListing agave))))
 
-  (searchApps [_ search-term params]
+  (searchApps [self search-term params]
     (when (user-has-access-token?)
-      (listings/search-apps agave search-term params false)))
+      (if (apps-util/app-type-qualifies? self params)
+        (listings/search-apps agave search-term params false)
+        (.emptyAppListing agave))))
 
-  (adminSearchApps [_ search-term params]
+  (adminSearchApps [self search-term params]
     (when (user-has-access-token?)
-      (listings/search-apps agave search-term params true)))
+      (if (apps-util/app-type-qualifies? self params)
+        (listings/search-apps agave search-term params true)
+        (.emptyAppListing agave))))
 
   (canEditApps [_]
     false)

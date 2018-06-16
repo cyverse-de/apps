@@ -24,7 +24,7 @@
                  [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "2.8.3"]
                  [org.cyverse/kameleon "3.0.2"]
-                 [org.cyverse/mescal "3.0.1"]
+                 [org.cyverse/mescal "3.0.2"]
                  [org.cyverse/metadata-client "3.0.0"]
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/common-cfg "2.8.1"]
@@ -41,7 +41,7 @@
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :plugins [[lein-swank "1.4.4"]
             [test2junit "1.1.3"]
-            [jonase/eastwood "0.2.3"]]
+            [jonase/eastwood "0.2.6"]]
   :profiles {:dev {:dependencies   [[ring "1.5.0"]]
                    :plugins        [[lein-ring "0.9.7"]]
                    :resource-paths ["conf/test"]}
