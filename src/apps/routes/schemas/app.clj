@@ -445,9 +445,14 @@
 (def AdminAppListingValidSortFields
   (sets/union AppListingValidSortFields AdminAppListingJobStatsKeys))
 
+(defschema AppFilterParams
+  {(optional-key :app-type)
+   (describe String "The type of app to include in the listing.")})
+
 (defschema AppListingPagingParams
   (merge SecuredQueryParamsEmailRequired
          PagingParams
+         AppFilterParams
          {SortFieldOptionalKey
           (describe (apply enum AppListingValidSortFields) SortFieldDocs)}))
 
@@ -461,6 +466,7 @@
 
 (defschema AppSearchParams
   (merge SecuredPagingParams
+         AppFilterParams
          {(optional-key :search)
           (describe String
                     "The pattern to match in an App's Name, Description, Integrator Name, or Tool Name.")

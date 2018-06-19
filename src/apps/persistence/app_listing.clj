@@ -107,6 +107,23 @@
          {:integrator_username username
           :id                  [in public-app-ids]}))
 
+(defn- app-type-subselect
+  "Returns a subselect statement to search for apps with a selected app type."
+  [app-type]
+  (subselect [:app_steps :s]
+             (join [:tasks :t] {:s.task_id :t.id})
+             (join [:job_types :jt] {:t.job_type_id :jt.id})
+             (where {:s.app_id :app_listing.id
+                     :jt.name  app-type})))
+
+(defn- add-app-type-where-clause
+  "Adds a where clause to an app listing query to restrict results to a particular
+   app type if an app type was specified in the HTTP query parameters."
+  [query {:keys [app-type]}]
+  (if app-type
+    (where query (exists (app-type-subselect app-type)))
+    query))
+
 (defn- get-all-apps-count-base-query
   "Returns a base query for counting the total number of apps in the
    app_listing table."
@@ -114,6 +131,7 @@
   (-> (select* app_listing)
       (fields (raw "count(DISTINCT app_listing.id) AS total"))
       (add-app-id-where-clause query-opts)
+      (add-app-type-where-clause query-opts)
       (add-omitted-app-id-where-clause query-opts)
       (add-agave-pipeline-where-clause query-opts)))
 
@@ -199,6 +217,7 @@
         (add-app-listing-is-favorite-field workspace_root_group_id favorites_group_index)
         (add-app-listing-ratings-fields user_id)
         (add-app-id-where-clause query_opts)
+        (add-app-type-where-clause query_opts)
         (add-omitted-app-id-where-clause query_opts)
         (add-agave-pipeline-where-clause query_opts)
         (add-query-limit row_limit)
@@ -375,19 +394,21 @@
 
 (defn count-deleted-and-orphaned-apps
   "Counts the number of deleted, public apps, plus apps that are not listed under any category."
-  [{:keys [public-app-ids]}]
+  [{:keys [public-app-ids] :as params}]
   ((comp :count first)
    (-> (select* app_listing)
        (aggregate (count :*) :count)
        (add-deleted-and-orphaned-where-clause public-app-ids)
+       (add-app-type-where-clause params)
        (select))))
 
 (defn list-deleted-and-orphaned-apps
   "Fetches a list of deleted, public apps, plus apps that are not listed under any category."
-  [{:keys [limit offset sort-field sort-dir public-app-ids]}]
+  [{:keys [limit offset sort-field sort-dir public-app-ids] :as params}]
   (-> (select* app_listing)
       (add-app-listing-base-query-fields)
       (add-deleted-and-orphaned-where-clause public-app-ids)
+      (add-app-type-where-clause params)
       (add-query-limit limit)
       (add-query-offset offset)
       (add-query-sorting (when sort-field (keyword sort-field))
@@ -403,6 +424,7 @@
        (where {:deleted false})
        (add-public-apps-by-user-where-clause username params)
        (add-app-id-where-clause params)
+       (add-app-type-where-clause params)
        (add-omitted-app-id-where-clause params)
        (add-agave-pipeline-where-clause params)
        (select))))
@@ -428,11 +450,12 @@
    apps that the user did not integrate."
   [workspace favorites-group-index params]
   (let [params (assoc params :omitted-app-ids (:public-app-ids params))]
-    (-> (select* [:app_listing :l])
+    (-> (select* app_listing)
         (aggregate (count :*) :count)
         (where {:deleted false})
         (where {:integrator_id [not= (:user_id workspace)]})
         (add-app-id-where-clause params)
+        (add-app-type-where-clause params)
         (add-omitted-app-id-where-clause params)
         select first :count)))
 
