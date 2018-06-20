@@ -3,10 +3,11 @@
         [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats uuid?]]
         [apps.util.conversions :only [remove-nil-vals]]
         [slingshot.slingshot :only [try+]])
-  (:require [clojure.tools.logging :as log]
-            [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
+  (:require [apps.clients.iplant-groups :as ipg]
             [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jobs-db]))
+            [apps.persistence.jobs :as jobs-db]
+            [clojure.tools.logging :as log]
+            [clojure-commons.error-codes :as ce :refer [clj-http-error?]]))
 
 (defn- add-agave-job-stats
   [{:keys [id] :as app} params admin?]
@@ -26,9 +27,27 @@
     (update app-listing :apps (partial map #(format-job-stats % admin?)))
     app-listing))
 
+(defn- add-app-integrator-info
+  ([app-listing]
+   (let [subject-info-for (ipg/lookup-subjects (map :owner (:apps app-listing)))
+         add-integrator   (partial add-app-integrator-info subject-info-for)]
+     (update app-listing :apps (partial mapv add-integrator))))
+  ([subject-info-for {:keys [owner] :as app-listing}]
+   (if-let [subject-info (some-> owner subject-info-for)]
+     (assoc (dissoc app-listing :owner)
+       :integrator_name  (:name subject-info)
+       :integrator_email (:email subject-info))
+     (dissoc app-listing :owner))))
+
+(defn- add-app-details-integrator-info
+  [{:keys [owner] :as app-details}]
+  (let [subject-info-for (ipg/lookup-subjects [owner])]
+    (add-app-integrator-info subject-info-for app-details)))
+
 (defn get-app-details
   [agave app-id admin?]
   (-> (.getAppDetails agave app-id)
+      add-app-details-integrator-info
       (add-agave-job-stats nil admin?)
       (format-job-stats admin?)
       remove-nil-vals))
@@ -36,6 +55,7 @@
 (defn list-apps
   [agave category-id params]
   (-> (.listApps agave)
+      add-app-integrator-info
       (add-app-listing-job-stats params false)
       (sort-apps params {:default-sort-field "name"})
       (apply-offset params)
@@ -46,6 +66,7 @@
   [agave term params admin?]
   (try+
     (-> (select-keys (.listAppsWithOntology agave term) [:total :apps])
+        add-app-integrator-info
         (add-app-listing-job-stats params admin?)
         (sort-apps params {:default-sort-field "name"})
         (apply-offset params)
@@ -66,6 +87,7 @@
   [agave search-term params admin?]
   (try+
    (-> (.searchApps agave search-term (fix-search-params params admin?))
+       add-app-integrator-info
        (add-app-listing-job-stats params admin?)
        (sort-apps params {:default-sort-field "name"})
        (apply-offset params)

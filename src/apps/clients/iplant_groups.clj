@@ -128,3 +128,11 @@
   "Lists the members of the group with the given ID."
   [user group-id]
   (c/list-group-members-by-id (get-client) user group-id))
+
+(defn lookup-subjects
+  "Looks up multiple subjects by subject ID."
+  [subjects]
+  (->> (c/lookup-subjects (get-client) (config/de-grouper-user) (set subjects))
+       :subjects
+       (map (juxt :id identity))
+       (into {})))
