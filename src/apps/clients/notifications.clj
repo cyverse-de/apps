@@ -52,7 +52,7 @@
                 (emailable-job-statuses (:status job-info)))))
 
 
-(defn- interapps-url
+(defn interapps-url
   "Returns the externally accessible URL to the interactive app as a URL from
    cemerick.url.
 
