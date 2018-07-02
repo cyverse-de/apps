@@ -296,7 +296,7 @@
 (cc/defprop-optstr interapps-base
   "The external URL for interactive applications."
   [props config-valid configs]
-  "app.interactive-apps.base" "https://cyverse.run")
+  "apps.interactive-apps.base" "https://cyverse.run")
 
 (cc/defprop-optint job-status-poll-interval
   "The job status polling interval in minutes."
