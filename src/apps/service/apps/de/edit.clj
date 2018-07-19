@@ -18,7 +18,8 @@
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [clojure-commons.exception-util :as cxu]))
 
 (def ^:private copy-prefix "Copy of ")
 (def ^:private max-app-name-len 255)
@@ -263,9 +264,58 @@
       (assoc file-parameter :parameter_id param-id
                             :retain retain))))
 
+(defn- get-rule-type
+  "Gets information about a named rule type."
+  [rule-type-name]
+  (let [rule-type (persistence/get-rule-type rule-type-name)]
+    (when (nil? rule-type)
+      (cxu/bad-request (str "validation rule type " rule-type-name " not found")))
+    (when (:deprecated rule-type)
+      (cxu/bad-request (str "validation rule type " rule-type-name " is deprecated")))
+    rule-type))
+
+(defn- validate-rule-arg-not-nil [arg]
+  (when (nil? arg)
+    (cxu/bad-request (str "nil rule arguments are not allowed"))))
+
+(defn- validate-integer-arg-value [arg]
+  (try
+    (Integer/parseInt arg)
+    (catch NumberFormatException _
+      (cxu/bad-request (str "invalid integer argument value: " arg)))))
+
+(defn- validate-double-arg-value [arg]
+  (try
+    (Double/parseDouble arg)
+    (catch NumberFormatException _
+      (cxu/bad-request (str "invalid double argument value: " arg)))))
+
+(def ^:private validate-string-arg validate-rule-arg-not-nil)
+(def ^:private validate-integer-arg (juxt validate-rule-arg-not-nil validate-integer-arg-value))
+(def ^:private validate-double-arg (juxt validate-rule-arg-not-nil validate-double-arg-value))
+
+(defn- validate-rule-arg
+  "Validates a single rule argument."
+  [{type :argument_type :as arg-def} arg]
+  (condp = type
+    "String"  (validate-string-arg arg)
+    "Integer" (validate-integer-arg arg)
+    "Double"  (validate-double-arg arg)
+    (cxu/internal-system-error (str "unsupported argument type found in database: " type))))
+
+(defn- validate-rule-args
+  "Verifies the number and types of a validator rule argument."
+  [validator-type rule-args]
+  (let [rule-type (get-rule-type validator-type)
+        arg-defs  (persistence/get-rule-arg-definitions (:id rule-type))]
+    (when (not= (count rule-args) (count arg-defs))
+      (cxu/bad-request (str "incorrect number of arguments (" (count rule-args) ") for rule type " validator-type)))
+    (dorun (map validate-rule-arg arg-defs rule-args))))
+
 (defn- add-validation-rule
   "Adds an App parameter's validator and its rule arguments."
   [parameter-id {validator-type :type rule-args :params}]
+  (validate-rule-args validator-type rule-args)
   (let [validation-rule-id (:id (persistence/add-validation-rule parameter-id validator-type))]
     (dorun (map-indexed (partial persistence/add-validation-rule-argument validation-rule-id)
                         rule-args))))

@@ -585,6 +585,24 @@
   [parameter-id]
   (delete file_parameters (where {:parameter_id parameter-id})))
 
+(defn get-rule-type
+  "Retrieves information about a validation rule from the database."
+  [rule-type-name]
+  (-> (select* :rule_type)
+      (fields :id :name :description :label :deprecated)
+      (where {:name rule-type-name})
+      select
+      first))
+
+(defn get-rule-arg-definitions
+  "Retrieves validation rule argument definitions corresponding to a rule type ID from the database."
+  [rule-type-id]
+  (-> (select* [:validation_rule_argument_definitions :vrad])
+      (join [:validation_rule_argument_types :vrat] {:vrad.argument_type_id :vrat.id})
+      (fields :vrad.id :vrad.name :vrad.description [:vrat.name :argument_type])
+      (where {:vrad.rule_type_id (uuidify rule-type-id)})
+      select))
+
 (defn add-validation-rule
   "Adds a validation rule to the database."
   [parameter-id rule-type]
