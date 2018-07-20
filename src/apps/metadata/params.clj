@@ -98,19 +98,18 @@
      :else                        (:value default))))
 
 (defn- format-validator
-  [{:keys [id type]}]
+  [{type-id :type_id :keys [id type]}]
   {:type   type
-   :params (mapv (comp conv/convert-rule-argument :argument_value)
-                 (select :validation_rule_arguments
-                         (fields :argument_value)
-                         (where {:rule_id id})))})
+   :params (mapv conv/convert-rule-argument
+                 (map :argument_value (persistence/get-rule-arguments id))
+                 (map :argument_type (persistence/get-rule-arg-definitions type-id)))})
 
 (defn get-validators
   [param-id]
   (mapv format-validator
         (select [:validation_rules :r]
                 (join [:rule_type :t] {:r.rule_type :t.id})
-                (fields :r.id [:t.name :type])
+                (fields :r.id [:t.name :type] [:t.id :type_id])
                 (where {:r.parameter_id param-id
                         :t.deprecated   false}))))
 

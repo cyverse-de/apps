@@ -57,7 +57,8 @@
                      (order :ordering)
                      (fields :argument_value))
                    (fields :id
-                           [:rule_type.name :type])
+                           [:rule_type.name :type]
+                           [:rule_type.id :type_id])
                    (where {:rule_type.deprecated false}))
                  (with parameter_values
                        (fields :id
@@ -89,8 +90,9 @@
 (defn- format-validator
   [validator]
   {:type (:type validator)
-   :params (map (comp convert-rule-argument :argument_value)
-                (:validation_rule_arguments validator))})
+   :params (mapv convert-rule-argument
+                 (map :argument_value (:validation_rule_arguments validator))
+                 (map :argument_type (persistence/get-rule-arg-definitions (:type_id validator))))})
 
 (defn- format-param-value
   [param-value]
