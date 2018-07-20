@@ -594,6 +594,15 @@
       select
       first))
 
+(defn get-rule-arguments
+  "Retrieves validation rule arguments corresponding to a rule ID from the database."
+  [rule-id]
+  (-> (select* :validation_rule_arguments)
+      (fields :argument_value)
+      (where {:rule_id rule-id})
+      (order :ordering)
+      select))
+
 (defn get-rule-arg-definitions
   "Retrieves validation rule argument definitions corresponding to a rule type ID from the database."
   [rule-type-id]
@@ -601,6 +610,7 @@
       (join [:validation_rule_argument_types :vrat] {:vrad.argument_type_id :vrat.id})
       (fields :vrad.id :vrad.name :vrad.description [:vrat.name :argument_type])
       (where {:vrad.rule_type_id (uuidify rule-type-id)})
+      (order :vrad.argument_index)
       select))
 
 (defn add-validation-rule

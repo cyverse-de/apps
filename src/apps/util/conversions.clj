@@ -38,8 +38,9 @@
   (partial remove-vals #(and (sequential? %1) (empty? %1))))
 
 (defn convert-rule-argument
-  [arg]
+  [arg type]
   (let [arg (string/trim arg)]
-    (->> [(Ints/tryParse arg) (Doubles/tryParse arg) (identity arg)]
-         (remove nil?)
-         (first))))
+    (condp = type
+      "Integer" (Ints/tryParse arg)
+      "Double"  (Doubles/tryParse arg)
+      arg)))
