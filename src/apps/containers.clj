@@ -384,6 +384,7 @@
      :tools_id
      :interactive_apps_proxy_settings_id
      :skip_tmp_mount
+     :uid
      :id]))
 
 (defn add-settings
@@ -460,7 +461,8 @@
                            :working_directory
                            :interactive_apps_proxy_settings_id
                            :skip_tmp_mount
-                           :entrypoint)
+                           :entrypoint
+                           :uid)
                    (with container-devices
                      (fields :host_path :container_path :id))
                    (with container-volumes
