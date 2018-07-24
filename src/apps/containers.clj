@@ -22,6 +22,7 @@
   (:require [cheshire.core :as json]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [clojure-commons.exception-util :as cxu]
             [korma.core :as sql])
   (:import java.util.Base64))
 
@@ -169,8 +170,9 @@
 (defn add-device
   "Associates a device with the given container_settings UUID."
   [settings-uuid device-map]
-  (if (device-mapping? settings-uuid (:host_path device-map) (:container_path device-map))
-    (throw (Exception. (str "device mapping already exists: " settings-uuid " " (:host_path device-map)  " " (:container_path device-map)))))
+  (when (device-mapping? settings-uuid (:host_path device-map) (:container_path device-map))
+    (let [{host-path :host_path container-path :container_path} device-map]
+      (cxu/exists (str "device mapping already exists: " settings-uuid " " host-path " " container-path))))
   (insert container-devices
           (values (merge
                    (select-keys device-map [:host_path :container_path])
@@ -178,8 +180,8 @@
 
 (defn modify-device
   [settings-uuid device-uuid update-map]
-  (if-not (device? device-uuid)
-    (throw (Exception. (str "device does not exist: " device-uuid))))
+  (when-not (device? device-uuid)
+    (cxu/not-found (str "device does not exist: " device-uuid)))
   (sql/update container-devices
     (set-fields (select-keys update-map [:host_path :container_path :container_settings_id]))
     (where {:id (uuidify device-uuid)})))
@@ -232,8 +234,9 @@
 (defn add-volume
   "Adds a volume record to the database for the specified container_settings UUID."
   [settings-uuid volume-map]
-  (if (volume-mapping? settings-uuid (:host_path volume-map) (:container_path volume-map))
-    (throw (Exception. (str "volume mapping already exists: " settings-uuid " " (:host_path volume-map) " " (:container_path volume-map)))))
+  (when (volume-mapping? settings-uuid (:host_path volume-map) (:container_path volume-map))
+    (let [{host-path :host_path container-path :container_path} volume-map]
+      (cxu/exists (str "volume mapping already exists: " settings-uuid " " host-path " " container-path))))
   (insert container-volumes
           (values (merge
                    (select-keys volume-map [:host_path :container_path])
@@ -242,8 +245,8 @@
 (defn modify-volume
   "Modifies the container_volumes record indicated by the uuid."
   [settings-uuid volume-uuid volume-map]
-  (if-not (volume? volume-uuid)
-    (throw (Exception. (str "volume does not exist: " volume-uuid))))
+  (when-not (volume? volume-uuid)
+    (cxu/not-found (str "volume does not exist: " volume-uuid)))
   (sql/update container-volumes
     (set-fields (merge {:container_settings_id (uuidify settings-uuid)}
                        (select-keys volume-map [:host_path :container_path])))
@@ -403,12 +406,16 @@
   [tool-uuid]
   (:id (first (select container-settings (where {:tools_id (uuidify tool-uuid)})))))
 
+(defn- assert-tool-has-settings [tool-uuid]
+  (when-not (tool-has-settings? tool-uuid)
+    (cxu/not-found (str "Tool " tool-uuid " does not have a container."))))
+
 (defn modify-settings
   "Modifies an existing set of container settings. Requires the container-settings-uuid
    and a new set of values."
   [settings-uuid settings-map]
-  (if-not (settings? settings-uuid)
-    (throw (Exception. (str "Container settings do not exist for UUID: " settings-uuid))))
+  (when-not (settings? settings-uuid)
+    (cxu/not-found (str "Container settings do not exist for UUID: " settings-uuid)))
   (let [values (filter-container-settings settings-map)]
     (sql/update container-settings
       (set-fields values)
@@ -512,8 +519,7 @@
 
 (defn add-tool-device
   [tool-uuid device-map]
-  (when-not (tool-has-settings? tool-uuid)
-    (throw (Exception. (str "Tool " tool-uuid " does not have a container."))))
+  (assert-tool-has-settings tool-uuid)
   (let [settings-uuid (tool-settings-uuid tool-uuid)]
     (dissoc
      (if-not (device-mapping? settings-uuid (:host_path device-map) (:container_path device-map))
@@ -545,8 +551,7 @@
 
 (defn add-tool-volume
   [tool-uuid volume-map]
-  (when-not (tool-has-settings? tool-uuid)
-    (throw (Exception. (str "Tool " tool-uuid " does not have a container."))))
+  (assert-tool-has-settings tool-uuid)
   (let [settings-uuid (tool-settings-uuid tool-uuid)]
     (dissoc
      (if-not (volume-mapping? settings-uuid (:host_path volume-map) (:container_path volume-map))
@@ -587,8 +592,7 @@
 
 (defn add-tool-volumes-from
   [tool-uuid vf-map]
-  (when-not (tool-has-settings? tool-uuid)
-    (throw (Exception. (str "Tool " tool-uuid " does not have a container."))))
+  (assert-tool-has-settings tool-uuid)
   (add-settings-volumes-from (tool-settings-uuid tool-uuid) vf-map))
 
 (defn tool-volume-info
@@ -617,8 +621,8 @@
 
 (defn add-port
   [settings-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
-  (if (port-mapping? settings-uuid host-port container-port bind-to-host)
-    (throw (Exception. (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host))))
+  (when (port-mapping? settings-uuid host-port container-port bind-to-host)
+    (cxu/exists (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host)))
   (insert ports
           (values (merge
                    (select-keys port-map [:host_port :container_port :bind_to_host])
@@ -645,7 +649,7 @@
 (defn add-tool-container
   [tool-uuid info-map]
   (when (tool-has-settings? tool-uuid)
-    (throw (Exception. (str "Tool " tool-uuid " already has container settings."))))
+    (cxu/exists (str "Tool " tool-uuid " already has container settings.")))
   (let [devices        (:container_devices info-map)
         volumes        (:container_volumes info-map)
         vfs            (:container_volumes_from info-map)
