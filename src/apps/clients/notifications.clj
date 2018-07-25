@@ -9,11 +9,13 @@
             [apps.clients.notifications.app-sharing :as asn]
             [apps.clients.notifications.job-sharing :as jsn]
             [apps.clients.notifications.tool-sharing :as tool-notifications]
+            [apps.persistence.app-metadata :as amp]
             [apps.persistence.jobs :as jp]
             [apps.persistence.tool-requests :as tp]
             [apps.util.config :as config])
-  (:use [pandect.algo.sha256 :only [sha256]]
-        [cemerick.url :only [url]]))
+  (:use [apps.service.util :only [uuid?]]
+        [cemerick.url :only [url]]
+        [pandect.algo.sha256 :only [sha256]]))
 
 (def ^:private emailable-job-statuses
   #{jp/completed-status
@@ -63,10 +65,20 @@
   [{host :host :as base} username external-id]
   (assoc base :host (str "a" (-> (str username external-id) sha256 (subs 0 8)) "." host)))
 
+(defn get-notification-type
+  "Determines the notification type to use for an app ID. In general, we only want one type of notification
+   per app, but because the notification type is determined by the tool, it's possible to have more than one
+   notification type per app. Currently, tools that use different notification types will never appear in the
+   same app, so this function arbitrarily takes the first notification type associated with the app for now.
+   Also, apps that do not run in the DE will always have a notification type of `analysis`."
+  [app-id]
+  (or (when (uuid? app-id) (first (amp/get-app-notification-types app-id)))
+      "analysis"))
+
 (defn- format-job-status-update
   "Formats a job status update notification to send to the notification agent."
-  [username email-address {job-name :name :as job-info} message]
-  {:type           "analysis"
+  [username email-address {job-name :name app-id :app_id :as job-info} message]
+  {:type           (get-notification-type app-id)
    :user           username
    :subject        (str job-name " status changed.")
    :message        message
