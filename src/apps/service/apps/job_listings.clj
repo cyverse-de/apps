@@ -1,11 +1,15 @@
 (ns apps.service.apps.job-listings
-  (:use [kameleon.uuids :only [uuidify]]
-        [apps.util.conversions :only [remove-nil-vals]])
+  (:use [cemerick.url :only [url]]
+        [kameleon.uuids :only [uuidify]]
+        [apps.clients.notifications :only [interapps-url]]
+        [apps.util.conversions :only [remove-nil-vals]]
+        [apps.validation :only [get-valid-user-id]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.service.apps.util :as apps-util]
             [apps.service.util :as util]
+            [apps.util.config :as config]
             [clojure.string :as string]
             [kameleon.db :as db]))
 
@@ -68,18 +72,31 @@
     :batch           (:is_batch job)
     :batch_status    (when (:is_batch job) (format-batch-status id))}))
 
+(defn- interactive-urls
+  [job rep-steps]
+  (let [user-id (get-valid-user-id (job :username))
+        job-id  (job :id)
+        steps   (rep-steps job-id)]
+    (reduce (fn [urls step]
+              (when (= (:job_type step) jp/interactive-job-type)
+                (conj urls (str (interapps-url (url (config/interapps-base)) user-id (:external_id step))))))
+            []
+            steps)))
+
 (defn format-admin-job
-  [job]
+  [rep-steps job]
   (remove-nil-vals
-   (assoc (format-base-job job)
-     :external_ids (vec (.getArray (:external_ids job))))))
+    (assoc (format-base-job job)
+      :external_ids     (vec (.getArray (:external_ids job)))
+      :interactive_urls (interactive-urls job rep-steps))))
 
 (defn format-job
   [apps-client perms app-tables rep-steps job]
   (remove-nil-vals
-   (assoc (format-base-job job)
-     :app_disabled (app-disabled? app-tables (:system_id job) (:app_id job))
-     :can_share    (job-supports-sharing? apps-client perms rep-steps job))))
+    (assoc (format-base-job job)
+      :app_disabled     (app-disabled? app-tables (:system_id job) (:app_id job))
+      :can_share        (job-supports-sharing? apps-client perms rep-steps job)
+      :interactive_urls (interactive-urls job rep-steps))))
 
 (defn- list-jobs*
   [{:keys [username]} search-params types analysis-ids]
@@ -104,7 +121,9 @@
      :total     (count-jobs user params types analysis-ids)}))
 
 (defn admin-list-jobs-with-external-ids [external-ids]
-  {:analyses (mapv format-admin-job (jp/list-jobs-by-external-id external-ids))})
+  (let [jobs      (jp/list-jobs-by-external-id external-ids)
+        rep-steps (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))]
+    {:analyses (mapv (partial format-admin-job rep-steps) jobs)}))
 
 (defn list-job
   [apps-client job-id]

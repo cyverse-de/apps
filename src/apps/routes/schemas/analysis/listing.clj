@@ -70,7 +70,10 @@
 
 (defschema AdminAnalysis
   (assoc BaseAnalysis
-    :external_ids (describe [ExternalId] "The list of external identifiers.")))
+    :external_ids (describe [ExternalId] "The list of external identifiers.")
+
+    (optional-key :interactive_urls)
+    (describe [String] "The list of externally accessible interactive analysis URLs.")))
 
 (defschema AdminAnalysisList
   {:analyses (describe [AdminAnalysis] "The list of anlayses.")})
@@ -81,7 +84,10 @@
     (describe Boolean "Indicates whether the app is currently disabled.")
 
     :can_share
-    (describe Boolean "Indicates whether or not the analysis can be shared.")))
+    (describe Boolean "Indicates whether or not the analysis can be shared.")
+
+    (optional-key :interactive_urls)
+    (describe [String] "The list of externally accessible interactive analysis URLs.")))
 
 (defschema AnalysisList
   {:analyses  (describe [Analysis] "The list of analyses.")
