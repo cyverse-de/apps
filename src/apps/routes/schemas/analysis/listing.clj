@@ -66,7 +66,10 @@
    (describe UUID "The identifier of the parent analysis.")
 
    (optional-key :batch_status)
-   (describe BatchStatus "A summary of the status of the batch.")})
+   (describe BatchStatus "A summary of the status of the batch.")
+
+   (optional-key :interactive_urls)
+   (describe [String] "The list of externally accessible interactive analysis URLs.")})
 
 (defschema AdminAnalysis
   (assoc BaseAnalysis
