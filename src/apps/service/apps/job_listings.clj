@@ -74,8 +74,8 @@
 
 (defn- interactive-urls
   [job rep-steps]
-  (let [user-id (get-valid-user-id (job :username))
-        job-id  (job :id)
+  (let [user-id (get-valid-user-id (:username job))
+        job-id  (:id job)
         steps   (rep-steps job-id)]
     (reduce (fn [urls step]
               (when (= (:job_type step) jp/interactive-job-type)

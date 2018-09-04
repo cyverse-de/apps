@@ -66,14 +66,14 @@
    (describe UUID "The identifier of the parent analysis.")
 
    (optional-key :batch_status)
-   (describe BatchStatus "A summary of the status of the batch.")})
+   (describe BatchStatus "A summary of the status of the batch.")
+
+   (optional-key :interactive_urls)
+   (describe [String] "The list of externally accessible interactive analysis URLs.")})
 
 (defschema AdminAnalysis
   (assoc BaseAnalysis
-    :external_ids (describe [ExternalId] "The list of external identifiers.")
-
-    (optional-key :interactive_urls)
-    (describe [String] "The list of externally accessible interactive analysis URLs.")))
+    :external_ids (describe [ExternalId] "The list of external identifiers.")))
 
 (defschema AdminAnalysisList
   {:analyses (describe [AdminAnalysis] "The list of anlayses.")})
@@ -84,10 +84,7 @@
     (describe Boolean "Indicates whether the app is currently disabled.")
 
     :can_share
-    (describe Boolean "Indicates whether or not the analysis can be shared.")
-
-    (optional-key :interactive_urls)
-    (describe [String] "The list of externally accessible interactive analysis URLs.")))
+    (describe Boolean "Indicates whether or not the analysis can be shared.")))
 
 (defschema AnalysisList
   {:analyses  (describe [Analysis] "The list of analyses.")
