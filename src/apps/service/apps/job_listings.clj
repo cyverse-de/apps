@@ -74,14 +74,10 @@
 
 (defn- interactive-urls
   [job rep-steps]
-  (let [user-id (get-valid-user-id (:username job))
-        job-id  (:id job)
-        steps   (rep-steps job-id)]
-    (reduce (fn [urls step]
-              (when (= (:job_type step) jp/interactive-job-type)
-                (conj urls (str (interapps-url (url (config/interapps-base)) user-id (:external_id step))))))
-            []
-            steps)))
+  (let [user-id       (get-valid-user-id (:username job))
+        interactive?  (fn [step] (= (:job_type step) jp/interactive-job-type))
+        get-url       (fn [step] (str (interapps-url (url (config/interapps-base)) user-id (:external_id step))))]
+    (seq (map get-url (filter interactive? (rep-steps (:id job)))))))
 
 (defn format-admin-job
   [rep-steps job]
@@ -122,7 +118,7 @@
 
 (defn admin-list-jobs-with-external-ids [external-ids]
   (let [jobs      (jp/list-jobs-by-external-id external-ids)
-        rep-steps (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))]
+        rep-steps (group-by :job_id (jp/list-representative-job-steps (mapv :id jobs)))]
     {:analyses (mapv (partial format-admin-job rep-steps) jobs)}))
 
 (defn list-job
