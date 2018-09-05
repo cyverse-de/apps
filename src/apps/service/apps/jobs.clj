@@ -64,16 +64,27 @@
       (jp/update-job (:id batch) {:status new-status :end_date end-date})
       (jp/update-job-steps (:id batch) new-status end-date))))
 
-(defn update-job-status
-  [apps-client {external-id :external_id :as job-step} {:keys [id] :as job} batch status end-date]
-  (when (jp/completed? (:status job))
-    (service/bad-request (str "received a job status update for completed or canceled job, " id)))
-  (when (jp/completed? (:status job-step))
-    (service/bad-request (str "received a job status update for completed or canceled step, " external-id "/" id)))
+(defn- log-spurious-job-update
+  [{:keys [id]}]
+  (log/warn (str "received a job status update for completed or canceled job, " id)))
+
+(defn- log-spurious-job-step-update
+  [{job-id :id} {external-id :external_id}]
+  (log/warn (str "received a job status update for completed or canceled step, " external-id "/" job-id)))
+
+(defn- update-job-status*
+  [apps-client job-step job batch status end-date]
   (let [end-date (db/timestamp-from-str end-date)]
     (.updateJobStatus apps-client job-step job status end-date)
     (when batch (update-batch-status batch end-date))
     (send-job-status-update apps-client (or batch job) job-step)))
+
+(defn update-job-status
+  [apps-client job-step job batch status end-date]
+  (cond
+    (jp/completed? (:status job))      (log-spurious-job-update job)
+    (jp/completed? (:status job-step)) (log-spurious-job-step-update job job-step)
+    :else                              (update-job-status* apps-client job-step job batch status end-date)))
 
 (defn- find-incomplete-job-steps
   [job-id]
