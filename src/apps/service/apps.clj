@@ -210,16 +210,28 @@
     (format-job-submission-response job-info)))
 
 (defn update-job-status
-  ([external-id status end-date]
-     (let [{job-id :job_id} (jobs/get-unique-job-step external-id)]
-       (update-job-status job-id external-id status end-date)))
+  ([external-id]
+   (let [{job-id :job_id} (jobs/get-unique-job-step external-id)
+         updates          (jp/get-job-status-updates external-id)]
+     (when (seq updates)
+       (let [job-step    (jobs/lock-job-step job-id external-id)
+             job         (jobs/lock-job job-id)
+             batch       (when-let [parent-id (:parent_id job)] (jp/get-job-by-id parent-id))
+             apps-client (get-apps-client-for-username (:username job))]
+         (doseq [{:keys [status sent-on]} updates]
+           (let [end-date (when (jp/completed? status) (str sent-on))
+                 job-step (jobs/get-unique-job-step external-id)]
+             (time (when (jp/status-follows? status (:status job-step))
+                     (jobs/update-job-status apps-client job-step job batch status end-date)))))
+         (jp/mark-job-status-updates-propagated (mapv :id updates))
+         nil))))
   ([job-id external-id status end-date]
-     (transaction
-      (let [job-step (jobs/lock-job-step job-id external-id)
-            job      (jobs/lock-job job-id)
-            batch    (when-let [parent-id (:parent_id job)] (jobs/lock-job parent-id))]
-        (-> (get-apps-client-for-username (:username job))
-            (jobs/update-job-status job-step job batch status end-date))))))
+   (transaction
+    (let [job-step (jobs/lock-job-step job-id external-id)
+          job      (jobs/lock-job job-id)
+          batch    (when-let [parent-id (:parent_id job)] (jp/get-job-by-id parent-id))]
+      (-> (get-apps-client-for-username (:username job))
+          (jobs/update-job-status job-step job batch status end-date))))))
 
 (def logging-context-map (ref {}))
 
