@@ -6,12 +6,10 @@
             [clojure.tools.logging :as log]))
 
 (defn update-de-job-status
-  [{{end-date :completion_date :keys [status uuid]} :state}]
+  [{:keys [uuid]}]
   (service/assert-valid uuid "no job UUID provided")
-  (service/assert-valid status "no status provided")
-  (log/info (str "received a status update for DE job " uuid ": status = " status))
-  (when-not (= status jp/submitted-status)
-    (apps/update-job-status uuid status end-date)))
+  (log/info (str "received a status update for DE job " uuid))
+  (apps/update-job-status uuid))
 
 (defn update-agave-job-status
   [job-id last-updated {:keys [status external-id end-time]}]

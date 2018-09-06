@@ -84,7 +84,7 @@
 (defn status-follows?
   "Determines whether or not the new job status follows the old job status."
   [new-status old-status]
-  (>= (job-status-order new-status) (job-status-order old-status)))
+  (> (job-status-order new-status) (job-status-order old-status)))
 
 (defn completed?
   [job-status]
@@ -761,3 +761,21 @@
   (->> (select :job_tickets (fields :irods_path :ticket) (where {:job_id job-id}))
        (map (juxt :irods_path :ticket))
        (into {})))
+
+(defn get-job-status-updates
+  "Retrieves the list of job status updates for an external ID."
+  [external-id]
+  (-> (select* :job_status_updates)
+      (fields :id :status :sent_on)
+      (order :sent_on :ASC)
+      (where {:external_id          external-id
+              :propagated           false
+              :propagation_attempts [< 3]})
+      select))
+
+(defn mark-job-status-updates-propagated
+  "Marks a set of job status updates as propagated."
+  [ids]
+  (sql/update :job_status_updates
+              (set-fields {:propagated true})
+              (where {:id [in ids]})))
