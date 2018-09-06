@@ -221,8 +221,8 @@
          (doseq [{status :status sent-on :sent_on} updates]
            (let [end-date (when (jp/completed? status) (str sent-on))
                  job-step (jobs/get-unique-job-step external-id)]
-             (time (when (jp/status-follows? status (:status job-step))
-                     (jobs/update-job-status apps-client job-step job batch status end-date)))))
+             (when (jp/status-follows? status (:status job-step))
+               (jobs/update-job-status apps-client job-step job batch status end-date))))
          (jp/mark-job-status-updates-propagated (mapv :id updates))
          nil))))
   ([job-id external-id status end-date]
