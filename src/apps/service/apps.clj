@@ -218,7 +218,7 @@
              job         (jobs/lock-job job-id)
              batch       (when-let [parent-id (:parent_id job)] (jp/get-job-by-id parent-id))
              apps-client (get-apps-client-for-username (:username job))]
-         (doseq [{:keys [status sent-on]} updates]
+         (doseq [{status :status sent-on :sent_on} updates]
            (let [end-date (when (jp/completed? status) (str sent-on))
                  job-step (jobs/get-unique-job-step external-id)]
              (time (when (jp/status-follows? status (:status job-step))
