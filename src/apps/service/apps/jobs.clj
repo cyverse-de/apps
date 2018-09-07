@@ -174,6 +174,7 @@
 (defn- stop-single-job
   [apps-client status-to-set {job-id :id :as job} notify?]
   (jp/update-job job-id status-to-set (db/now))
+  (jp/add-job-status-update job-id "Job being stopped" status-to-set)
   (try+
     (stop-job-steps apps-client job (find-incomplete-job-steps job-id) notify?)
     (catch Throwable t
