@@ -123,12 +123,12 @@
 
   (POST "/:analysis-id/stop" []
          :path-params [analysis-id :- AnalysisIdPathParam]
-         :query       [params SecuredQueryParams]
+         :query       [params StopAnalysisRequest]
          :return      StopAnalysisResponse
          :summary     "Stop a running analysis."
          :description       "This service allows DE users to stop running analyses."
          (ok (coerce! StopAnalysisResponse
-                  (apps/stop-job current-user analysis-id))))
+                  (apps/stop-job current-user analysis-id params))))
 
   (GET "/:analysis-id/steps" []
         :path-params [analysis-id :- AnalysisIdPathParam]
