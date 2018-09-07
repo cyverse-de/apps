@@ -286,7 +286,7 @@
 
 (defn stop-job
   [user job-id params]
-  (let [status (:job_status params "Canceled")]
+  (let [status (:job_status params jp/canceled-status)]
     (jobs/stop-job (get-apps-client user) user job-id status))
   {:id job-id})
 

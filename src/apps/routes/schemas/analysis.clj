@@ -2,7 +2,8 @@
   (:use [common-swagger-api.schema :only [describe]]
         [schema.core :only [defschema optional-key enum Any Bool Keyword]]
         [apps.routes.params :only [SystemId SecuredQueryParams]]
-        [apps.routes.schemas.containers :only [ToolContainer]])
+        [apps.routes.schemas.containers :only [ToolContainer]]
+        [apps.persistence.jobs :only [canceled-status failed-status completed-status]])
   (:import [java.util UUID]))
 
 (defschema ParameterValue
@@ -48,7 +49,7 @@
 (defschema StopAnalysisRequest
   (assoc SecuredQueryParams
          (optional-key :job_status)
-         (describe (enum "Canceled" "Completed" "Failed") "The job status to set. Defaults to canceled, can also be completed or failed")))
+         (describe (enum canceled-status completed-status failed-status) "The job status to set. Defaults to canceled, can also be completed or failed")))
 
 (defschema StopAnalysisResponse
   {:id (describe UUID "the ID of the stopped analysis.")})
