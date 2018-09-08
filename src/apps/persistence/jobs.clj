@@ -769,7 +769,7 @@
           (values {:external_id        external-id
                    :message            message
                    :status             status
-                   :sent_from          "0.0.0.0"
+                   :sent_from          (raw "'0.0.0.0'::inet")
                    :sent_from_hostname "0.0.0.0"
                    :sent_on            (System/currentTimeMillis)})))
 
