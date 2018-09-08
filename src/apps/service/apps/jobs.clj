@@ -165,18 +165,18 @@
 
 (defn- stop-job-steps
   "Stops an individual step in a job."
-  [apps-client {:keys [id] :as job} steps notify?]
+  [apps-client status-to-set {:keys [id] :as job} steps notify?]
   (.stopJobStep apps-client (first steps))
   (jp/cancel-job-step-numbers id (mapv :step_number steps))
+  (jp/add-job-status-update (:external_id (first steps)) "Job being stopped" status-to-set)
   (when notify?
     (send-job-status-update apps-client job (first steps))))
 
 (defn- stop-single-job
   [apps-client status-to-set {job-id :id :as job} notify?]
   (jp/update-job job-id status-to-set (db/now))
-  (jp/add-job-status-update job-id "Job being stopped" status-to-set)
   (try+
-    (stop-job-steps apps-client job (find-incomplete-job-steps job-id) notify?)
+    (stop-job-steps apps-client status-to-set job (find-incomplete-job-steps job-id) notify?)
     (catch Throwable t
       (log/warn t "unable to cancel the most recent step of job, " job-id))
     (catch Object _
