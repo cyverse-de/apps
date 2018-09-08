@@ -286,8 +286,9 @@
   (jobs/get-job-relaunch-info (get-apps-client user) user job-id))
 
 (defn stop-job
-  [user job-id]
-  (jobs/stop-job (get-apps-client user) user job-id)
+  [user job-id params]
+  (let [status (:job_status params jp/canceled-status)]
+    (jobs/stop-job (get-apps-client user) user job-id status))
   {:id job-id})
 
 (defn list-job-steps

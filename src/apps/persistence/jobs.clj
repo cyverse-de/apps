@@ -762,6 +762,17 @@
        (map (juxt :irods_path :ticket))
        (into {})))
 
+(defn add-job-status-update
+  "Adds a job status update for a given external ID"
+  [external-id message status]
+  (insert :job_status_updates
+          (values {:external_id        external-id
+                   :message            message
+                   :status             status
+                   :sent_from          (raw "'0.0.0.0'::inet")
+                   :sent_from_hostname "0.0.0.0"
+                   :sent_on            (System/currentTimeMillis)})))
+
 (defn get-job-status-updates
   "Retrieves the list of job status updates for an external ID."
   [external-id]

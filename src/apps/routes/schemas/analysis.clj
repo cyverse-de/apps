@@ -1,8 +1,9 @@
 (ns apps.routes.schemas.analysis
   (:use [common-swagger-api.schema :only [describe]]
-        [schema.core :only [defschema optional-key Any Bool Keyword]]
-        [apps.routes.params :only [SystemId]]
-        [apps.routes.schemas.containers :only [ToolContainer]])
+        [schema.core :only [defschema optional-key enum Any Bool Keyword]]
+        [apps.routes.params :only [SystemId SecuredQueryParams]]
+        [apps.routes.schemas.containers :only [ToolContainer]]
+        [apps.persistence.jobs :only [canceled-status failed-status completed-status]])
   (:import [java.util UUID]))
 
 (defschema ParameterValue
@@ -44,6 +45,11 @@
 
 (defschema AnalysisShredderRequest
   {:analyses (describe [UUID] "The identifiers of the analyses to be deleted.")})
+
+(defschema StopAnalysisRequest
+  (assoc SecuredQueryParams
+         (optional-key :job_status)
+         (describe (enum canceled-status completed-status failed-status) "The job status to set. Defaults to canceled, can also be completed or failed")))
 
 (defschema StopAnalysisResponse
   {:id (describe UUID "the ID of the stopped analysis.")})
