@@ -1,10 +1,11 @@
-FROM discoenv/clojure-base:master
+FROM clojure:lein-alpine
 
-ENV CONF_TEMPLATE=/usr/src/app/apps.properties.tmpl
-ENV CONF_FILENAME=apps.properties
-ENV PROGRAM=apps
+WORKDIR /usr/src/app
 
-RUN mkdir -p /etc/iplant/de/crypto && \
+RUN apk add --no-cache git
+
+RUN ln -s "/usr/bin/java" "/bin/apps" && \
+    mkdir -p /etc/iplant/de/crypto && \
     touch /etc/iplant/de/crypto/pubring.gpg && \
     touch /etc/iplant/de/crypto/random_seed && \
     touch /etc/iplant/de/crypto/secring.gpg && \
@@ -21,9 +22,7 @@ COPY . /usr/src/app
 RUN lein uberjar && \
     cp target/apps-standalone.jar .
 
-RUN ln -s "/usr/bin/java" "/bin/apps"
-
-ENTRYPOINT ["run-service", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-cp", ".:apps-standalone.jar:/", "apps.core"]
+ENTRYPOINT ["apps", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-cp", ".:apps-standalone.jar:/", "apps.core"]
 CMD ["--help"]
 
 ARG git_commit=unknown
