@@ -17,8 +17,9 @@ node('docker') {
         echo descriptive_version
 
         dockerRepo = "test-${env.BUILD_TAG}"
+        dockerPushRepo = "${service.dockerUser}/${service.repo}:${env.BRANCH_NAME}"
 
-        sh "docker build --pull --rm --build-arg git_commit=${git_commit} --build-arg version=${version} --build-arg descriptive_version=${descriptive_version} -t ${dockerRepo} ."
+        sh "docker build --pull --cache-from=${dockerPushRepo} --rm --build-arg git_commit=${git_commit} --build-arg version=${version} --build-arg descriptive_version=${descriptive_version} -t ${dockerRepo} ."
 
         image_sha = sh(returnStdout: true, script: "docker inspect -f '{{ .Config.Image }}' ${dockerRepo}").trim()
         echo image_sha
@@ -41,7 +42,6 @@ node('docker') {
 
             milestone 100
             stage "Docker Push"
-            dockerPushRepo = "${service.dockerUser}/${service.repo}:${env.BRANCH_NAME}"
             lock("docker-push-${dockerPushRepo}") {
               milestone 101
               sh "docker tag ${dockerRepo} ${dockerPushRepo}"
