@@ -1,4 +1,5 @@
 #!groovy
+milestone 0
 node('docker') {
     slackJobDescription = "job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
     try {
@@ -19,7 +20,9 @@ node('docker') {
         dockerRepo = "test-${env.BUILD_TAG}"
         dockerPushRepo = "${service.dockerUser}/${service.repo}:${env.BRANCH_NAME}"
 
+        milestone 50
         sh "docker build --pull --cache-from=${dockerPushRepo} --rm --build-arg git_commit=${git_commit} --build-arg version=${version} --build-arg descriptive_version=${descriptive_version} -t ${dockerRepo} ."
+        milestone 51
 
         image_sha = sh(returnStdout: true, script: "docker inspect -f '{{ .Config.Image }}' ${dockerRepo}").trim()
         echo image_sha
