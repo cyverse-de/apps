@@ -11,6 +11,8 @@
   (listAppsInCategory [_ system-id category-id params])
   (listAppsUnderHierarchy [_ root-iri attr params])
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params])
+  (listAppsInCommunity [_ community-id params])
+  (adminListAppsInCommunity [_ community-id params])
   (searchApps [_ search-term params])
   (adminSearchApps [_ search-term params])
   (canEditApps [_])

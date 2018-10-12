@@ -42,6 +42,7 @@
             :tags [{:name "service-info", :description "Service Status Information"}
                    {:name "callbacks", :description "General callback endpoints"}
                    {:name "app-categories", :description "App Category endpoints."}
+                   {:name "app-communities", :description "App Community endpoints."}
                    {:name "app-hierarchies", :description "App Hierarchy endpoints."}
                    {:name "app-element-types", :description "App Element endpoints."}
                    {:name "apps", :description "App endpoints."}
@@ -62,6 +63,7 @@
                    {:name "admin-apps", :description "Admin App endpoints."}
                    {:name "admin-app-metadata", :description "Admin App Metadata endpoints."}
                    {:name "admin-categories", :description "Admin App Category endpoints."}
+                   {:name "admin-communities", :description "Admin App Community endpoints."}
                    {:name "admin-ontologies", :description "Admin App Ontology endpoints."}
                    {:name "admin-container-images", :description "Admin Tool Docker Images endpoints."}
                    {:name "admin-data-containers", :description "Admin Docker Data Container endpoints."}
@@ -93,6 +95,9 @@
     (context "/apps/categories" []
       :tags ["app-categories"]
       app-category-routes/app-categories)
+    (context "/apps/communities" []
+      :tags ["app-communities"]
+      app-category-routes/app-communities)
     (context "/apps/hierarchies" []
       :tags ["app-hierarchies"]
       app-category-routes/app-hierarchies)
@@ -150,6 +155,9 @@
     (context "/admin/apps/categories" []
       :tags ["admin-categories"]
       admin-routes/admin-categories)
+    (context "/admin/apps/communities" []
+      :tags ["admin-communities"]
+      admin-routes/admin-communities)
     (context "/admin/apps/:app-id/metadata" []
       :tags ["admin-app-metadata"]
       metadata-routes/admin-app-metadata)

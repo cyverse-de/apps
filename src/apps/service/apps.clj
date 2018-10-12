@@ -91,6 +91,14 @@
   [user ontology-version root-iri attr params]
   (.adminListAppsUnderHierarchy (get-apps-client user) ontology-version root-iri attr params))
 
+(defn list-apps-in-community
+  [user community-id params]
+  (.listAppsInCommunity (get-apps-client user) community-id params))
+
+(defn admin-list-apps-in-community
+  [user community-id params]
+  (.adminListAppsInCommunity (get-apps-client user) community-id params))
+
 (defn search-apps
   [user {:keys [search] :as params}]
   (.searchApps (get-apps-client user) search params))

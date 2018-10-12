@@ -58,6 +58,12 @@
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params]
     (listings/list-apps-under-hierarchy user ontology-version root-iri attr params true))
 
+  (listAppsInCommunity [_ community-id params]
+    (listings/list-apps-in-community user community-id params false))
+
+  (adminListAppsInCommunity [_ community-id params]
+    (listings/list-apps-in-community user community-id params true))
+
   (searchApps [_ _ params]
     (listings/list-apps user params false))
 

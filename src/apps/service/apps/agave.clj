@@ -94,6 +94,19 @@
         (listings/list-apps-with-ontology agave root-iri params true)
         (.emptyAppListing agave))))
 
+  ;; Since Agave doesn't list apps under ontology hierarchies, we'll use the ontology listing with communities for now.
+  (listAppsInCommunity [self community-id params]
+    (when (user-has-access-token?)
+      (if (apps-util/app-type-qualifies? self params)
+        (listings/list-apps-with-ontology agave community-id params false)
+        (.emptyAppListing agave))))
+
+  (adminListAppsInCommunity [self community-id params]
+    (when (user-has-access-token?)
+      (if (apps-util/app-type-qualifies? self params)
+        (listings/list-apps-with-ontology agave community-id params true)
+        (.emptyAppListing agave))))
+
   (searchApps [self search-term params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)

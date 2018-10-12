@@ -253,6 +253,19 @@
       on the fields included in the request."
       (ok (apps/admin-update-category current-user system-id (assoc body :id category-id))))))
 
+(defroutes admin-communities
+
+  (GET "/:community-id/apps" []
+       :path-params [community-id :- AppCommunityGroupNameParam]
+       :query [params AdminAppListingPagingParams]
+       :return AdminAppListing
+       :summary "List Apps in a Community"
+       :description (str "Lists all of the apps under an App Community that are visible to an admin."
+                         (get-endpoint-delegate-block
+                           "metadata"
+                           "POST /avus/filter-targets"))
+       (ok (coerce! AdminAppListing (apps/admin-list-apps-in-community current-user community-id params)))))
+
 (defroutes admin-ontologies
 
   (GET "/" []
