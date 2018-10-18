@@ -51,6 +51,18 @@
            (remove nil?)
            (util/combine-app-listings params))))
 
+  (listAppsInCommunity [_ community-id params]
+    (let [unpaged-params (dissoc params :limit :offset)]
+      (->> (map #(.listAppsInCommunity % community-id unpaged-params) clients)
+           (remove nil?)
+           (util/combine-app-listings params))))
+
+  (adminListAppsInCommunity [_ community-id params]
+    (let [unpaged-params (dissoc params :limit :offset)]
+      (->> (map #(.adminListAppsInCommunity % community-id unpaged-params) clients)
+           (remove nil?)
+           (util/combine-app-listings params))))
+
   (searchApps [_ search-term params]
     (->> (map #(.searchApps % search-term (select-keys params [:search :app-type])) clients)
          (remove nil?)

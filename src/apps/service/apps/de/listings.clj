@@ -315,6 +315,13 @@
                   :value (workspace-metadata-beta-value)}]
     (set (metadata-client/filter-by-avus username app-ids [beta-avu]))))
 
+(defn- filter-app-ids-by-community
+  "Filters the given list of app-ids into a set containing the ids of apps tagged with the given community-id"
+  [username community-id app-ids]
+  (let [community-avu {:attr  (workspace-metadata-communities-attr)
+                       :value community-id}]
+    (set (metadata-client/filter-by-avus username app-ids [community-avu]))))
+
 (defn- app-listing-by-id
   [{:keys [username shortUsername]} params perms app-ids admin?]
   (let [workspace      (get-optional-workspace username)
@@ -364,6 +371,11 @@
   ([{:keys [username] :as user} ontology-version root-iri attr params admin?]
    (let [metadata-filter (partial metadata-client/filter-unclassified username ontology-version root-iri attr)]
      (apps-listing-with-metadata-filter user params metadata-filter admin?))))
+
+(defn list-apps-in-community
+  [{:keys [username] :as user} community-id params admin?]
+  (let [metadata-filter (partial filter-app-ids-by-community username community-id)]
+    (apps-listing-with-metadata-filter user params metadata-filter admin?)))
 
 (defn- list-apps-in-virtual-group
   "Formats a listing for a virtual group."

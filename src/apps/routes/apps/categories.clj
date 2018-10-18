@@ -91,3 +91,18 @@
         (ok (coerce! AppListing (listings/get-unclassified-app-listing current-user root-iri attr params))))
 
   (undocumented (route/not-found (service/unrecognized-path-response))))
+
+(defroutes app-communities
+
+  (GET "/:community-id/apps" []
+       :path-params [community-id :- AppCommunityGroupNameParam]
+       :query [params AppListingPagingParams]
+       :return AppListing
+       :summary "List Apps in a Community"
+       :description (str "Lists all of the apps under an App Community that are visible to the user."
+                         (get-endpoint-delegate-block
+                           "metadata"
+                           "POST /avus/filter-targets"))
+       (ok (coerce! AppListing (apps/list-apps-in-community current-user community-id params))))
+
+  (undocumented (route/not-found (service/unrecognized-path-response))))

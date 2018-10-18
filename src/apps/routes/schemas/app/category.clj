@@ -14,6 +14,7 @@
   (:import [java.util Date UUID]))
 
 (def AppCategoryNameParam (describe String "The App Category's name"))
+(def AppCommunityGroupNameParam (describe String "The full group name of the App Community"))
 
 (defschema CategoryListingParams
   (merge SecuredQueryParamsEmailRequired
@@ -28,6 +29,11 @@
   (assoc SecuredQueryParams
     (optional-key :name)
     (describe [String] "Category names to search for.")))
+
+(defschema AdminAppListingPagingParams
+  (assoc AppListingPagingParams
+    SortFieldOptionalKey
+    (describe (apply enum AdminAppListingValidSortFields) SortFieldDocs)))
 
 (defschema AppCategoryId
   {:system_id

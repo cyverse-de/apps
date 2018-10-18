@@ -158,6 +158,11 @@
   [props config-valid configs]
   "apps.workspace.metadata.category.attrs" ["rdf:type", "http://edamontology.org/has_topic"])
 
+(cc/defprop-optstr workspace-metadata-communities-attr
+  "The attr of an App Community tag AVU."
+  [props config-valid configs]
+  "apps.workspace.metadata.communities.attr" "cyverse-community")
+
 (cc/defprop-str uid-domain
   "The domain name to append to the user identifier to get the fully qualified
    user identifier."
