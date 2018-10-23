@@ -27,12 +27,21 @@
 
 (defn- restrict-private-tool-container
   "Restrict the networking, CPU shares, and memory limits for the tool's container."
-  [{:keys [pids_limit memory_limit] :or {pids_limit   (cfg/private-tool-pids-limit)
-                                         memory_limit (cfg/private-tool-memory-limit)}
+  [{:keys [pids_limit memory_limit max_cpu_cores] :or {pids_limit    (cfg/private-tool-pids-limit)
+                                                       memory_limit  (cfg/private-tool-memory-limit)
+                                                       max_cpu_cores (cfg/private-tool-max-cpu-cores)}
     :as container}]
   (assoc container :network_mode "none"
-                   :pids_limit   (restrict-private-tool-setting pids_limit   (cfg/private-tool-pids-limit))
-                   :memory_limit (restrict-private-tool-setting memory_limit (cfg/private-tool-memory-limit))))
+                   :max_cpu_cores (restrict-private-tool-setting max_cpu_cores (cfg/tool-max-cpu-cores))
+                   :pids_limit    (restrict-private-tool-setting pids_limit   (cfg/private-tool-pids-limit))
+                   :memory_limit  (restrict-private-tool-setting memory_limit (cfg/tool-memory-limit))))
+
+(defn- set-private-tool-defaults
+  "Set the default pid/memory/cpu restrictions for a private tool, if they're unset"
+  [{:keys [pids_limit memory_limit max_cpu_cores] :as container}]
+  (assoc container :pids_limit    (or pids_limit (cfg/private-tool-pids-limit))
+                   :memory_limit  (or memory_limit (cfg/private-tool-memory-limit))
+                   :max_cpu_cores (or max_cpu_cores (cfg/private-tool-max-cpu-cores))))
 
 (defn- restrict-private-tool-time-limit
   "Restrict the tool's time limit setting."
@@ -69,7 +78,7 @@
                       restrict-private-tool
                       (assoc :implementation (ensure-default-implementation user implementation))
                       persistence/add-tool)]
-      (containers/add-tool-container tool-id (restrict-private-tool-container container))
+      (containers/add-tool-container tool-id (restrict-private-tool-container (set-private-tool-defaults container)))
       (perms-client/register-private-tool shortUsername tool-id)
       (tools/get-tool shortUsername tool-id))))
 

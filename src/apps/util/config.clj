@@ -112,6 +112,21 @@
   [props config-valid configs]
   "apps.tools.private.memory-limit" (* 16 1024 1024 1024)) ;; 16GB
 
+(cc/defprop-optlong private-tool-max-cpu-cores
+  "The number of cpu cores to use when adding new private tools"
+  [props config-valid configs]
+  "apps.tools.private.max-cpu-cores" 4.0)
+
+(cc/defprop-optint tool-memory-limit
+  "The maximum memory limit, in bytes, that a (private) tool may be created with"
+  [props config-valid configs]
+  "apps.tools.memory-limit" (* 32 1024 1024 1024)) ;; 32GB
+
+(cc/defprop-optlong tool-max-cpu-cores
+  "The maximum number of max cpu cores that a (private) tool may be created with"
+  [props config-valid configs]
+  "apps.tools.max-cpu-cores" 16.0)
+
 (cc/defprop-optstr workspace-root-app-category
   "The name of the root app category in a user's workspace."
   [props config-valid configs]
