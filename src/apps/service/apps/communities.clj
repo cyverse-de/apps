@@ -34,10 +34,6 @@
     (validate-avu-community-admins username avus))
   (metadata-client/update-avus username app-id (json/encode request)))
 
-(defn- metadata->avu-only
-  [avu]
-  (select-keys avu [:attr :value :unit]))
-
 (defn- community-admin-remove-avus
   "remove only community AVUs as an admin"
   [username app-id {:keys [avus]} admin?]
@@ -45,16 +41,10 @@
     (validate-avu-community-admins username avus))
 
   (let [community-avu-set (->> avus
-                               (map metadata->avu-only)
-                               set)
-        all-avus          (->> (metadata-client/list-avus username app-id {:as :json})
-                               :body
-                               :avus)
-        remaining-avus    (remove #(contains? community-avu-set (metadata->avu-only %))
-                                  all-avus)]
-    (metadata-client/set-avus username
-                              app-id
-                              (json/encode {:avus remaining-avus}))))
+                               (map #(select-keys % [:attr :value :unit]))
+                               set
+                               seq)]
+    (metadata-client/delete-avus username [app-id] community-avu-set)))
 
 (defn add-app-to-communities
   [{username :shortUsername} app-id {:keys [avus]} admin?]

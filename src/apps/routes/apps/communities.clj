@@ -3,7 +3,8 @@
         [common-swagger-api.schema]
         [apps.routes.params]
         [apps.routes.schemas.app :only [AppCategoryMetadata]]
-        [apps.user :only [current-user]])
+        [apps.user :only [current-user]]
+        [ring.util.http-response :only [ok]])
   (:require [apps.service.apps.communities :as communities]
             [apps.util.service :as service]
             [compojure.route :as route]))
@@ -43,13 +44,8 @@
                                     "GET /groups/{group-name}/privileges")
                                   (get-endpoint-delegate-block
                                     "metadata"
-                                    "GET /avus/{target-type}/{target-id}")
-                                  (get-endpoint-delegate-block
-                                    "metadata"
-                                    "PUT /avus/{target-type}/{target-id}")
-                                  "Where `{target-type}` is `app`."
-                                  " Please see the metadata service documentation for response information.")
-                   (communities/remove-app-from-communities current-user app-id body false))
+                                    "POST /avus/deleter"))
+                   (ok (communities/remove-app-from-communities current-user app-id body false)))
 
            (undocumented (route/not-found (service/unrecognized-path-response))))
 
@@ -78,12 +74,7 @@
                                   "Removes the given Community AVUs associated with an app."
                                   (get-endpoint-delegate-block
                                     "metadata"
-                                    "GET /avus/{target-type}/{target-id}")
-                                  (get-endpoint-delegate-block
-                                    "metadata"
-                                    "PUT /avus/{target-type}/{target-id}")
-                                  "Where `{target-type}` is `app`."
-                                  " Please see the metadata service documentation for response information.")
-                   (communities/remove-app-from-communities current-user app-id body true))
+                                    "POST /avus/deleter"))
+                   (ok (communities/remove-app-from-communities current-user app-id body true)))
 
            (undocumented (route/not-found (service/unrecognized-path-response))))
