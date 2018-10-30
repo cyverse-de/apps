@@ -17,14 +17,15 @@
 (defn validate-job-status-update-step-count
   "Validates the number of steps for an external ID provided in a set of job status updates. If there are too many or
   too few matching job steps then all of the job status updates will be marked as propagated and an exception will be
-  thrown."
-  [external-id updates job-steps]
-  (when (empty? job-steps)
-    (jp/mark-job-status-updates-propagated (mapv :id updates))
-    (service/not-found "job step" external-id))
-  (when (> (count job-steps) 1)
-    (jp/mark-job-status-updates-propagated (mapv :id updates))
-    (service/not-unique "job step" external-id)))
+  thrown. This function should not be called from within a transaction."
+  [external-id]
+  (let [job-steps (jp/get-job-steps-by-external-id external-id)]
+    (when (empty? job-steps)
+      (jp/mark-job-status-updates-for-external-id-completed external-id)
+      (service/not-found "job step" external-id))
+    (when (> (count job-steps) 1)
+      (jp/mark-job-status-updates-for-external-id-completed external-id)
+      (service/not-unique "job step" external-id))))
 
 (defn lock-job-step
   [job-id external-id]

@@ -219,12 +219,11 @@
 
 (defn update-job-status
   ([external-id]
+   (jobs/validate-job-status-update-step-count external-id)
    (transaction
-    (let [updates (jp/get-job-status-updates external-id)
-          steps   (jp/get-job-steps-by-external-id external-id)]
+    (let [updates (jp/get-job-status-updates external-id)]
       (when (seq updates)
-        (jobs/validate-job-status-update-step-count external-id updates steps)
-        (let [job-id      (:job_id (first steps))
+        (let [job-id      (:job_id (jp/get-job-steps-by-external-id external-id))
               job-step    (jobs/lock-job-step job-id external-id)
               job         (jobs/lock-job job-id)
               batch       (when-let [parent-id (:parent_id job)] (jp/get-job-by-id parent-id))
