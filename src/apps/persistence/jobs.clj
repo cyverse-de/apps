@@ -787,6 +787,14 @@
 (defn mark-job-status-updates-propagated
   "Marks a set of job status updates as propagated."
   [ids]
+  (when (seq ids)
+    (sql/update :job_status_updates
+                (set-fields {:propagated true})
+                (where {:id [in ids]}))))
+
+(defn mark-job-status-updates-for-external-id-completed
+  "Marks all job status updates for an external ID as completed."
+  [external-id]
   (sql/update :job_status_updates
               (set-fields {:propagated true})
-              (where {:id [in ids]})))
+              (where {:external_id external-id})))
