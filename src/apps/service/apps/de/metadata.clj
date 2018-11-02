@@ -14,9 +14,12 @@
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+ try+]])
-  (:require [apps.clients.metadata :as metadata-client]
+  (:require [apps.clients.iplant-groups :as groups-client]
+            [apps.clients.notifications :as notifications]
+            [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
+            [apps.service.apps.communities :as communities]
             [apps.service.apps.de.docs :as app-docs]
             [apps.service.apps.de.permissions :as perms]
             [apps.translations.app-metadata :as atx]
@@ -153,19 +156,36 @@
             :value (config/workspace-metadata-beta-attr-label)
             :unit  "attr"}]})
 
+(defn- community-name->admin-set
+  [username community-name]
+  (->> (communities/get-community-admin-set username community-name)
+       (map #(vector community-name %))))
+
+(defn- notify-community-admins
+  [username app-name community-names]
+  (let [admin->communities-map (->> community-names
+                                    (mapcat (partial community-name->admin-set username))
+                                    (group-by second))]
+    (doseq [[admin community+admin-lists] admin->communities-map]
+      (notifications/send-community-admin-notification app-name
+                                                       (groups-client/lookup-subject username admin)
+                                                       (map first community+admin-lists)))))
+
 (defn- publish-app-metadata
-  [username app-id avus]
+  [username app-id app-name avus]
   (let [body (cheshire/encode {:avus (conj avus (beta-avu))})]
-    (metadata-client/update-avus username app-id body)))
+    (metadata-client/update-avus username app-id body))
+  (if-let [community-names (communities/extract-full-community-names avus)]
+    (notify-community-admins username app-name community-names)))
 
 (defn- publish-app
-  [{:keys [shortUsername] :as user} {app-id :id :keys [references avus] :as app}]
+  [{:keys [shortUsername] :as user} {app-id :id :keys [name references avus] :as app}]
   (transaction
     (amp/update-app app true)
     (when (:documentation app) (app-docs/add-app-docs user app-id app))
     (when references (amp/set-app-references app-id references))
     (decategorize-app app-id)
-    (publish-app-metadata shortUsername app-id avus)
+    (publish-app-metadata shortUsername app-id (or name (amp/get-app-name app-id)) avus)
     (perms-client/make-app-public shortUsername app-id))
   nil)
 

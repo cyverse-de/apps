@@ -196,3 +196,18 @@
   (->> (tool-notifications/format-unsharing-notifications sharer sharee responses)
        (map guarded-send-notification)
        dorun))
+
+(defn- format-community-admin-notification
+  [app-name {:keys [id email]} community-names]
+  {:type           "apps"
+   :user           id
+   :subject        (str "App " app-name " added to one or more communities")
+   :email          true
+   :email_template "app_added_to_communities"
+   :payload        {:email_address  email
+                    :app_name       app-name
+                    :community_list (string/join "\n" community-names)}})
+
+(defn send-community-admin-notification
+  [app-name admin community-names]
+  (guarded-send-notification (format-community-admin-notification app-name admin community-names)))

@@ -6,9 +6,9 @@
             [clojure.set :as sets]
             [clojure-commons.exception-util :as exception-util]))
 
-(defn- get-community-admin-set
-  [username name]
-  (->> (groups/get-community-admins username name)
+(defn get-community-admin-set
+  [username community-name]
+  (->> (groups/get-community-admins username community-name)
        :members
        (mapv :id)
        set))
@@ -46,16 +46,26 @@
                                seq)]
     (metadata-client/delete-avus username [app-id] community-avu-set)))
 
+(defn filter-community-avus
+  [avus]
+  (get (group-by :attr avus)
+       (config/workspace-metadata-communities-attr)))
+
+(defn extract-full-community-names
+  [avus]
+  (->> avus
+       filter-community-avus
+       (group-by :value)
+       keys))
+
 (defn add-app-to-communities
   [{username :shortUsername} app-id {:keys [avus]} admin?]
-  (if-let [community-avus (get (group-by :attr avus)
-                               (config/workspace-metadata-communities-attr))]
+  (if-let [community-avus (filter-community-avus avus)]
     (community-admin-update-avus username app-id {:avus community-avus} admin?)
     (exception-util/bad-request "No community metadata found in request")))
 
 (defn remove-app-from-communities
   [{username :shortUsername} app-id {:keys [avus]} admin?]
-  (if-let [community-avus (get (group-by :attr avus)
-                               (config/workspace-metadata-communities-attr))]
+  (if-let [community-avus (filter-community-avus avus)]
     (community-admin-remove-avus username app-id {:avus community-avus} admin?)
     (exception-util/bad-request "No community metadata found in request")))
