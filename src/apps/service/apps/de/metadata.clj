@@ -14,8 +14,7 @@
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+ try+]])
-  (:require [apps.clients.iplant-groups :as groups-client]
-            [apps.clients.notifications :as notifications]
+  (:require [apps.clients.notifications :as notifications]
             [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
@@ -156,20 +155,26 @@
             :value (config/workspace-metadata-beta-attr-label)
             :unit  "attr"}]})
 
-(defn- community-name->admin-set
-  [username community-name]
-  (->> (communities/get-community-admin-set username community-name)
-       (map #(vector community-name %))))
+(defn- admin->communities-map
+  "Takes a `community-name` and its corresponding `admin-set` and returns a map like the following:
+  {admin1 [community-name],
+   admin2 [community-name],
+   admin3 [community-name]}"
+  [community-name admin-set]
+  (zipmap admin-set (repeat [community-name])))
 
 (defn- notify-community-admins
   [username app-name community-names]
-  (let [admin->communities-map (->> community-names
-                                    (mapcat (partial community-name->admin-set username))
-                                    (group-by second))]
-    (doseq [[admin community+admin-lists] admin->communities-map]
-      (notifications/send-community-admin-notification app-name
-                                                       (groups-client/lookup-subject username admin)
-                                                       (map first community+admin-lists)))))
+  (->> community-names
+       (map #(admin->communities-map % (communities/get-community-admin-set username %)))
+       (apply merge-with into)
+       ;; if community1 has admin1 and 2, community2 has admin2 and 3, and community3 has admin3,
+       ;; then by this point there should be a map like the following:
+       ;; {admin1 [community1],
+       ;;  admin2 [community1, community2],
+       ;;  admin3 [community2, community3]}
+       (map (partial apply notifications/send-community-admin-notification username app-name))
+       dorun))
 
 (defn- publish-app-metadata
   [username app-id app-name avus]

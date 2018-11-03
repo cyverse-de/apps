@@ -6,6 +6,7 @@
             [clj-time.format :as tf]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [apps.clients.iplant-groups :as groups-client]
             [apps.clients.notifications.app-sharing :as asn]
             [apps.clients.notifications.job-sharing :as jsn]
             [apps.clients.notifications.tool-sharing :as tool-notifications]
@@ -209,5 +210,7 @@
                     :community_list (string/join "\n" community-names)}})
 
 (defn send-community-admin-notification
-  [app-name admin community-names]
-  (guarded-send-notification (format-community-admin-notification app-name admin community-names)))
+  [username app-name admin community-names]
+  (guarded-send-notification (format-community-admin-notification app-name
+                                                                  (groups-client/lookup-subject username admin)
+                                                                  community-names)))
