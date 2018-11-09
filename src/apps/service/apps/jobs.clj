@@ -60,11 +60,12 @@
           :else                                          jp/submitted-status)))
 
 (defn- update-batch-status
-  [batch end-date]
-  (let [new-status (determine-batch-status batch)]
-    (when-not (= (:status batch) new-status)
-      (jp/update-job (:id batch) {:status new-status :end_date end-date})
-      (jp/update-job-steps (:id batch) new-status end-date))))
+  [{current-status :status :as batch} end-date]
+  (when-not (jp/completed? current-status)
+    (let [new-status (determine-batch-status batch)]
+      (when-not (= current-status new-status)
+        (jp/update-job (:id batch) {:status new-status :end_date end-date})
+        (jp/update-job-steps (:id batch) new-status end-date)))))
 
 (defn- log-spurious-job-update
   [{:keys [id]}]
