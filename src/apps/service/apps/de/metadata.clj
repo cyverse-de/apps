@@ -14,9 +14,11 @@
         [kameleon.uuids :only [uuidify]]
         [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+ try+]])
-  (:require [apps.clients.metadata :as metadata-client]
+  (:require [apps.clients.notifications :as notifications]
+            [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
+            [apps.service.apps.communities :as communities]
             [apps.service.apps.de.docs :as app-docs]
             [apps.service.apps.de.permissions :as perms]
             [apps.translations.app-metadata :as atx]
@@ -153,19 +155,42 @@
             :value (config/workspace-metadata-beta-attr-label)
             :unit  "attr"}]})
 
+(defn- admin->communities-map
+  "Takes a `community-name` and its corresponding `admin-set` and returns a map like the following:
+  {admin1 [community-name],
+   admin2 [community-name],
+   admin3 [community-name]}"
+  [community-name admin-set]
+  (zipmap admin-set (repeat [community-name])))
+
+(defn- notify-community-admins
+  [username app-name community-names]
+  (->> community-names
+       (map #(admin->communities-map % (communities/get-community-admin-set username %)))
+       (apply merge-with into)
+       ;; if community1 has admin1 and 2, community2 has admin2 and 3, and community3 has admin3,
+       ;; then by this point there should be a map like the following:
+       ;; {admin1 [community1],
+       ;;  admin2 [community1, community2],
+       ;;  admin3 [community2, community3]}
+       (map (partial apply notifications/send-community-admin-notification username app-name))
+       dorun))
+
 (defn- publish-app-metadata
-  [username app-id avus]
+  [username app-id app-name avus]
   (let [body (cheshire/encode {:avus (conj avus (beta-avu))})]
-    (metadata-client/update-avus username app-id body)))
+    (metadata-client/update-avus username app-id body))
+  (if-let [community-names (communities/extract-full-community-names avus)]
+    (notify-community-admins username app-name community-names)))
 
 (defn- publish-app
-  [{:keys [shortUsername] :as user} {app-id :id :keys [references avus] :as app}]
+  [{:keys [shortUsername] :as user} {app-id :id :keys [name references avus] :as app}]
   (transaction
     (amp/update-app app true)
     (when (:documentation app) (app-docs/add-app-docs user app-id app))
     (when references (amp/set-app-references app-id references))
     (decategorize-app app-id)
-    (publish-app-metadata shortUsername app-id avus)
+    (publish-app-metadata shortUsername app-id (or name (amp/get-app-name app-id)) avus)
     (perms-client/make-app-public shortUsername app-id))
   nil)
 
