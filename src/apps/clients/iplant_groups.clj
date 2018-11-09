@@ -98,6 +98,11 @@
                     :content-type :json
                     :as           :json})))
 
+(defn- verify-group-exists [client user name]
+  ;; get-group will return a 404 if the group doesn't exist.
+  (c/get-group client user name)
+  nil)
+
 (defn get-or-create-group
   "Ensures that a group with the given name exists."
   [group-name group-type]
@@ -136,3 +141,13 @@
        :subjects
        (map (juxt :id identity))
        (into {})))
+
+(defn get-community-admins
+  [user group]
+  (let [client (get-client)]
+    (verify-group-exists client user group)
+    (->> (c/list-group-privileges client (config/de-grouper-user) group {:subject-source-id "ldap" :privilege "admin"})
+         :privileges
+         (mapv :subject)
+         (remove (comp (partial = (config/de-grouper-user)) :id))
+         (hash-map :members))))

@@ -6,6 +6,10 @@
 
 (def app-target-type "app")
 
+(defn delete-avus
+  [username app-ids avus]
+  (metadata-client/delete-avus (config/metadata-client) username [app-target-type] app-ids avus))
+
 (defn filter-by-avus
   [username app-ids avus]
   (metadata-client/filter-by-avus (config/metadata-client) username [app-target-type] app-ids avus))
