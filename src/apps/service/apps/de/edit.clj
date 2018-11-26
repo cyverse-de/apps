@@ -282,13 +282,13 @@
 
 (defn- validate-integer-arg-value [arg]
   (try
-    (Integer/parseInt arg)
+    (Integer/parseInt (str arg))
     (catch NumberFormatException _
       (cxu/bad-request (str "invalid integer argument value: " arg)))))
 
 (defn- validate-double-arg-value [arg]
   (try
-    (Double/parseDouble arg)
+    (Double/parseDouble (str arg))
     (catch NumberFormatException _
       (cxu/bad-request (str "invalid double argument value: " arg)))))
 
