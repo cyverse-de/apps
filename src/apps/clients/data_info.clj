@@ -108,10 +108,11 @@
                   :as           :json}))))
 
 (defn delete-tickets
-  [user tickets]
+  [user tickets & {:as ticket-params}]
   (when (seq tickets)
     (->> (http/post (data-info-url "ticket-deleter")
-                    {:query-params (secured-params user)
+                    {:query-params (merge (secured-params user)
+                                          ticket-params)
                      :body         (cheshire/encode {:tickets tickets})
                      :content-type :json
                      :as           :json})

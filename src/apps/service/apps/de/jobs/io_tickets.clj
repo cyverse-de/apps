@@ -17,7 +17,8 @@
                                         paths
                                         :mode       "read"
                                         :public     false
-                                        :uses-limit 0))
+                                        :uses-limit 0
+                                        :for-job    true))
     []))
 
 (defn- get-output-ticket
@@ -28,7 +29,8 @@
                                  :mode             "write"
                                  :public           false
                                  :uses-limit       0
-                                 :file-write-limit 0)
+                                 :file-write-limit 0
+                                 :for-job          true)
        :tickets first))
 
 (defn- add-tickets-to-inputs
@@ -67,4 +69,4 @@
 (defn delete-tickets
   "Deletes the tickets in a map from iRODS path to ticket string."
   [user ticket-map]
-  (data-info/delete-tickets user (vals ticket-map)))
+  (data-info/delete-tickets user (vals ticket-map) :for-job true))
