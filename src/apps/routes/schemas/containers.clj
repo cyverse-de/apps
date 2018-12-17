@@ -37,15 +37,21 @@
     {(s/optional-key :overwrite-public)
      (describe Boolean "Flag to force updates of images used by public tools.")}))
 
+(def LongString
+  (describe (s/either Long
+                      (s/pred #(try (Long/parseLong %) true (catch Exception e false))
+                              'long-string?))
+            "A string representing a Long number."))
+
 (s/defschema Settings
   (describe
    {(s/optional-key :cpu_shares)         Integer
     (s/optional-key :pids_limit)         Integer
-    (s/optional-key :memory_limit)       Long
-    (s/optional-key :min_memory_limit)   Long
+    (s/optional-key :memory_limit)       LongString
+    (s/optional-key :min_memory_limit)   LongString
     (s/optional-key :min_cpu_cores)      Double
     (s/optional-key :max_cpu_cores)      Double
-    (s/optional-key :min_disk_space)     Long
+    (s/optional-key :min_disk_space)     LongString
     (s/optional-key :network_mode)       s/Str
     (s/optional-key :working_directory)  s/Str
     (s/optional-key :name)               s/Str
