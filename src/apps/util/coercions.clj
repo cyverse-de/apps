@@ -6,6 +6,13 @@
             [slingshot.slingshot :refer [throw+]])
   (:import [java.util UUID]))
 
+(defn coerce-string->long
+  "When the given map contains the given key, converts its string value to a long."
+  [m k]
+  (if (contains? m k)
+    (update m k rc/string->long)
+    m))
+
 (defn- stringify-uuids
   [v]
   (if (instance? UUID v)

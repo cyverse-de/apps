@@ -145,6 +145,7 @@
 
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
+        :middleware [coerce-tool-import-requests]
         :body [body (describe PrivateToolImportRequest "The private Tool to import.")]
         :responses (merge CommonResponses
                           {200 {:schema      ToolDetails
@@ -239,6 +240,7 @@ otherwise the default value will be used."
   (PATCH "/:tool-id" []
          :path-params [tool-id :- ToolIdParam]
          :query [{:keys [user]} SecuredQueryParams]
+         :middleware [coerce-tool-import-requests]
          :body [body (describe PrivateToolUpdateRequest "The private Tool to update.")]
          :responses (merge CommonResponses
                            {200 {:schema      ToolDetails
@@ -481,6 +483,7 @@ for the `pids_limit` and `memory_limit` fields."
 
   (POST "/" []
         :query [params SecuredQueryParams]
+        :middleware [coerce-tool-list-import-request]
         :body [body (describe ToolsImportRequest "The Tools to import.")]
         :responses (merge CommonResponses
                           {200 {:schema      ToolIdsList
@@ -522,6 +525,7 @@ for the `pids_limit` and `memory_limit` fields."
   (PATCH "/:tool-id" []
          :path-params [tool-id :- ToolIdParam]
          :query [{:keys [user overwrite-public]} ToolUpdateParams]
+         :middleware [coerce-tool-import-requests]
          :body [body (describe ToolUpdateRequest "The Tool to update.")]
          :responses (merge CommonResponses
                            {200 {:schema      ToolDetails

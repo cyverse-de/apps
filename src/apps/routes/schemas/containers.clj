@@ -1,7 +1,8 @@
 (ns apps.routes.schemas.containers
   (:use [common-swagger-api.schema :only [->optional-param describe]]
         [apps.routes.params :only [ToolIdParam SecuredQueryParams]])
-  (:require [schema.core :as s]))
+  (:require [apps.util.coercions :as coercions]
+            [schema.core :as s]))
 
 (s/defschema Image
   (describe
@@ -36,6 +37,14 @@
   (merge SecuredQueryParams
     {(s/optional-key :overwrite-public)
      (describe Boolean "Flag to force updates of images used by public tools.")}))
+
+(defn coerce-settings-long-values
+  "Converts any values in the given settings map that should be a Long, according to the Settings schema."
+  [settings]
+  (-> settings
+      (coercions/coerce-string->long :memory_limit)
+      (coercions/coerce-string->long :min_memory_limit)
+      (coercions/coerce-string->long :min_disk_space)))
 
 (s/defschema Settings
   (describe
