@@ -1,7 +1,8 @@
 (ns apps.routes.schemas.containers
   (:use [common-swagger-api.schema :only [->optional-param describe]]
         [apps.routes.params :only [ToolIdParam SecuredQueryParams]])
-  (:require [schema.core :as s]))
+  (:require [apps.util.coercions :as coercions]
+            [schema.core :as s]))
 
 (s/defschema Image
   (describe
@@ -37,21 +38,23 @@
     {(s/optional-key :overwrite-public)
      (describe Boolean "Flag to force updates of images used by public tools.")}))
 
-(def LongString
-  (describe (s/either Long
-                      (s/pred #(try (Long/parseLong %) true (catch Exception e false))
-                              'long-string?))
-            "A string representing a Long number."))
+(defn coerce-settings-long-values
+  "Converts any values in the given settings map that should be a Long, according to the Settings schema."
+  [settings]
+  (-> settings
+      (coercions/coerce-string->long :memory_limit)
+      (coercions/coerce-string->long :min_memory_limit)
+      (coercions/coerce-string->long :min_disk_space)))
 
 (s/defschema Settings
   (describe
    {(s/optional-key :cpu_shares)         Integer
     (s/optional-key :pids_limit)         Integer
-    (s/optional-key :memory_limit)       LongString
-    (s/optional-key :min_memory_limit)   LongString
+    (s/optional-key :memory_limit)       Long
+    (s/optional-key :min_memory_limit)   Long
     (s/optional-key :min_cpu_cores)      Double
     (s/optional-key :max_cpu_cores)      Double
-    (s/optional-key :min_disk_space)     LongString
+    (s/optional-key :min_disk_space)     Long
     (s/optional-key :network_mode)       s/Str
     (s/optional-key :working_directory)  s/Str
     (s/optional-key :name)               s/Str
