@@ -27,10 +27,10 @@
 
 (defn- restrict-private-tool-container
   "Restrict the networking, CPU shares, and memory limits for the tool's container."
-  [{:keys [pids_limit memory_limit] :or {pids_limit   (cfg/private-tool-pids-limit)
-                                         memory_limit (cfg/private-tool-memory-limit)}
-    :as container}]
-  (assoc container :network_mode "none"
+  [type {:keys [pids_limit memory_limit] :or {pids_limit   (cfg/private-tool-pids-limit)
+                                              memory_limit (cfg/private-tool-memory-limit)}
+         :as   container}]
+  (assoc container :network_mode (if (= type "interactive") "bridge" "none")
                    :pids_limit   (restrict-private-tool-setting pids_limit   (cfg/private-tool-pids-limit))
                    :memory_limit (restrict-private-tool-setting memory_limit (cfg/private-tool-memory-limit))))
 
@@ -61,7 +61,7 @@
 (defn add-private-tool
   "Adds a private tool to the database, returning the tool details added."
   [{:keys [shortUsername] :as user}
-   {:keys [container implementation] :as tool}]
+   {:keys [type container implementation] :as tool}]
   (validate-image-not-deprecated (:image container))
   (verify-tool-name-version tool)
   (transaction
@@ -69,12 +69,12 @@
                       restrict-private-tool
                       (assoc :implementation (ensure-default-implementation user implementation))
                       persistence/add-tool)]
-      (containers/add-tool-container tool-id (restrict-private-tool-container container))
+      (containers/add-tool-container tool-id (restrict-private-tool-container type container))
       (perms-client/register-private-tool shortUsername tool-id)
       (tools/get-tool shortUsername tool-id))))
 
 (defn update-private-tool
-  [user {:keys [container time_limit_seconds] tool-id :id :as tool}]
+  [user {:keys [type container time_limit_seconds] tool-id :id :as tool}]
   (perms/check-tool-permissions user "write" [tool-id])
   (validation/validate-tool-not-public tool-id)
   (when container
@@ -83,13 +83,13 @@
     (let [current-tool       (persistence/get-tool tool-id)
           current-time-limit (:time_limit_seconds current-tool)
           tool               (-> tool
-                                 (dissoc :type :restricted)
+                                 (dissoc :restricted)
                                  (assoc :time_limit_seconds (or time_limit_seconds current-time-limit))
                                  restrict-private-tool-time-limit)]
       (tools/verify-tool-name-version-for-update current-tool tool)
       (persistence/update-tool tool)
       (when container
-        (containers/set-tool-container tool-id false (restrict-private-tool-container container)))))
+        (containers/set-tool-container tool-id false (restrict-private-tool-container type container)))))
   (tools/get-tool user tool-id))
 
 (defn delete-private-tool
