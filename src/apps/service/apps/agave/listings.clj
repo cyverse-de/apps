@@ -35,8 +35,8 @@
   ([subject-info-for {:keys [owner] :as app-listing}]
    (if-let [subject-info (some-> owner subject-info-for)]
      (assoc (dissoc app-listing :owner)
-       :integrator_name  (:name subject-info)
-       :integrator_email (:email subject-info))
+       :integrator_name  (:name subject-info (:integrator_name app-listing))
+       :integrator_email (:email subject-info (:integrator_email app-listing)))
      (dissoc app-listing :owner))))
 
 (defn- add-app-details-integrator-info
