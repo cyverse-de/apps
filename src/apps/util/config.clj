@@ -105,7 +105,7 @@
 (cc/defprop-optint private-tool-pids-limit
   "The PIDs limit to use when adding new private tools."
   [props config-valid configs]
-  "apps.tools.private.pids-limit" 64)
+  "apps.tools.private.pids-limit" 1024)
 
 (cc/defprop-optint private-tool-memory-limit
   "The memory limit, in bytes, to use when adding new private tools."
