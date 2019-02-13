@@ -18,7 +18,6 @@
             [apps.routes.apps.metadata :as metadata-routes]
             [apps.routes.bootstrap :as bootstrap-routes]
             [apps.routes.callbacks :as callback-routes]
-            [apps.routes.collaborators :as collaborator-routes]
             [apps.routes.groups :as group-routes]
             [apps.routes.integration-data :as integration-data-routes]
             [apps.routes.oauth :as oauth-routes]
@@ -60,7 +59,6 @@
                    {:name "tool-requests", :description "Tool Request endpoints."}
                    {:name "reference-genomes", :description "Reference Genome endpoints."}
                    {:name "oauth", :description "OAuth callback and information endpoints."}
-                   {:name "collaborator-routes", :description "Collaborator Information Routes"}
                    {:name "admin-analyses", :description "Admin Analysis Endpoints"}
                    {:name "admin-apps", :description "Admin App endpoints."}
                    {:name "admin-app-community-tags", :description "Admin App Community tag endpoints."}
@@ -149,9 +147,6 @@
     (context "/oauth" []
       :tags ["oauth"]
       oauth-routes/oauth)
-    (context "/collaborators" []
-      :tags ["collaborator-routes"]
-      collaborator-routes/collaborators)
     (context "/admin/analyses" []
       :tags ["admin-analyses"]
       admin-routes/admin-analyses)
