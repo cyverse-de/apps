@@ -752,6 +752,7 @@ included in it. Any existing settings not included in the request's `container` 
   (POST "/:tool-id/publish" []
         :path-params [tool-id :- ToolIdParam]
         :query [params SecuredQueryParams]
+        :middleware [coerce-tool-import-requests]
         :body [body (describe ToolUpdateRequest "The Tool to update.")]
         :responses (merge CommonResponses
                           {200 {:schema      ToolDetails
