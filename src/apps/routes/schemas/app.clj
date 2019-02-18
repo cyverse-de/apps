@@ -9,10 +9,11 @@
         [apps.routes.schemas.app.rating]
         [apps.routes.schemas.tool :only [Tool ToolDetails ToolListingImage ToolListingItem]]
         [schema.core :only [Any defschema enum optional-key recursive]])
-  (:require [clojure.set :as sets])
+  (:require [clojure.set :as sets]
+            [common-swagger-api.schema.apps :as app-schema])
   (:import [java.util UUID Date]))
 
-(def AppIdParam (describe UUID "A UUID that is used to identify the App"))
+(def AppIdParam app-schema/AppIdParam)
 (def StringAppIdParam (describe String "The App identifier."))
 (def OptionalIdParam (describe UUID "An optional UUID identifier"))
 (def AppDocParam (describe String "The App's documentation"))
