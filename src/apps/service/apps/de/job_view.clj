@@ -1,10 +1,15 @@
 (ns apps.service.apps.de.job-view
-  (:use [apps.service.apps.de.validation :only [verify-app-permission]]
+  (:use [apps.service.apps.de.jobs.util :as util]
+        [apps.service.apps.de.validation :only [verify-app-permission]]
         [apps.util.conversions :only [remove-nil-vals]]
-        [korma.core :exclude [update]])
-  (:require [apps.metadata.params :as mp]
+        [korma.core :exclude [update]]
+        [slingshot.slingshot :only [try+ throw+]])
+  (:require [apps.clients.data-info :as data-info]
+            [apps.metadata.params :as mp]
             [apps.persistence.app-metadata :as amp]
-            [apps.service.apps.de.constants :as c]))
+            [apps.service.apps.de.constants :as c]
+            [apps.util.service :as service]
+            [clojure-commons.exception-util :as cxu]))
 
 (defn- mapped-input-subselect
   [step-id]
@@ -89,10 +94,29 @@
              :app_type  "DE"
              :system_id c/system-id)))
 
+(defn- validate-hidden-inputs [user app-id]
+  (when-let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-id)))]
+    (try+
+     (data-info/get-path-info user :paths paths :validation-behavior "read")
+     (catch [:status 500] e
+       (let [error-code (:error_code (service/parse-json (:body e)))]
+         (cond
+           (= error-code "ERR_NOT_READABLE")
+           (cxu/forbidden (str "The app you are trying to use references one or more input files that you cannot "
+                               "access. Please contact the app integrator."))
+
+           (= error-code "ERR_DOES_NOT_EXIST")
+           (cxu/bad-request (str "The app you are trying to use references one or more input files that cannot be "
+                                 "found. Please contact the app integrator."))
+
+           :else
+           (throw+)))))))
+
 (defn get-app
   "This service obtains an app description in a format that is suitable for building the job
   submission UI."
   [user app-id include-hidden-params?]
   (let [app (amp/get-app app-id)]
     (verify-app-permission user app "read")
+    (validate-hidden-inputs user app-id)
     (format-app app include-hidden-params?)))
