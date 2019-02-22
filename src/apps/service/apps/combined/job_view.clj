@@ -75,17 +75,17 @@
      app)])
 
 (defn- get-app-from-client
-  [system-id app-id clients current-client]
-  (-> (.getAppJobView current-client system-id app-id)
+  [system-id app-id include-hidden-params? clients current-client]
+  (-> (.getAppJobView current-client system-id app-id include-hidden-params?)
       (format-app-submission-info clients current-client)))
 
 (defn get-app
-  [system-id app-id clients]
+  [system-id app-id include-hidden-params? clients]
   (->> (util/get-apps-client clients system-id)
-       (get-app-from-client system-id app-id clients)
+       (get-app-from-client system-id app-id include-hidden-params? clients)
        second))
 
 (defn get-app-submission-info
   [system-id app-id clients]
   (->> (util/get-apps-client clients system-id)
-       (get-app-from-client system-id app-id clients)))
+       (get-app-from-client system-id app-id true clients)))

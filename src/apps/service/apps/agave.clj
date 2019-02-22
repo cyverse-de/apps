@@ -138,7 +138,10 @@
   (deleteApps [this deletion-request]
     (.validateDeletionRequest this deletion-request))
 
-  (getAppJobView [_ system-id app-id]
+  (getAppJobView [this system-id app-id]
+    (.getAppJobView this system-id app-id false))
+
+  (getAppJobView [_ system-id app-id _]
     (validate-system-id system-id)
     (.getApp agave app-id))
 

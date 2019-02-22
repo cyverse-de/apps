@@ -94,8 +94,11 @@
       (doseq [[system-id qualified-app-ids] requests-for-system]
         (.deleteApps (util/get-apps-client clients system-id) (assoc req :app_ids qualified-app-ids)))))
 
-  (getAppJobView [_ system-id app-id]
-    (job-view/get-app system-id app-id clients))
+  (getAppJobView [this system-id app-id]
+    (.getAppJobView this system-id app-id false))
+
+  (getAppJobView [_ system-id app-id include-hidden-params?]
+    (job-view/get-app system-id app-id include-hidden-params? clients))
 
   (getAppSubmissionInfo [_ system-id app-id]
     (job-view/get-app-submission-info system-id app-id clients))

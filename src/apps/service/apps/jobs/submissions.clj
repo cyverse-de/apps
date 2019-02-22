@@ -207,11 +207,16 @@
   [{:keys [config] :as submission} user input-params-by-id input-paths-by-id path-stats]
   (assoc submission :job_config (process-job-config config user input-params-by-id input-paths-by-id path-stats)))
 
+(defn build-input-path-map
+  [property-values input-params-by-id]
+  (let [get-property-value (fn [id] (get property-values id (get-in input-params-by-id [id :defaultValue])))]
+    (into {} (map (juxt identity get-property-value) (keys input-params-by-id)))))
+
 (defn submit
   [apps-client user {app-id :app_id system-id :system_id :as submission}]
   (let [[job-types app]    (.getAppSubmissionInfo apps-client system-id app-id)
         input-params-by-id (get-app-params app ap/param-ds-input-types)
-        input-paths-by-id  (select-keys (:config submission) (keys input-params-by-id))
+        input-paths-by-id  (build-input-path-map (:config submission) input-params-by-id)
         path-stats         (load-input-path-stats user input-paths-by-id)
         ht-path-list-stats (filter-stats-by-info-type (config/ht-path-list-info-type) path-stats)
         submission         (pre-process-submission submission user input-params-by-id input-paths-by-id path-stats)]

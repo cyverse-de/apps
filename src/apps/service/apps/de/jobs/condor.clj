@@ -40,7 +40,7 @@
     (params/build-params this (:config submission) io-maps outputs defaults params))
 
   (buildInputs [this params]
-    (params/build-inputs submission params))
+    (params/build-inputs submission defaults params))
 
   (buildOutputs [this params]
     (conj (params/build-outputs (:config submission) defaults params)
