@@ -29,7 +29,7 @@
 
 (defn build-default-values-map
   [params]
-  (remove-vals #(string/blank? (str %))
+  (remove-vals (comp string/blank? str)
                (into {} (map (juxt util/param->qual-id :default_value) params))))
 
 (defn build-config

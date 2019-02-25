@@ -41,18 +41,20 @@
      :value        (stringify path)}))
 
 (defn- build-inputs-for-param
-  [config retain? param]
-  (let [param-value (config (util/param->qual-key param))
+  [config default-values retain? param]
+  (let [qual-id     (util/param->qual-id param)
+        qual-key    (keyword qual-id)
+        param-value (config qual-key (default-values qual-id))
         paths       (if (sequential? param-value) param-value [param-value])]
     (map (partial build-input retain? param) (filter fs/absolute? paths))))
 
 (defn build-inputs
   "Builds the list of inputs for a step in an app. The current implementation performs the
   analysis configuration lookup twice, but the code seems clearest that way."
-  [{config :config retain? :debug} params]
+  [{config :config retain? :debug} default-values params]
   (->> (filter util/input? params)
-       (filter (comp config util/param->qual-key))
-       (mapcat (partial build-inputs-for-param config retain?))))
+       (filter (some-fn (comp config util/param->qual-key) (comp default-values util/param->qual-id)))
+       (mapcat (partial build-inputs-for-param config default-values retain?))))
 
 (defn- missing-output-filename
   [{step-id :step_id id :id}]

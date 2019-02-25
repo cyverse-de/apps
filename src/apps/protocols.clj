@@ -20,7 +20,7 @@
   (previewCommandLine [_ system-id app])
   (validateDeletionRequest [_ deletion-request])
   (deleteApps [_ deletion-request])
-  (getAppJobView [_ system-id app-id])
+  (getAppJobView [_ system-id app-id] [_ system-id app-id include-hidden-params?])
   (getAppSubmissionInfo [_ system-id app-id])
   (deleteApp [_ system-id app-id])
   (relabelApp [_ system-id app])

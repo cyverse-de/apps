@@ -90,9 +90,12 @@
     (.validateDeletionRequest this req)
     (app-metadata/delete-apps user req))
 
-  (getAppJobView [_ system-id app-id]
+  (getAppJobView [this system-id app-id]
+    (.getAppJobView this system-id app-id false))
+
+  (getAppJobView [_ system-id app-id include-hidden-params?]
     (validate-system-id system-id)
-    (job-view/get-app user (uuidify app-id)))
+    (job-view/get-app user (uuidify app-id) include-hidden-params?))
 
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
