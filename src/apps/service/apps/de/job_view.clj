@@ -39,7 +39,7 @@
 (defn- path-accessible?
   [user path]
   (try+
-   (data-info/get-path-info user :paths [path] :validation-behavior "read")
+   (data-info/get-path-info user :paths [path] :validation-behavior "read" :filter-include "path")
    (catch [:status 500] e
      (let [error-code (:error_code (service/parse-json (:body e)))]
        (if (#{"ERR_NOT_READABLE" "ERR_DOES_NOT_EXIST"} error-code)
@@ -116,7 +116,7 @@
 (defn- validate-hidden-inputs [user app-id]
   (when-let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-id)))]
     (try+
-     (data-info/get-path-info user :paths paths :validation-behavior "read")
+     (data-info/get-path-info user :paths paths :validation-behavior "read" :filter-include "path")
      (catch [:status 500] e
        (let [error-code (:error_code (service/parse-json (:body e)))]
          (condp = error-code
