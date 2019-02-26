@@ -36,12 +36,30 @@
                       {:is_implicit false})))
       select))
 
+(defn- path-accessible?
+  [user path]
+  (try+
+   (data-info/get-path-info user :paths [path] :validation-behavior "read")
+   (catch [:status 500] e
+     (let [error-code (:error_code (service/parse-json (:body e)))]
+       (if (#{"ERR_NOT_READABLE" "ERR_DOES_NOT_EXIST"} error-code)
+         false
+         (throw+))))))
+
+(defn- get-default-value
+  [user type values]
+  (let [default-value (mp/get-default-value type values)]
+    (if (util/input-type? type)
+      (when (and default-value (path-accessible? user default-value))
+        default-value)
+      default-value)))
+
 (defn- format-parameter
-  [step {:keys [id type] :as parameter}]
+  [user step {:keys [id type] :as parameter}]
   (let [values (mp/get-param-values (:id parameter))]
     (remove-nil-vals
      {:arguments    (mp/format-param-values type values)
-      :defaultValue (mp/get-default-value type values)
+      :defaultValue (get-default-value user type values)
       :description  (:description parameter)
       :id           (str (:id step) "_" (:id parameter))
       :isVisible    (:is_visible parameter)
@@ -61,16 +79,17 @@
           (where {:s.id step-id})))
 
 (defn- format-group
-  [name-prefix include-hidden-params? step group]
-  {:id          (:id group)
-   :name        (str name-prefix (:name group))
-   :label       (str name-prefix (:label group))
-   :parameters  (mapv (partial format-parameter step) (get-parameters (:id step) (:id group) include-hidden-params?))
-   :step_number (:step_number step)})
+  [user name-prefix include-hidden-params? step group]
+  (let [params (get-parameters (:id step) (:id group) include-hidden-params?)]
+    {:id          (:id group)
+     :name        (str name-prefix (:name group))
+     :label       (str name-prefix (:label group))
+     :parameters  (mapv (partial format-parameter user step) params)
+     :step_number (:step_number step)}))
 
 (defn- format-groups
-  [name-prefix include-hidden-params? step]
-  (mapv (partial format-group name-prefix include-hidden-params? step) (get-groups (:id step))))
+  [user name-prefix include-hidden-params? step]
+  (mapv (partial format-group user name-prefix include-hidden-params? step) (get-groups (:id step))))
 
 (defn- get-steps
   [app-id]
@@ -80,17 +99,17 @@
           (where {:app_id app-id})))
 
 (defn- format-steps
-  [app-id include-hidden-params?]
+  [user app-id include-hidden-params?]
   (let [app-steps         (get-steps app-id)
         multistep?        (> (count app-steps) 1)
         group-name-prefix (fn [{task-name :task_name}] (if multistep? (str task-name " - ") ""))]
-    (doall (mapcat (fn [step] (format-groups (group-name-prefix step) include-hidden-params? step)) app-steps))))
+    (doall (mapcat (fn [step] (format-groups user (group-name-prefix step) include-hidden-params? step)) app-steps))))
 
 (defn- format-app
-  [{app-id :id name :name :as app} include-hidden-params?]
+  [user {app-id :id name :name :as app} include-hidden-params?]
   (-> (select-keys app [:id :name :description :disabled :deleted])
       (assoc :label     name
-             :groups    (remove (comp empty? :parameters) (format-steps app-id include-hidden-params?))
+             :groups    (remove (comp empty? :parameters) (format-steps user app-id include-hidden-params?))
              :app_type  "DE"
              :system_id c/system-id)))
 
@@ -100,16 +119,15 @@
      (data-info/get-path-info user :paths paths :validation-behavior "read")
      (catch [:status 500] e
        (let [error-code (:error_code (service/parse-json (:body e)))]
-         (cond
-           (= error-code "ERR_NOT_READABLE")
+         (condp = error-code
+           "ERR_NOT_READABLE"
            (cxu/forbidden (str "The app you are trying to use references one or more input files that you cannot "
                                "access. Please contact the app integrator."))
 
-           (= error-code "ERR_DOES_NOT_EXIST")
+           "ERR_DOES_NOT_EXIST"
            (cxu/bad-request (str "The app you are trying to use references one or more input files that cannot be "
                                  "found. Please contact the app integrator."))
 
-           :else
            (throw+)))))))
 
 (defn get-app
@@ -119,4 +137,4 @@
   (let [app (amp/get-app app-id)]
     (verify-app-permission user app "read")
     (validate-hidden-inputs user app-id)
-    (format-app app include-hidden-params?)))
+    (format-app user app include-hidden-params?)))

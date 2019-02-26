@@ -39,6 +39,10 @@
 
 (def param->qual-key (comp keyword param->qual-id))
 
+(defn input-type?
+  [type]
+  (input-types type))
+
 (defn input?
   [{:keys [type]}]
   (input-types type))
