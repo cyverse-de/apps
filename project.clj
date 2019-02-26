@@ -33,6 +33,7 @@
                  [org.cyverse/permissions-client "2.8.0"]
                  [org.cyverse/service-logging "2.8.0"]
                  [org.cyverse/event-messages "0.0.1"]
+                 [org.flatland/ordered "1.5.7"]
                  [com.novemberain/langohr "3.7.0"]
                  [me.raynes/fs "1.4.6"]
                  [mvxcvi/clj-pgp "0.8.0"]
