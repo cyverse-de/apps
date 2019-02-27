@@ -18,6 +18,7 @@
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
+            [apps.service.apps.de.jobs.util :as job-util]
             [clojure.set :as set]
             [clojure-commons.exception-util :as cxu]))
 
@@ -155,11 +156,18 @@
 
 (defn- format-default-value
   [{param-type :type :as param} default-value]
-  (let [default-value (if (and default-value
-                               (contains? persistence/param-reference-genome-types param-type))
-                        (format-reference-genome-value default-value)
-                        default-value)]
-    (assoc param :defaultValue default-value)))
+  (assoc param
+    :defaultValue
+    (when default-value
+      (cond
+        (contains? persistence/param-reference-genome-types param-type)
+        (format-reference-genome-value default-value)
+
+        (job-util/input-type? param-type)
+        {:path default-value}
+
+        :else
+        default-value))))
 
 (defn- format-param
   [{param-type :type
@@ -322,10 +330,22 @@
     (dorun (map-indexed (partial persistence/add-validation-rule-argument validation-rule-id)
                         rule-args))))
 
+(defn- get-parameter-default-value
+  "Gets the default value from an incoming parameter."
+  [{default-value :defaultValue param-type :type}]
+  (cond
+    (job-util/input-type? param-type)
+    (:path default-value)
+
+    (contains? persistence/param-list-types param-type)
+    (:id default-value)
+
+    :else
+    default-value))
+
 (defn- update-app-parameter
   "Adds or updates an App parameter and any associated file parameters, validators, and arguments."
   [task-id group-id display-order {param-id :id
-                                   default-value :defaultValue
                                    param-type :type
                                    file-parameter :file_parameters
                                    validators :validators
@@ -342,9 +362,7 @@
                    param-id
                    (:id (persistence/add-app-parameter update-values)))
         parameter (assoc parameter :id param-id)
-        default-value (if (contains? persistence/param-reference-genome-types param-type)
-                        (:id default-value)
-                        default-value)]
+        default-value (get-parameter-default-value parameter)]
     (when param-exists
       (persistence/update-app-parameter update-values)
       (persistence/remove-file-parameter param-id)
