@@ -71,6 +71,9 @@
   (buildSteps [this]
     (ca/build-steps this app submission))
 
+  (buildExtra [this]
+    (ca/build-extra this app))
+
   (buildSubmission [this]
     (let [submission  (ca/build-submission this user email submission app)
           osg-compat? (fn [step] (not (string/blank? (some-> step :component :container :image :osg_image_path))))]

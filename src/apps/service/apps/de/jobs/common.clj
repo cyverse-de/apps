@@ -114,6 +114,16 @@
        (take-while (comp nil? :external_app_id))
        (reduce #(.buildStep request-builder %1 %2) [])))
 
+(defn load-htcondor-extra-requirements
+  [app-id]
+  (select :apps_htcondor_extra
+          (fields [:extra_requirements])
+          (where {:app_id app-id})))
+
+(defn build-extra
+  [request-builder app]
+  {:htcondor {:extra_requirements (load-htcondor-extra-requirements (:id app))}})
+
 (defn- interactive?
   "Returns true if the given submission is for an interactive job."
   [job]
@@ -143,6 +153,7 @@
          :output_dir           (:output_dir submission)
          :request_type         "submit"
          :steps                (.buildSteps request-builder)
+         :extra                (.buildExtra request-builder)
          :username             (:shortUsername user)
          :user_id              (get-user-id (:username user))
          :user_groups          (map (comp ipg/remove-environment-from-group :name) groups)
