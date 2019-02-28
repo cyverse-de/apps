@@ -114,7 +114,7 @@
        (take-while (comp nil? :external_app_id))
        (reduce #(.buildStep request-builder %1 %2) [])))
 
-(defn load-htcondor-extra-requirements
+(defn- load-htcondor-extra-requirements
   [app-id]
   (first
     (select :apps_htcondor_extra
