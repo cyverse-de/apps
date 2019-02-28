@@ -116,13 +116,14 @@
 
 (defn load-htcondor-extra-requirements
   [app-id]
-  (select :apps_htcondor_extra
-          (fields [:extra_requirements])
-          (where {:app_id app-id})))
+  (first
+    (select :apps_htcondor_extra
+            (fields [:extra_requirements])
+            (where {:app_id app-id}))))
 
 (defn build-extra
   [request-builder app]
-  {:htcondor {:extra_requirements (load-htcondor-extra-requirements (:id app))}})
+  {:htcondor (load-htcondor-extra-requirements (:id app))})
 
 (defn- interactive?
   "Returns true if the given submission is for an interactive job."
