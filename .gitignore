@@ -11,6 +11,7 @@ pom.xml
 /apps.spec
 /apps*.tar.gz
 /target
+.eastwood
 .lein-*
 *~
 \#*

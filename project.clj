@@ -42,9 +42,9 @@
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :plugins [[lein-swank "1.4.4"]
             [test2junit "1.1.3"]
-            [jonase/eastwood "0.2.6"]]
+            [jonase/eastwood "0.3.5"]]
   :profiles {:dev {:dependencies   [[ring "1.5.0"]]
-                   :plugins        [[lein-ring "0.9.7"]]
+                   :plugins        [[lein-ring "0.12.5"]]
                    :resource-paths ["conf/test"]}
              :repl {:source-paths ["repl"]}
              :uberjar {:aot :all}}
