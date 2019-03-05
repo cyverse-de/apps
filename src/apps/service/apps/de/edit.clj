@@ -18,7 +18,7 @@
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
-            [apps.service.apps.de.jobs.util :as job-util]
+            [apps.service.apps.jobs.util :as job-util]
             [clojure.set :as set]
             [clojure-commons.exception-util :as cxu]))
 

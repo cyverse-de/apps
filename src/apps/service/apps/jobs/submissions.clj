@@ -209,7 +209,8 @@
 
 (defn build-input-path-map
   [property-values input-params-by-id]
-  (let [get-property-value (fn [id] (get property-values id (get-in input-params-by-id [id :defaultValue])))]
+  (let [get-default-value  (fn [id] (get-in input-params-by-id [id :defaultValue :path]))
+        get-property-value (fn [id] (get property-values id (get-default-value id)))]
     (into {} (map (juxt identity get-property-value) (keys input-params-by-id)))))
 
 (defn submit

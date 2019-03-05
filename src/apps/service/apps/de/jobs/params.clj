@@ -3,7 +3,7 @@
         [slingshot.slingshot :only [throw+]])
   (:require [clojure.string :as string]
             [me.raynes.fs :as fs]
-            [apps.service.apps.de.jobs.util :as util]
+            [apps.service.apps.jobs.util :as util]
             [apps.util.config :as config]))
 
 (defn stringify
