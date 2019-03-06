@@ -4,6 +4,7 @@
   (:require [cheshire.core :as cheshire]
             [clojure.string :as string]
             [apps.persistence.app-metadata :as ap]
+            [apps.service.apps.jobs.util :as ju]
             [apps.service.util :as util]))
 
 (defn- get-job-submission
@@ -106,11 +107,13 @@
 
 (defn- update-prop
   [config prop]
-  (let [id (keyword (:id prop))]
+  (let [id        (keyword (:id prop))
+        get-value (if (ju/input? prop) #({:path (config id)}) #(config id))]
     (if (contains? config id)
-      (assoc prop
-        :value        (config id)
-        :defaultValue (config id))
+      (let [prop-value (get-value)]
+        (assoc prop
+          :value        prop-value
+          :defaultValue prop-value))
       prop)))
 
 (defn- update-app-props

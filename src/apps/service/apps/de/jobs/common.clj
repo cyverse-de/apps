@@ -8,7 +8,7 @@
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.containers :as c]
             [apps.service.apps.de.jobs.params :as params]
-            [apps.service.apps.de.jobs.util :as util]
+            [apps.service.apps.jobs.util :as util]
             [clojure.string :as string]))
 
 (defn- format-io-map

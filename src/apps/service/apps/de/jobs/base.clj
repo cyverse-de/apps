@@ -4,7 +4,7 @@
             [apps.service.apps.de.jobs.common :as ca]
             [apps.service.apps.de.jobs.condor]
             [apps.service.apps.de.jobs.protocol]
-            [apps.service.apps.de.jobs.util :as util]))
+            [apps.service.apps.jobs.util :as util]))
 
 (defn- build-job-request-formatter
   [user submission]

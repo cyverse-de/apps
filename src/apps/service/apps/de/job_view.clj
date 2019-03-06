@@ -1,6 +1,6 @@
 (ns apps.service.apps.de.job-view
-  (:use [apps.service.apps.de.jobs.util :as util]
-        [apps.service.apps.de.validation :only [verify-app-permission]]
+  (:use [apps.service.apps.de.validation :only [verify-app-permission]]
+        [apps.service.apps.jobs.util :as util]
         [apps.util.conversions :only [remove-nil-vals]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [try+ throw+]])
@@ -51,7 +51,7 @@
   (let [default-value (mp/get-default-value type values)]
     (if (util/input-type? type)
       (when (and default-value (path-accessible? user default-value))
-        default-value)
+        {:path default-value})
       default-value)))
 
 (defn- format-parameter
