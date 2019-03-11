@@ -108,7 +108,7 @@
 (defn- update-prop
   [config prop]
   (let [id        (keyword (:id prop))
-        get-value (if (ju/input? prop) #({:path (config id)}) #(config id))]
+        get-value (if (ju/input? prop) (constantly {:path (config id)}) #(config id))]
     (if (contains? config id)
       (let [prop-value (get-value)]
         (assoc prop
