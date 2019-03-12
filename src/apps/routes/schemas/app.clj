@@ -5,23 +5,27 @@
                                           PagingParams
                                           SortFieldDocs
                                           SortFieldOptionalKey]]
+        [common-swagger-api.schema.apps :only [AppBase
+                                               AppDeletedParam
+                                               AppDisabledParam
+                                               AppDocUrlParam
+                                               AppFilterParams
+                                               AppListing
+                                               AppListingDetail
+                                               AppListingValidSortFields
+                                               AppPublicParam
+                                               AppSearchValidSortFields
+                                               SystemId]]
         [apps.routes.params]
-        [apps.routes.schemas.app.rating]
         [apps.routes.schemas.tool :only [Tool ToolDetails ToolListingImage ToolListingItem]]
         [schema.core :only [Any defschema enum optional-key recursive]])
   (:require [clojure.set :as sets]
             [common-swagger-api.schema.apps :as app-schema])
   (:import [java.util UUID Date]))
 
-(def AppIdParam app-schema/AppIdParam)
 (def StringAppIdParam (describe String "The App identifier."))
-(def OptionalIdParam (describe UUID "An optional UUID identifier"))
 (def AppDocParam (describe String "The App's documentation"))
-(def AppDocUrlParam (describe String "The App's documentation URL"))
 (def AppReferencesParam (describe [String] "The App's references"))
-(def AppDeletedParam (describe Boolean "Whether the App is marked as deleted"))
-(def AppDisabledParam (describe Boolean "Whether the App is marked as disabled"))
-(def AppPublicParam (describe Boolean "Whether the App has been published and is viewable by all users"))
 (def ToolDeprecatedParam (describe Boolean "Flag indicating if this Tool has been deprecated"))
 
 (def OptionalDebugKey (optional-key :debug))
@@ -199,14 +203,6 @@
    OptionalParametersKey
    (describe [AppParameter] ParameterListDocs)})
 
-(defschema AppBase
-  {:id                              AppIdParam
-   :name                            (describe String "The App's name")
-   :description                     (describe String "The App's description")
-   (optional-key :integration_date) (describe Date "The App's Date of public submission")
-   (optional-key :edited_date)      (describe Date "The App's Date of its last edit")
-   (optional-key :system_id)        SystemId})
-
 (defschema App
   (merge AppBase
          {OptionalToolsKey           (describe [(merge Tool {OptionalDeprecatedKey ToolDeprecatedParam})] ToolListDocs)
@@ -353,71 +349,6 @@
 (defschema AppDocumentationRequest
   (dissoc AppDocumentation :references))
 
-(defschema PipelineEligibility
-  {:is_valid (describe Boolean "Whether the App can be used in a Pipeline")
-   :reason (describe String "The reason an App cannot be used in a Pipeline")})
-
-(defschema AppListingDetail
-  (merge AppBase
-    {:id
-     (describe String "The app ID.")
-
-     :app_type
-     (describe String "The type ID of the App")
-
-     :can_favor
-     (describe Boolean "Whether the current user can favorite this App")
-
-     :can_rate
-     (describe Boolean "Whether the current user can rate this App")
-
-     :can_run
-     (describe Boolean
-       "This flag is calculated by comparing the number of steps in the app to the number of steps
-        that have a tool associated with them. If the numbers are different then this flag is set to
-        `false`. The idea is that every step in the analysis has to have, at the very least, a tool
-        associated with it in order to run successfully")
-
-     :deleted
-     AppDeletedParam
-
-     :disabled
-     AppDisabledParam
-
-     :integrator_email
-     (describe String "The App integrator's email address")
-
-     :integrator_name
-     (describe String "The App integrator's full name")
-
-     (optional-key :is_favorite)
-     (describe Boolean "Whether the current user has marked the App as a favorite")
-
-     :is_public
-     AppPublicParam
-
-     (optional-key :beta)
-     (describe Boolean "Whether the App has been marked as `beta` release status")
-
-     :pipeline_eligibility
-     (describe PipelineEligibility "Whether the App can be used in a Pipeline")
-
-     :rating
-     (describe Rating "The App's rating details")
-
-     :step_count
-     (describe Long "The number of Tasks this App executes")
-
-     (optional-key :wiki_url)
-     AppDocUrlParam
-
-     :permission
-     (describe String "The user's access level for the app.")}))
-
-(defschema AppListing
-  {:total (describe Long "The total number of Apps in the listing")
-   :apps  (describe [AppListingDetail] "A listing of App details")})
-
 (defschema AdminAppListingDetail
   (merge AppListingDetail
          {(optional-key :job_stats)
@@ -427,17 +358,6 @@
   (merge AppListing
          {:apps (describe [AdminAppListingDetail] "A listing of App details")}))
 
-(def AppListingValidSortFields
-  (-> (map optional-key->keyword (keys AppListingDetail))
-      (conj :average_rating :user_rating)
-      set
-      (sets/difference #{:app_type
-                         :can_favor
-                         :can_rate
-                         :can_run
-                         :pipeline_eligibility
-                         :rating})))
-
 (def AdminAppListingJobStatsKeys (->> AdminAppListingJobStats
                                       keys
                                       (map optional-key->keyword)
@@ -446,10 +366,6 @@
 (def AdminAppListingValidSortFields
   (sets/union AppListingValidSortFields AdminAppListingJobStatsKeys))
 
-(defschema AppFilterParams
-  {(optional-key :app-type)
-   (describe String "The type of app to include in the listing.")})
-
 (defschema AppListingPagingParams
   (merge SecuredQueryParamsEmailRequired
          PagingParams
@@ -457,29 +373,11 @@
          {SortFieldOptionalKey
           (describe (apply enum AppListingValidSortFields) SortFieldDocs)}))
 
-(def AppSearchValidSortFields
-  (-> AppListingValidSortFields
-      (sets/difference #{:average_rating :user_rating})
-      (conj :average :total)))
-
 (def AdminAppSearchValidSortFields
   (sets/union AppSearchValidSortFields AdminAppListingJobStatsKeys))
 
 (defschema AppSearchParams
-  (merge SecuredPagingParams
-         AppFilterParams
-         {(optional-key :search)
-          (describe String
-                    "The pattern to match in an App's Name, Description, Integrator Name, or Tool Name.")
-
-          (optional-key :start_date)
-          (describe Date "Filters out the app stats before this start date")
-
-          (optional-key :end_date)
-          (describe Date "Filters out the apps stats after this end date")
-
-          SortFieldOptionalKey
-          (describe (apply enum AppSearchValidSortFields) SortFieldDocs)}))
+  (merge SecuredQueryParams app-schema/AppSearchParams))
 
 (def AppSubsets (enum :public :private :all))
 

@@ -2,6 +2,7 @@
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
+        [common-swagger-api.schema.apps :only [SystemId]]
         [apps.metadata.reference-genomes :only [add-reference-genome
                                                 delete-reference-genome
                                                 update-reference-genome]]

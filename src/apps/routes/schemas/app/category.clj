@@ -5,10 +5,11 @@
                                           PagingParams
                                           SortFieldDocs
                                           SortFieldOptionalKey]]
+        [common-swagger-api.schema.apps :only [AppListingDetail
+                                               SystemId]]
         [common-swagger-api.schema.ontologies]
         [apps.routes.params]
         [apps.routes.schemas.app :only [AdminAppListingValidSortFields
-                                        AppListingDetail
                                         AppListingPagingParams]]
         [schema.core :only [defschema optional-key recursive enum]])
   (:import [java.util Date UUID]))

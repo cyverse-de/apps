@@ -1,6 +1,7 @@
 (ns apps.routes.schemas.permission
-  (:use [apps.routes.params :only [SystemId SecuredQueryParams]]
+  (:use [apps.routes.params :only [SecuredQueryParams]]
         [common-swagger-api.schema :only [describe ErrorResponse NonBlankString]]
+        [common-swagger-api.schema.apps :only [SystemId]]
         [schema.core :only [defschema optional-key enum]])
   (:import [java.util UUID]))
 
