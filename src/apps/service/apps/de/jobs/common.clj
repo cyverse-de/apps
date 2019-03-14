@@ -119,7 +119,7 @@
   (first
     (select :apps_htcondor_extra
             (fields [:extra_requirements])
-            (where {:app_id app-id}))))
+            (where {:apps_id app-id}))))
 
 (defn build-extra
   [request-builder app]
