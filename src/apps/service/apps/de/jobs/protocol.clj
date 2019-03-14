@@ -19,4 +19,5 @@
   (buildComponent [_ step])
   (buildStep [_ steps step])
   (buildSteps [_])
+  (buildExtra [_])
   (buildSubmission [_]))
