@@ -1,6 +1,8 @@
 (ns apps.service.apps.de.jobs.io-tickets
+  (:use [slingshot.slingshot :only [try+]])
   (:require [apps.clients.data-info :as data-info]
-            [apps.service.apps.jobs.util :as job-util]))
+            [apps.service.apps.jobs.util :as job-util]
+            [clojure.tools.logging :as log]))
 
 (def ^:private extract-input-paths
   "This is a transform used to extract input paths from a list of job steps."
@@ -69,4 +71,7 @@
 (defn delete-tickets
   "Deletes the tickets in a map from iRODS path to ticket string."
   [user ticket-map]
-  (data-info/delete-tickets user (vals ticket-map) :for-job true))
+  (try+
+   (data-info/delete-tickets user (vals ticket-map) :for-job true)
+   (catch [:status 500] {:keys [body]}
+     (log/warn "unable to delete tickets" body))))
