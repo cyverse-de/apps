@@ -2,9 +2,10 @@
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
+        [common-swagger-api.schema.apps :only [AppListing
+                                               SystemId]]
         [apps.routes.params]
-        [apps.routes.schemas.app :only [AppListing
-                                        AppListingPagingParams]]
+        [apps.routes.schemas.app :only [AppListingPagingParams]]
         [apps.routes.schemas.app.category]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]

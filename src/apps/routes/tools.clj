@@ -1,11 +1,12 @@
 (ns apps.routes.tools
   (:use [common-swagger-api.schema]
+        [common-swagger-api.schema.apps :only [AppListing]]
         [apps.constants :only [de-system-id]]
         [apps.containers]
         [apps.routes.params]
         [apps.routes.schemas.containers]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
-        [apps.routes.schemas.app :only [AdminAppListing AppListing]]
+        [apps.routes.schemas.app :only [AdminAppListing]]
         [apps.routes.schemas.tool]
         [apps.tools :only [admin-add-tools
                            admin-delete-tool

@@ -1,6 +1,7 @@
 (ns apps.routes.schemas.analysis.listing
   (:use [common-swagger-api.schema :only [describe NonBlankString]]
-        [apps.routes.params :only [ResultsTotalParam SystemId]]
+        [common-swagger-api.schema.apps :only [SystemId]]
+        [apps.routes.params :only [ResultsTotalParam]]
         [schema.core :only [defschema optional-key Any Int Bool]])
   (:import [java.util UUID]))
 

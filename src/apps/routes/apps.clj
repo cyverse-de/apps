@@ -1,9 +1,12 @@
 (ns apps.routes.apps
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
+        [common-swagger-api.schema.apps :only [AppListing
+                                               AppListingSummary
+                                               SystemId]]
+        [common-swagger-api.schema.apps.rating]
         [apps.routes.params]
         [apps.routes.schemas.app]
-        [apps.routes.schemas.app.rating]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool :only [NewToolListing]]
         [apps.user :only [current-user]]
@@ -15,18 +18,9 @@
 (defroutes apps
   (GET "/" []
     :query [params AppSearchParams]
-    :summary "List Apps"
+    :summary AppListingSummary
     :return AppListing
-    :description
-    (str "This service allows users to get a paged listing of all Apps accessible to the user.
-         If the `search` parameter is included, then the results are filtered by
-         the App name, description, integrator's name, tool name, or category name the app is under."
-         (get-endpoint-delegate-block
-          "metadata"
-          "POST /avus/filter-targets")
-         (get-endpoint-delegate-block
-          "metadata"
-          "POST /ontologies/{ontology-version}/filter-targets"))
+    :description-file "docs/apps/apps-listing.md"
     (ok (coerce! AppListing
                  (apps/search-apps current-user params))))
 
