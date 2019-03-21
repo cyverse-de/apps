@@ -798,3 +798,8 @@
   (sql/update :job_status_updates
               (set-fields {:propagated true})
               (where {:external_id external-id})))
+
+(defn set-lock-timeout
+  "Sets a timeout for obtaining locks in the database."
+  []
+  (exec-raw ["SET LOCAL lock_timeout='5s'" []]))

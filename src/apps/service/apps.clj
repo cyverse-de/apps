@@ -221,6 +221,7 @@
   ([external-id]
    (jobs/validate-job-status-update-step-count external-id)
    (transaction
+    (jp/set-lock-timeout)
     (let [updates (jp/get-job-status-updates external-id)]
       (when (seq updates)
         (let [job-id      (:job_id (first (jp/get-job-steps-by-external-id external-id)))
