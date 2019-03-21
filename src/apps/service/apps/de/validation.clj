@@ -45,6 +45,18 @@
                        :t.tool_id         nil
                        :t.external_app_id nil}))))
 
+(defn- remove-owned-tools
+  [username tools]
+  (let [tool-ids  (mapv :id tools)
+        owned-ids (set (keys (perms-client/load-tool-permissions username tool-ids "own")))]
+    (remove (comp owned-ids :id) tools)))
+
+(defn- get-unpublishable-tools
+  [username tools]
+  (let [public-tool-ids (perms-client/get-public-tool-ids)]
+    (->> (remove (comp public-tool-ids :id) tools)
+         (remove-owned-tools username))))
+
 (defn app-publishable?
   "Determines whether or not an app can be published. An app is publishable if none of the
    templates in the app are associated with any single-step apps that are not public. Returns
@@ -53,23 +65,22 @@
   [{username :shortUsername} app-id]
   (validate-app-existence app-id)
   (perms/check-app-permissions username "own" [app-id])
-  (let [task-ids         (task-ids-for-app app-id)
-        unrunnable-tasks (list-unrunnable-tasks task-ids)
-        tools            (get-app-tools app-id)
-        public-app-ids   (perms-client/get-public-app-ids)
-        public-tool-ids  (perms-client/get-public-tool-ids)
-        is-public?       (contains? public-app-ids app-id)
-        private-tools    (remove #(contains? public-tool-ids (:id %)) tools)
-        deprecated-tools (filter :deprecated tools)
-        private-apps     (private-apps-for task-ids public-app-ids)]
-    (cond is-public?             [false "app is already public"]
-          (empty? task-ids)      [false "no app ID provided"]
-          (seq unrunnable-tasks) [false "contains unrunnable tasks" unrunnable-tasks]
-          (seq private-tools)    [false "contains private tools" private-tools]
-          (seq deprecated-tools) [false "contains deprecated tools" deprecated-tools]
-          (= 1 (count task-ids)) [true]
-          (seq private-apps)     [false "contains private apps" private-apps]
-          :else                  [true])))
+  (let [task-ids            (task-ids-for-app app-id)
+        unrunnable-tasks    (list-unrunnable-tasks task-ids)
+        tools               (get-app-tools app-id)
+        public-app-ids      (perms-client/get-public-app-ids)
+        is-public?          (contains? public-app-ids app-id)
+        unpublishable-tools (get-unpublishable-tools username tools)
+        deprecated-tools    (filter :deprecated tools)
+        private-apps        (private-apps-for task-ids public-app-ids)]
+    (cond is-public?                [false "app is already public"]
+          (empty? task-ids)         [false "no app ID provided"]
+          (seq unrunnable-tasks)    [false "contains unrunnable tasks" unrunnable-tasks]
+          (seq unpublishable-tools) [false "contains unpublishable tools" unpublishable-tools]
+          (seq deprecated-tools)    [false "contains deprecated tools" deprecated-tools]
+          (= 1 (count task-ids))    [true]
+          (seq private-apps)        [false "contains private apps" private-apps]
+          :else                     [true])))
 
 (defn- verify-app-not-public
   "Verifies that an app has not been made public."
