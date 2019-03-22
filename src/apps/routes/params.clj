@@ -5,8 +5,10 @@
                                           PagingParams
                                           SortFieldDocs
                                           SortFieldOptionalKey
-                                          StandardUserQueryParams]])
-  (:require [schema.core :as s])
+                                          StandardUserQueryParams]]
+        [common-swagger-api.schema.apps :only [IncludeHiddenParams]])
+  (:require [common-swagger-api.schema.apps.elements :as app-elements-schema]
+            [schema.core :as s])
   (:import [java.util UUID]))
 
 (def AppIdPathParam (describe UUID "The App's UUID"))
@@ -46,10 +48,6 @@
   (assoc SecuredQueryParams
     :code  (describe NonBlankString "The authorization code used to obtain the access token.")
     :state (describe NonBlankString "The authorization state information.")))
-
-(s/defschema IncludeHiddenParams
-  {(s/optional-key :include-hidden)
-   (describe Boolean "True if hidden elements should be included in the results.")})
 
 (s/defschema SecuredPagingParams
   (merge SecuredQueryParams PagingParams))
@@ -106,9 +104,7 @@
                                          or leave unset to list all Tools.")}))
 
 (s/defschema AppParameterTypeParams
-  (merge SecuredQueryParams
-    {(s/optional-key :tool-type) (describe String "Filters results by tool type")
-     (s/optional-key :tool-id)   (describe UUID "Filters results by tool identifier")}))
+  (merge SecuredQueryParams app-elements-schema/AppParameterTypeParams))
 
 (s/defschema IntegrationDataSortFields
   (s/enum :email :name :username))
