@@ -2,79 +2,55 @@
   (:use [common-swagger-api.schema]
         [apps.metadata.element-listings :only [list-elements]]
         [apps.routes.params]
-        [apps.routes.schemas.app.element]
         [apps.routes.schemas.tool :only [ToolListing]]
         [ring.util.http-response :only [ok]])
-  (:require [apps.util.service :as service]
+  (:require [common-swagger-api.schema.apps.elements :as elements-schema]
+            [apps.util.service :as service]
             [compojure.route :as route]))
 
 (defroutes app-elements
   (GET "/" []
         :query [params SecuredIncludeHiddenParams]
-        :summary "List All Available App Elements"
-        :description "This endpoint may be used to obtain lists of all available elements that may be
-        included in an App."
+        :summary elements-schema/AppElementsListingSummary
+        :description elements-schema/AppElementsListingDocs
         (ok (list-elements "all" params)))
 
   (GET "/data-sources" []
         :query [params SecuredQueryParams]
-        :return DataSourceListing
-        :summary "List App File Parameter Data Sources"
-        :description "Data sources are the known possible sources for file parameters. In most cases, file
-        parameters will come from a plain file. The only other options that are currently available
-        are redirected standard output and redirected standard error output. Both of these options
-        apply only to file parameters that are associated with an output."
+        :return elements-schema/DataSourceListing
+        :summary elements-schema/AppElementsDataSourceListingSummary
+        :description elements-schema/AppElementsDataSourceListingDocs
         (ok (list-elements "data-sources" params)))
 
   (GET "/file-formats" []
         :query [params SecuredQueryParams]
-        :return FileFormatListing
-        :summary "List App Parameter File Formats"
-        :description "The known file formats can be used to describe supported input or output formats for
-        a tool. For example, tools in the FASTX toolkit may support FASTA files, several different
-        varieties of FASTQ files and Barcode files, among others."
+        :return elements-schema/FileFormatListing
+        :summary elements-schema/AppElementsFileFormatListingSummary
+        :description elements-schema/AppElementsFileFormatListingDocs
         (ok (list-elements "file-formats" params)))
 
   (GET "/info-types" []
         :query [params SecuredQueryParams]
-        :return InfoTypeListing
-        :summary "List Tool Info Types"
-        :description "The known information types can be used to describe the type of information consumed
-        or produced by a tool. This is distinct from the data format because some data formats may
-        contain multiple types of information and some types of information can be described using
-        multiple data formats. For example, the Nexus format can contain multiple types of
-        information, including phylogenetic trees. And phylogenetic trees can also be represented in
-        PhyloXML format, and a large number of other formats. The file format and information type
-        together identify the type of input consumed by a tool or the type of output produced by a
-        tool."
+        :return elements-schema/InfoTypeListing
+        :summary elements-schema/AppElementsInfoTypeListingSummary
+        :description elements-schema/AppElementsInfoTypeListingDocs
         (ok (list-elements "info-types" params)))
 
   (GET "/parameter-types" []
         :query [params AppParameterTypeParams]
-        :return ParameterTypeListing
-        :summary "List App Parameter Types"
-        :description "Parameter types represent the types of information that can be passed to a tool. For
-        command-line tools, a parameter generally represents a command-line option and the parameter
-        type represents the type of data required by the command-line option. For example a
-        `Boolean` parameter generally corresponds to a single command-line flag that takes no
-        arguments. A `Text` parameter, on the other hand, generally represents some sort of textual
-        information. Some parameter types are not supported by all tool types, so it is helpful in
-        some cases to filter parameter types either by the tool type or optionally by the tool
-        (which is used to determine the tool type). If you filter by both tool type and tool ID then
-        the tool type will take precedence. Including either an undefined tool type or an undefined
-        tool type name will result in an error"
+        :return elements-schema/ParameterTypeListing
+        :summary elements-schema/AppElementsParameterTypeListingSummary
+        :description elements-schema/AppElementsParameterTypeListingDocs
         (ok (list-elements "parameter-types" params)))
 
   (GET "/rule-types" []
         :query [params SecuredQueryParams]
-        :return RuleTypeListing
-        :summary "List App Parameter Rule Types"
-        :description "Rule types represent types of validation rules that may be defined to validate user
-        input. For example, if a parameter value must be an integer between 1 and 10 then the
-        `IntRange` rule type may be used. Similarly, if a parameter value must contain data in a
-        specific format, such as a phone number, then the `Regex` rule type may be used."
+        :return elements-schema/RuleTypeListing
+        :summary elements-schema/AppElementsRuleTypeListingSummary
+        :description elements-schema/AppElementsRuleTypeListingDocs
         (ok (list-elements "rule-types" params)))
 
+  ;; Deprecated?
   (GET "/tools" []
         :query [params SecuredIncludeHiddenParams]
         :return ToolListing
@@ -85,22 +61,16 @@
 
   (GET "/tool-types" []
         :query [params SecuredQueryParams]
-        :return ToolTypeListing
-        :summary "List App Tool Types"
-        :description "Tool types are known types of tools in the Discovery Environment. Generally, there's
-        a different tool type for each execution environment that is supported by the DE."
+        :return elements-schema/ToolTypeListing
+        :summary elements-schema/AppElementsToolTypeListingSummary
+        :description elements-schema/AppElementsToolTypeListingDocs
         (ok (list-elements "tool-types" params)))
 
   (GET "/value-types" []
         :query [params SecuredQueryParams]
-        :return ValueTypeListing
-        :summary "List App Parameter and Rule Value Types"
-        :description "If you look closely at the response schema for parameter types and rule types
-        listings then you'll notice that each parameter type has a single value type assocaited with
-        it and each rule type has one or more value types associated with it. The purpose of value
-        types is specifically to link parameter types and rule types. The App Editor uses the value
-        type to determine which types of rules can be applied to a parameter that is being defined
-        by the user."
+        :return elements-schema/ValueTypeListing
+        :summary elements-schema/AppElementsValueTypeListingSummary
+        :description elements-schema/AppElementsValueTypeListingDocs
         (ok (list-elements "value-types" params)))
 
   (undocumented (route/not-found (service/unrecognized-path-response))))
