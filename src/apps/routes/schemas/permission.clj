@@ -1,85 +1,16 @@
 (ns apps.routes.schemas.permission
   (:use [apps.routes.params :only [SecuredQueryParams]]
         [common-swagger-api.schema :only [describe ErrorResponse NonBlankString]]
-        [common-swagger-api.schema.apps :only [SystemId]]
+        [common-swagger-api.schema.apps :only [QualifiedAppId SystemId]]
         [schema.core :only [defschema optional-key enum]])
+  (:require [common-swagger-api.schema.apps.permission :as perms-schema])
   (:import [java.util UUID]))
 
-(def AppPermissionEnum (enum "read" "write" "own" ""))
 (def AnalysisPermissionEnum (enum "read" "own" ""))
-(def ToolPermissionEnum AppPermissionEnum)
+(def ToolPermissionEnum perms-schema/AppPermissionEnum)
 
 (defschema PermissionListerQueryParams
-  (assoc SecuredQueryParams
-    (optional-key :full-listing)
-    (describe Boolean "If true, include permissions for the authenticated user as well.")))
-
-(defschema Subject
-  {:source_id (describe NonBlankString "The identifier of the subject source (for exmaple, 'ldap').")
-   :id        (describe NonBlankString "The subject identifier.")})
-
-(defschema QualifiedAppId
-  {:system_id SystemId
-   :app_id    (describe NonBlankString "The app ID")})
-
-(defschema QualifiedAppIdList
-  {:apps (describe [QualifiedAppId] "A List of app IDs")})
-
-(defschema SubjectPermissionListElement
-  {:subject    (describe Subject "The user or group identification.")
-   :permission (describe AppPermissionEnum "The permission level assigned to the subject")})
-
-(defschema AppPermissionListElement
-  (assoc QualifiedAppId
-    (optional-key :name) (describe NonBlankString "The app name")
-    :permissions         (describe [SubjectPermissionListElement] "The list of subject permissions for the app")))
-
-(defschema AppPermissionListing
-  {:apps (describe [AppPermissionListElement] "The list of app permissions")})
-
-(defschema AppSharingRequestElement
-  (assoc QualifiedAppId
-    :permission (describe AppPermissionEnum "The requested permission level")))
-
-(defschema AppSharingResponseElement
-  (assoc AppSharingRequestElement
-    :app_name             (describe NonBlankString "The app name")
-    :success              (describe Boolean "A Boolean flag indicating whether the sharing request succeeded")
-    (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")))
-
-(defschema SubjectAppSharingRequestElement
-  {:subject (describe Subject "The user or group identification.")
-   :apps    (describe [AppSharingRequestElement] "The list of app sharing requests for the subject")})
-
-(defschema SubjectAppSharingResponseElement
-  (assoc SubjectAppSharingRequestElement
-    :apps (describe [AppSharingResponseElement] "The list of app sharing responses for the subject")))
-
-(defschema AppSharingRequest
-  {:sharing (describe [SubjectAppSharingRequestElement] "The list of app sharing requests")})
-
-(defschema AppSharingResponse
-  {:sharing (describe [SubjectAppSharingResponseElement] "The list of app sharing responses")})
-
-(defschema AppUnsharingResponseElement
-  (assoc QualifiedAppId
-    :app_name             (describe NonBlankString "The app name")
-    :success              (describe Boolean "A Boolean flag indicating whether the unsharing request succeeded")
-    (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")))
-
-(defschema SubjectAppUnsharingRequestElement
-  {:subject (describe Subject "The user or group identification.")
-   :apps    (describe [QualifiedAppId] "The list of app unsharing requests for the subject.")})
-
-(defschema SubjectAppUnsharingResponseElement
-  (assoc SubjectAppUnsharingRequestElement
-    :apps (describe [AppUnsharingResponseElement] "The list of app sharing responses for the subject")))
-
-(defschema AppUnsharingRequest
-  {:unsharing (describe [SubjectAppUnsharingRequestElement] "The list of app unsharing requests")})
-
-(defschema AppUnsharingResponse
-  {:unsharing (describe [SubjectAppUnsharingResponseElement] "The list of app unsharing responses")})
+  (merge SecuredQueryParams perms-schema/PermissionListerQueryParams))
 
 (defschema AnalysisIdList
   {:analyses (describe [UUID] "A List of analysis IDs")})
@@ -87,7 +18,7 @@
 (defschema AnalysisPermissionListElement
   {:id          (describe UUID "The analysis ID")
    :name        (describe NonBlankString "The analysis name")
-   :permissions (describe [SubjectPermissionListElement] "The list of subject permissions for the analysis")})
+   :permissions (describe [perms-schema/SubjectPermissionListElement] "The list of subject permissions for the analysis")})
 
 (defschema AnalysisPermissionListing
   {:analyses (describe [AnalysisPermissionListElement] "The list of analysis permissions")})
@@ -106,7 +37,7 @@
     (optional-key :error)         (describe ErrorResponse "Information about any error that may have occurred")))
 
 (defschema SubjectAnalysisSharingRequestElement
-  {:subject  (describe Subject "The user or group identification.")
+  {:subject  (describe perms-schema/Subject "The user or group identification.")
    :analyses (describe [AnalysisSharingRequestElement] "The list of sharing requests for individual analyses")})
 
 (defschema SubjectAnalysisSharingResponseElement
@@ -128,7 +59,7 @@
    (optional-key :error)         (describe ErrorResponse "Information about any error that may have occurred")})
 
 (defschema SubjectAnalysisUnsharingRequestElement
-  {:subject  (describe Subject "The user or group identification.")
+  {:subject  (describe perms-schema/Subject "The user or group identification.")
    :analyses (describe [UUID] "The identifiers of the analyses to unshare")})
 
 (defschema SubjectAnalysisUnsharingResponseElement
@@ -149,7 +80,7 @@
 (defschema ToolPermissionListElement
   {:id          (describe UUID "The Tool ID")
    :name        (describe NonBlankString "The Tool name")
-   :permissions (describe [SubjectPermissionListElement] "The list of subject permissions for the Tool")})
+   :permissions (describe [perms-schema/SubjectPermissionListElement] "The list of subject permissions for the Tool")})
 
 (defschema ToolPermissionListing
   {:tools (describe [ToolPermissionListElement] "The list of Tool permissions")})
@@ -165,7 +96,7 @@
     (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")))
 
 (defschema SubjectToolSharingRequestElement
-  {:subject (describe Subject "The user or group identification.")
+  {:subject (describe perms-schema/Subject "The user or group identification.")
    :tools   (describe [ToolSharingRequestElement] "The list of Tool sharing requests for the subject")})
 
 (defschema SubjectToolSharingResponseElement
@@ -185,7 +116,7 @@
    (optional-key :error) (describe ErrorResponse "Information about any error that may have occurred")})
 
 (defschema SubjectToolUnsharingRequestElement
-  {:subject (describe Subject "The user or group identification.")
+  {:subject (describe perms-schema/Subject "The user or group identification.")
    :tools   (describe [UUID] "The identifiers of the Tools to unshare")})
 
 (defschema SubjectToolUnsharingResponseElement

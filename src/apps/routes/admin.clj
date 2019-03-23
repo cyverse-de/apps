@@ -2,7 +2,8 @@
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
-        [common-swagger-api.schema.apps :only [SystemId]]
+        [common-swagger-api.schema.apps :only [AppDeletionRequest
+                                               SystemId]]
         [apps.metadata.reference-genomes :only [add-reference-genome
                                                 delete-reference-genome
                                                 update-reference-genome]]
@@ -120,7 +121,7 @@
 
   (POST "/shredder" []
     :query [params SecuredQueryParams]
-    :body [body (describe AppDeletionRequest "List of App IDs to delete.")]
+    :body [body AppDeletionRequest]
     :summary "Permanently Deleting Apps"
     :description "This service physically removes an App from the database, which allows
     administrators to completely remove Apps that are causing problems."
