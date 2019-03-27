@@ -9,7 +9,9 @@
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as perms-client]
-            [apps.service.apps.de.permissions :as perms]))
+            [apps.service.apps.de.permissions :as perms]
+            [apps.util.config :as config]
+            [clojure.string :as string]))
 
 (defn validate-app-existence
   "Verifies that apps exist."
@@ -45,17 +47,21 @@
                        :t.tool_id         nil
                        :t.external_app_id nil}))))
 
-(defn- remove-owned-tools
+(defn- remove-publishable-tools
+  "A tool is publishable if the authenticated user has ownership of the tool and the Docker container that the tool
+   uses is in one of the trusted Docker registries."
   [username tools]
-  (let [tool-ids  (mapv :id tools)
-        owned-ids (set (keys (perms-client/load-tool-permissions username tool-ids "own")))]
-    (remove (comp owned-ids :id) tools)))
+  (let [tool-ids          (mapv :id tools)
+        owned-id?         (comp (set (keys (perms-client/load-tool-permissions username tool-ids "own"))) :id)
+        get-registry      (fn [{image-name :image_name}] (first (string/split image-name #"/" 2)))
+        trusted-registry? (comp (set (config/trusted-registries)) get-registry)]
+    (remove (every-pred owned-id? trusted-registry?) tools)))
 
 (defn- get-unpublishable-tools
   [username tools]
   (let [public-tool-ids (perms-client/get-public-tool-ids)]
     (->> (remove (comp public-tool-ids :id) tools)
-         (remove-owned-tools username))))
+         (remove-publishable-tools username))))
 
 (defn app-publishable?
   "Determines whether or not an app can be published. An app is publishable if none of the
