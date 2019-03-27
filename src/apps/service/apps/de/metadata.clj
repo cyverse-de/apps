@@ -207,10 +207,19 @@
     (throw+ {:type  :clojure-commons.exception/bad-request-field
              :error (str "App " app-id " does not have documentation.")})))
 
+(defn- publish-app-tools
+  [app-id]
+  (let [public-tool-ids (perms-client/get-public-tool-ids)]
+    (->> (map :id (amp/get-app-tools app-id))
+         (remove public-tool-ids)
+         (map perms-client/make-tool-public)
+         dorun)))
+
 (defn make-app-public
-  [user app]
+  [user {app-id :id :as app}]
   (verify-app-publishable user app)
   (verify-app-documentation user app)
+  (publish-app-tools app-id)
   (publish-app user app))
 
 (defn get-app
