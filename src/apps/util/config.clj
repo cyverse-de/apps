@@ -333,6 +333,11 @@
   [props config-valid configs]
   "apps.email.app-deletion.subject" "Your \"%s\" app has been administratively deprecated.")
 
+(cc/defprop-optvec trusted-registries
+  "The list of registries that we trust for public tools."
+  [props config-valid configs]
+  "apps.tools.trusted-registries" [])
+
 (cc/defprop-optstr amqp-uri
   "The URI to use for connections to a AMQP broker."
   [props config-valid configs]
