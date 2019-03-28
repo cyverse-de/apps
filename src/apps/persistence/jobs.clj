@@ -773,8 +773,8 @@
                    :sent_from_hostname "0.0.0.0"
                    :sent_on            (System/currentTimeMillis)})))
 
-(defn get-job-status-updates
-  "Retrieves the list of job status updates for an external ID."
+(defn get-unpropagated-job-status-updates
+  "Retrieves the list of unpropagated job status updates for an external ID."
   [external-id]
   (-> (select* :job_status_updates)
       (fields :id :status :sent_on)
@@ -798,6 +798,15 @@
   (sql/update :job_status_updates
               (set-fields {:propagated true})
               (where {:external_id external-id})))
+
+(defn get-job-status-updates
+  "Retrieves the list of job status updates for an external ID."
+  [external-id]
+  (-> (select* :job_status_updates)
+      (fields :id :status :message :sent_on)
+      (order :sent_on :ASC)
+      (where {:external_id external-id})
+      select))
 
 (defn set-lock-timeout
   "Sets a timeout for obtaining locks in the database."

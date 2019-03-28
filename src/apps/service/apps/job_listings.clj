@@ -128,6 +128,13 @@
         rep-steps  (group-by :job_id (jp/list-representative-job-steps [job-id]))]
     (format-job apps-client nil app-tables rep-steps job-info)))
 
+(defn- build-job-step-listing
+  [job-id steps format-step]
+  {:analysis_id job-id
+   :steps       (map format-step steps)
+   :timestamp   (str (System/currentTimeMillis))
+   :total       (count steps)})
+
 (defn- format-job-step
   [step]
   (remove-nil-vals
@@ -141,8 +148,13 @@
 
 (defn list-job-steps
   [job-id]
-  (let [steps (jp/list-job-steps job-id)]
-    {:analysis_id job-id
-     :steps       (map format-job-step steps)
-     :timestamp   (str (System/currentTimeMillis))
-     :total       (count steps)}))
+  (build-job-step-listing job-id (jp/list-job-steps job-id) format-job-step))
+
+(defn- get-job-step-history
+  [apps-client step]
+  (assoc (format-job-step step)
+    :updates (.getJobStepHistory apps-client step)))
+
+(defn get-job-history
+  [apps-client job-id]
+  (build-job-step-listing job-id (jp/list-job-steps job-id) (partial get-job-step-history apps-client)))

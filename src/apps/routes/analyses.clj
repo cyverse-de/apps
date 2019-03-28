@@ -92,6 +92,14 @@
            :description       "This service marks an analysis as deleted in the DE database."
            (ok (apps/delete-job current-user analysis-id)))
 
+  (GET "/:analysis-id/history" []
+         :path-params [analysis-id :- AnalysisIdPathParam]
+         :query       [params SecuredQueryParams]
+         :return      AnalysisHistory
+         :summary     "Get the Status Update History of an Analysis"
+         :description "This endpoint returns a status update history for each step in an analysis."
+         (ok (apps/get-job-history current-user analysis-id)))
+
   (POST "/shredder" []
          :query   [params SecuredQueryParams]
          :body    [body AnalysisShredderRequest]

@@ -170,6 +170,13 @@
     {:status  (:status step)
      :enddate (:completion_date step)}))
 
+(defn get-job-step-history
+  [{:keys [external_id]}]
+  (for [update (jp/get-job-status-updates external_id)]
+    {:status    (:status update)
+     :message   (:message update)
+     :timestamp (str (:sent_on update))}))
+
 (defn prepare-step
   [user submission]
   (build-submission user submission))

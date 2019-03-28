@@ -237,6 +237,11 @@
     (if (not (empty? running-children))
       (async-stop-batch-jobs apps-client status-to-set job-id))))
 
+(defn get-job-history
+  [apps-client user job-id]
+  (validate-jobs-for-user user [job-id] "read")
+  (listings/get-job-history apps-client job-id))
+
 (defn list-job-steps
   [user job-id]
   (validate-jobs-for-user user [job-id] "read")

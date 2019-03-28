@@ -222,7 +222,7 @@
    (jobs/validate-job-status-update-step-count external-id)
    (transaction
     (jp/set-lock-timeout)
-    (let [updates (jp/get-job-status-updates external-id)]
+    (let [updates (jp/get-unpropagated-job-status-updates external-id)]
       (when (seq updates)
         (let [job-id      (:job_id (first (jp/get-job-steps-by-external-id external-id)))
               job-step    (jobs/lock-job-step job-id external-id)
@@ -286,6 +286,10 @@
   [user body]
   (jobs/delete-jobs user (:analyses body))
   nil)
+
+(defn get-job-history
+  [user job-id]
+  (jobs/get-job-history (get-apps-client user) user job-id))
 
 (defn get-parameter-values
   [user job-id]

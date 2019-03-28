@@ -239,6 +239,9 @@
   (getJobStepStatus [_ job-step]
     (agave-jobs/get-job-step-status agave job-step))
 
+  (getJobStepHistory [_ {:keys [external_id]}]
+    (.getJobHistory agave external_id))
+
   (prepareStepSubmission [_ job-id submission]
     (agave-jobs/prepare-step-submission agave job-id submission))
 

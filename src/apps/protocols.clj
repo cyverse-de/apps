@@ -51,6 +51,7 @@
   (updateJobStatus [_ job-step job status end-date])
   (getDefaultOutputName [_ io-map source-step])
   (getJobStepStatus [_ job-step])
+  (getJobStepHistory [_ job-step])
   (buildNextStepSubmission [_ job-step job])
   (prepareStepSubmission [_ job-id submission])
   (getParamDefinitions [_ system-id app-id])
