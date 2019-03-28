@@ -1,276 +1,33 @@
 (ns apps.routes.schemas.app
-  (:use [common-swagger-api.schema :only [->optional-param
-                                          optional-key->keyword
-                                          describe
-                                          PagingParams
-                                          SortFieldDocs
-                                          SortFieldOptionalKey]]
-        [common-swagger-api.schema.apps :only [AppBase
-                                               AppDeletedParam
-                                               AppDisabledParam
-                                               AppDocUrlParam
-                                               AppFilterParams
-                                               AppListing
-                                               AppListingDetail
-                                               AppListingValidSortFields
-                                               AppPublicParam
-                                               AppSearchValidSortFields
-                                               StringAppIdParam
-                                               SystemId]]
-        [apps.routes.params]
-        [apps.routes.schemas.tool :only [Tool ToolDetails ToolListingImage ToolListingItem]]
-        [schema.core :only [Any defschema enum optional-key recursive]])
+  (:use [apps.routes.params :only [SecuredQueryParams SecuredQueryParamsEmailRequired]]
+        [common-swagger-api.schema
+         :only [->optional-param
+                optional-key->keyword
+                describe
+                PagingParams
+                SortFieldDocs
+                SortFieldOptionalKey]]
+        [common-swagger-api.schema.apps
+         :only [AppBase
+                AppDeletedParam
+                AppDetails
+                AppDisabledParam
+                AppDocUrlParam
+                AppFilterParams
+                AppListing
+                AppListingDetail
+                AppListingJobStats
+                AppListingJobStatsDocs
+                AppListingValidSortFields
+                AppGroup
+                AppReferencesParam
+                AppSearchValidSortFields
+                GroupListDocs
+                OptionalGroupsKey]]
+        [schema.core :only [defschema enum optional-key]])
   (:require [clojure.set :as sets]
             [common-swagger-api.schema.apps :as app-schema])
-  (:import [java.util UUID Date]))
-
-(def AppDocParam (describe String "The App's documentation"))
-(def AppReferencesParam (describe [String] "The App's references"))
-(def ToolDeprecatedParam (describe Boolean "Flag indicating if this Tool has been deprecated"))
-
-(def OptionalDebugKey (optional-key :debug))
-(def OptionalDeprecatedKey (optional-key :deprecated))
-(def OptionalGroupsKey (optional-key :groups))
-(def OptionalToolsKey (optional-key :tools))
-(def OptionalParametersKey (optional-key :parameters))
-(def OptionalParameterArgumentsKey (optional-key :arguments))
-
-(def ToolListDocs "The tools used to execute the App")
-(def GroupListDocs "The list of Parameter Groups associated with the App")
-(def ParameterListDocs "The list of Parameters in this Group")
-(def ListItemOrTreeDocs
-  "The List Parameter's arguments. Only used in cases where the user is given a fixed number of
-   values to choose from. This can occur for Parameters such as `TextSelection` or
-   `IntegerSelection` Parameters")
-(def TreeSelectorParameterListDocs "The TreeSelector root's arguments")
-(def TreeSelectorGroupListDocs "The TreeSelector root's groups")
-(def TreeSelectorGroupParameterListDocs "The TreeSelector Group's arguments")
-(def TreeSelectorGroupGroupListDocs "The TreeSelector Group's groups")
-(def AppListingJobStatsDocs "Some launch statistics associated with the App")
-
-(defschema AppParameterListItem
-  {:id                         (describe UUID "A UUID that is used to identify the List Item")
-   (optional-key :name)        (describe String "The List Item's name")
-   (optional-key :value)       (describe String "The List Item's value")
-   (optional-key :description) (describe String "The List Item's description")
-   (optional-key :display)     (describe String "The List Item's display label")
-   (optional-key :isDefault)   (describe Boolean "Flags this Item as the List's default selection")})
-
-(defschema AppParameterListGroup
-  (merge AppParameterListItem
-         {OptionalParameterArgumentsKey
-          (describe [AppParameterListItem] TreeSelectorGroupParameterListDocs)
-
-          OptionalGroupsKey
-          (describe [(recursive #'AppParameterListGroup)] TreeSelectorGroupGroupListDocs)}))
-
-(defschema AppParameterListItemOrTree
-  (merge AppParameterListItem
-         {(optional-key :isSingleSelect)
-          (describe Boolean "The TreeSelector root's single-selection flag")
-
-          (optional-key :selectionCascade)
-          (describe String "The TreeSelector root's cascace option")
-
-          OptionalParameterArgumentsKey
-          (describe [AppParameterListItem] TreeSelectorParameterListDocs)
-
-          OptionalGroupsKey
-          (describe [AppParameterListGroup] TreeSelectorGroupListDocs)}))
-
-(defschema AppParameterValidator
-  {:type
-   (describe String
-     "The validation rule's type, which describes how a property value should be validated. For
-      example, if the type is `IntAbove` then the property value entered by the user must be an
-      integer above a specific value, which is specified in the parameter list. You can use the
-      `rule-types` endpoint to get a list of validation rule types")
-
-   :params
-   (describe [Any]
-     "The list of parameters to use when validating a Parameter value. For example, to ensure that a
-      Parameter contains a value that is an integer greater than zero, you would use a validation
-      rule of type `IntAbove` along with a parameter list of `[0]`")})
-
-(defschema AppFileParameters
-  {(optional-key :format)
-   (describe String "The Input/Output Parameter's file format")
-
-   (optional-key :file_info_type)
-   (describe String "The Input/Output Parameter's info type")
-
-   (optional-key :is_implicit)
-   (describe Boolean
-     "Whether the Output Parameter name is specified on the command line (but still be referenced in
-      Pipelines), or implicitly determined by the app itself. If the output file name is implicit
-      then the output file name either must always be the same or it must follow a naming convention
-      that can easily be matched with a glob pattern")
-
-   (optional-key :repeat_option_flag)
-   (describe Boolean
-     "Whether or not the command-line option flag should preceed each file of a MultiFileSelector
-     on the command line when the App is run")
-
-   (optional-key :data_source)
-   (describe String "The Output Parameter's source")
-
-   (optional-key :retain)
-   (describe Boolean
-     "Whether or not the Input should be copied back to the job output directory in iRODS")})
-
-(defschema AppParameter
-  {:id
-   (describe UUID "A UUID that is used to identify the Parameter")
-
-   (optional-key :name)
-   (describe String
-     "The Parameter's name. In most cases, this field indicates the command-line option used to
-      identify the Parameter on the command line. In these cases, the Parameter is assumed to be
-      positional and no command-line option is used if the name is blank. For Parameters that
-      specify a limited set of selection values, however, this is not the case. Instead, the
-      Parameter arguments specify both the command-line flag and the Parameter value to use for each
-      option that is selected")
-
-   (optional-key :defaultValue)
-   (describe Any "The Parameter's default value")
-
-   (optional-key :value)
-   (describe Any "The Parameter's value, used for previewing this parameter on the command-line.")
-
-   (optional-key :label)
-   (describe String "The Parameter's prompt to display in the UI")
-
-   (optional-key :description)
-   (describe String "The Parameter's description")
-
-   (optional-key :order)
-   (describe Long
-     "The relative command-line order for the Parameter. If this field is not specified then the
-      arguments will appear on the command-line in the order in which they appear in the import JSON.
-      If you're not specifying the order, please be sure that the argument order is unimportant for
-      the tool being integrated")
-
-   (optional-key :required)
-   (describe Boolean "Whether or not a value is required for this Parameter")
-
-   (optional-key :isVisible)
-   (describe Boolean "The Parameter's intended visibility in the job submission UI")
-
-   (optional-key :omit_if_blank)
-   (describe Boolean
-     "Whether the command-line option should be omitted if the Parameter value is blank. This is
-      most useful for optional arguments that use command-line flags in conjunction with a value. In
-      this case, it is an error to include the command-line flag without a corresponding value. This
-      flag indicates that the command-line flag should be omitted if the value is blank. This can
-      also be used for positional arguments, but this flag tends to be useful only for trailing
-      positional arguments")
-
-   :type
-   (describe String
-     "The Parameter's type name. Must contain the name of one of the Parameter types defined in the
-      database. You can get the list of defined and undeprecated Parameter types using the
-      `parameter-types` endpoint")
-
-   (optional-key :file_parameters)
-   (describe AppFileParameters "The File Parameter specific details")
-
-   OptionalParameterArgumentsKey
-   (describe [AppParameterListItemOrTree] ListItemOrTreeDocs)
-
-   (optional-key :validators)
-   (describe [AppParameterValidator]
-     "The Parameter's validation rules, which contains a list of rules that can be used to verify
-      that Parameter values entered by a user are valid. Note that in cases where the user is given
-      a list of possibilities to choose from, no validation rules are required because the selection
-      list itself can be used to validate the Parameter value")})
-
-(defschema AppGroup
-  {:id
-   (describe UUID "A UUID that is used to identify the Parameter Group")
-
-   (optional-key :name)
-   (describe String "The Parameter Group's name")
-
-   (optional-key :description)
-   (describe String "The Parameter Group's description")
-
-   :label
-   (describe String "The label used to identify the Parameter Group in the UI")
-
-   (optional-key :isVisible)
-   (describe Boolean "The Parameter Group's intended visibility in the job submission UI")
-
-   OptionalParametersKey
-   (describe [AppParameter] ParameterListDocs)})
-
-(defschema App
-  (merge AppBase
-         {OptionalToolsKey           (describe [(merge Tool {OptionalDeprecatedKey ToolDeprecatedParam})] ToolListDocs)
-          (optional-key :references) AppReferencesParam
-          OptionalGroupsKey          (describe [AppGroup] GroupListDocs)}))
-
-(defschema AppFileParameterDetails
-  {:id          (describe String "The Parameter's ID")
-   :name        (describe String "The Parameter's name")
-   :description (describe String "The Parameter's description")
-   :label       (describe String "The Input Parameter's label or the Output Parameter's value")
-   :format      (describe String "The Parameter's file format")
-   :required    (describe Boolean "Whether or not a value is required for this Parameter")})
-
-(defschema AppTask
-  {:system_id           (describe String "The Task's System ID")
-   :id                  (describe String "The Task's ID")
-   :name                (describe String "The Task's name")
-   :description         (describe String "The Task's description")
-   (optional-key :tool) ToolDetails
-   :inputs              (describe [AppFileParameterDetails] "The Task's input parameters")
-   :outputs             (describe [AppFileParameterDetails] "The Task's output parameters")})
-
-(defschema AppTaskListing
-  (assoc AppBase
-    :id    (describe String "The App's ID.")
-    :tasks (describe [AppTask] "The App's tasks")))
-
-(defschema AppParameterJobView
-  (assoc AppParameter
-    :id
-    (describe String
-      "A string consisting of the App's step ID and the Parameter ID separated by an underscore.
-       Both identifiers are necessary because the same task may be associated with a single App,
-       which would cause duplicate keys in the job submission JSON. The step ID is prepended to
-       the Parameter ID in order to ensure that all parameter value keys are unique.")))
-
-(defschema AppGroupJobView
-  (assoc AppGroup
-    :id                   (describe String "The app group ID.")
-    :step_number          (describe Long "The step number associated with this parameter group")
-    OptionalParametersKey (describe [AppParameterJobView] ParameterListDocs)))
-
-(defschema AppJobView
-  (assoc AppBase
-    :app_type         (describe String "DE or External.")
-    :id               (describe String "The app ID.")
-    :label            (describe String "An alias for the App's name")
-    :deleted          AppDeletedParam
-    :disabled         AppDisabledParam
-    OptionalDebugKey  (describe Boolean "True if input files should be retained for the job by default.")
-    OptionalGroupsKey (describe [AppGroupJobView] GroupListDocs)))
-
-(defschema AppDetailCategory
-  {:id AppCategoryIdPathParam
-   :name (describe String "The App Category's name")})
-
-(defschema AppDetailsTool
-  (merge Tool
-         {:id                       (describe String "The tool identifier.")
-          (optional-key :container) ToolListingImage}))
-
-(defschema AppListingJobStats
-  {:job_count_completed
-   (describe Long "The number of times this app has run to `Completed` status")
-
-   (optional-key :job_last_completed)
-   (describe Date "The last date this app has run to `Completed` status")})
+  (:import [java.util Date]))
 
 (defschema AdminAppListingJobStats
   (merge AppListingJobStats
@@ -282,72 +39,6 @@
 
           (optional-key :last_used)
           (describe Date "The start date this app was last run")}))
-
-(defschema AppDetails
-  (merge AppBase
-         {:id
-          (describe String "The app identifier.")
-
-          :tools
-          (describe [AppDetailsTool] ToolListDocs)
-
-          :deleted
-          AppDeletedParam
-
-          :disabled
-          AppDisabledParam
-
-          :integrator_email
-          (describe String "The App integrator's email address.")
-
-          :integrator_name
-          (describe String "The App integrator's full name.")
-
-          (optional-key :wiki_url)
-          AppDocUrlParam
-
-          :references
-          AppReferencesParam
-
-          (optional-key :job_stats)
-          (describe AppListingJobStats AppListingJobStatsDocs)
-
-          (optional-key :hierarchies)
-          (describe Any
-            "The ontology hierarchies associated with the App")
-
-          :categories
-          (describe [AppDetailCategory]
-            "The list of Categories associated with the App")
-
-          :suggested_categories
-          (describe [AppDetailCategory]
-            "The list of Categories the integrator wishes to associate with the App")}))
-
-(defschema AppDocumentation
-  {(optional-key :app_id)
-   StringAppIdParam
-
-   :documentation
-   AppDocParam
-
-   :references
-   AppReferencesParam
-
-   (optional-key :created_on)
-   (describe Date "The Date the App's documentation was created")
-
-   (optional-key :modified_on)
-   (describe Date "The Date the App's documentation was last modified")
-
-   (optional-key :created_by)
-   (describe String "The user that created the App's documentation")
-
-   (optional-key :modified_by)
-   (describe String "The user that last modified the App's documentation")})
-
-(defschema AppDocumentationRequest
-  (dissoc AppDocumentation :references))
 
 (defschema AdminAppListingDetail
   (merge AppListingDetail
@@ -394,71 +85,6 @@
          {(optional-key :job_stats)
           (describe AdminAppListingJobStats AppListingJobStatsDocs)}))
 
-(defschema AppParameterListItemRequest
-  (->optional-param AppParameterListItem :id))
-
-(defschema AppParameterListGroupRequest
-  (-> AppParameterListGroup
-    (->optional-param :id)
-    (assoc OptionalParameterArgumentsKey
-           (describe [AppParameterListItemRequest] TreeSelectorGroupParameterListDocs)
-           OptionalGroupsKey
-           (describe [(recursive #'AppParameterListGroupRequest)] TreeSelectorGroupGroupListDocs))))
-
-(defschema AppParameterListItemOrTreeRequest
-  (-> AppParameterListItemOrTree
-    (->optional-param :id)
-    (assoc OptionalParameterArgumentsKey
-           (describe [AppParameterListItemRequest] TreeSelectorParameterListDocs))
-    (assoc OptionalGroupsKey
-           (describe [AppParameterListGroupRequest] TreeSelectorGroupListDocs))))
-
-(defschema AppParameterRequest
-  (-> AppParameter
-    (->optional-param :id)
-    (assoc OptionalParameterArgumentsKey
-           (describe [AppParameterListItemOrTreeRequest] ListItemOrTreeDocs))))
-
-(defschema AppGroupRequest
-  (-> AppGroup
-      (->optional-param :id)
-      (assoc OptionalParametersKey (describe [AppParameterRequest] ParameterListDocs))))
-
-(defschema AppToolRequest
-  (-> ToolListingItem
-      (->optional-param :is_public)
-      (->optional-param :permission)
-      (->optional-param :implementation)
-      (->optional-param :container)
-      (assoc OptionalDeprecatedKey ToolDeprecatedParam)))
-
-(defschema AppRequest
-  (-> App
-      (->optional-param :id)
-      (assoc OptionalGroupsKey (describe [AppGroupRequest] GroupListDocs)
-             OptionalToolsKey  (describe [AppToolRequest] ToolListDocs))))
-
-(defschema AppPreviewRequest
-  (-> App
-    (->optional-param :id)
-    (->optional-param :name)
-    (->optional-param :description)
-    (assoc OptionalGroupsKey (describe [AppGroupRequest] GroupListDocs)
-           (optional-key :is_public) AppPublicParam
-           OptionalToolsKey  (describe [AppToolRequest] ToolListDocs))))
-
-(defschema AppCategoryMetadata
-  {(optional-key :avus) (describe [Any] "A listing of App Category metadata")})
-
-(defschema PublishAppRequest
-  (-> AppBase
-    (->optional-param :id)
-    (->optional-param :name)
-    (->optional-param :description)
-    (assoc (optional-key :documentation) AppDocParam
-           (optional-key :references) AppReferencesParam)
-    (merge AppCategoryMetadata)))
-
 (defschema AdminAppPatchRequest
   (-> AppBase
     (->optional-param :id)
@@ -469,7 +95,3 @@
            (optional-key :deleted)    AppDeletedParam
            (optional-key :disabled)   AppDisabledParam
            OptionalGroupsKey          (describe [AppGroup] GroupListDocs))))
-
-(defschema AppPublishableResponse
-  {:publishable           (describe Boolean "True if the app is publishable.")
-   (optional-key :reason) (describe String "The reason the app can't be published if it's not publishable.")})

@@ -1,8 +1,8 @@
 (ns apps.routes.apps.communities
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [apps.routes.params]
-        [apps.routes.schemas.app :only [AppCategoryMetadata]]
+        [apps.routes.params :only [AppIdPathParam SecuredQueryParams]]
+        [common-swagger-api.schema.apps :only [AppCategoryMetadata]]
         [apps.user :only [current-user]]
         [ring.util.http-response :only [ok]])
   (:require [apps.service.apps.communities :as communities]

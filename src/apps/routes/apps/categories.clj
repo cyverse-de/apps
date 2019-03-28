@@ -2,9 +2,11 @@
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
-        [common-swagger-api.schema.apps :only [AppListing
-                                               SystemId]]
-        [apps.routes.params]
+        [common-swagger-api.schema.apps
+         :only [AppCategoryIdPathParam
+                AppListing
+                SystemId]]
+        [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.app :only [AppListingPagingParams]]
         [apps.routes.schemas.app.category]
         [apps.user :only [current-user]]

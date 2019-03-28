@@ -1,27 +1,43 @@
 (ns apps.routes.apps
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppDeletionRequest
-                                               AppListing
-                                               AppListingSummary
-                                               AppsShredderDocs
-                                               AppsShredderSummary
-                                               SystemId]]
-        [common-swagger-api.schema.apps.permission :only [AppPermissionListing
-                                                          AppPermissionListingDocs
-                                                          AppPermissionListingRequest
-                                                          AppPermissionListingSummary
-                                                          AppSharingDocs
-                                                          AppSharingRequest
-                                                          AppSharingResponse
-                                                          AppSharingSummary
-                                                          AppUnsharingDocs
-                                                          AppUnsharingRequest
-                                                          AppUnsharingResponse
-                                                          AppUnsharingSummary]]
+        [common-swagger-api.schema.apps
+         :only [App
+                AppDeletionRequest
+                AppDetails
+                AppDocumentation
+                AppDocumentationRequest
+                AppJobView
+                AppListing
+                AppListingSummary
+                AppPreviewRequest
+                AppPublishableResponse
+                AppRequest
+                AppsShredderDocs
+                AppsShredderSummary
+                AppTaskListing
+                PublishAppRequest
+                StringAppIdParam
+                SystemId]]
+        [common-swagger-api.schema.apps.permission
+         :only [AppPermissionListing
+                AppPermissionListingDocs
+                AppPermissionListingRequest
+                AppPermissionListingSummary
+                AppSharingDocs
+                AppSharingRequest
+                AppSharingResponse
+                AppSharingSummary
+                AppUnsharingDocs
+                AppUnsharingRequest
+                AppUnsharingResponse
+                AppUnsharingSummary]]
         [common-swagger-api.schema.apps.rating]
-        [apps.routes.params]
-        [apps.routes.schemas.app]
+        [apps.routes.params
+         :only [SecuredQueryParams
+                SecuredQueryParamsEmailRequired
+                SecuredQueryParamsRequired]]
+        [apps.routes.schemas.app :only [AppSearchParams]]
         [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool :only [NewToolListing]]
         [apps.user :only [current-user]]
@@ -94,7 +110,7 @@
       (ok (apps/preview-command-line current-user system-id body)))
 
     (context "/:app-id" []
-      :path-params [app-id :- AppIdJobViewPathParam]
+      :path-params [app-id :- StringAppIdParam]
 
       (GET "/" []
         :query [params SecuredQueryParams]

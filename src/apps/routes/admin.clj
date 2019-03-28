@@ -2,13 +2,22 @@
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.ontologies]
-        [common-swagger-api.schema.apps :only [AppDeletionRequest
-                                               SystemId]]
-        [apps.metadata.reference-genomes :only [add-reference-genome
-                                                delete-reference-genome
-                                                update-reference-genome]]
+        [common-swagger-api.schema.apps
+         :only [AppCategoryIdPathParam
+                AppDeletionRequest
+                AppDocumentation
+                AppDocumentationRequest
+                StringAppIdParam
+                SystemId]]
+        [common-swagger-api.schema.tools :only [ToolRequestIdParam]]
+        [apps.metadata.reference-genomes
+         :only [add-reference-genome
+                delete-reference-genome
+                update-reference-genome]]
         [apps.metadata.tool-requests]
-        [apps.routes.params]
+        [apps.routes.params
+         :only [IntegrationDataIdPathParam
+                SecuredQueryParams]]
         [apps.routes.schemas.analysis.listing]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
@@ -129,7 +138,7 @@
 
   (context "/:system-id/:app-id" []
     :path-params [system-id :- SystemId
-                  app-id    :- AppIdJobViewPathParam]
+                  app-id    :- StringAppIdParam]
 
     (DELETE "/" []
       :query [params SecuredQueryParams]

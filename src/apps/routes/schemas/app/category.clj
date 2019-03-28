@@ -1,16 +1,22 @@
 (ns apps.routes.schemas.app.category
-  (:use [common-swagger-api.schema :only [->optional-param
-                                          describe
-                                          NonBlankString
-                                          PagingParams
-                                          SortFieldDocs
-                                          SortFieldOptionalKey]]
-        [common-swagger-api.schema.apps :only [AppListingDetail
-                                               SystemId]]
+  (:use [common-swagger-api.schema
+         :only [->optional-param
+                describe
+                NonBlankString
+                PagingParams
+                SortFieldDocs
+                SortFieldOptionalKey]]
+        [common-swagger-api.schema.apps
+         :only [AppCategoryIdPathParam
+                AppListingDetail
+                SystemId]]
         [common-swagger-api.schema.ontologies]
-        [apps.routes.params]
-        [apps.routes.schemas.app :only [AdminAppListingValidSortFields
-                                        AppListingPagingParams]]
+        [apps.routes.params
+         :only [SecuredQueryParams
+                SecuredQueryParamsEmailRequired]]
+        [apps.routes.schemas.app
+         :only [AdminAppListingValidSortFields
+                AppListingPagingParams]]
         [schema.core :only [defschema optional-key recursive enum]])
   (:import [java.util Date UUID]))
 

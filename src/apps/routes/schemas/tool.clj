@@ -1,23 +1,14 @@
 (ns apps.routes.schemas.tool
-  (:use [clojure-commons.error-codes]
+  (:use [apps.routes.params :only [SecuredPagingParams SecuredQueryParams]]
+        [clojure-commons.error-codes]
         [common-swagger-api.schema :only [->optional-param describe ErrorResponse]]
-        [apps.routes.params]
+        [common-swagger-api.schema.tools]
         [schema.core :only [defschema enum optional-key]])
-  (:require [apps.routes.schemas.containers :as containers])
+  (:require [apps.routes.schemas.containers :as containers]
+            [common-swagger-api.schema.containers :as containers-schema])
   (:import [java.util UUID]))
 
-(def ToolRequestIdParam (describe UUID "The Tool Requests's UUID"))
-(def ToolRequestToolIdParam (describe UUID "The ID of the tool the user is requesting to be made public"))
-(def ToolNameParam (describe String "The Tool's name (can be the file name or Docker image)"))
-(def ToolDescriptionParam (describe String "A brief description of the Tool"))
-(def VersionParam (describe String "The Tool's version"))
-(def AttributionParam (describe String "The Tool's author or publisher"))
-(def SubmittedByParam (describe String "The username of the user that submitted the Tool Request"))
-(def ToolImplementationDocs "Information about the user who integrated the Tool into the DE")
-(def ToolRestricted (describe Boolean "Determines whether a time limit is applied and whether network access is granted"))
-(def ToolTimeLimit (describe Integer "The number of seconds that a tool is allowed to execute. A value of 0 means the time limit is disabled."))
 (def StatusCodeId (describe UUID "The Status Code's UUID"))
-(def Interactive (describe Boolean "Determines whether the tool is interactive."))
 
 (defn- coerce-container-settings-long-values
   [tool]
@@ -50,42 +41,6 @@
     {(optional-key :overwrite-public)
      (describe Boolean "Flag to force container settings updates of public tools.")}))
 
-(defschema ToolTestData
-  {(optional-key :params) (describe [String] "The list of command-line parameters")
-   :input_files           (describe [String] "The list of paths to test input files in iRODS")
-   :output_files          (describe [String] "The list of paths to expected output files in iRODS")})
-
-(defschema ToolImplementor
-  {:implementor       (describe String "The name of the implementor")
-   :implementor_email (describe String "The email address of the implementor")})
-
-(defschema ToolImplementation
-  (merge ToolImplementor
-         {:test (describe ToolTestData "The test data for the Tool")}))
-
-(defschema Tool
-  {:id                                ToolIdParam
-   :name                              ToolNameParam
-   (optional-key :description)        ToolDescriptionParam
-   (optional-key :attribution)        AttributionParam
-   (optional-key :location)           (describe String "The path of the directory containing the Tool")
-   :version                           VersionParam
-   :type                              (describe String "The Tool Type name")
-   (optional-key :restricted)         ToolRestricted
-   (optional-key :time_limit_seconds) ToolTimeLimit
-   (optional-key :interactive)        Interactive})
-
-(defschema ToolDetails
-  (merge Tool
-         {:is_public      (describe Boolean "Whether the Tool has been published and is viewable by all users")
-          :permission     (describe String "The user's access level for the Tool")
-          :implementation (describe ToolImplementation ToolImplementationDocs)
-          :container      containers/ToolContainer}))
-
-(defschema ToolListingImage
-  (assoc (dissoc containers/Settings :id)
-    :image (dissoc containers/Image :id)))
-
 (defschema ToolImportRequest
   (-> Tool
       (->optional-param :id)
@@ -95,9 +50,9 @@
 
 (defschema PrivateToolContainerImportRequest
   (dissoc containers/NewToolContainer
-          containers/DevicesParamOptional
-          containers/VolumesParamOptional
-          containers/VolumesFromParamOptional))
+          containers-schema/DevicesParamOptional
+          containers-schema/VolumesParamOptional
+          containers-schema/VolumesFromParamOptional))
 
 (defschema PrivateToolImportRequest
   (-> ToolImportRequest
@@ -219,17 +174,6 @@
 (defschema ToolRequest
   (dissoc ToolRequestDetails :id :submitted_by :history))
 
-(defschema ToolRequestSummary
-  {:id                     ToolRequestIdParam
-   :name                   ToolNameParam
-   :version                VersionParam
-   :requested_by           SubmittedByParam
-   (optional-key :tool_id) ToolRequestToolIdParam
-   :date_submitted         (describe Long "The timestamp of the Tool Request submission")
-   :status                 (describe String "The current status of the Tool Request")
-   :date_updated           (describe Long "The timestamp of the last Tool Request status update")
-   :updated_by             (describe String "The username of the user that last updated the Tool Request status")})
-
 (defschema ToolRequestListing
   {:tool_requests (describe [ToolRequestSummary]
                     "A listing of high level details about tool requests that have been submitted")})
@@ -255,15 +199,6 @@
 
 (defschema StatusCodeListing
   {:status_codes (describe [StatusCode] "A listing of known Status Codes")})
-
-(defschema ToolListingToolRequestSummary
-  (select-keys ToolRequestSummary [:id :status]))
-
-(defschema ToolListingItem
-  (merge ToolDetails
-         {:implementation              (describe ToolImplementor ToolImplementationDocs)
-          :container                   ToolListingImage
-          (optional-key :tool_request) ToolListingToolRequestSummary}))
 
 (defschema ToolListing
   {:tools (describe [ToolListingItem] "Listing of App Tools")})

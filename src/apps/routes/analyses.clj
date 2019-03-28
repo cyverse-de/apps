@@ -1,6 +1,13 @@
 (ns apps.routes.analyses
   (:use [common-swagger-api.schema]
-        [apps.routes.params]
+        [common-swagger-api.schema.apps :only [AppJobView]]
+        [apps.routes.params
+         :only [AnalysisIdPathParam
+                FilterParams
+                OptionalKeyFilter
+                SecuredAnalysisListingParams
+                SecuredQueryParams
+                SecuredQueryParamsEmailRequired]]
         [apps.routes.schemas.analysis]
         [apps.routes.schemas.analysis.listing]
         [apps.routes.schemas.app]

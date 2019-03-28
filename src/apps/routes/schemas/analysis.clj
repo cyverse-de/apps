@@ -1,9 +1,9 @@
 (ns apps.routes.schemas.analysis
   (:use [common-swagger-api.schema :only [describe]]
         [common-swagger-api.schema.apps :only [SystemId]]
+        [common-swagger-api.schema.containers :only [ToolContainer]]
         [schema.core :only [defschema optional-key enum Any Bool Keyword]]
         [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.containers :only [ToolContainer]]
         [apps.persistence.jobs :only [canceled-status failed-status completed-status]])
   (:import [java.util UUID]))
 
