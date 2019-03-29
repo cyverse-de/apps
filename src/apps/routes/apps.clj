@@ -3,6 +3,8 @@
         [common-swagger-api.schema]
         [common-swagger-api.schema.apps
          :only [App
+                AppCopyDocs
+                AppCopySummary
                 AppCreateDocs
                 AppCreateRequest
                 AppCreateSummary
@@ -157,11 +159,11 @@
         (ok (apps/get-app-integration-data current-user system-id app-id)))
 
       (POST "/copy" []
-        :query [params SecuredQueryParamsRequired]
-        :return App
-        :summary "Make a Copy of an App Available for Editing"
-        :description "This service can be used to make a copy of an App in the user's workspace."
-        (ok (apps/copy-app current-user system-id app-id)))
+            :query [params SecuredQueryParamsRequired]
+            :return App
+            :summary AppCopySummary
+            :description AppCopyDocs
+            (ok (apps/copy-app current-user system-id app-id)))
 
       (GET "/details" []
         :query [params SecuredQueryParams]
