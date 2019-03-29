@@ -11,6 +11,8 @@
                 AppDocumentation
                 AppDocumentationRequest
                 AppJobView
+                AppJobViewDocs
+                AppJobViewSummary
                 AppListing
                 AppListingSummary
                 AppPreviewDocs
@@ -113,13 +115,12 @@
       :path-params [app-id :- StringAppIdParam]
 
       (GET "/" []
-        :query [params SecuredQueryParams]
-        :summary "Obtain an app description."
-        :return AppJobView
-        :description "This service allows the Discovery Environment user interface to obtain an
-        app description that can be used to construct a job submission form."
-        (ok (coerce! AppJobView
-                     (apps/get-app-job-view current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :summary AppJobViewSummary
+           :return AppJobView
+           :description AppJobViewDocs
+           (ok (coerce! AppJobView
+                        (apps/get-app-job-view current-user system-id app-id))))
 
       (DELETE "/" []
         :query [params SecuredQueryParams]
