@@ -6,6 +6,8 @@
                 AppCreateDocs
                 AppCreateRequest
                 AppCreateSummary
+                AppDeleteDocs
+                AppDeleteSummary
                 AppDeletionRequest
                 AppDetails
                 AppDocumentation
@@ -123,14 +125,10 @@
                         (apps/get-app-job-view current-user system-id app-id))))
 
       (DELETE "/" []
-        :query [params SecuredQueryParams]
-        :summary "Logically Deleting an App"
-        :description "An app can be marked as deleted in the DE without being completely removed from
-        the database using this service. <b>Note</b>: an attempt to delete an App that is already
-        marked as deleted is treated as a no-op rather than an error condition. If the App
-        doesn't exist in the database at all, however, then that is treated as an error
-        condition."
-        (ok (apps/delete-app current-user system-id app-id)))
+              :query [params SecuredQueryParams]
+              :summary AppDeleteSummary
+              :description AppDeleteDocs
+              (ok (apps/delete-app current-user system-id app-id)))
 
       (PATCH "/" []
         :query [params SecuredQueryParamsEmailRequired]
