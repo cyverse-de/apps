@@ -14,7 +14,9 @@
                 AppDetails
                 AppDetailsSummary
                 AppDocumentation
+                AppDocumentationDocs
                 AppDocumentationRequest
+                AppDocumentationSummary
                 AppJobView
                 AppJobViewDocs
                 AppJobViewSummary
@@ -175,12 +177,12 @@
                         (apps/get-app-details current-user system-id app-id))))
 
       (GET "/documentation" []
-        :query [params SecuredQueryParams]
-        :return AppDocumentation
-        :summary "Get App Documentation"
-        :description "This service is used by the DE to obtain documentation for a single App"
-        (ok (coerce! AppDocumentation
-                     (apps/get-app-docs current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return AppDocumentation
+           :summary AppDocumentationSummary
+           :description AppDocumentationDocs
+           (ok (coerce! AppDocumentation
+                        (apps/get-app-docs current-user system-id app-id))))
 
       (PATCH "/documentation" []
         :query [params SecuredQueryParamsEmailRequired]
