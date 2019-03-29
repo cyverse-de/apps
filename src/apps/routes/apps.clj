@@ -12,6 +12,7 @@
                 AppDeleteSummary
                 AppDeletionRequest
                 AppDetails
+                AppDetailsSummary
                 AppDocumentation
                 AppDocumentationRequest
                 AppJobView
@@ -166,17 +167,12 @@
             (ok (apps/copy-app current-user system-id app-id)))
 
       (GET "/details" []
-        :query [params SecuredQueryParams]
-        :return AppDetails
-        :summary "Get App Details"
-        :description
-        (str "This service is used by the DE to obtain high-level details about a single App."
-             (get-endpoint-delegate-block
-              "metadata"
-              "POST /ontologies/{ontology-version}/filter")
-             "Please see the metadata service documentation for information about the `hierarchies` response field.")
-        (ok (coerce! AppDetails
-                     (apps/get-app-details current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return AppDetails
+           :summary AppDetailsSummary
+           :description-file "docs/apps/app-details.md"
+           (ok (coerce! AppDetails
+                        (apps/get-app-details current-user system-id app-id))))
 
       (GET "/documentation" []
         :query [params SecuredQueryParams]
