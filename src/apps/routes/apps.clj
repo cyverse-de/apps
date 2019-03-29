@@ -14,6 +14,8 @@
                 AppDetails
                 AppDetailsSummary
                 AppDocumentation
+                AppDocumentationAddDocs
+                AppDocumentationAddSummary
                 AppDocumentationDocs
                 AppDocumentationRequest
                 AppDocumentationSummary
@@ -196,13 +198,13 @@
                           (apps/owner-edit-app-docs current-user system-id app-id body))))
 
       (POST "/documentation" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :body [body AppDocumentationRequest]
-        :return AppDocumentation
-        :summary "Add App Documentation"
-        :description "This service is used by the DE to add documentation for a single App"
-        (ok (coerce! AppDocumentation
-                     (apps/owner-add-app-docs current-user system-id app-id body))))
+            :query [params SecuredQueryParamsEmailRequired]
+            :body [body AppDocumentationRequest]
+            :return AppDocumentation
+            :summary AppDocumentationAddSummary
+            :description AppDocumentationAddDocs
+            (ok (coerce! AppDocumentation
+                         (apps/owner-add-app-docs current-user system-id app-id body))))
 
       (DELETE "/favorite" []
         :query [params SecuredQueryParams]
