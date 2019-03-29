@@ -3,6 +3,9 @@
         [common-swagger-api.schema]
         [common-swagger-api.schema.apps
          :only [App
+                AppCreateDocs
+                AppCreateRequest
+                AppCreateSummary
                 AppDeletionRequest
                 AppDetails
                 AppDocumentation
@@ -90,12 +93,12 @@
     :path-params [system-id :- SystemId]
 
     (POST "/" []
-      :query [params SecuredQueryParamsRequired]
-      :body [body (describe AppRequest "The App to add.")]
-      :return App
-      :summary "Add a new App."
-      :description "This service adds a new App to the user's workspace."
-      (ok (apps/add-app current-user system-id body)))
+          :query [params SecuredQueryParamsRequired]
+          :body [body AppCreateRequest]
+          :return App
+          :summary AppCreateSummary
+          :description AppCreateDocs
+          (ok (apps/add-app current-user system-id body)))
 
     (POST "/arg-preview" []
       :query [params SecuredQueryParams]
