@@ -3,7 +3,7 @@
         [apps.routes.params :only [IntegrationDataIdPathParam IntegrationDataSearchParams SecuredQueryParams]]
         [apps.user :only [current-user]]
         [ring.util.http-response :only [ok]])
-  (:require [apps.routes.schemas.integration-data :as schema]
+  (:require [common-swagger-api.schema.integration-data :as schema]
             [apps.service.integration-data :as integration-data]))
 
 (defroutes admin-integration-data

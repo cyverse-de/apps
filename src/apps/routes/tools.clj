@@ -8,6 +8,7 @@
                 ToolContainer
                 Volume
                 VolumesFrom]]
+        [common-swagger-api.schema.integration-data :only [IntegrationData]]
         [common-swagger-api.schema.tools
          :only [Tool
                 ToolDetails
@@ -16,7 +17,6 @@
         [apps.containers]
         [apps.routes.params]
         [apps.routes.schemas.containers]
-        [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.app :only [AdminAppListing]]
         [apps.routes.schemas.tool]
         [apps.tools

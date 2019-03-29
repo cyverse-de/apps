@@ -9,6 +9,7 @@
                 AppDocumentationRequest
                 StringAppIdParam
                 SystemId]]
+        [common-swagger-api.schema.integration-data :only [IntegrationData]]
         [common-swagger-api.schema.tools :only [ToolRequestIdParam]]
         [apps.metadata.reference-genomes
          :only [add-reference-genome
@@ -22,7 +23,6 @@
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
         [apps.routes.schemas.reference-genome]
-        [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool]
         [apps.routes.schemas.workspace]
         [apps.user :only [current-user]]

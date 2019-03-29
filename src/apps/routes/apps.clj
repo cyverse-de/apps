@@ -25,6 +25,8 @@
                 AppFavoriteAddSummary
                 AppFavoriteDeleteDocs
                 AppFavoriteDeleteSummary
+                AppIntegrationDataDocs
+                AppIntegrationDataSummary
                 AppJobView
                 AppJobViewDocs
                 AppJobViewSummary
@@ -58,12 +60,12 @@
                 AppUnsharingResponse
                 AppUnsharingSummary]]
         [common-swagger-api.schema.apps.rating]
+        [common-swagger-api.schema.integration-data :only [IntegrationData]]
         [apps.routes.params
          :only [SecuredQueryParams
                 SecuredQueryParamsEmailRequired
                 SecuredQueryParamsRequired]]
         [apps.routes.schemas.app :only [AppSearchParams]]
-        [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.tool :only [NewToolListing]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
@@ -162,13 +164,6 @@
            :description-file "docs/apps/app-update.md"
            (ok (apps/update-app current-user system-id (assoc body :id app-id))))
 
-      (GET "/integration-data" []
-        :query [params SecuredQueryParams]
-        :return IntegrationData
-        :summary "Return the Integration Data Record for an App"
-        :description "This service returns the integration data associated with an app."
-        (ok (apps/get-app-integration-data current-user system-id app-id)))
-
       (POST "/copy" []
             :query [params SecuredQueryParamsRequired]
             :return App
@@ -221,6 +216,13 @@
            :summary AppFavoriteAddSummary
            :description AppFavoriteAddDocs
            (ok (apps/add-app-favorite current-user system-id app-id)))
+
+      (GET "/integration-data" []
+           :query [params SecuredQueryParams]
+           :return IntegrationData
+           :summary AppIntegrationDataSummary
+           :description AppIntegrationDataDocs
+           (ok (apps/get-app-integration-data current-user system-id app-id)))
 
       (GET "/is-publishable" []
         :query [params SecuredQueryParams]
