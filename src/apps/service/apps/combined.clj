@@ -195,6 +195,9 @@
   (getJobStepStatus [_ job-step]
     (.getJobStepStatus (util/apps-client-for-job-step clients job-step) job-step))
 
+  (getJobStepHistory [_ job-step]
+    (.getJobStepHistory (util/apps-client-for-job-step clients job-step) job-step))
+
   (buildNextStepSubmission [self job-step job]
     (combined-jobs/build-next-step-submission self clients job-step job))
 

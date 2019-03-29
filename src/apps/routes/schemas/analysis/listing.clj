@@ -129,3 +129,16 @@
    :steps       (describe [AnalysisStep] "The list of analysis steps.")
    :timestamp   (describe Timestamp "The time the list of analysis steps was retrieved.")
    :total       ResultsTotalParam})
+
+(defschema AnalysisStatusUpdate
+  {:status    (describe NonBlankString "The job status associated with the update.")
+   :message   (describe String "A brief description of the job status update.")
+   :timestamp (describe String "The date and time when the job status update was created.")})
+
+(defschema AnalysisStepHistory
+  (assoc AnalysisStep
+    :updates (describe [AnalysisStatusUpdate] "The list of updates received for the analysis step.")))
+
+(defschema AnalysisHistory
+  (assoc AnalysisStepList
+    :steps (describe [AnalysisStepHistory] "The history of each step in the analysis.")))

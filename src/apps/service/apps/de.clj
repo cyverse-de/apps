@@ -209,6 +209,9 @@
   (getJobStepStatus [_ job-step]
     (de-jobs/get-job-step-status job-step))
 
+  (getJobStepHistory [_ job-step]
+    (de-jobs/get-job-step-history job-step))
+
   (prepareStepSubmission [_ _ submission]
     (de-jobs/prepare-step user (update-in submission [:app_id] uuidify)))
 
