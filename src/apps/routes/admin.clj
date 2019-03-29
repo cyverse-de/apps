@@ -191,7 +191,7 @@
 
     (PATCH "/documentation" []
       :query [params SecuredQueryParams]
-      :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
+      :body [body AppDocumentationRequest]
       :return AppDocumentation
       :summary "Update App Documentation"
       :description "This service is used by DE administrators to update documentation for a single
@@ -201,7 +201,7 @@
 
     (POST "/documentation" []
       :query [params SecuredQueryParams]
-      :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
+      :body [body AppDocumentationRequest]
       :return AppDocumentation
       :summary "Add App Documentation"
       :description "This service is used by DE administrators to add documentation for a single App"
