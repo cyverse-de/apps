@@ -21,6 +21,8 @@
                 AppDocumentationSummary
                 AppDocumentationUpdateDocs
                 AppDocumentationUpdateSummary
+                AppFavoriteDeleteDocs
+                AppFavoriteDeleteSummary
                 AppJobView
                 AppJobViewDocs
                 AppJobViewSummary
@@ -207,12 +209,10 @@
                          (apps/owner-add-app-docs current-user system-id app-id body))))
 
       (DELETE "/favorite" []
-        :query [params SecuredQueryParams]
-        :summary "Removing an App as a Favorite"
-        :description "Apps can be marked as favorites in the DE, which allows users to access them
-        without having to search. This service is used to remove an App from a user's favorites
-        list."
-        (ok (apps/remove-app-favorite current-user system-id app-id)))
+              :query [params SecuredQueryParams]
+              :summary AppFavoriteDeleteSummary
+              :description AppFavoriteDeleteDocs
+              (ok (apps/remove-app-favorite current-user system-id app-id)))
 
       (PUT "/favorite" []
         :query [params SecuredQueryParams]
