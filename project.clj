@@ -20,7 +20,7 @@
                  [com.google.guava/guava "18.0"]
                  [de.ubercode.clostache/clostache "1.4.0"]
                  [medley "1.1.0"]
-                 [metosin/compojure-api "1.1.8"]
+                 [metosin/compojure-api "1.1.12"]
                  [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "2.8.3"]
                  [org.cyverse/kameleon "3.0.3"]
