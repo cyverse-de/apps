@@ -1,9 +1,24 @@
 (ns apps.routes.apps
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppListing
+        [common-swagger-api.schema.apps :only [AppDeletionRequest
+                                               AppListing
                                                AppListingSummary
+                                               AppsShredderDocs
+                                               AppsShredderSummary
                                                SystemId]]
+        [common-swagger-api.schema.apps.permission :only [AppPermissionListing
+                                                          AppPermissionListingDocs
+                                                          AppPermissionListingRequest
+                                                          AppPermissionListingSummary
+                                                          AppSharingDocs
+                                                          AppSharingRequest
+                                                          AppSharingResponse
+                                                          AppSharingSummary
+                                                          AppUnsharingDocs
+                                                          AppUnsharingRequest
+                                                          AppUnsharingResponse
+                                                          AppUnsharingSummary]]
         [common-swagger-api.schema.apps.rating]
         [apps.routes.params]
         [apps.routes.schemas.app]
@@ -26,50 +41,34 @@
 
   (POST "/shredder" []
     :query [params SecuredQueryParams]
-    :body [body (describe AppDeletionRequest "List of App IDs to delete.")]
-    :summary "Logically Deleting Apps"
-    :description "One or more Apps can be marked as deleted in the DE without being completely
-    removed from the database using this service. <b>Note</b>: an attempt to delete an app that
-    is already marked as deleted is treated as a no-op rather than an error condition. If the
-    App doesn't exist in the database at all, however, then that is treated as an error
-    condition."
+    :body [body AppDeletionRequest]
+    :summary AppsShredderSummary
+    :description AppsShredderDocs
     (ok (apps/delete-apps current-user body)))
 
   (POST "/permission-lister" []
     :query [params perms/PermissionListerQueryParams]
-    :body [body (describe perms/QualifiedAppIdList "The app permission listing request.")]
-    :return perms/AppPermissionListing
-    :summary "List App Permissions"
-    :description "This endpoint allows the caller to list the permissions for one or more apps. The
-    authenticated user must have read permission on every app in the request body for this
-    endpoint to succeed."
+    :body [body AppPermissionListingRequest]
+    :return AppPermissionListing
+    :summary AppPermissionListingSummary
+    :description AppPermissionListingDocs
     (ok (apps/list-app-permissions current-user (:apps body) params)))
 
   (POST "/sharing" []
     :query [params SecuredQueryParams]
-    :body [body (describe perms/AppSharingRequest "The app sharing request.")]
-    :return perms/AppSharingResponse
-    :summary "Add App Permissions"
-    :description "This endpoint allows the caller to share multiple apps with multiple users. The
-    authenticated user must have ownership permission to every app in the request body for this endpoint
-    to fully succeed. Note: this is a potentially slow operation and the response is returned
-    synchronously. The DE UI handles this by allowing the user to continue working while the request is
-    being processed. When calling this endpoint, please be sure that the response timeout is long
-    enough. Using a response timeout that is too short will result in an exception on the client side.
-    On the server side, the result of the sharing operation when a connection is lost is undefined. It
-    may be worthwhile to repeat failed or timed out calls to this endpoint."
-    (ok (apps/share-apps current-user (:sharing body))))
+    :body [{:keys [sharing]} AppSharingRequest]
+    :return AppSharingResponse
+    :summary AppSharingSummary
+    :description AppSharingDocs
+    (ok (apps/share-apps current-user sharing)))
 
   (POST "/unsharing" []
     :query [params SecuredQueryParams]
-    :body [body (describe perms/AppUnsharingRequest "The app unsharing request.")]
-    :return perms/AppUnsharingResponse
-    :summary "Revoke App Permissions"
-    :description "This endpoint allows the caller to revoke permission to access one or more apps from
-    one or more users. The authenticate user must have ownership permission to every app in the request
-    body for this endoint to fully succeed. Note: like app sharing, this is a potentially slow
-    operation."
-    (ok (apps/unshare-apps current-user (:unsharing body))))
+    :body [{:keys [unsharing]} AppUnsharingRequest]
+    :return AppUnsharingResponse
+    :summary AppUnsharingSummary
+    :description AppUnsharingDocs
+    (ok (apps/unshare-apps current-user unsharing)))
 
   (context "/:system-id" []
     :path-params [system-id :- SystemId]

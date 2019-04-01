@@ -15,6 +15,7 @@
                                                AppListingValidSortFields
                                                AppPublicParam
                                                AppSearchValidSortFields
+                                               StringAppIdParam
                                                SystemId]]
         [apps.routes.params]
         [apps.routes.schemas.tool :only [Tool ToolDetails ToolListingImage ToolListingItem]]
@@ -23,7 +24,6 @@
             [common-swagger-api.schema.apps :as app-schema])
   (:import [java.util UUID Date]))
 
-(def StringAppIdParam (describe String "The App identifier."))
 (def AppDocParam (describe String "The App's documentation"))
 (def AppReferencesParam (describe [String] "The App's references"))
 (def ToolDeprecatedParam (describe Boolean "Flag indicating if this Tool has been deprecated"))
@@ -393,18 +393,6 @@
   (merge AppDetails
          {(optional-key :job_stats)
           (describe AdminAppListingJobStats AppListingJobStatsDocs)}))
-
-(defschema QualifiedAppId
-  {:system_id SystemId
-   :app_id    StringAppIdParam})
-
-(defschema AppIdList
-  {:app_ids (describe [QualifiedAppId] "A List of qualified app identifiers")})
-
-(defschema AppDeletionRequest
-  (merge AppIdList
-         {(optional-key :root_deletion_request)
-          (describe Boolean "Set to `true` to  delete one or more public apps")}))
 
 (defschema AppParameterListItemRequest
   (->optional-param AppParameterListItem :id))
