@@ -77,13 +77,6 @@
       (->optional-param :implementation)
       (->optional-param :container)))
 
-(defschema NewTool
-  (assoc Tool
-    :id (describe String "The tool's ID")))
-
-(defschema NewToolListing
-  {:tools (describe [NewTool] "Listing of App Tools")})
-
 (defschema ToolRequestStatus
   {(optional-key :status)
    (describe String

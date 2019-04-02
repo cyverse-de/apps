@@ -49,6 +49,9 @@
                 AppTaskListing
                 AppTaskListingDocs
                 AppTaskListingSummary
+                AppToolListing
+                AppToolListingDocs
+                AppToolListingSummary
                 AppUpdateRequest
                 AppUpdateSummary
                 PublishAppDocs
@@ -76,7 +79,6 @@
                 SecuredQueryParamsEmailRequired
                 SecuredQueryParamsRequired]]
         [apps.routes.schemas.app :only [AppSearchParams]]
-        [apps.routes.schemas.tool :only [NewToolListing]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [ring.util.http-response :only [ok]])
@@ -272,13 +274,12 @@
                         (apps/get-app-task-listing current-user system-id app-id))))
 
       (GET "/tools" []
-        :query [params SecuredQueryParams]
-        :return NewToolListing
-        :summary "List Tools used by an App"
-        :description "This service lists information for all of the tools that are associated with an App.
-        This information used to be included in the results of the App listing service."
-        (ok (coerce! NewToolListing
-                     (apps/get-app-tool-listing current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return AppToolListing
+           :summary AppToolListingSummary
+           :description AppToolListingDocs
+           (ok (coerce! AppToolListing
+                        (apps/get-app-tool-listing current-user system-id app-id))))
 
       (GET "/ui" []
         :query [params SecuredQueryParamsEmailRequired]
