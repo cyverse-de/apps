@@ -42,6 +42,8 @@
                 AppPublishableSummary
                 AppRatingDeleteDocs
                 AppRatingDeleteSummary
+                AppRatingDocs
+                AppRatingSummary
                 AppsShredderDocs
                 AppsShredderSummary
                 AppTaskListing
@@ -252,15 +254,12 @@
               (ok (apps/delete-app-rating current-user system-id app-id)))
 
       (POST "/rating" []
-        :query [params SecuredQueryParams]
-        :body [body (describe RatingRequest "The user's new rating for this App.")]
-        :return RatingResponse
-        :summary "Rate an App"
-        :description "Users have the ability to rate an App for its usefulness, and this service provides
-        the means to store the App rating. This service accepts a rating level between one and
-        five, inclusive, and a comment identifier that refers to a comment in iPlant's Confluence
-        wiki. The rating is stored in the database and associated with the authenticated user."
-        (ok (apps/rate-app current-user system-id app-id body)))
+            :query [params SecuredQueryParams]
+            :body [body RatingRequest]
+            :return RatingResponse
+            :summary AppRatingSummary
+            :description AppRatingDocs
+            (ok (apps/rate-app current-user system-id app-id body)))
 
       (GET "/tasks" []
         :query [params SecuredQueryParams]
