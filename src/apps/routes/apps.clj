@@ -47,6 +47,8 @@
                 AppsShredderDocs
                 AppsShredderSummary
                 AppTaskListing
+                AppTaskListingDocs
+                AppTaskListingSummary
                 AppUpdateRequest
                 AppUpdateSummary
                 PublishAppDocs
@@ -262,14 +264,12 @@
             (ok (apps/rate-app current-user system-id app-id body)))
 
       (GET "/tasks" []
-        :query [params SecuredQueryParams]
-        :return AppTaskListing
-        :summary "List Tasks with File Parameters in an App"
-        :description "When a pipeline is being created, the UI needs to know what types of files are
-        consumed by and what types of files are produced by each App's task in the pipeline. This
-        service provides that information."
-        (ok (coerce! AppTaskListing
-                     (apps/get-app-task-listing current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return AppTaskListing
+           :summary AppTaskListingSummary
+           :description AppTaskListingDocs
+           (ok (coerce! AppTaskListing
+                        (apps/get-app-task-listing current-user system-id app-id))))
 
       (GET "/tools" []
         :query [params SecuredQueryParams]
