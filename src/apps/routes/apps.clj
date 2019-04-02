@@ -37,7 +37,9 @@
                 AppPreviewDocs
                 AppPreviewRequest
                 AppPreviewSummary
+                AppPublishableDocs
                 AppPublishableResponse
+                AppPublishableSummary
                 AppsShredderDocs
                 AppsShredderSummary
                 AppTaskListing
@@ -225,13 +227,11 @@
            (ok (apps/get-app-integration-data current-user system-id app-id)))
 
       (GET "/is-publishable" []
-        :query [params SecuredQueryParams]
-        :return AppPublishableResponse
-        :summary "Determine if an App Can be Made Public"
-        :description "A multi-step App can't be made public if any of the Tasks that are included in it
-        are not public. This endpoint returns a true flag if the App is a single-step App or it's a
-        multistep App in which all of the Tasks included in the pipeline are public."
-        (ok (apps/app-publishable? current-user system-id app-id)))
+           :query [params SecuredQueryParams]
+           :return AppPublishableResponse
+           :summary AppPublishableSummary
+           :description AppPublishableDocs
+           (ok (apps/app-publishable? current-user system-id app-id)))
 
       (POST "/publish" []
         :query [params SecuredQueryParamsEmailRequired]
