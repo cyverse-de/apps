@@ -40,6 +40,8 @@
                 AppPublishableDocs
                 AppPublishableResponse
                 AppPublishableSummary
+                AppRatingDeleteDocs
+                AppRatingDeleteSummary
                 AppsShredderDocs
                 AppsShredderSummary
                 AppTaskListing
@@ -243,12 +245,11 @@
             (ok (apps/make-app-public current-user system-id (assoc body :id app-id))))
 
       (DELETE "/rating" []
-        :query [params SecuredQueryParams]
-        :return RatingResponse
-        :summary "Delete an App Rating"
-        :description "The DE uses this service to remove a rating that a user has previously made. This
-        service deletes the authenticated user's rating for the corresponding app-id."
-        (ok (apps/delete-app-rating current-user system-id app-id)))
+              :query [params SecuredQueryParams]
+              :return RatingResponse
+              :summary AppRatingDeleteSummary
+              :description AppRatingDeleteDocs
+              (ok (apps/delete-app-rating current-user system-id app-id)))
 
       (POST "/rating" []
         :query [params SecuredQueryParams]
