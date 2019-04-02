@@ -21,6 +21,8 @@
                 AppDocumentationSummary
                 AppDocumentationUpdateDocs
                 AppDocumentationUpdateSummary
+                AppEditingViewDocs
+                AppEditingViewSummary
                 AppFavoriteAddDocs
                 AppFavoriteAddSummary
                 AppFavoriteDeleteDocs
@@ -282,10 +284,8 @@
                         (apps/get-app-tool-listing current-user system-id app-id))))
 
       (GET "/ui" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :return App
-        :summary "Make an App Available for Editing"
-        :description "The app integration utility in the DE uses this service to obtain the App
-        description JSON so that it can be edited. The App must have been integrated by the
-        requesting user."
-        (ok (apps/get-app-ui current-user system-id app-id))))))
+           :query [params SecuredQueryParamsEmailRequired]
+           :return App
+           :summary AppEditingViewSummary
+           :description AppEditingViewDocs
+           (ok (apps/get-app-ui current-user system-id app-id))))))
