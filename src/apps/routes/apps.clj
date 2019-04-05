@@ -89,43 +89,43 @@
 
 (defroutes apps
   (GET "/" []
-    :query [params AppSearchParams]
-    :summary AppListingSummary
-    :return AppListing
-    :description-file "docs/apps/apps-listing.md"
-    (ok (coerce! AppListing
-                 (apps/search-apps current-user params))))
+       :query [params AppSearchParams]
+       :summary AppListingSummary
+       :return AppListing
+       :description-file "docs/apps/apps-listing.md"
+       (ok (coerce! AppListing
+                    (apps/search-apps current-user params))))
 
   (POST "/shredder" []
-    :query [params SecuredQueryParams]
-    :body [body AppDeletionRequest]
-    :summary AppsShredderSummary
-    :description AppsShredderDocs
-    (ok (apps/delete-apps current-user body)))
+        :query [params SecuredQueryParams]
+        :body [body AppDeletionRequest]
+        :summary AppsShredderSummary
+        :description AppsShredderDocs
+        (ok (apps/delete-apps current-user body)))
 
   (POST "/permission-lister" []
-    :query [params perms/PermissionListerQueryParams]
-    :body [body AppPermissionListingRequest]
-    :return AppPermissionListing
-    :summary AppPermissionListingSummary
-    :description AppPermissionListingDocs
-    (ok (apps/list-app-permissions current-user (:apps body) params)))
+        :query [params perms/PermissionListerQueryParams]
+        :body [body AppPermissionListingRequest]
+        :return AppPermissionListing
+        :summary AppPermissionListingSummary
+        :description AppPermissionListingDocs
+        (ok (apps/list-app-permissions current-user (:apps body) params)))
 
   (POST "/sharing" []
-    :query [params SecuredQueryParams]
-    :body [{:keys [sharing]} AppSharingRequest]
-    :return AppSharingResponse
-    :summary AppSharingSummary
-    :description AppSharingDocs
-    (ok (apps/share-apps current-user sharing)))
+        :query [params SecuredQueryParams]
+        :body [{:keys [sharing]} AppSharingRequest]
+        :return AppSharingResponse
+        :summary AppSharingSummary
+        :description AppSharingDocs
+        (ok (apps/share-apps current-user sharing)))
 
   (POST "/unsharing" []
-    :query [params SecuredQueryParams]
-    :body [{:keys [unsharing]} AppUnsharingRequest]
-    :return AppUnsharingResponse
-    :summary AppUnsharingSummary
-    :description AppUnsharingDocs
-    (ok (apps/unshare-apps current-user unsharing)))
+        :query [params SecuredQueryParams]
+        :body [{:keys [unsharing]} AppUnsharingRequest]
+        :return AppUnsharingResponse
+        :summary AppUnsharingSummary
+        :description AppUnsharingDocs
+        (ok (apps/unshare-apps current-user unsharing)))
 
   (context "/:system-id" []
     :path-params [system-id :- SystemId]
