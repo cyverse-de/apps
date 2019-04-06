@@ -1,7 +1,8 @@
 (ns apps.routes.apps.communities
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [apps.routes.params :only [AppIdPathParam SecuredQueryParams]]
+        [common-swagger-api.schema.apps :only [AppIdParam]]
+        [apps.routes.params :only [SecuredQueryParams]]
         [common-swagger-api.schema.apps :only [AppCategoryMetadata]]
         [apps.user :only [current-user]]
         [ring.util.http-response :only [ok]])
@@ -12,7 +13,7 @@
 (defroutes app-community-tags
 
            (POST "/" []
-                 :path-params [app-id :- AppIdPathParam]
+                 :path-params [app-id :- AppIdParam]
                  :query [params SecuredQueryParams]
                  :body [body (describe AppCategoryMetadata "Community metadata to add to the App.")]
                  :summary "Add/Update Community Metadata AVUs"
@@ -31,7 +32,7 @@
                  (communities/add-app-to-communities current-user app-id body false))
 
            (DELETE "/" []
-                   :path-params [app-id :- AppIdPathParam]
+                   :path-params [app-id :- AppIdParam]
                    :query [params SecuredQueryParams]
                    :body [body (describe AppCategoryMetadata "Community metadata to remove from the App.")]
                    :summary "Remove Community Metadata AVUs"
@@ -52,7 +53,7 @@
 (defroutes admin-app-community-tags
 
            (POST "/" []
-                 :path-params [app-id :- AppIdPathParam]
+                 :path-params [app-id :- AppIdParam]
                  :query [params SecuredQueryParams]
                  :body [body (describe AppCategoryMetadata "Community metadata to add to the App.")]
                  :summary "Add/Update Community Metadata AVUs"
@@ -66,7 +67,7 @@
                  (communities/add-app-to-communities current-user app-id body true))
 
            (DELETE "/" []
-                   :path-params [app-id :- AppIdPathParam]
+                   :path-params [app-id :- AppIdParam]
                    :query [params SecuredQueryParams]
                    :body [body (describe AppCategoryMetadata "Community metadata to remove from the App.")]
                    :summary "Remove Community Metadata AVUs"
