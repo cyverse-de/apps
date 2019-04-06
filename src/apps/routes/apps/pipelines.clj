@@ -1,10 +1,10 @@
 (ns apps.routes.apps.pipelines
   (:use [common-swagger-api.schema]
+        [common-swagger-api.schema.apps.pipeline]
         [apps.routes.params]
-        [apps.routes.schemas.pipeline]
+        [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
-        [ring.util.http-response :only [ok]]
-        [apps.user :only [current-user]])
+        [ring.util.http-response :only [ok]])
   (:require [apps.service.apps :as apps]))
 
 (defroutes pipelines
