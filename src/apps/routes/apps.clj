@@ -1,293 +1,232 @@
 (ns apps.routes.apps
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppDeletionRequest
-                                               AppListing
-                                               AppListingSummary
-                                               AppsShredderDocs
-                                               AppsShredderSummary
-                                               SystemId]]
-        [common-swagger-api.schema.apps.permission :only [AppPermissionListing
-                                                          AppPermissionListingDocs
-                                                          AppPermissionListingRequest
-                                                          AppPermissionListingSummary
-                                                          AppSharingDocs
-                                                          AppSharingRequest
-                                                          AppSharingResponse
-                                                          AppSharingSummary
-                                                          AppUnsharingDocs
-                                                          AppUnsharingRequest
-                                                          AppUnsharingResponse
-                                                          AppUnsharingSummary]]
+        [common-swagger-api.schema.apps.permission
+         :only [AppPermissionListing
+                AppPermissionListingDocs
+                AppPermissionListingRequest
+                AppPermissionListingSummary
+                AppSharingDocs
+                AppSharingRequest
+                AppSharingResponse
+                AppSharingSummary
+                AppUnsharingDocs
+                AppUnsharingRequest
+                AppUnsharingResponse
+                AppUnsharingSummary]]
         [common-swagger-api.schema.apps.rating]
-        [apps.routes.params]
-        [apps.routes.schemas.app]
-        [apps.routes.schemas.integration-data :only [IntegrationData]]
-        [apps.routes.schemas.tool :only [NewToolListing]]
+        [common-swagger-api.schema.integration-data :only [IntegrationData]]
+        [apps.routes.params
+         :only [SecuredQueryParams
+                SecuredQueryParamsEmailRequired
+                SecuredQueryParamsRequired]]
+        [apps.routes.schemas.app :only [AppSearchParams]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [ring.util.http-response :only [ok]])
   (:require [apps.routes.schemas.permission :as perms]
-            [apps.service.apps :as apps]))
+            [apps.service.apps :as apps]
+            [common-swagger-api.schema.apps :as schema]))
 
 (defroutes apps
   (GET "/" []
-    :query [params AppSearchParams]
-    :summary AppListingSummary
-    :return AppListing
-    :description-file "docs/apps/apps-listing.md"
-    (ok (coerce! AppListing
-                 (apps/search-apps current-user params))))
+       :query [params AppSearchParams]
+       :summary schema/AppListingSummary
+       :return schema/AppListing
+       :description-file "docs/apps/apps-listing.md"
+       (ok (coerce! schema/AppListing
+                    (apps/search-apps current-user params))))
 
   (POST "/shredder" []
-    :query [params SecuredQueryParams]
-    :body [body AppDeletionRequest]
-    :summary AppsShredderSummary
-    :description AppsShredderDocs
-    (ok (apps/delete-apps current-user body)))
+        :query [params SecuredQueryParams]
+        :body [body schema/AppDeletionRequest]
+        :summary schema/AppsShredderSummary
+        :description schema/AppsShredderDocs
+        (ok (apps/delete-apps current-user body)))
 
   (POST "/permission-lister" []
-    :query [params perms/PermissionListerQueryParams]
-    :body [body AppPermissionListingRequest]
-    :return AppPermissionListing
-    :summary AppPermissionListingSummary
-    :description AppPermissionListingDocs
-    (ok (apps/list-app-permissions current-user (:apps body) params)))
+        :query [params perms/PermissionListerQueryParams]
+        :body [body AppPermissionListingRequest]
+        :return AppPermissionListing
+        :summary AppPermissionListingSummary
+        :description AppPermissionListingDocs
+        (ok (apps/list-app-permissions current-user (:apps body) params)))
 
   (POST "/sharing" []
-    :query [params SecuredQueryParams]
-    :body [{:keys [sharing]} AppSharingRequest]
-    :return AppSharingResponse
-    :summary AppSharingSummary
-    :description AppSharingDocs
-    (ok (apps/share-apps current-user sharing)))
+        :query [params SecuredQueryParams]
+        :body [{:keys [sharing]} AppSharingRequest]
+        :return AppSharingResponse
+        :summary AppSharingSummary
+        :description AppSharingDocs
+        (ok (apps/share-apps current-user sharing)))
 
   (POST "/unsharing" []
-    :query [params SecuredQueryParams]
-    :body [{:keys [unsharing]} AppUnsharingRequest]
-    :return AppUnsharingResponse
-    :summary AppUnsharingSummary
-    :description AppUnsharingDocs
-    (ok (apps/unshare-apps current-user unsharing)))
+        :query [params SecuredQueryParams]
+        :body [{:keys [unsharing]} AppUnsharingRequest]
+        :return AppUnsharingResponse
+        :summary AppUnsharingSummary
+        :description AppUnsharingDocs
+        (ok (apps/unshare-apps current-user unsharing)))
 
   (context "/:system-id" []
-    :path-params [system-id :- SystemId]
+    :path-params [system-id :- schema/SystemId]
 
     (POST "/" []
-      :query [params SecuredQueryParamsRequired]
-      :body [body (describe AppRequest "The App to add.")]
-      :return App
-      :summary "Add a new App."
-      :description "This service adds a new App to the user's workspace."
-      (ok (apps/add-app current-user system-id body)))
+          :query [params SecuredQueryParamsRequired]
+          :body [body schema/AppCreateRequest]
+          :return schema/App
+          :summary schema/AppCreateSummary
+          :description schema/AppCreateDocs
+          (ok (apps/add-app current-user system-id body)))
 
     (POST "/arg-preview" []
-      :query [params SecuredQueryParams]
-      :body [body (describe AppPreviewRequest "The App to preview.")]
-      :summary "Preview Command Line Arguments"
-      :description "The app integration utility in the DE uses this service to obtain an example list
-      of command-line arguments so that the user can tell what the command-line might look like
-      without having to run a job using the app that is being integrated first. The App request
-      body also requires that each parameter contain a `value` field that contains the parameter
-      value to include on the command line. The response body is in the same format as the
-      `/arg-preview` service in the JEX. Please see the JEX documentation for more information."
-      (ok (apps/preview-command-line current-user system-id body)))
+          :query [params SecuredQueryParams]
+          :body [body schema/AppPreviewRequest]
+          :summary schema/AppPreviewSummary
+          :description schema/AppPreviewDocs
+          (ok (apps/preview-command-line current-user system-id body)))
 
     (context "/:app-id" []
-      :path-params [app-id :- AppIdJobViewPathParam]
+      :path-params [app-id :- schema/StringAppIdParam]
 
       (GET "/" []
-        :query [params SecuredQueryParams]
-        :summary "Obtain an app description."
-        :return AppJobView
-        :description "This service allows the Discovery Environment user interface to obtain an
-        app description that can be used to construct a job submission form."
-        (ok (coerce! AppJobView
-                     (apps/get-app-job-view current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :summary schema/AppJobViewSummary
+           :return schema/AppJobView
+           :description schema/AppJobViewDocs
+           (ok (coerce! schema/AppJobView
+                        (apps/get-app-job-view current-user system-id app-id))))
 
       (DELETE "/" []
-        :query [params SecuredQueryParams]
-        :summary "Logically Deleting an App"
-        :description "An app can be marked as deleted in the DE without being completely removed from
-        the database using this service. <b>Note</b>: an attempt to delete an App that is already
-        marked as deleted is treated as a no-op rather than an error condition. If the App
-        doesn't exist in the database at all, however, then that is treated as an error
-        condition."
-        (ok (apps/delete-app current-user system-id app-id)))
+              :query [params SecuredQueryParams]
+              :summary schema/AppDeleteSummary
+              :description schema/AppDeleteDocs
+              (ok (apps/delete-app current-user system-id app-id)))
 
       (PATCH "/" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :body [body (describe App "The App to update.")]
-        :return App
-        :summary "Update App Labels"
-        :description
-        (str "This service is capable of updating just the labels within a single-step app,
-              and it allows apps that have already been made available for public use to be updated,
-              which helps to eliminate administrative thrash for app updates that only correct typographical errors.
-              The app's name must not duplicate the name of any other app (visible to the requesting user)
-              under the same categories as this app.
-              Upon error, the response body contains an error code along with some additional information about the
-              error. <b>Note</b>: Although this endpoint accepts all App fields,
-              only the 'name' (except in parameters and parameter arguments), 'description', 'label', and 'display'
-              (only in parameter arguments) fields will be processed and updated by this endpoint."
-             (get-endpoint-delegate-block
-              "metadata"
-              "GET /avus/{target-type}/{target-id}")
-             "Where `{target-type}` is `app`."
-             (get-endpoint-delegate-block
-              "metadata"
-              "POST /avus/filter-targets"))
-        (ok (apps/relabel-app current-user system-id (assoc body :id app-id))))
+             :query [params SecuredQueryParamsEmailRequired]
+             :body [body schema/AppLabelUpdateRequest]
+             :return schema/App
+             :summary schema/AppLabelUpdateSummary
+             :description-file "docs/apps/app-label-update.md"
+             (ok (apps/relabel-app current-user system-id (assoc body :id app-id))))
 
       (PUT "/" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :body [body (describe AppRequest "The App to update.")]
-        :return App
-        :summary "Update an App"
-        :description
-        (str "This service updates a single-step App in the database, as long as the App has not been submitted
-              for public use, and the app's name must not duplicate the name of any other app (visible to the
-              requesting user) under the same categories as this app."
-             (get-endpoint-delegate-block
-              "metadata"
-              "GET /avus/{target-type}/{target-id}")
-             "Where `{target-type}` is `app`."
-             (get-endpoint-delegate-block
-              "metadata"
-              "POST /avus/filter-targets"))
-        (ok (apps/update-app current-user system-id (assoc body :id app-id))))
-
-      (GET "/integration-data" []
-        :query [params SecuredQueryParams]
-        :return IntegrationData
-        :summary "Return the Integration Data Record for an App"
-        :description "This service returns the integration data associated with an app."
-        (ok (apps/get-app-integration-data current-user system-id app-id)))
+           :query [params SecuredQueryParamsEmailRequired]
+           :body [body schema/AppUpdateRequest]
+           :return schema/App
+           :summary schema/AppUpdateSummary
+           :description-file "docs/apps/app-update.md"
+           (ok (apps/update-app current-user system-id (assoc body :id app-id))))
 
       (POST "/copy" []
-        :query [params SecuredQueryParamsRequired]
-        :return App
-        :summary "Make a Copy of an App Available for Editing"
-        :description "This service can be used to make a copy of an App in the user's workspace."
-        (ok (apps/copy-app current-user system-id app-id)))
+            :query [params SecuredQueryParamsRequired]
+            :return schema/App
+            :summary schema/AppCopySummary
+            :description schema/AppCopyDocs
+            (ok (apps/copy-app current-user system-id app-id)))
 
       (GET "/details" []
-        :query [params SecuredQueryParams]
-        :return AppDetails
-        :summary "Get App Details"
-        :description
-        (str "This service is used by the DE to obtain high-level details about a single App."
-             (get-endpoint-delegate-block
-              "metadata"
-              "POST /ontologies/{ontology-version}/filter")
-             "Please see the metadata service documentation for information about the `hierarchies` response field.")
-        (ok (coerce! AppDetails
-                     (apps/get-app-details current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return schema/AppDetails
+           :summary schema/AppDetailsSummary
+           :description-file "docs/apps/app-details.md"
+           (ok (coerce! schema/AppDetails
+                        (apps/get-app-details current-user system-id app-id))))
 
       (GET "/documentation" []
-        :query [params SecuredQueryParams]
-        :return AppDocumentation
-        :summary "Get App Documentation"
-        :description "This service is used by the DE to obtain documentation for a single App"
-        (ok (coerce! AppDocumentation
-                     (apps/get-app-docs current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return schema/AppDocumentation
+           :summary schema/AppDocumentationSummary
+           :description schema/AppDocumentationDocs
+           (ok (coerce! schema/AppDocumentation
+                        (apps/get-app-docs current-user system-id app-id))))
 
       (PATCH "/documentation" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
-        :return AppDocumentation
-        :summary "Update App Documentation"
-        :description "This service is used by the DE to update documentation for a single App"
-        (ok (coerce! AppDocumentation
-                     (apps/owner-edit-app-docs current-user system-id app-id body))))
+             :query [params SecuredQueryParamsEmailRequired]
+             :body [body schema/AppDocumentationRequest]
+             :return schema/AppDocumentation
+             :summary schema/AppDocumentationUpdateSummary
+             :description schema/AppDocumentationUpdateDocs
+             (ok (coerce! schema/AppDocumentation
+                          (apps/owner-edit-app-docs current-user system-id app-id body))))
 
       (POST "/documentation" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :body [body (describe AppDocumentationRequest "The App Documentation Request.")]
-        :return AppDocumentation
-        :summary "Add App Documentation"
-        :description "This service is used by the DE to add documentation for a single App"
-        (ok (coerce! AppDocumentation
-                     (apps/owner-add-app-docs current-user system-id app-id body))))
+            :query [params SecuredQueryParamsEmailRequired]
+            :body [body schema/AppDocumentationRequest]
+            :return schema/AppDocumentation
+            :summary schema/AppDocumentationAddSummary
+            :description schema/AppDocumentationAddDocs
+            (ok (coerce! schema/AppDocumentation
+                         (apps/owner-add-app-docs current-user system-id app-id body))))
 
       (DELETE "/favorite" []
-        :query [params SecuredQueryParams]
-        :summary "Removing an App as a Favorite"
-        :description "Apps can be marked as favorites in the DE, which allows users to access them
-        without having to search. This service is used to remove an App from a user's favorites
-        list."
-        (ok (apps/remove-app-favorite current-user system-id app-id)))
+              :query [params SecuredQueryParams]
+              :summary schema/AppFavoriteDeleteSummary
+              :description schema/AppFavoriteDeleteDocs
+              (ok (apps/remove-app-favorite current-user system-id app-id)))
 
       (PUT "/favorite" []
-        :query [params SecuredQueryParams]
-        :summary "Marking an App as a Favorite"
-        :description "Apps can be marked as favorites in the DE, which allows users to access them without
-        having to search. This service is used to add an App to a user's favorites list."
-        (ok (apps/add-app-favorite current-user system-id app-id)))
+           :query [params SecuredQueryParams]
+           :summary schema/AppFavoriteAddSummary
+           :description schema/AppFavoriteAddDocs
+           (ok (apps/add-app-favorite current-user system-id app-id)))
+
+      (GET "/integration-data" []
+           :query [params SecuredQueryParams]
+           :return IntegrationData
+           :summary schema/AppIntegrationDataSummary
+           :description schema/AppIntegrationDataDocs
+           (ok (apps/get-app-integration-data current-user system-id app-id)))
 
       (GET "/is-publishable" []
-        :query [params SecuredQueryParams]
-        :return AppPublishableResponse
-        :summary "Determine if an App Can be Made Public"
-        :description "A multi-step App can't be made public if any of the Tasks that are included in it
-        are not public. This endpoint returns a true flag if the App is a single-step App or it's a
-        multistep App in which all of the Tasks included in the pipeline are public."
-        (ok (apps/app-publishable? current-user system-id app-id)))
+           :query [params SecuredQueryParams]
+           :return schema/AppPublishableResponse
+           :summary schema/AppPublishableSummary
+           :description schema/AppPublishableDocs
+           (ok (apps/app-publishable? current-user system-id app-id)))
 
       (POST "/publish" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :body [body (describe PublishAppRequest "The user's Publish App Request.")]
-        :summary "Submit an App for Public Use"
-        :description "This service can be used to submit a private App for public use. The user supplies
-        basic information about the App and a suggested location for it. The service records the
-        information and suggested location then places the App in the Beta category. A Tito
-        administrator can subsequently move the App to the suggested location at a later time if it
-        proves to be useful."
-        (ok (apps/make-app-public current-user system-id (assoc body :id app-id))))
+            :query [params SecuredQueryParamsEmailRequired]
+            :body [body schema/PublishAppRequest]
+            :summary schema/PublishAppSummary
+            :description schema/PublishAppDocs
+            (ok (apps/make-app-public current-user system-id (assoc body :id app-id))))
 
       (DELETE "/rating" []
-        :query [params SecuredQueryParams]
-        :return RatingResponse
-        :summary "Delete an App Rating"
-        :description "The DE uses this service to remove a rating that a user has previously made. This
-        service deletes the authenticated user's rating for the corresponding app-id."
-        (ok (apps/delete-app-rating current-user system-id app-id)))
+              :query [params SecuredQueryParams]
+              :return RatingResponse
+              :summary schema/AppRatingDeleteSummary
+              :description schema/AppRatingDeleteDocs
+              (ok (apps/delete-app-rating current-user system-id app-id)))
 
       (POST "/rating" []
-        :query [params SecuredQueryParams]
-        :body [body (describe RatingRequest "The user's new rating for this App.")]
-        :return RatingResponse
-        :summary "Rate an App"
-        :description "Users have the ability to rate an App for its usefulness, and this service provides
-        the means to store the App rating. This service accepts a rating level between one and
-        five, inclusive, and a comment identifier that refers to a comment in iPlant's Confluence
-        wiki. The rating is stored in the database and associated with the authenticated user."
-        (ok (apps/rate-app current-user system-id app-id body)))
+            :query [params SecuredQueryParams]
+            :body [body RatingRequest]
+            :return RatingResponse
+            :summary schema/AppRatingSummary
+            :description schema/AppRatingDocs
+            (ok (apps/rate-app current-user system-id app-id body)))
 
       (GET "/tasks" []
-        :query [params SecuredQueryParams]
-        :return AppTaskListing
-        :summary "List Tasks with File Parameters in an App"
-        :description "When a pipeline is being created, the UI needs to know what types of files are
-        consumed by and what types of files are produced by each App's task in the pipeline. This
-        service provides that information."
-        (ok (coerce! AppTaskListing
-                     (apps/get-app-task-listing current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return schema/AppTaskListing
+           :summary schema/AppTaskListingSummary
+           :description schema/AppTaskListingDocs
+           (ok (coerce! schema/AppTaskListing
+                        (apps/get-app-task-listing current-user system-id app-id))))
 
       (GET "/tools" []
-        :query [params SecuredQueryParams]
-        :return NewToolListing
-        :summary "List Tools used by an App"
-        :description "This service lists information for all of the tools that are associated with an App.
-        This information used to be included in the results of the App listing service."
-        (ok (coerce! NewToolListing
-                     (apps/get-app-tool-listing current-user system-id app-id))))
+           :query [params SecuredQueryParams]
+           :return schema/AppToolListing
+           :summary schema/AppToolListingSummary
+           :description schema/AppToolListingDocs
+           (ok (coerce! schema/AppToolListing
+                        (apps/get-app-tool-listing current-user system-id app-id))))
 
       (GET "/ui" []
-        :query [params SecuredQueryParamsEmailRequired]
-        :return App
-        :summary "Make an App Available for Editing"
-        :description "The app integration utility in the DE uses this service to obtain the App
-        description JSON so that it can be edited. The App must have been integrated by the
-        requesting user."
-        (ok (apps/get-app-ui current-user system-id app-id))))))
+           :query [params SecuredQueryParamsEmailRequired]
+           :return schema/App
+           :summary schema/AppEditingViewSummary
+           :description schema/AppEditingViewDocs
+           (ok (apps/get-app-ui current-user system-id app-id))))))

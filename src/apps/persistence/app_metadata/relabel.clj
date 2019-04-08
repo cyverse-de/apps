@@ -1,7 +1,6 @@
 (ns apps.persistence.app-metadata.relabel
   "Persistence layer for app metadata."
   (:use [apps.persistence.entities]
-        [apps.routes.schemas.app :only [AppParameterListGroup]]
         [apps.util.assertions]
         [apps.util.conversions :only [long->timestamp
                                       remove-nil-vals]]

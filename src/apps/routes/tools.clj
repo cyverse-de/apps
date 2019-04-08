@@ -1,23 +1,38 @@
 (ns apps.routes.tools
   (:use [common-swagger-api.schema]
         [common-swagger-api.schema.apps :only [AppListing]]
+        [common-swagger-api.schema.containers
+         :only [DataContainer
+                Device
+                Image
+                ToolContainer
+                Volume
+                VolumesFrom]]
+        [common-swagger-api.schema.integration-data :only [IntegrationData]]
+        [common-swagger-api.schema.tools
+         :only [Tool
+                ToolDetails
+                ToolIdParam]]
         [apps.constants :only [de-system-id]]
         [apps.containers]
         [apps.routes.params]
         [apps.routes.schemas.containers]
-        [apps.routes.schemas.integration-data :only [IntegrationData]]
         [apps.routes.schemas.app :only [AdminAppListing]]
         [apps.routes.schemas.tool]
-        [apps.tools :only [admin-add-tools
-                           admin-delete-tool
-                           admin-list-tools
-                           admin-publish-tool
-                           admin-update-tool
-                           get-tool
-                           list-tools
-                           submit-tool-request
-                           user-get-tool]]
-        [apps.tools.private :only [add-private-tool delete-private-tool update-private-tool]]
+        [apps.tools
+         :only [admin-add-tools
+                admin-delete-tool
+                admin-list-tools
+                admin-publish-tool
+                admin-update-tool
+                get-tool
+                list-tools
+                submit-tool-request
+                user-get-tool]]
+        [apps.tools.private
+         :only [add-private-tool
+                delete-private-tool
+                update-private-tool]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [apps.util.service]

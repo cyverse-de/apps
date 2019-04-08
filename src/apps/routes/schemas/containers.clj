@@ -1,19 +1,10 @@
 (ns apps.routes.schemas.containers
   (:use [common-swagger-api.schema :only [->optional-param describe]]
-        [apps.routes.params :only [ToolIdParam SecuredQueryParams]])
+        [common-swagger-api.schema.containers]
+        [apps.routes.params :only [SecuredQueryParams]])
   (:require [apps.util.coercions :as coercions]
-            [schema.core :as s]))
-
-(s/defschema Image
-  (describe
-   {:name                            s/Str
-    :id                              s/Uuid
-    (s/optional-key :tag)            s/Str
-    (s/optional-key :url)            (s/maybe s/Str)
-    (s/optional-key :deprecated)     Boolean
-    (s/optional-key :auth)           (s/maybe s/Str)
-    (s/optional-key :osg_image_path) (s/maybe s/Str)}
-   "A map describing a container image."))
+            [schema.core :as s])
+  (:import (java.util UUID)))
 
 (s/defschema Images
   (describe
@@ -27,7 +18,7 @@
 
 (s/defschema ImageId
   (describe
-    java.util.UUID
+    UUID
     "A container image UUID."))
 
 (s/defschema ImageUpdateRequest
@@ -45,24 +36,6 @@
       (coercions/coerce-string->long :memory_limit)
       (coercions/coerce-string->long :min_memory_limit)
       (coercions/coerce-string->long :min_disk_space)))
-
-(s/defschema Settings
-  (describe
-   {(s/optional-key :cpu_shares)         Integer
-    (s/optional-key :pids_limit)         Integer
-    (s/optional-key :memory_limit)       Long
-    (s/optional-key :min_memory_limit)   Long
-    (s/optional-key :min_cpu_cores)      Double
-    (s/optional-key :max_cpu_cores)      Double
-    (s/optional-key :min_disk_space)     Long
-    (s/optional-key :network_mode)       s/Str
-    (s/optional-key :working_directory)  s/Str
-    (s/optional-key :name)               s/Str
-    (s/optional-key :entrypoint)         s/Str
-    (s/optional-key :skip_tmp_mount)     Boolean
-    (s/optional-key :uid)                Integer
-    :id                 s/Uuid}
-   "The group of settings for a container."))
 
 (s/defschema Entrypoint
   (describe
@@ -114,13 +87,6 @@
    {:name (s/maybe s/Str)}
    "The name given to the tool container."))
 
-(s/defschema Device
-  (describe
-   {:host_path      s/Str
-    :container_path s/Str
-    :id             s/Uuid}
-   "Information about a device associated with a tool's container."))
-
 (s/defschema NewDevice
   (describe
    (dissoc Device :id)
@@ -138,20 +104,13 @@
 
 (def DeviceIdParam
   (describe
-   java.util.UUID
-   "A device's UUID."))
+    UUID
+    "A device's UUID."))
 
 (s/defschema Devices
   (describe
    {:container_devices [Device]}
    "A list of devices associated with a tool's container."))
-
-(s/defschema Volume
-  (describe
-   {:host_path      s/Str
-    :container_path s/Str
-    :id             s/Uuid}
-   "A map representing a bind mounted container volume."))
 
 (s/defschema NewVolume
   (describe
@@ -160,8 +119,8 @@
 
 (def VolumeIdParam
   (describe
-   java.util.UUID
-   "A volume's UUID."))
+    UUID
+    "A volume's UUID."))
 
 (s/defschema Volumes
   (describe
@@ -178,14 +137,6 @@
    {:container_path s/Str}
    "The path to a bind mounted volume in the tool container."))
 
-(s/defschema DataContainer
-  (describe
-    (merge (dissoc Image :id)
-      {:id                         s/Uuid
-       :name_prefix                s/Str
-       (s/optional-key :read_only) s/Bool})
-    "A description of a data container."))
-
 (s/defschema DataContainers
   (describe
    {:data_containers [DataContainer]}
@@ -193,7 +144,7 @@
 
 (s/defschema DataContainerIdParam
   (describe
-    java.util.UUID
+    UUID
     "A data container's UUID."))
 
 (s/defschema DataContainerUpdateRequest
@@ -204,9 +155,6 @@
         (dissoc :id))
     "A map for updating data container settings."))
 
-(s/defschema VolumesFrom
-  (describe DataContainer "A description of a data container volumes-from settings."))
-
 (s/defschema NewVolumesFrom
   (describe
    (dissoc VolumesFrom :id)
@@ -214,67 +162,23 @@
 
 (def VolumesFromIdParam
   (describe
-   java.util.UUID
-   "A volume from's UUID."))
+    UUID
+    "A volume from's UUID."))
 
 (s/defschema VolumesFromList
   (describe
    {:container_volumes_from [VolumesFrom]}
    "The list of VolumeFroms associated with a tool's container."))
 
-(s/defschema Port
-  (describe
-   {:id                              s/Uuid
-    (s/optional-key :host_port)      (s/maybe Integer)
-    :container_port                  Integer
-    (s/optional-key :bind_to_host)   (s/maybe Boolean)}
-   "Port information for a tool container."))
-
 (s/defschema NewPort
   (describe
    (dissoc Port :id)
    "A map for adding a new port configuration to a tool container."))
 
-(s/defschema ProxySettings
-  (describe
-   {:id                             s/Uuid
-    :image                          String
-    :name                           String
-    (s/optional-key :frontend_url)  (s/maybe String)
-    (s/optional-key :cas_url)       (s/maybe String)
-    (s/optional-key :cas_validate)  (s/maybe String)
-    (s/optional-key :ssl_cert_path) (s/maybe String)
-    (s/optional-key :ssl_key_path)  (s/maybe String)}
-   "Interactive app settings for the reverse proxy that runs on the HTCondor nodes for each job."))
-
 (s/defschema NewProxySettings
   (describe
    (dissoc ProxySettings :id)
    "A map for adding new interactive app reverse proxy settings."))
-
-(def DevicesParamOptional       (s/optional-key :container_devices))
-(def VolumesParamOptional       (s/optional-key :container_volumes))
-(def VolumesFromParamOptional   (s/optional-key :container_volumes_from))
-(def PortsParamOptional         (s/optional-key :container_ports))
-(def ProxySettingsParamOptional (s/optional-key :interactive_apps))
-
-(s/defschema ToolContainerSettings
-  (describe
-   (merge
-    Settings
-    {DevicesParamOptional       [Device]
-     VolumesParamOptional       [Volume]
-     VolumesFromParamOptional   [VolumesFrom]
-     PortsParamOptional         [Port]
-     ProxySettingsParamOptional ProxySettings})
-   "Bare minimum map containing all of the container settings."))
-
-(s/defschema ToolContainer
-  (describe
-   (merge
-    ToolContainerSettings
-    {:image Image})
-   "All container and container image information associated with a tool."))
 
 (s/defschema NewToolContainer
   (describe

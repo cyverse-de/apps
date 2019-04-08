@@ -1,7 +1,6 @@
 (ns apps.routes.schemas.pipeline
   (:use [common-swagger-api.schema :only [->optional-param describe]]
-        [apps.routes.params]
-        [apps.routes.schemas.app :only [AppTaskListing]]
+        [common-swagger-api.schema.apps :only [AppTaskListing]]
         [schema.core :only [defschema optional-key Keyword]])
   (:import [java.util UUID]))
 
