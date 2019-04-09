@@ -1,7 +1,8 @@
 (ns apps.routes.apps.metadata
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [apps.routes.params]
+        [common-swagger-api.schema.apps :only [AppIdParam]]
+        [apps.routes.params :only [SecuredQueryParams]]
         [apps.user :only [current-user]])
   (:require [apps.metadata.avus :as avus]
             [apps.util.service :as service]
@@ -10,7 +11,7 @@
 (defroutes app-metadata
 
   (GET "/" []
-        :path-params [app-id :- AppIdPathParam]
+        :path-params [app-id :- AppIdParam]
         :query [params SecuredQueryParams]
         :summary "View all Metadata AVUs"
         :description (str
@@ -24,7 +25,7 @@ Please see the metadata service documentation for response information.")
         (avus/list-avus current-user app-id false))
 
   (POST "/" [:as {:keys [body]}]
-         :path-params [app-id :- AppIdPathParam]
+         :path-params [app-id :- AppIdParam]
          :query [params SecuredQueryParams]
          :summary "Add/Update Metadata AVUs"
          :description (str
@@ -43,7 +44,7 @@ Please see the metadata service documentation for request and response informati
          (avus/update-avus current-user app-id body false))
 
   (PUT "/" [:as {:keys [body]}]
-        :path-params [app-id :- AppIdPathParam]
+        :path-params [app-id :- AppIdParam]
         :query [params SecuredQueryParams]
         :summary "Set Metadata AVUs"
         :description (str
@@ -66,7 +67,7 @@ Please see the metadata service documentation for request and response informati
 (defroutes admin-app-metadata
 
   (GET "/" []
-        :path-params [app-id :- AppIdPathParam]
+        :path-params [app-id :- AppIdParam]
         :query [params SecuredQueryParams]
         :summary "View all Metadata AVUs"
         :description (str
@@ -79,7 +80,7 @@ Please see the metadata service documentation for response information.")
         (avus/list-avus current-user app-id true))
 
   (POST "/" [:as {:keys [body]}]
-         :path-params [app-id :- AppIdPathParam]
+         :path-params [app-id :- AppIdParam]
          :query [params SecuredQueryParams]
          :summary "Add/Update Metadata AVUs"
          :description (str
@@ -97,7 +98,7 @@ Please see the metadata service documentation for request and response informati
          (avus/update-avus current-user app-id body true))
 
   (PUT "/" [:as {:keys [body]}]
-        :path-params [app-id :- AppIdPathParam]
+        :path-params [app-id :- AppIdParam]
         :query [params SecuredQueryParams]
         :summary "Set Metadata AVUs"
         :description (str

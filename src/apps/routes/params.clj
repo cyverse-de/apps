@@ -11,7 +11,6 @@
             [schema.core :as s])
   (:import [java.util UUID]))
 
-(def AppIdPathParam (describe UUID "The App's UUID"))
 (def IntegrationDataIdPathParam (describe UUID "A UUID that is used to identify the integration data record"))
 
 (def ApiName (describe String "The name of the external API"))
