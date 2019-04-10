@@ -13,7 +13,6 @@
                 AppDetails
                 AppDisabledParam
                 AppDocUrlParam
-                AppFilterParams
                 AppListing
                 AppListingDetail
                 AppListingJobStats
@@ -59,10 +58,7 @@
 
 (defschema AppListingPagingParams
   (merge SecuredQueryParamsEmailRequired
-         PagingParams
-         AppFilterParams
-         {SortFieldOptionalKey
-          (describe (apply enum AppListingValidSortFields) SortFieldDocs)}))
+         app-schema/AppListingPagingParams))
 
 (def AdminAppSearchValidSortFields
   (sets/union AppSearchValidSortFields AdminAppListingJobStatsKeys))
