@@ -1,14 +1,18 @@
 (ns apps.routes.apps.categories
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [common-swagger-api.schema.ontologies]
         [common-swagger-api.schema.apps
          :only [AppCategoryIdPathParam
                 AppListing
                 SystemId]]
+        [common-swagger-api.schema.ontologies :only [OntologyClassIRIParam]]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.app :only [AppListingPagingParams]]
-        [apps.routes.schemas.app.category]
+        [apps.routes.schemas.app.category
+         :only [AppCommunityGroupNameParam
+                CategoryListingParams
+                OntologyAppListingPagingParams
+                OntologyHierarchyFilterParams]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [ring.util.http-response :only [ok]])
