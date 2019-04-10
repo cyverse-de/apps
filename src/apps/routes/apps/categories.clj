@@ -22,9 +22,8 @@
   (GET "/" []
         :query [params CategoryListingParams]
         :return schema/AppCategoryListing
-        :summary "List App Categories"
-        :description "This service is used by the DE to obtain the list of app categories that
-         are visible to the user."
+        :summary schema/AppCategoryListingSummary
+        :description schema/AppCategoryListingDocs
         (ok (apps/get-app-categories current-user params)))
 
   (GET "/:system-id/:category-id" []
@@ -32,12 +31,8 @@
                       category-id :- AppCategoryIdPathParam]
         :query [params AppListingPagingParams]
         :return schema/AppCategoryAppListing
-        :summary "List Apps in a Category"
-        :description "This service lists all of the apps within an app category or any of its
-         descendents. The DE uses this service to obtain the list of apps when a user
-         clicks on a category in the _Apps_ window.
-         This endpoint accepts optional URL query parameters to limit and sort Apps,
-         which will allow pagination of results."
+        :summary schema/AppCategoryAppListingSummary
+        :description schema/AppCategoryAppListingDocs
         (ok (coerce! schema/AppCategoryAppListing
                  (apps/list-apps-in-category current-user system-id category-id params))))
 
