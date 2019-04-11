@@ -23,6 +23,7 @@
             [apps.routes.oauth :as oauth-routes]
             [apps.routes.reference-genomes :as reference-genome-routes]
             [apps.routes.status :as status-routes]
+            [apps.routes.submissions :as submission-routes]
             [apps.routes.tools :as tool-routes]
             [apps.routes.users :as user-routes]
             [apps.routes.workspaces :as workspace-routes]
@@ -59,6 +60,7 @@
                    {:name "tool-requests", :description "Tool Request endpoints."}
                    {:name "reference-genomes", :description "Reference Genome endpoints."}
                    {:name "oauth", :description "OAuth callback and information endpoints."}
+                   {:name "submissions", :description "Analysis submission endpoints"}
                    {:name "admin-analyses", :description "Admin Analysis Endpoints"}
                    {:name "admin-apps", :description "Admin App endpoints."}
                    {:name "admin-app-community-tags", :description "Admin App Community tag endpoints."}
@@ -147,6 +149,9 @@
     (context "/oauth" []
       :tags ["oauth"]
       oauth-routes/oauth)
+    (context "/submissions" []
+      :tags ["submissions"]
+      submission-routes/submissions)
     (context "/admin/analyses" []
       :tags ["admin-analyses"]
       admin-routes/admin-analyses)

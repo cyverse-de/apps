@@ -1,8 +1,10 @@
 (ns apps.service.apps.jobs.params
   (:use [apps.util.conversions :only [remove-nil-vals]]
+        [kameleon.uuids :only [uuidify]]
         [slingshot.slingshot :only [throw+]])
   (:require [cheshire.core :as cheshire]
             [clojure.string :as string]
+            [clojure-commons.exception-util :as cxu]
             [apps.persistence.app-metadata :as ap]
             [apps.service.apps.jobs.util :as ju]
             [apps.service.util :as util]))
@@ -134,6 +136,14 @@
     (update-in (assoc (.getAppJobView apps-client system-id app-id) :debug (:debug submission false))
                [:groups]
                (partial update-app-groups (:config submission)))))
+
+(defn get-submission-launch-info
+  [apps-client {system-id :system_id app-id :app_id :as submission}]
+  (when-not system-id (cxu/internal-system-error "no system ID assocaited with submission"))
+  (when-not app-id (cxu/internal-system-error "no app ID associated with submission"))
+  (update (assoc (.getAppJobView apps-client system-id (uuidify app-id)) :debug (:debug submission false))
+          :groups
+          (partial update-app-groups (:config submission))))
 
 (defn get-job-config
   [job]

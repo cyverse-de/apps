@@ -17,6 +17,8 @@
 
 (def AnalysisIdPathParam (describe UUID "The Analysis UUID"))
 
+(def SubmissionIdPathParam (describe UUID "The Submission UUID"))
+
 (def ResultsTotalParam
   (describe Long
     "The total number of results that would be returned without limits and offsets applied."))
