@@ -3,9 +3,11 @@
         [slingshot.slingshot :only [try+]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [clojure-commons.exception-util :as cxu]
             [kameleon.db :as db]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
+            [apps.persistence.submissions :as sp]
             [apps.service.apps.job-listings :as listings]
             [apps.service.apps.jobs.params :as job-params]
             [apps.service.apps.jobs.permissions :as job-permissions]
@@ -165,6 +167,12 @@
   [apps-client user job-id]
   (validate-jobs-for-user user [job-id] "read")
   (job-params/get-job-relaunch-info apps-client (jp/get-job-by-id job-id)))
+
+(defn get-submission-launch-info
+  [apps-client submission-id]
+  (if-let [submission (sp/get-submission-by-id submission-id)]
+    (job-params/get-submission-launch-info apps-client submission)
+    (cxu/not-found "submission information not found")))
 
 (defn- stop-job-steps
   "Stops an individual step in a job."
