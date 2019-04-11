@@ -6,7 +6,6 @@
                 SortFieldDocs
                 SortFieldOptionalKey]]
         [common-swagger-api.schema.apps :only [SystemId]]
-        [common-swagger-api.schema.ontologies :only [OntologyDetails]]
         [apps.routes.params
          :only [SecuredQueryParams
                 SecuredQueryParamsEmailRequired]]
@@ -14,7 +13,8 @@
          :only [AdminAppListingValidSortFields
                 AppListingPagingParams]]
         [schema.core :only [defschema optional-key enum]])
-  (:require [common-swagger-api.schema.apps.categories :as categories-schema])
+  (:require [common-swagger-api.schema.apps.categories :as categories-schema]
+            [common-swagger-api.schema.ontologies :as ontologies-schema])
   (:import [java.util Date UUID]))
 
 (def AppCommunityGroupNameParam (describe String "The full group name of the App Community"))
@@ -69,7 +69,7 @@
    :applied    (describe Date "The date this version was set as active")})
 
 (defschema ActiveOntologyDetails
-  (merge OntologyDetails
+  (merge ontologies-schema/OntologyDetails
          {:active (describe Boolean
                             "Marks this Ontology version as the active version used when querying
                              metadata service ontology endpoints")}))
@@ -79,11 +79,11 @@
 
 (defschema OntologyHierarchyFilterParams
   (merge SecuredQueryParams
-         {:attr (describe String "The metadata attribute that stores class IRIs under the given root IRI")}))
+         ontologies-schema/OntologyHierarchyFilterParams))
 
 (defschema OntologyAppListingPagingParams
-  (merge AppListingPagingParams
-         {:attr (describe String "The metadata attribute that stores the given class IRI")}))
+  (merge SecuredQueryParamsEmailRequired
+         categories-schema/OntologyAppListingPagingParams))
 
 (defschema AdminOntologyAppListingPagingParams
   (assoc OntologyAppListingPagingParams

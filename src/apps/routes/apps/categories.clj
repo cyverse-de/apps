@@ -1,14 +1,18 @@
 (ns apps.routes.apps.categories
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
-        [common-swagger-api.schema.ontologies]
         [common-swagger-api.schema.apps
          :only [AppCategoryIdPathParam
                 AppListing
                 SystemId]]
+        [common-swagger-api.schema.ontologies :only [OntologyClassIRIParam]]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.app :only [AppListingPagingParams]]
-        [apps.routes.schemas.app.category]
+        [apps.routes.schemas.app.category
+         :only [AppCommunityGroupNameParam
+                CategoryListingParams
+                OntologyAppListingPagingParams
+                OntologyHierarchyFilterParams]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [ring.util.http-response :only [ok]])
@@ -41,53 +45,33 @@
 (defroutes app-hierarchies
 
   (GET "/" []
-        :query [params SecuredQueryParams]
-        :summary "List App Hierarchies"
-        :description (str
-"Lists all hierarchies saved for the active ontology version."
-(get-endpoint-delegate-block
-  "metadata"
-  "GET /ontologies/{ontology-version}")
-"Please see the metadata service documentation for response information.")
-        (listings/list-hierarchies current-user))
+       :query [params SecuredQueryParams]
+       :summary schema/AppHierarchiesListingSummary
+       :description-file "docs/apps/categories/hierarchies-listing.md"
+       (listings/list-hierarchies current-user))
 
-  (GET "/:root-iri" []
-        :path-params [root-iri :- OntologyClassIRIParam]
-        :query [{:keys [attr]} OntologyHierarchyFilterParams]
-        :summary "List App Category Hierarchy"
-        :description (str
-"Gets the list of app categories that are visible to the user for the active ontology version,
- rooted at the given `root-iri`."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter")
-"Please see the metadata service documentation for response information.")
-        (listings/get-app-hierarchy current-user root-iri attr))
+  (context "/:root-iri" []
+    :path-params [root-iri :- OntologyClassIRIParam]
 
-  (GET "/:root-iri/apps" []
-        :path-params [root-iri :- OntologyClassIRIParam]
-        :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
-        :return AppListing
-        :summary "List Apps in a Category"
-        :description (str
-"Lists all of the apps under an app category hierarchy that are visible to the user."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
-        (ok (coerce! AppListing (apps/list-apps-under-hierarchy current-user root-iri attr params))))
+    (GET "/" []
+         :query [{:keys [attr]} OntologyHierarchyFilterParams]
+         :summary schema/AppCategoryHierarchyListingSummary
+         :description-file "docs/apps/categories/category-hierarchy-listing.md"
+         (listings/get-app-hierarchy current-user root-iri attr))
 
-  (GET "/:root-iri/unclassified" []
-        :path-params [root-iri :- OntologyClassIRIParam]
-        :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
-        :return AppListing
-        :summary "List Unclassified Apps"
-        :description (str
-"Lists all of the apps that are visible to the user that are not under the given app category or any of
- its subcategories."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
-        (ok (coerce! AppListing (listings/get-unclassified-app-listing current-user root-iri attr params))))
+    (GET "/apps" []
+         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
+         :return AppListing
+         :summary schema/AppCategoryAppListingSummary
+         :description-file "docs/apps/categories/hierarchy-app-listing.md"
+         (ok (coerce! AppListing (apps/list-apps-under-hierarchy current-user root-iri attr params))))
+
+    (GET "/unclassified" []
+         :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
+         :return AppListing
+         :summary schema/AppHierarchyUnclassifiedListingSummary
+         :description-file "docs/apps/categories/hierarchy-unclassified-app-listing.md"
+         (ok (coerce! AppListing (listings/get-unclassified-app-listing current-user root-iri attr params)))))
 
   (undocumented (route/not-found (service/unrecognized-path-response))))
 

@@ -10,7 +10,7 @@
                 SystemId]]
         [common-swagger-api.schema.apps.categories :only [AppCategoryListing AppCategoryAppListing]]
         [common-swagger-api.schema.integration-data :only [IntegrationData]]
-        [common-swagger-api.schema.ontologies]
+        [common-swagger-api.schema.ontologies :only [OntologyClassIRIParam OntologyVersionParam]]
         [common-swagger-api.schema.tools :only [ToolRequestIdParam]]
         [apps.metadata.reference-genomes
          :only [add-reference-genome
