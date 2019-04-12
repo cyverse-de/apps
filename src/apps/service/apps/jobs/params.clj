@@ -1,5 +1,6 @@
 (ns apps.service.apps.jobs.params
-  (:use [apps.util.conversions :only [remove-nil-vals]]
+  (:use [apps.service.apps.util :only [paths-accessible?]]
+        [apps.util.conversions :only [remove-nil-vals]]
         [kameleon.uuids :only [uuidify]]
         [slingshot.slingshot :only [throw+]])
   (:require [cheshire.core :as cheshire]
@@ -107,43 +108,56 @@
          (remove omit-param?)
          (mapcat (partial format-job-param config)))))
 
+(defn- get-prop-value
+  [user config {:keys [id] :as prop}]
+  (let [value (config (keyword id))]
+    (if (ju/input? prop)
+      (when (paths-accessible? user value)
+        {:path value})
+      value)))
+
 (defn- update-prop
-  [config prop]
-  (let [id        (keyword (:id prop))
-        get-value (if (ju/input? prop) (constantly {:path (config id)}) #(config id))]
-    (if (contains? config id)
-      (let [prop-value (get-value)]
-        (assoc prop
-          :value        prop-value
-          :defaultValue prop-value))
-      prop)))
+  "Updates a property with the value from a saved job submission. In general, if the property value is specified
+   in the saved job submission then the corresponding value will be set as the property's default value.  The
+   behavior is a little bit different for input properties because we have to worry about file permissions. If the
+   input property value is specified in the saved job submission then the corresponding value will be used provided
+   that the user has permission to read all of the associated paths. If the user does not have permission to read all
+   of the paths then no paths will be selected by default, even if the app itself specifies default input paths."
+  [user config {:keys [id] :as prop}]
+  (remove-nil-vals
+   (if (contains? config (keyword id))
+     (let [prop-value (get-prop-value user config prop)]
+       (assoc prop
+         :value        prop-value
+         :defaultValue prop-value))
+     prop)))
 
 (defn- update-app-props
-  [config props]
-  (map (partial update-prop config) props))
+  [user config props]
+  (map (partial update-prop user config) props))
 
 (defn- update-app-group
-  [config group]
-  (update-in group [:parameters] (partial update-app-props config)))
+  [user config group]
+  (update group :parameters (partial update-app-props user config)))
 
 (defn- update-app-groups
-  [config groups]
-  (map (partial update-app-group config) groups))
+  [user config groups]
+  (map (partial update-app-group user config) groups))
 
 (defn get-job-relaunch-info
-  [apps-client {system-id :system_id app-id :app_id :as job}]
+  [apps-client user {system-id :system_id app-id :app_id :as job}]
   (let [submission (get-job-submission job)]
-    (update-in (assoc (.getAppJobView apps-client system-id app-id) :debug (:debug submission false))
-               [:groups]
-               (partial update-app-groups (:config submission)))))
+    (update (assoc (.getAppJobView apps-client system-id app-id) :debug (:debug submission false))
+            :groups
+            (partial update-app-groups user (:config submission)))))
 
 (defn get-submission-launch-info
-  [apps-client {system-id :system_id app-id :app_id :as submission}]
+  [apps-client user {system-id :system_id app-id :app_id :as submission}]
   (when-not system-id (cxu/internal-system-error "no system ID assocaited with submission"))
   (when-not app-id (cxu/internal-system-error "no app ID associated with submission"))
   (update (assoc (.getAppJobView apps-client system-id (uuidify app-id)) :debug (:debug submission false))
           :groups
-          (partial update-app-groups (:config submission))))
+          (partial update-app-groups user (:config submission))))
 
 (defn get-job-config
   [job]

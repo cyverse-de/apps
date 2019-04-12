@@ -1,6 +1,6 @@
 (ns apps.service.apps.de.job-view
   (:use [apps.service.apps.de.validation :only [verify-app-permission]]
-        [apps.service.apps.jobs.util :as util]
+        [apps.service.apps.util :only [paths-accessible?]]
         [apps.util.conversions :only [remove-nil-vals]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [try+ throw+]])
@@ -8,6 +8,7 @@
             [apps.metadata.params :as mp]
             [apps.persistence.app-metadata :as amp]
             [apps.service.apps.de.constants :as c]
+            [apps.service.apps.jobs.util :as util]
             [apps.util.service :as service]
             [clojure-commons.exception-util :as cxu]))
 
@@ -36,21 +37,11 @@
                       {:is_implicit false})))
       select))
 
-(defn- path-accessible?
-  [user path]
-  (try+
-   (data-info/get-path-info user :paths [path] :validation-behavior "read" :filter-include "path")
-   (catch [:status 500] e
-     (let [error-code (:error_code (service/parse-json (:body e)))]
-       (if (#{"ERR_NOT_READABLE" "ERR_DOES_NOT_EXIST"} error-code)
-         false
-         (throw+))))))
-
 (defn- get-default-value
   [user type values]
   (let [default-value (mp/get-default-value type values)]
     (if (util/input-type? type)
-      (when (and default-value (path-accessible? user default-value))
+      (when (and default-value (paths-accessible? user default-value))
         {:path default-value})
       default-value)))
 

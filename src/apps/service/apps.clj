@@ -301,7 +301,7 @@
 
 (defn get-submission-launch-info
   [user submission-id]
-  (jobs/get-submission-launch-info (get-apps-client user) submission-id))
+  (jobs/get-submission-launch-info (get-apps-client user) user submission-id))
 
 (defn stop-job
   [user job-id params]

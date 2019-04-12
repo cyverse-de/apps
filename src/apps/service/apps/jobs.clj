@@ -166,12 +166,12 @@
 (defn get-job-relaunch-info
   [apps-client user job-id]
   (validate-jobs-for-user user [job-id] "read")
-  (job-params/get-job-relaunch-info apps-client (jp/get-job-by-id job-id)))
+  (job-params/get-job-relaunch-info apps-client user (jp/get-job-by-id job-id)))
 
 (defn get-submission-launch-info
-  [apps-client submission-id]
+  [apps-client user submission-id]
   (if-let [submission (sp/get-submission-by-id submission-id)]
-    (job-params/get-submission-launch-info apps-client submission)
+    (job-params/get-submission-launch-info apps-client user submission)
     (cxu/not-found "submission information not found")))
 
 (defn- stop-job-steps
