@@ -47,7 +47,11 @@
 
 (defn list-hierarchies
   [username]
-  (metadata-client/list-hierarchies (config/metadata-client) username (get-active-hierarchy-version)))
+  (:body
+    (metadata-client/list-hierarchies (config/metadata-client)
+                                      username
+                                      (get-active-hierarchy-version)
+                                      {:as :json})))
 
 (defn filter-hierarchies
   [username ontology-version attrs app-id]
