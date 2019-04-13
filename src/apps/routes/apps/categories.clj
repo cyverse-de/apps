@@ -5,7 +5,10 @@
          :only [AppCategoryIdPathParam
                 AppListing
                 SystemId]]
-        [common-swagger-api.schema.ontologies :only [OntologyClassIRIParam]]
+        [common-swagger-api.schema.ontologies
+         :only [OntologyClassIRIParam
+                OntologyHierarchy
+                OntologyHierarchyList]]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.app :only [AppListingPagingParams]]
         [apps.routes.schemas.app.category
@@ -46,31 +49,33 @@
 
   (GET "/" []
        :query [params SecuredQueryParams]
+       :return OntologyHierarchyList
        :summary schema/AppHierarchiesListingSummary
-       :description-file "docs/apps/categories/hierarchies-listing.md"
-       (listings/list-hierarchies current-user))
+       :description schema/AppHierarchiesListingDocs
+       (ok (listings/list-hierarchies current-user)))
 
   (context "/:root-iri" []
     :path-params [root-iri :- OntologyClassIRIParam]
 
     (GET "/" []
          :query [{:keys [attr]} OntologyHierarchyFilterParams]
+         :return OntologyHierarchy
          :summary schema/AppCategoryHierarchyListingSummary
-         :description-file "docs/apps/categories/category-hierarchy-listing.md"
-         (listings/get-app-hierarchy current-user root-iri attr))
+         :description schema/AppCategoryHierarchyListingDocs
+         (ok (listings/get-app-hierarchy current-user root-iri attr)))
 
     (GET "/apps" []
          :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
          :return AppListing
          :summary schema/AppCategoryAppListingSummary
-         :description-file "docs/apps/categories/hierarchy-app-listing.md"
+         :description schema/AppHierarchyAppListingDocs
          (ok (coerce! AppListing (apps/list-apps-under-hierarchy current-user root-iri attr params))))
 
     (GET "/unclassified" []
          :query [{:keys [attr] :as params} OntologyAppListingPagingParams]
          :return AppListing
          :summary schema/AppHierarchyUnclassifiedListingSummary
-         :description-file "docs/apps/categories/hierarchy-unclassified-app-listing.md"
+         :description schema/AppHierarchyUnclassifiedListingDocs
          (ok (coerce! AppListing (listings/get-unclassified-app-listing current-user root-iri attr params)))))
 
   (undocumented (route/not-found (service/unrecognized-path-response))))

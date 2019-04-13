@@ -33,7 +33,7 @@
        :query [params AppSearchParams]
        :summary schema/AppListingSummary
        :return schema/AppListing
-       :description-file "docs/apps/apps-listing.md"
+       :description schema/AppListingDocs
        (ok (coerce! schema/AppListing
                     (apps/search-apps current-user params))))
 
@@ -116,7 +116,7 @@
            :body [body schema/AppUpdateRequest]
            :return schema/App
            :summary schema/AppUpdateSummary
-           :description-file "docs/apps/app-update.md"
+           :description schema/AppUpdateDocs
            (ok (apps/update-app current-user system-id (assoc body :id app-id))))
 
       (POST "/copy" []
@@ -130,7 +130,7 @@
            :query [params SecuredQueryParams]
            :return schema/AppDetails
            :summary schema/AppDetailsSummary
-           :description-file "docs/apps/app-details.md"
+           :description schema/AppDetailsDocs
            (ok (coerce! schema/AppDetails
                         (apps/get-app-details current-user system-id app-id))))
 

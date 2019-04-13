@@ -10,7 +10,10 @@
                 SystemId]]
         [common-swagger-api.schema.apps.categories :only [AppCategoryListing AppCategoryAppListing]]
         [common-swagger-api.schema.integration-data :only [IntegrationData]]
-        [common-swagger-api.schema.ontologies :only [OntologyClassIRIParam OntologyVersionParam]]
+        [common-swagger-api.schema.ontologies
+         :only [OntologyClassIRIParam
+                OntologyHierarchy
+                OntologyVersionParam]]
         [common-swagger-api.schema.tools :only [ToolRequestIdParam]]
         [apps.metadata.reference-genomes
          :only [add-reference-genome
@@ -314,18 +317,19 @@
     (ok (admin/set-category-ontology-version current-user ontology-version)))
 
   (GET "/:ontology-version/:root-iri" []
-    :path-params [ontology-version :- OntologyVersionParam
-                  root-iri :- OntologyClassIRIParam]
-    :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
-    :summary "Get App Category Hierarchy"
-    :description (str
+       :path-params [ontology-version :- OntologyVersionParam
+                     root-iri :- OntologyClassIRIParam]
+       :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
+       :return OntologyHierarchy
+       :summary "Get App Category Hierarchy"
+       :description (str
 "Gets the list of app categories that are visible to the user for the given `ontology-version`,
  rooted at the given `root-iri`."
 (get-endpoint-delegate-block
   "metadata"
   "POST /ontologies/{ontology-version}/{root-iri}/filter")
 "Please see the metadata service documentation for response information.")
-    (listings/get-app-hierarchy current-user ontology-version root-iri attr))
+    (ok (listings/get-app-hierarchy current-user ontology-version root-iri attr)))
 
   (GET "/:ontology-version/:root-iri/apps" []
     :path-params [ontology-version :- OntologyVersionParam
