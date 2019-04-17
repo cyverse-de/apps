@@ -17,8 +17,6 @@
             [common-swagger-api.schema.ontologies :as ontologies-schema])
   (:import [java.util Date UUID]))
 
-(def AppCommunityGroupNameParam (describe String "The full group name of the App Community"))
-
 (defschema CategoryListingParams
   (merge SecuredQueryParamsEmailRequired
          categories-schema/CategoryListingParams))

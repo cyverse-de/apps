@@ -12,8 +12,7 @@
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.app :only [AppListingPagingParams]]
         [apps.routes.schemas.app.category
-         :only [AppCommunityGroupNameParam
-                CategoryListingParams
+         :only [CategoryListingParams
                 OntologyAppListingPagingParams
                 OntologyHierarchyFilterParams]]
         [apps.user :only [current-user]]
@@ -83,14 +82,11 @@
 (defroutes app-communities
 
   (GET "/:community-id/apps" []
-       :path-params [community-id :- AppCommunityGroupNameParam]
+       :path-params [community-id :- schema/AppCommunityGroupNameParam]
        :query [params AppListingPagingParams]
        :return AppListing
-       :summary "List Apps in a Community"
-       :description (str "Lists all of the apps under an App Community that are visible to the user."
-                         (get-endpoint-delegate-block
-                           "metadata"
-                           "POST /avus/filter-targets"))
+       :summary schema/AppCommunityAppListingSummary
+       :description schema/AppCommunityAppListingDocs
        (ok (coerce! AppListing (apps/list-apps-in-community current-user community-id params))))
 
   (undocumented (route/not-found (service/unrecognized-path-response))))
