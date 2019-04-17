@@ -8,7 +8,10 @@
                 AppDocumentationRequest
                 StringAppIdParam
                 SystemId]]
-        [common-swagger-api.schema.apps.categories :only [AppCategoryListing AppCategoryAppListing]]
+        [common-swagger-api.schema.apps.categories
+         :only [AppCategoryListing
+                AppCategoryAppListing
+                AppCommunityGroupNameParam]]
         [common-swagger-api.schema.integration-data :only [IntegrationData]]
         [common-swagger-api.schema.ontologies
          :only [OntologyClassIRIParam
