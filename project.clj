@@ -43,8 +43,7 @@
   :plugins [[lein-swank "1.4.4"]
             [test2junit "1.1.3"]
             [jonase/eastwood "0.3.5"]]
-  :profiles {:dev {:dependencies   [[ring "1.5.0"]]
-                   :plugins        [[lein-ring "0.12.5"]]
+  :profiles {:dev {:plugins        [[lein-ring "0.12.5"]]
                    :resource-paths ["conf/test"]}
              :repl {:source-paths ["repl"]}
              :uberjar {:aot :all}}

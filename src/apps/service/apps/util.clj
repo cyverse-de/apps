@@ -1,5 +1,8 @@
 (ns apps.service.apps.util
+  (:use [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.util.config :as config]
+            [apps.util.service :as service]
+            [apps.clients.data-info :as data-info]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]))
 
@@ -52,3 +55,16 @@
    DE apps client will not call this function."
   [apps-client {:keys [app-type]}]
   (or (nil? app-type) (supports-job-type? apps-client app-type)))
+
+(defn paths-accessible?
+  "Determins if one or more paths in the data store is accessible to a user who is attempting to launch an app
+   referencing the paths. The user should have read access for a path to be considered accessible."
+  [user paths]
+  (let [paths (if (sequential? paths) paths [paths])]
+    (try+
+     (data-info/get-path-info user :paths paths :validation-behavior "read" :filter-include "path")
+     (catch [:status 500] e
+       (let [error-code (:error_code (service/parse-json (:body e)))]
+         (if (#{"ERR_NOT_READABLE" "ERR_DOES_NOT_EXIST"} error-code)
+           false
+           (throw+)))))))

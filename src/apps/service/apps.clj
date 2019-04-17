@@ -299,6 +299,10 @@
   [user job-id]
   (jobs/get-job-relaunch-info (get-apps-client user) user job-id))
 
+(defn get-submission-launch-info
+  [user submission-id]
+  (jobs/get-submission-launch-info (get-apps-client user) user submission-id))
+
 (defn stop-job
   [user job-id params]
   (let [status (:job_status params jp/canceled-status)]
