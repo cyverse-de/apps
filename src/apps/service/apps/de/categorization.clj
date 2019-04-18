@@ -28,9 +28,7 @@
     username
     app-id
     app-name
-    (-> (metadata-client/list-avus username app-id {:as :json})
-        :body
-        :avus)))
+    (:avus (metadata-client/list-avus username app-id))))
 
 (defn- validate-app
   [app-id category-ids]

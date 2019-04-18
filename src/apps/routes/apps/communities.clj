@@ -2,6 +2,7 @@
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
         [common-swagger-api.schema.apps :only [AppIdParam]]
+        [common-swagger-api.schema.metadata :only [AvuList]]
         [apps.routes.params :only [SecuredQueryParams]]
         [common-swagger-api.schema.apps :only [AppCategoryMetadata]]
         [apps.user :only [current-user]]
@@ -16,6 +17,7 @@
                  :path-params [app-id :- AppIdParam]
                  :query [params SecuredQueryParams]
                  :body [body (describe AppCategoryMetadata "Community metadata to add to the App.")]
+                 :return AvuList
                  :summary "Add/Update Community Metadata AVUs"
                  :description (str
                                 "Adds or updates Community Metadata AVUs on the app."
@@ -28,8 +30,8 @@
                                   "metadata"
                                   "POST /avus/{target-type}/{target-id}")
                                 "Where `{target-type}` is `app`."
-                                " Please see the metadata service documentation for request and response information.")
-                 (communities/add-app-to-communities current-user app-id body false))
+                                " Please see the metadata service documentation for request information.")
+                 (ok (communities/add-app-to-communities current-user app-id body false)))
 
            (DELETE "/" []
                    :path-params [app-id :- AppIdParam]
@@ -56,6 +58,7 @@
                  :path-params [app-id :- AppIdParam]
                  :query [params SecuredQueryParams]
                  :body [body (describe AppCategoryMetadata "Community metadata to add to the App.")]
+                 :return AvuList
                  :summary "Add/Update Community Metadata AVUs"
                  :description (str
                                 "Adds or updates Community Metadata AVUs on the app."
@@ -63,8 +66,8 @@
                                   "metadata"
                                   "POST /avus/{target-type}/{target-id}")
                                 "Where `{target-type}` is `app`."
-                                " Please see the metadata service documentation for request and response information.")
-                 (communities/add-app-to-communities current-user app-id body true))
+                                " Please see the metadata service documentation for request information.")
+                 (ok (communities/add-app-to-communities current-user app-id body true)))
 
            (DELETE "/" []
                    :path-params [app-id :- AppIdParam]
