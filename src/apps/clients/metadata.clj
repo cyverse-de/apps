@@ -15,18 +15,16 @@
   (metadata-client/filter-by-avus (config/metadata-client) username [app-target-type] app-ids avus))
 
 (defn list-avus
-  ([username app-id]
-   (metadata-client/list-avus (config/metadata-client) username app-target-type app-id))
-  ([username app-id opts]
-   (metadata-client/list-avus (config/metadata-client) username app-target-type app-id opts)))
+  [username app-id]
+  (:body (metadata-client/list-avus (config/metadata-client) username app-target-type app-id {:as :json})))
 
 (defn update-avus
   [username app-id body]
-  (metadata-client/update-avus (config/metadata-client) username app-target-type app-id body))
+  (:body (metadata-client/update-avus (config/metadata-client) username app-target-type app-id body {:as :json})))
 
 (defn set-avus
   [username app-id body]
-  (metadata-client/set-avus (config/metadata-client) username app-target-type app-id body))
+  (:body (metadata-client/set-avus (config/metadata-client) username app-target-type app-id body {:as :json})))
 
 (defn get-active-hierarchy-version
   [& {:keys [validate] :or {validate true}}]
