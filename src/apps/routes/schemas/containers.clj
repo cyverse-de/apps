@@ -11,11 +11,6 @@
     {:container_images [Image]}
     "A list of container images."))
 
-(s/defschema NewImage
-  (describe
-   (dissoc Image :id)
-   "The values needed to add a new image to a tool."))
-
 (s/defschema ImageId
   (describe
     UUID
@@ -41,11 +36,6 @@
   (describe
    {:entrypoint (s/maybe s/Str)}
    "The entrypoint for a tool container"))
-
-(s/defschema NewSettings
-  (describe
-   (->optional-param Settings :id)
-   "The values needed to add a new container to a tool."))
 
 (s/defschema CPUShares
   (describe
@@ -87,11 +77,6 @@
    {:name (s/maybe s/Str)}
    "The name given to the tool container."))
 
-(s/defschema NewDevice
-  (describe
-   (dissoc Device :id)
-   "The map needed to add a device to a container."))
-
 (s/defschema DeviceHostPath
   (describe
    {:host_path s/Str}
@@ -111,11 +96,6 @@
   (describe
    {:container_devices [Device]}
    "A list of devices associated with a tool's container."))
-
-(s/defschema NewVolume
-  (describe
-   (dissoc Volume :id)
-   "A map for adding a new volume to a container."))
 
 (def VolumeIdParam
   (describe
@@ -155,11 +135,6 @@
         (dissoc :id))
     "A map for updating data container settings."))
 
-(s/defschema NewVolumesFrom
-  (describe
-   (dissoc VolumesFrom :id)
-   "A map for adding a new container from which to bind mount volumes."))
-
 (def VolumesFromIdParam
   (describe
     UUID
@@ -169,25 +144,3 @@
   (describe
    {:container_volumes_from [VolumesFrom]}
    "The list of VolumeFroms associated with a tool's container."))
-
-(s/defschema NewPort
-  (describe
-   (dissoc Port :id)
-   "A map for adding a new port configuration to a tool container."))
-
-(s/defschema NewProxySettings
-  (describe
-   (dissoc ProxySettings :id)
-   "A map for adding new interactive app reverse proxy settings."))
-
-(s/defschema NewToolContainer
-  (describe
-   (merge
-    NewSettings
-    {DevicesParamOptional       [NewDevice]
-     VolumesParamOptional       [NewVolume]
-     VolumesFromParamOptional   [NewVolumesFrom]
-     PortsParamOptional         [NewPort]
-     ProxySettingsParamOptional NewProxySettings
-     :image                     NewImage})
-   "The settings for adding a new full container definition to a tool."))

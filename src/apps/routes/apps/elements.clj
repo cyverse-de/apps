@@ -1,11 +1,11 @@
 (ns apps.routes.apps.elements
-  (:use [common-swagger-api.schema]
-        [apps.metadata.element-listings :only [list-elements]]
+  (:use [apps.metadata.element-listings :only [list-elements]]
         [apps.routes.params]
-        [apps.routes.schemas.tool :only [ToolListing]]
+        [common-swagger-api.schema]
+        [common-swagger-api.schema.tools :only [ToolListing]]
         [ring.util.http-response :only [ok]])
-  (:require [common-swagger-api.schema.apps.elements :as elements-schema]
-            [apps.util.service :as service]
+  (:require [apps.util.service :as service]
+            [common-swagger-api.schema.apps.elements :as elements-schema]
             [compojure.route :as route]))
 
 (defroutes app-elements

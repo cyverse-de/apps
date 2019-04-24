@@ -2,10 +2,9 @@
   (:use [apps.routes.params :only [SecuredPagingParams SecuredQueryParams]]
         [clojure-commons.error-codes]
         [common-swagger-api.schema :only [->optional-param describe ErrorResponse]]
-        [common-swagger-api.schema.tools]
         [schema.core :only [defschema enum optional-key]])
   (:require [apps.routes.schemas.containers :as containers]
-            [common-swagger-api.schema.containers :as containers-schema])
+            [common-swagger-api.schema.tools :as schema])
   (:import [java.util UUID]))
 
 (def StatusCodeId (describe UUID "The Status Code's UUID"))
@@ -32,45 +31,18 @@
   {:tool_ids (describe [UUID] "A List of Tool IDs")})
 
 (defschema PrivateToolDeleteParams
-  (merge SecuredQueryParams
-         {(optional-key :force-delete)
-          (describe Boolean "Flag to force deletion of a Tool already in use by Apps.")}))
+  (merge SecuredQueryParams schema/PrivateToolDeleteParams))
 
 (defschema ToolUpdateParams
   (merge SecuredQueryParams
     {(optional-key :overwrite-public)
      (describe Boolean "Flag to force container settings updates of public tools.")}))
 
-(defschema ToolImportRequest
-  (-> Tool
-      (->optional-param :id)
-      (merge
-        {:implementation (describe ToolImplementation ToolImplementationDocs)
-         :container      containers/NewToolContainer})))
-
-(defschema PrivateToolContainerImportRequest
-  (dissoc containers/NewToolContainer
-          containers-schema/DevicesParamOptional
-          containers-schema/VolumesParamOptional
-          containers-schema/VolumesFromParamOptional))
-
-(defschema PrivateToolImportRequest
-  (-> ToolImportRequest
-      (->optional-param :type)
-      (->optional-param :implementation)
-      (merge {:container PrivateToolContainerImportRequest})))
-
-(defschema PrivateToolUpdateRequest
-  (-> PrivateToolImportRequest
-      (->optional-param :name)
-      (->optional-param :version)
-      (->optional-param :container)))
-
 (defschema ToolsImportRequest
-  {:tools (describe [ToolImportRequest] "zero or more Tool definitions")})
+  {:tools (describe [schema/ToolImportRequest] "zero or more Tool definitions")})
 
 (defschema ToolUpdateRequest
-  (-> ToolImportRequest
+  (-> schema/ToolImportRequest
       (->optional-param :name)
       (->optional-param :version)
       (->optional-param :type)
@@ -97,22 +69,22 @@
 
 (defschema ToolRequestDetails
   {:id
-   ToolRequestIdParam
+   schema/ToolRequestIdParam
 
    :submitted_by
-   SubmittedByParam
+   schema/SubmittedByParam
 
    (optional-key :phone)
    (describe String "The phone number of the user submitting the request")
 
    (optional-key :tool_id)
-   ToolRequestToolIdParam
+   schema/ToolRequestToolIdParam
 
    :name
-   ToolNameParam
+   schema/ToolNameParam
 
    :description
-   ToolDescriptionParam
+   schema/ToolDescriptionParam
 
    (optional-key :source_url)
    (describe String "A link that can be used to obtain the tool")
@@ -124,10 +96,10 @@
    (describe String "A link to the tool documentation")
 
    :version
-   VersionParam
+   schema/VersionParam
 
    (optional-key :attribution)
-   AttributionParam
+   schema/AttributionParam
 
    (optional-key :multithreaded)
    (describe Boolean
@@ -162,13 +134,13 @@
    (describe [ToolRequestStatus] "A history of status updates for this Tool Request")
 
    (optional-key :interactive)
-   Interactive})
+   schema/Interactive})
 
 (defschema ToolRequest
   (dissoc ToolRequestDetails :id :submitted_by :history))
 
 (defschema ToolRequestListing
-  {:tool_requests (describe [ToolRequestSummary]
+  {:tool_requests (describe [schema/ToolRequestSummary]
                     "A listing of high level details about tool requests that have been submitted")})
 
 (defschema ToolRequestListingParams
@@ -193,18 +165,5 @@
 (defschema StatusCodeListing
   {:status_codes (describe [StatusCode] "A listing of known Status Codes")})
 
-(defschema ToolListing
-  {:tools (describe [ToolListingItem] "Listing of App Tools")})
-
 (defschema ImagePublicAppToolListing
-  {:tools (describe [Tool] "Listing of Public App Tools")})
-
-(defschema ErrorPrivateToolRequestBadParam
-  (assoc ErrorResponse
-    :error_code (describe (enum ERR_EXISTS ERR_BAD_OR_MISSING_FIELD) "Exists or Bad Field error code")))
-
-(def PrivateToolImportResponse400
-  {:schema      ErrorPrivateToolRequestBadParam
-   :description "
-* `ERR_EXISTS`: A Tool with the given `name` already exists.
-* `ERR_BAD_OR_MISSING_FIELD`: The image with the given `name` and `tag` has been deprecated."})
+  {:tools (describe [schema/Tool] "Listing of Public App Tools")})

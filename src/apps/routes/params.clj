@@ -6,8 +6,9 @@
                                           SortFieldDocs
                                           SortFieldOptionalKey
                                           StandardUserQueryParams]]
-        [common-swagger-api.schema.apps :only [IncludeHiddenParams]])
-  (:require [common-swagger-api.schema.apps.elements :as app-elements-schema]
+        [common-swagger-api.schema.common :only [IncludeHiddenParams]])
+  (:require [common-swagger-api.schema.apps.elements :as elements-schema]
+            [common-swagger-api.schema.tools :as tools-schema]
             [schema.core :as s])
   (:import [java.util UUID]))
 
@@ -95,14 +96,10 @@
         `[{\"field\":\"ownership\",\"value\":\"mine\"}]`.")}))
 
 (s/defschema ToolSearchParams
-  (merge SecuredPagingParams IncludeHiddenParams
-    {(s/optional-key :search) (describe String "The pattern to match in an Tool's Name or Description.")
-     (s/optional-key :public) (describe Boolean
-                                        "Set to `true` to list only public Tools, `false` to list only private Tools,
-                                         or leave unset to list all Tools.")}))
+  (merge SecuredPagingParams tools-schema/ToolSearchParams))
 
 (s/defschema AppParameterTypeParams
-  (merge SecuredQueryParams app-elements-schema/AppParameterTypeParams))
+  (merge SecuredQueryParams elements-schema/AppParameterTypeParams))
 
 (s/defschema IntegrationDataSortFields
   (s/enum :email :name :username))

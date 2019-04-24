@@ -9,10 +9,6 @@
                 Volume
                 VolumesFrom]]
         [common-swagger-api.schema.integration-data :only [IntegrationData]]
-        [common-swagger-api.schema.tools
-         :only [Tool
-                ToolDetails
-                ToolIdParam]]
         [apps.constants :only [de-system-id]]
         [apps.containers]
         [apps.routes.params]
@@ -44,6 +40,9 @@
             [apps.service.apps.de.listings :as app-listings]
             [apps.tools.permissions :as tool-permissions]
             [apps.tools.sharing :as tool-sharing]
+            [common-swagger-api.schema.containers :as containers-schema]
+            [common-swagger-api.schema.apps.permission :as perm-schema]
+            [common-swagger-api.schema.tools :as schema]
             [compojure.api.middleware :as middleware]))
 
 (def entrypoint-warning
@@ -87,7 +86,7 @@
 
   (POST "/" []
         :query [params SecuredQueryParams]
-        :body [body NewImage]
+        :body [body containers-schema/NewImage]
         :return Image
         :summary "Add Container Image"
         :description "Adds a new container image to the system."
@@ -154,7 +153,7 @@
 (defroutes tools
   (GET "/" []
        :query [params ToolSearchParams]
-       :return ToolListing
+       :return schema/ToolListing
        :summary "List Tools"
        :description "This endpoint allows users to get a listing of all Tools accessible to the user."
        (ok (list-tools params)))
@@ -162,11 +161,11 @@
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
         :middleware [coerce-tool-import-requests]
-        :body [body (describe PrivateToolImportRequest "The private Tool to import.")]
+        :body [body (describe schema/PrivateToolImportRequest "The private Tool to import.")]
         :responses (merge CommonResponses
-                          {200 {:schema      ToolDetails
+                          {200 {:schema      schema/ToolDetails
                                 :description "The new Tool details."}
-                           400 PrivateToolImportResponse400})
+                           400 schema/PrivateToolImportResponse400})
         :summary "Add Private Tool"
         :description
 "This service adds a new private Tool to the DE for the requesting user.
@@ -181,9 +180,9 @@ otherwise the default value will be used."
 
   (POST "/permission-lister" []
         :query [params permission/PermissionListerQueryParams]
-        :body [{:keys [tools]} (describe permission/ToolIdList "The Tool permission listing request.")]
+        :body [{:keys [tools]} (describe perm-schema/ToolIdList "The Tool permission listing request.")]
         :responses (merge CommonResponses
-                          {200 {:schema      permission/ToolPermissionListing
+                          {200 {:schema      perm-schema/ToolPermissionListing
                                 :description "The Tool permission listings."}
                            403 {:schema      ErrorResponseForbidden
                                 :description "The requesting user does not have `read` permission for some Tool(s) in the request."}
@@ -196,8 +195,8 @@ otherwise the default value will be used."
 
   (POST "/sharing" []
         :query [params SecuredQueryParams]
-        :body [{:keys [sharing]} (describe permission/ToolSharingRequest "The Tool sharing request.")]
-        :return permission/ToolSharingResponse
+        :body [{:keys [sharing]} (describe perm-schema/ToolSharingRequest "The Tool sharing request.")]
+        :return perm-schema/ToolSharingResponse
         :summary "Add Tool Permissions"
         :description "This endpoint allows the caller to share multiple Tools with multiple users.
         The authenticated user must have ownership permission to every Tool in the request body for this endpoint to fully succeed.
@@ -211,8 +210,8 @@ otherwise the default value will be used."
 
   (POST "/unsharing" []
         :query [params SecuredQueryParams]
-        :body [{:keys [unsharing]} (describe permission/ToolUnsharingRequest "The Tool unsharing request.")]
-        :return permission/ToolUnsharingResponse
+        :body [{:keys [unsharing]} (describe perm-schema/ToolUnsharingRequest "The Tool unsharing request.")]
+        :return perm-schema/ToolUnsharingResponse
         :summary "Revoke Tool Permissions"
         :description "This endpoint allows the caller to revoke permission to access one or more Tools from one or more users.
         The authenticated user must have ownership permission to every Tool in the request body for this endoint to fully succeed.
@@ -220,7 +219,7 @@ otherwise the default value will be used."
         (ok (tool-sharing/unshare-tools current-user unsharing)))
 
   (DELETE "/:tool-id" []
-          :path-params [tool-id :- ToolIdParam]
+          :path-params [tool-id :- schema/ToolIdParam]
           :query [{:keys [user force-delete]} PrivateToolDeleteParams]
           :coercion middleware/no-response-coercion
           :responses (merge CommonResponses
@@ -240,10 +239,10 @@ otherwise the default value will be used."
           (ok (delete-private-tool user tool-id force-delete)))
 
   (GET "/:tool-id" []
-       :path-params [tool-id :- ToolIdParam]
+       :path-params [tool-id :- schema/ToolIdParam]
        :query [{:keys [user]} SecuredQueryParams]
        :responses (merge CommonResponses
-                         {200 {:schema      ToolDetails
+                         {200 {:schema      schema/ToolDetails
                                :description "The Tool details."}
                           403 {:schema      ErrorResponseForbidden
                                :description "The requesting user does not have `read` permission for the Tool."}
@@ -254,14 +253,14 @@ otherwise the default value will be used."
        (ok (user-get-tool user tool-id)))
 
   (PATCH "/:tool-id" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [{:keys [user]} SecuredQueryParams]
          :middleware [coerce-tool-import-requests]
-         :body [body (describe PrivateToolUpdateRequest "The private Tool to update.")]
+         :body [body (describe schema/PrivateToolUpdateRequest "The private Tool to update.")]
          :responses (merge CommonResponses
-                           {200 {:schema      ToolDetails
+                           {200 {:schema      schema/ToolDetails
                                  :description "The updated Tool details."}
-                            400 PrivateToolImportResponse400})
+                            400 schema/PrivateToolImportResponse400})
          :summary "Update a Private Tool"
          :description "This service updates a private Tool definition in the DE.
 As with new private Tools, `type` is always set to `executable` and `restricted` is always set to `true`,
@@ -276,7 +275,7 @@ for the `pids_limit` and `memory_limit` fields."
          (ok (update-private-tool user (assoc body :id tool-id))))
 
   (GET "/:tool-id/apps" []
-       :path-params [tool-id :- ToolIdParam]
+       :path-params [tool-id :- schema/ToolIdParam]
        :query [params SecuredQueryParams]
        :responses (merge CommonResponses
                          {200 {:schema      AppListing
@@ -289,7 +288,7 @@ for the `pids_limit` and `memory_limit` fields."
                     (app-listings/user-list-apps-by-tool current-user tool-id params))))
 
   (GET "/:tool-id/container" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return ToolContainer
         :summary "Tool Container Information"
@@ -298,7 +297,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (tool-container-info tool-id)))
 
   (GET "/:tool-id/container/devices" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return Devices
         :summary "Tool Container Device Information"
@@ -306,7 +305,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (tool-device-info tool-id)))
 
   (GET "/:tool-id/container/devices/:device-id" []
-        :path-params [tool-id :- ToolIdParam,
+        :path-params [tool-id :- schema/ToolIdParam,
                       device-id :- DeviceIdParam]
         :query [params SecuredQueryParams]
         :return Device
@@ -315,7 +314,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (tool-device tool-id device-id)))
 
   (GET "/:tool-id/container/devices/:device-id/host-path" []
-        :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
+        :path-params [tool-id :- schema/ToolIdParam device-id :- DeviceIdParam]
         :query [params SecuredQueryParams]
         :return DeviceHostPath
         :summary "Tool Container Device Host Path"
@@ -323,7 +322,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (device-field tool-id device-id :host_path)))
 
   (GET "/:tool-id/container/devices/:device-id/container-path" []
-        :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
+        :path-params [tool-id :- schema/ToolIdParam device-id :- DeviceIdParam]
         :query [params SecuredQueryParams]
         :return DeviceContainerPath
         :summary "Tool Device Container Path"
@@ -331,7 +330,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (device-field tool-id device-id :container_path)))
 
   (GET "/:tool-id/container/cpu-shares" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return CPUShares
         :summary "Tool Container CPU Shares"
@@ -339,7 +338,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :cpu_shares)))
 
   (GET "/:tool-id/container/memory-limit" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return MemoryLimit
         :summary "Tool Container Memory Limit"
@@ -347,7 +346,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :memory_limit)))
 
   (GET "/:tool-id/container/min-memory-limit" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return MinMemoryLimit
         :summary "Tool Container Minimum Memory Requirement"
@@ -355,7 +354,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :min_memory_limit)))
 
   (GET "/:tool-id/container/min-cpu-cores" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return MinCPUCores
         :summary "Tool Container Minimum CPU Cores Requirement"
@@ -363,7 +362,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :min_cpu_cores)))
 
   (GET "/:tool-id/container/min-disk-space" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return MinDiskSpace
         :summary "Tool Container Minimum Disk Space"
@@ -371,7 +370,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :min_disk_space)))
 
   (GET "/:tool-id/container/network-mode" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return NetworkMode
         :summary "Tool Container Network Mode"
@@ -379,7 +378,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :network_mode)))
 
   (GET "/:tool-id/container/working-directory" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return WorkingDirectory
         :summary "Tool Container Working Directory"
@@ -387,7 +386,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :working_directory)))
 
   (GET "/:tool-id/container/entrypoint" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return Entrypoint
         :summary "Tool Container Entrypoint"
@@ -395,7 +394,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :entrypoint)))
 
   (GET "/:tool-id/container/name" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return ContainerName
         :summary "Tool Container Name"
@@ -403,7 +402,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (get-settings-field tool-id :name)))
 
   (GET "/:tool-id/container/volumes" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return Volumes
         :summary "Tool Container Volume Information"
@@ -411,7 +410,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (tool-volume-info tool-id)))
 
   (GET "/:tool-id/container/volumes/:volume-id" []
-        :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
+        :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
         :query [params SecuredQueryParams]
         :return Volume
         :summary "Tool Container Volume Information"
@@ -419,7 +418,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (tool-volume tool-id volume-id)))
 
   (GET "/:tool-id/container/volumes/:volume-id/host-path" []
-        :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
+        :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
         :query [params SecuredQueryParams]
         :return VolumeHostPath
         :summary "Tool Container Volume Host Path"
@@ -427,7 +426,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (volume-field tool-id volume-id :host_path)))
 
   (GET "/:tool-id/container/volumes/:volume-id/container-path" []
-        :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
+        :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
         :query [params SecuredQueryParams]
         :return VolumeContainerPath
         :summary "Tool Container Volume Container Path"
@@ -435,7 +434,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (volume-field tool-id volume-id :container_path)))
 
   (GET "/:tool-id/container/volumes-from" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return VolumesFromList
         :summary "Tool Container Volumes From Information"
@@ -443,7 +442,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (tool-volumes-from-info tool-id)))
 
   (GET "/:tool-id/container/volumes-from/:volumes-from-id" []
-        :path-params [tool-id :- ToolIdParam volumes-from-id :- VolumesFromIdParam]
+        :path-params [tool-id :- schema/ToolIdParam volumes-from-id :- VolumesFromIdParam]
         :query [params SecuredQueryParams]
         :return VolumesFrom
         :summary "Tool Container Volumes From Information"
@@ -452,7 +451,7 @@ for the `pids_limit` and `memory_limit` fields."
         (requester tool-id (tool-volumes-from tool-id volumes-from-id)))
 
   (GET "/:tool-id/integration-data" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return IntegrationData
         :summary "Return the Integration Data Record for a Tool"
@@ -492,7 +491,7 @@ for the `pids_limit` and `memory_limit` fields."
 (defroutes admin-tools
   (GET "/" []
        :query [params ToolSearchParams]
-       :return ToolListing
+       :return schema/ToolListing
        :summary "List Tools"
        :description "This endpoint allows admins to get a listing of all Tools."
        (ok (admin-list-tools params)))
@@ -513,7 +512,7 @@ for the `pids_limit` and `memory_limit` fields."
         (ok (admin-add-tools body)))
 
   (DELETE "/:tool-id" []
-          :path-params [tool-id :- ToolIdParam]
+          :path-params [tool-id :- schema/ToolIdParam]
           :query [{:keys [user]} SecuredQueryParams]
           :coercion middleware/no-response-coercion
           :responses (merge CommonResponses
@@ -527,10 +526,10 @@ for the `pids_limit` and `memory_limit` fields."
           (ok (admin-delete-tool user tool-id)))
 
   (GET "/:tool-id" []
-       :path-params [tool-id :- ToolIdParam]
+       :path-params [tool-id :- schema/ToolIdParam]
        :query [{:keys [user]} SecuredQueryParams]
        :responses (merge CommonResponses
-                         {200 {:schema      ToolDetails
+                         {200 {:schema      schema/ToolDetails
                                :description "The Tool details."}
                           404 {:schema      ErrorResponseNotFound
                                :description "The `tool-id` does not exist."}})
@@ -539,12 +538,12 @@ for the `pids_limit` and `memory_limit` fields."
        (ok (get-tool user tool-id)))
 
   (PATCH "/:tool-id" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [{:keys [user overwrite-public]} ToolUpdateParams]
          :middleware [coerce-tool-import-requests]
          :body [body (describe ToolUpdateRequest "The Tool to update.")]
          :responses (merge CommonResponses
-                           {200 {:schema      ToolDetails
+                           {200 {:schema      schema/ToolDetails
                                  :description "The Tool details."}
                             400 {:schema      ErrorResponseNotWritable
                                  :description "The Tool is in use by public apps its container could not be updated."}
@@ -566,7 +565,7 @@ included in it. Any existing settings not included in the request's `container` 
          (ok (admin-update-tool user overwrite-public (assoc body :id tool-id))))
 
   (GET "/:tool-id/apps" []
-       :path-params [tool-id :- ToolIdParam]
+       :path-params [tool-id :- schema/ToolIdParam]
        :query [params SecuredQueryParams]
        :responses (merge CommonResponses
                          {200 {:schema      AdminAppListing
@@ -579,16 +578,16 @@ included in it. Any existing settings not included in the request's `container` 
                     (app-listings/list-apps-by-tool current-user tool-id params true))))
 
   (POST "/:tool-id/container/devices" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
-         :body [body NewDevice]
+         :body [body containers-schema/NewDevice]
          :return Device
          :summary "Adds Device To Tool Container"
          :description "Adds a new device to a tool container."
          (requester tool-id (add-tool-device tool-id body)))
 
   (DELETE "/:tool-id/container/devices/:device-id" []
-           :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
+           :path-params [tool-id :- schema/ToolIdParam device-id :- DeviceIdParam]
            :query [params SecuredQueryParams]
            :return nil
            :summary "Delete a container device"
@@ -596,7 +595,7 @@ included in it. Any existing settings not included in the request's `container` 
            (ok (delete-tool-device tool-id device-id)))
 
   (POST "/:tool-id/container/devices/:device-id/host-path" []
-         :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
+         :path-params [tool-id :- schema/ToolIdParam device-id :- DeviceIdParam]
          :query [params SecuredQueryParams]
          :body [body DeviceHostPath]
          :return DeviceHostPath
@@ -605,7 +604,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-device-field tool-id device-id :host_path (:host_path body))))
 
   (POST "/:tool-id/container/devices/:device-id/container-path" []
-         :path-params [tool-id :- ToolIdParam device-id :- DeviceIdParam]
+         :path-params [tool-id :- schema/ToolIdParam device-id :- DeviceIdParam]
          :query [params SecuredQueryParams]
          :body [body DeviceContainerPath]
          :return DeviceContainerPath
@@ -614,7 +613,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-device-field tool-id device-id :container_path (:container_path body))))
 
   (POST "/:tool-id/container/entrypoint" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body Entrypoint]
          :return Entrypoint
@@ -625,7 +624,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :entrypoint (:entrypoint body))))
 
   (POST "/:tool-id/container/cpu-shares" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body CPUShares]
          :return CPUShares
@@ -634,7 +633,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :cpu_shares (:cpu_shares body))))
 
   (POST "/:tool-id/container/memory-limit" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body MemoryLimit]
          :return MemoryLimit
@@ -643,7 +642,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :memory_limit (:memory_limit body))))
 
   (POST "/:tool-id/container/min-memory-limit" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body MinMemoryLimit]
          :return MinMemoryLimit
@@ -652,7 +651,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :min_memory_limit (:min_memory_limit body))))
 
   (POST "/:tool-id/container/min-cpu-cores" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body MinCPUCores]
          :return MinCPUCores
@@ -661,7 +660,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :min_cpu_cores (:min_cpu_cores body))))
 
   (POST "/:tool-id/container/min-disk-space" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body MinDiskSpace]
          :return MinDiskSpace
@@ -670,7 +669,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :min_disk_space (:min_disk_space body))))
 
   (POST "/:tool-id/container/network-mode" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body NetworkMode]
          :return NetworkMode
@@ -679,7 +678,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :network_mode (:network_mode body))))
 
   (POST "/:tool-id/container/working-directory" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body WorkingDirectory]
          :return WorkingDirectory
@@ -688,7 +687,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :working_directory (:working_directory body))))
 
   (POST "/:tool-id/container/name" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
          :body [body ContainerName]
          :return ContainerName
@@ -697,9 +696,9 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-settings-field tool-id :name (:name body))))
 
   (POST "/:tool-id/container/volumes" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
-         :body [body NewVolume]
+         :body [body containers-schema/NewVolume]
          :return Volume
          :summary "Tool Container Volume Information"
          :description (str
@@ -708,7 +707,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (add-tool-volume tool-id body)))
 
   (DELETE "/:tool-id/container/volumes/:volume-id" []
-           :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
+           :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
            :query [params SecuredQueryParams]
            :return nil
            :summary "Delete Tool Container Volume"
@@ -716,7 +715,7 @@ included in it. Any existing settings not included in the request's `container` 
            (ok (delete-tool-volume tool-id volume-id)))
 
   (POST "/:tool-id/container/volumes/:volume-id/host-path" []
-         :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
+         :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
          :query [params SecuredQueryParams]
          :body [body VolumeHostPath]
          :return VolumeHostPath
@@ -727,7 +726,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-volume-field tool-id volume-id :host_path (:host_path body))))
 
   (POST "/:tool-id/container/volumes/:volume-id/container-path" []
-         :path-params [tool-id :- ToolIdParam volume-id :- VolumeIdParam]
+         :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
          :query [params SecuredQueryParams]
          :body [body VolumeContainerPath]
          :return VolumeContainerPath
@@ -738,9 +737,9 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (update-volume-field tool-id volume-id :container_path (:container_path body))))
 
   (PUT "/:tool-id/container/volumes-from" []
-         :path-params [tool-id :- ToolIdParam]
+         :path-params [tool-id :- schema/ToolIdParam]
          :query [params SecuredQueryParams]
-         :body [body NewVolumesFrom]
+         :body [body containers-schema/NewVolumesFrom]
          :return VolumesFrom
          :summary "Adds A Volume Host Container"
          :description (str
@@ -749,7 +748,7 @@ included in it. Any existing settings not included in the request's `container` 
          (requester tool-id (add-tool-volumes-from tool-id body)))
 
   (DELETE "/:tool-id/container/volumes-from/:volumes-from-id" []
-           :path-params [tool-id :- ToolIdParam volumes-from-id :- VolumesFromIdParam]
+           :path-params [tool-id :- schema/ToolIdParam volumes-from-id :- VolumesFromIdParam]
            :query [params SecuredQueryParams]
            :return nil
            :summary "Delete Tool Container Volumes From Information"
@@ -757,7 +756,7 @@ included in it. Any existing settings not included in the request's `container` 
            (ok (delete-tool-volumes-from tool-id volumes-from-id)))
 
   (PUT "/:tool-id/integration-data/:integration-data-id" []
-        :path-params [tool-id :- ToolIdParam integration-data-id :- IntegrationDataIdPathParam]
+        :path-params [tool-id :- schema/ToolIdParam integration-data-id :- IntegrationDataIdPathParam]
         :query [params SecuredQueryParams]
         :return IntegrationData
         :summary "Update the Integration Data Record for a Tool"
@@ -766,12 +765,12 @@ included in it. Any existing settings not included in the request's `container` 
         (ok (apps/update-tool-integration-data current-user de-system-id tool-id integration-data-id)))
 
   (POST "/:tool-id/publish" []
-        :path-params [tool-id :- ToolIdParam]
+        :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :middleware [coerce-tool-import-requests]
         :body [body (describe ToolUpdateRequest "The Tool to update.")]
         :responses (merge CommonResponses
-                          {200 {:schema      ToolDetails
+                          {200 {:schema      schema/ToolDetails
                                 :description "The Tool details."}
                            400 {:schema      ErrorResponseNotWritable
                                 :description "The Tool is already public."}
