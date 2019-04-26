@@ -1,6 +1,6 @@
 (ns apps.routes.tools
   (:use [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppListing]]
+        [common-swagger-api.schema.apps :only [AppListing ToolAppListingResponses]]
         [common-swagger-api.schema.containers
          :only [DataContainer
                 Device
@@ -40,6 +40,7 @@
             [apps.service.apps.de.listings :as app-listings]
             [apps.tools.permissions :as tool-permissions]
             [apps.tools.sharing :as tool-sharing]
+            [common-swagger-api.routes]                     ;; for :description-file
             [common-swagger-api.schema.containers :as containers-schema]
             [common-swagger-api.schema.apps.permission :as perm-schema]
             [common-swagger-api.schema.tools :as schema]
@@ -154,136 +155,76 @@
   (GET "/" []
        :query [params ToolSearchParams]
        :return schema/ToolListing
-       :summary "List Tools"
-       :description "This endpoint allows users to get a listing of all Tools accessible to the user."
+       :summary schema/ToolListingSummary
+       :description schema/ToolListingDocs
        (ok (list-tools params)))
 
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
         :middleware [coerce-tool-import-requests]
-        :body [body (describe schema/PrivateToolImportRequest "The private Tool to import.")]
-        :responses (merge CommonResponses
-                          {200 {:schema      schema/ToolDetails
-                                :description "The new Tool details."}
-                           400 schema/PrivateToolImportResponse400})
-        :summary "Add Private Tool"
-        :description
-"This service adds a new private Tool to the DE for the requesting user.
-
-Note that `type` is always set to `executable`, `restricted` is always set to `true`,
-and `container.network_mode` is always set to `none`, even if another value is set in the request.
-
-Configured default values will be used for the `time_limit_seconds`, `container.pids_limit`, and `container.memory_limit` fields
-The request may include a value less than the configured default if it's also greater than 0,
-otherwise the default value will be used."
+        :body [body schema/PrivateToolImportRequest]
+        :responses schema/PrivateToolImportResponses
+        :summary schema/ToolAddSummary
+        :description-file "docs/tools/tool-add.md"
         (ok (add-private-tool current-user body)))
 
   (POST "/permission-lister" []
         :query [params permission/PermissionListerQueryParams]
-        :body [{:keys [tools]} (describe perm-schema/ToolIdList "The Tool permission listing request.")]
-        :responses (merge CommonResponses
-                          {200 {:schema      perm-schema/ToolPermissionListing
-                                :description "The Tool permission listings."}
-                           403 {:schema      ErrorResponseForbidden
-                                :description "The requesting user does not have `read` permission for some Tool(s) in the request."}
-                           404 {:schema      ErrorResponseNotFound
-                                :description "Some `tool-id`(s) in the request do not exist."}})
-        :summary "List Tool Permissions"
-        :description "This endpoint allows the caller to list the permissions for one or more Tools.
-        The authenticated user must have read permission on every Tool in the request body for this endpoint to succeed."
+        :body [{:keys [tools]} perm-schema/ToolIdList]
+        :responses perm-schema/ToolPermissionsListingResponses
+        :summary schema/ToolPermissionsListingSummary
+        :description schema/ToolPermissionsListingDocs
         (ok (tool-permissions/list-tool-permissions current-user tools params)))
 
   (POST "/sharing" []
         :query [params SecuredQueryParams]
-        :body [{:keys [sharing]} (describe perm-schema/ToolSharingRequest "The Tool sharing request.")]
+        :body [{:keys [sharing]} perm-schema/ToolSharingRequest]
         :return perm-schema/ToolSharingResponse
-        :summary "Add Tool Permissions"
-        :description "This endpoint allows the caller to share multiple Tools with multiple users.
-        The authenticated user must have ownership permission to every Tool in the request body for this endpoint to fully succeed.
-        Note: this is a potentially slow operation and the response is returned synchronously.
-        The DE UI handles this by allowing the user to continue working while the request is being processed.
-        When calling this endpoint, please be sure that the response timeout is long enough.
-        Using a response timeout that is too short will result in an exception on the client side.
-        On the server side, the result of the sharing operation when a connection is lost is undefined.
-        It may be worthwhile to repeat failed or timed out calls to this endpoint."
+        :summary perm-schema/ToolSharingSummary
+        :description perm-schema/ToolSharingDocs
         (ok (tool-sharing/share-tools current-user sharing)))
 
   (POST "/unsharing" []
         :query [params SecuredQueryParams]
-        :body [{:keys [unsharing]} (describe perm-schema/ToolUnsharingRequest "The Tool unsharing request.")]
+        :body [{:keys [unsharing]} perm-schema/ToolUnsharingRequest]
         :return perm-schema/ToolUnsharingResponse
-        :summary "Revoke Tool Permissions"
-        :description "This endpoint allows the caller to revoke permission to access one or more Tools from one or more users.
-        The authenticated user must have ownership permission to every Tool in the request body for this endoint to fully succeed.
-        Note: like Tool sharing, this is a potentially slow operation."
+        :summary perm-schema/ToolUnsharingSummary
+        :description perm-schema/ToolUnsharingDocs
         (ok (tool-sharing/unshare-tools current-user unsharing)))
 
   (DELETE "/:tool-id" []
           :path-params [tool-id :- schema/ToolIdParam]
           :query [{:keys [user force-delete]} PrivateToolDeleteParams]
           :coercion middleware/no-response-coercion
-          :responses (merge CommonResponses
-                            {200 {:description "The Tool was successfully deleted."}
-                             400 {:schema      ErrorResponseNotWritable
-                                  :description "The Tool could not be deleted."}
-                             403 {:schema      ErrorResponseForbidden
-                                  :description "The requesting user does not have permission to delete this Tool."}
-                             404 {:schema      ErrorResponseNotFound
-                                  :description "A Tool with the given `tool-id` does not exist."}})
-          :summary "Delete a Private Tool"
-          :description "Deletes a private Tool, as long as it is not in use by any Apps.
-          The requesting user must have ownership permission for the Tool.
-          If the Tool is already in use in private Apps,
-          then an `ERR_NOT_WRITEABLE` will be returned along with a listing of the Apps using this Tool,
-          unless the `force-delete` flag is set to `true`."
+          :responses schema/ToolDeleteResponses
+          :summary schema/ToolDeleteSummary
+          :description schema/ToolDeleteDocs
           (ok (delete-private-tool user tool-id force-delete)))
 
   (GET "/:tool-id" []
        :path-params [tool-id :- schema/ToolIdParam]
        :query [{:keys [user]} SecuredQueryParams]
-       :responses (merge CommonResponses
-                         {200 {:schema      schema/ToolDetails
-                               :description "The Tool details."}
-                          403 {:schema      ErrorResponseForbidden
-                               :description "The requesting user does not have `read` permission for the Tool."}
-                          404 {:schema      ErrorResponseNotFound
-                               :description "The `tool-id` does not exist."}})
-       :summary "Get a Tool"
-       :description "This endpoint returns the details for one tool accessible to the user."
+       :responses schema/ToolDetailsResponses
+       :summary schema/ToolDetailsSummary
+       :description schema/ToolDetailsDocs
        (ok (user-get-tool user tool-id)))
 
   (PATCH "/:tool-id" []
          :path-params [tool-id :- schema/ToolIdParam]
          :query [{:keys [user]} SecuredQueryParams]
          :middleware [coerce-tool-import-requests]
-         :body [body (describe schema/PrivateToolUpdateRequest "The private Tool to update.")]
-         :responses (merge CommonResponses
-                           {200 {:schema      schema/ToolDetails
-                                 :description "The updated Tool details."}
-                            400 schema/PrivateToolImportResponse400})
-         :summary "Update a Private Tool"
-         :description "This service updates a private Tool definition in the DE.
-As with new private Tools, `type` is always set to `executable` and `restricted` is always set to `true`,
-even if other values are set in the request,
-and a configured limit may override the `time_limit_seconds` field set in the request.
-
-**Note**: If the `container` object is omitted in the request, then existing container settings will not be modified,
-but if the `container` object is present in the request, then all container settings must be included in it.
-Any existing settings not included in the request's `container` object will be removed,
-except `network_mode` is always set to `none` and configured limits may override values set (or omitted)
-for the `pids_limit` and `memory_limit` fields."
+         :body [body schema/PrivateToolUpdateRequest]
+         :responses schema/ToolUpdateResponses
+         :summary schema/ToolUpdateSummary
+         :description-file "docs/tools/tool-update.md"
          (ok (update-private-tool user (assoc body :id tool-id))))
 
   (GET "/:tool-id/apps" []
        :path-params [tool-id :- schema/ToolIdParam]
        :query [params SecuredQueryParams]
-       :responses (merge CommonResponses
-                         {200 {:schema      AppListing
-                               :description "The listing of Apps using the given Tool."}
-                          404 {:schema      ErrorResponseNotFound
-                               :description "The `tool-id` does not exist."}})
-       :summary "Get Apps by Tool"
-       :description "This endpoint returns a listing of Apps using the given Tool."
+       :responses ToolAppListingResponses
+       :summary schema/ToolAppListingSummary
+       :description schema/ToolAppListingDocs
        (ok (coerce! AppListing
                     (app-listings/user-list-apps-by-tool current-user tool-id params))))
 
@@ -454,8 +395,8 @@ for the `pids_limit` and `memory_limit` fields."
         :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :return IntegrationData
-        :summary "Return the Integration Data Record for a Tool"
-        :description "This service returns the integration data associated with an app."
+        :summary schema/ToolIntegrationDataListingSummary
+        :description schema/ToolIntegrationDataListingDocs
         (ok (apps/get-tool-integration-data current-user de-system-id tool-id))))
 
 (defroutes tool-requests
