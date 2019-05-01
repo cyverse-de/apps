@@ -6,7 +6,7 @@
 
 (defn- app-exposer-url
   [& components]
-  (str (apply curl/url (cfg/jex-base-url) components)))
+  (str (apply curl/url (cfg/app-exposer-base-url) components)))
 
 (defn stop-job
   [uuid]
