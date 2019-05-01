@@ -10,6 +10,7 @@
             [clojure.tools.logging :as log]
             [kameleon.db :as db]
             [apps.clients.jex :as jex]
+            [apps.clients.vice :as vice]
             [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.jobs.base :as jb]
@@ -19,7 +20,9 @@
 (defn- do-jex-submission
   [job]
   (try+
-   (jex/submit-job job)
+   (if (= (:execution_target job) "interapps")
+     (vice/submit-job job)
+     (jex/submit-job job))
    (catch Object _
      (log/error (:throwable &throw-context) "job submission failed")
      (throw+ {:type  :clojure-commons.exception/request-failed
