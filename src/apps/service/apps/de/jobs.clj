@@ -15,12 +15,14 @@
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.jobs.base :as jb]
             [apps.service.apps.de.jobs.io-tickets :as io-tickets]
-            [apps.util.json :as json-util]))
+            [apps.util.json :as json-util]
+            [apps.util.config :as cfg]))
 
 (defn- do-jex-submission
   [job]
   (try+
-   (if (= (:execution_target job) "interapps")
+   (if (and (cfg/vice-k8s-enabled)
+            (= (:execution_target job) "interapps"))
      (vice/submit-job job)
      (jex/submit-job job))
    (catch Object _
