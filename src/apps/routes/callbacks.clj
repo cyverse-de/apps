@@ -1,7 +1,7 @@
 (ns apps.routes.callbacks
-  (:use [common-swagger-api.schema]
-        [apps.routes.params]
-        [apps.routes.schemas.callback]
+  (:use [apps.routes.schemas.callback]
+        [common-swagger-api.schema]
+        [common-swagger-api.schema.analyses :only [AnalysisIdPathParam]]
         [ring.util.http-response :only [ok]])
   (:require [apps.service.callbacks :as callbacks]))
 

@@ -1,6 +1,7 @@
 (ns apps.routes.admin
   (:use [common-swagger-api.routes]
         [common-swagger-api.schema]
+        [common-swagger-api.schema.analyses.listing :only [ExternalId]]
         [common-swagger-api.schema.apps
          :only [AppCategoryIdPathParam
                 AppDeletionRequest
