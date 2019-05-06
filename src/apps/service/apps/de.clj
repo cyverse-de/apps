@@ -2,6 +2,7 @@
   (:use [apps.constants :only [de-system-id]])
   (:require [clojure.string :as string]
             [apps.clients.jex :as jex]
+            [apps.clients.vice :as vice]
             [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
             [apps.protocols]
@@ -21,7 +22,8 @@
             [apps.service.apps.permissions :as app-permissions]
             [apps.service.apps.util :as apps-util]
             [apps.service.integration-data :as integration-data]
-            [apps.service.util :as util :refer [uuidify]]))
+            [apps.service.util :as util :refer [uuidify]]
+            [apps.util.config :as cfg]))
 
 (def ^:private supported-system-ids #{jp/de-client-name jp/interactive-client-name jp/osg-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -222,7 +224,10 @@
   (stopJobStep [self {:keys [job_type external_id]}]
     (when (and (apps-util/supports-job-type? self job_type)
                (not (string/blank? external_id)))
-      (jex/stop-job external_id)))
+      (if (and (cfg/vice-k8s-enabled)
+               (= job_type jp/interactive-job-type))
+        (vice/stop-job external_id)
+        (jex/stop-job external_id))))
 
   (categorizeApps [_ {:keys [categories]}]
     (validate-system-ids (set (map :system_id categories)))

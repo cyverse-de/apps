@@ -2,7 +2,8 @@
   (:require [cemerick.url :as curl]
             [cheshire.core :as cheshire]
             [clj-http.client :as http]
-            [apps.util.config :as cfg]))
+            [apps.util.config :as cfg]
+            [clojure.tools.logging :as log]))
 
 (defn- app-exposer-url
   [& components]
@@ -10,9 +11,9 @@
 
 (defn stop-job
   [uuid]
-  (http/delete (app-exposer-url "vice" "stop" uuid)
-               {:throw-exceptions false
-                :as               :json}))
+  (http/post (app-exposer-url "vice" uuid "save-and-exit")
+             {:throw-exceptions false
+              :as               :json}))
 
 (defn submit-job
   [job]
