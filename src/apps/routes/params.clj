@@ -59,7 +59,7 @@
       case-insensitive, in the corresponding field.")})
 
 (s/defschema AnalysisListingParams
-  (merge SecuredPagingParams analyses-schema/AnalysisListingParams))
+  (merge SecuredQueryParams analyses-schema/AnalysisListingParams))
 
 (s/defschema ToolSearchParams
   (merge SecuredPagingParams tools-schema/ToolSearchParams))
