@@ -62,7 +62,7 @@
   (merge SecuredQueryParams analyses-schema/AnalysisListingParams))
 
 (s/defschema ToolSearchParams
-  (merge SecuredPagingParams tools-schema/ToolSearchParams))
+  (merge SecuredQueryParams tools-schema/ToolSearchParams))
 
 (s/defschema AppParameterTypeParams
   (merge SecuredQueryParams elements-schema/AppParameterTypeParams))
