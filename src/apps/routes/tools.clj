@@ -161,7 +161,7 @@
 
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
-        :middleware [coerce-tool-import-requests]
+        :middleware [schema/coerce-tool-import-requests]
         :body [body schema/PrivateToolImportRequest]
         :responses schema/PrivateToolImportResponses
         :summary schema/ToolAddSummary
@@ -212,7 +212,7 @@
   (PATCH "/:tool-id" []
          :path-params [tool-id :- schema/ToolIdParam]
          :query [{:keys [user]} SecuredQueryParams]
-         :middleware [coerce-tool-import-requests]
+         :middleware [schema/coerce-tool-import-requests]
          :body [body schema/PrivateToolUpdateRequest]
          :responses schema/ToolUpdateResponses
          :summary schema/ToolUpdateSummary
@@ -439,7 +439,7 @@
 
   (POST "/" []
         :query [params SecuredQueryParams]
-        :middleware [coerce-tool-list-import-request]
+        :middleware [schema/coerce-tool-list-import-request]
         :body [body (describe ToolsImportRequest "The Tools to import.")]
         :responses (merge CommonResponses
                           {200 {:schema      ToolIdsList
@@ -481,7 +481,7 @@
   (PATCH "/:tool-id" []
          :path-params [tool-id :- schema/ToolIdParam]
          :query [{:keys [user overwrite-public]} ToolUpdateParams]
-         :middleware [coerce-tool-import-requests]
+         :middleware [schema/coerce-tool-import-requests]
          :body [body (describe ToolUpdateRequest "The Tool to update.")]
          :responses (merge CommonResponses
                            {200 {:schema      schema/ToolDetails
@@ -708,7 +708,7 @@ included in it. Any existing settings not included in the request's `container` 
   (POST "/:tool-id/publish" []
         :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
-        :middleware [coerce-tool-import-requests]
+        :middleware [schema/coerce-tool-import-requests]
         :body [body (describe ToolUpdateRequest "The Tool to update.")]
         :responses (merge CommonResponses
                           {200 {:schema      schema/ToolDetails

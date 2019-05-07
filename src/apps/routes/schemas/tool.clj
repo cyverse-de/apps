@@ -3,29 +3,10 @@
         [clojure-commons.error-codes]
         [common-swagger-api.schema :only [->optional-param describe ErrorResponse]]
         [schema.core :only [defschema enum optional-key]])
-  (:require [apps.routes.schemas.containers :as containers]
-            [common-swagger-api.schema.tools :as schema])
+  (:require [common-swagger-api.schema.tools :as schema])
   (:import [java.util UUID]))
 
 (def StatusCodeId (describe UUID "The Status Code's UUID"))
-
-(defn- coerce-container-settings-long-values
-  [tool]
-  (if (contains? tool :container)
-    (update tool :container containers/coerce-settings-long-values)
-    tool))
-
-(defn coerce-tool-import-requests
-  "Middleware that converts any container values in the given tool import/update request that should be a Long."
-  [handler]
-  (fn [request]
-    (handler (update request :body-params coerce-container-settings-long-values))))
-
-(defn coerce-tool-list-import-request
-  "Middleware that converts any container values in the given tool list import request that should be a Long."
-  [handler]
-  (fn [request]
-    (handler (update-in request [:body-params :tools] (partial map coerce-container-settings-long-values)))))
 
 (defschema ToolIdsList
   {:tool_ids (describe [UUID] "A List of Tool IDs")})
