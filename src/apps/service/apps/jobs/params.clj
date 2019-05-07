@@ -112,7 +112,7 @@
   [user config {:keys [id] :as prop}]
   (let [value (config (keyword id))]
     (if (ju/input? prop)
-      (when (paths-accessible? user value)
+      (when (and value (paths-accessible? user value))
         {:path value})
       value)))
 
