@@ -1,7 +1,11 @@
 (ns apps.routes.schemas.tool
-  (:use [apps.routes.params :only [SecuredPagingParams SecuredQueryParams]]
+  (:use [apps.routes.params :only [SecuredQueryParams]]
         [clojure-commons.error-codes]
-        [common-swagger-api.schema :only [->optional-param describe ErrorResponse]]
+        [common-swagger-api.schema
+         :only [->optional-param
+                describe
+                ErrorResponse
+                PagingParams]]
         [schema.core :only [defschema enum optional-key]])
   (:require [common-swagger-api.schema.tools :as schema])
   (:import [java.util UUID]))
@@ -125,11 +129,12 @@
                     "A listing of high level details about tool requests that have been submitted")})
 
 (defschema ToolRequestListingParams
-  (merge SecuredPagingParams
-    {(optional-key :status)
-     (describe String
-       "The name of a status code to include in the results. The name of the status code is case
-        sensitive. If the status code isn't already defined, it will be added to the database")}))
+  (merge SecuredQueryParams
+         PagingParams
+         {(optional-key :status)
+          (describe String
+                    "The name of a status code to include in the results. The name of the status code is case
+                     sensitive. If the status code isn't already defined, it will be added to the database")}))
 
 (defschema StatusCodeListingParams
   (merge SecuredQueryParams

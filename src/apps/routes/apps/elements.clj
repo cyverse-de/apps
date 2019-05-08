@@ -10,7 +10,7 @@
 
 (defroutes app-elements
   (GET "/" []
-        :query [params SecuredIncludeHiddenParams]
+        :query [params AppElementToolListingParams]
         :summary elements-schema/AppElementsListingSummary
         :description elements-schema/AppElementsListingDocs
         (ok (list-elements "all" params)))
@@ -52,7 +52,7 @@
 
   ;; Deprecated?
   (GET "/tools" []
-        :query [params SecuredIncludeHiddenParams]
+        :query [params AppElementToolListingParams]
         :return ToolListing
         :summary "List App Tools"
         :description "This endpoint is used by the Discovery Environment to obtain a list of registered

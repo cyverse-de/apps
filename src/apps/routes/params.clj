@@ -1,11 +1,12 @@
 (ns apps.routes.params
-  (:use [common-swagger-api.schema :only [->optional-param
-                                          describe
-                                          NonBlankString
-                                          PagingParams
-                                          SortFieldDocs
-                                          SortFieldOptionalKey
-                                          StandardUserQueryParams]]
+  (:use [common-swagger-api.schema
+         :only [->optional-param
+                describe
+                NonBlankString
+                PagingParams
+                SortFieldDocs
+                SortFieldOptionalKey
+                StandardUserQueryParams]]
         [common-swagger-api.schema.common :only [IncludeHiddenParams]])
   (:require [common-swagger-api.schema.analyses.listing :as analyses-schema]
             [common-swagger-api.schema.apps.elements :as elements-schema]
@@ -34,19 +35,17 @@
   (-> SecuredQueryParamsEmailRequired
     (->optional-param :email)))
 
-(s/defschema SecuredProxyQueryParams
-  (assoc SecuredQueryParams
-    (s/optional-key :proxy-user) (describe NonBlankString "The name of the proxy user for admin service calls.")))
+(s/defschema TokenInfoProxyParams
+  (merge SecuredQueryParams
+         {(s/optional-key :proxy-user)
+          (describe NonBlankString "The name of the proxy user for admin service calls.")}))
 
 (s/defschema OAuthCallbackQueryParams
-  (assoc SecuredQueryParams
-    :code  (describe NonBlankString "The authorization code used to obtain the access token.")
-    :state (describe NonBlankString "The authorization state information.")))
+  (merge SecuredQueryParams
+         {:code  (describe NonBlankString "The authorization code used to obtain the access token.")
+          :state (describe NonBlankString "The authorization state information.")}))
 
-(s/defschema SecuredPagingParams
-  (merge SecuredQueryParams PagingParams))
-
-(s/defschema SecuredIncludeHiddenParams
+(s/defschema AppElementToolListingParams
   (merge SecuredQueryParams IncludeHiddenParams))
 
 (s/defschema FilterParams
@@ -71,9 +70,10 @@
   (s/enum :email :name :username))
 
 (s/defschema IntegrationDataSearchParams
-  (assoc SecuredPagingParams
-         (s/optional-key :search)
-         (describe String "Searches for entries with matching names or email addresses.")
+  (merge SecuredQueryParams
+         PagingParams
+         {(s/optional-key :search)
+          (describe String "Searches for entries with matching names or email addresses.")
 
-         SortFieldOptionalKey
-         (describe IntegrationDataSortFields SortFieldDocs)))
+          SortFieldOptionalKey
+          (describe IntegrationDataSortFields SortFieldDocs)}))
