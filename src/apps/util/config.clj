@@ -92,6 +92,16 @@
   [props config-valid configs]
   "apps.jex.base-url" "http://jex-events:60000")
 
+(cc/defprop-optstr app-exposer-base-url
+  "The base URL to use when connecting to the app-exposer service"
+  [props config-valid configs]
+  "apps.vice.base-url" "http://app-exposer")
+
+(cc/defprop-optboolean vice-k8s-enabled
+  "Turns on submitting VICE analyses to K8s rather than condor"
+  [props config-valid configs]
+  "apps.vice.k8s-enabled" false)
+
 (cc/defprop-optstr data-info-base-url
   "The base URL to use when connecting to the JEX."
   [props config-valid configs]

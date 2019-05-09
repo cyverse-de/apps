@@ -10,16 +10,21 @@
             [clojure.tools.logging :as log]
             [kameleon.db :as db]
             [apps.clients.jex :as jex]
+            [apps.clients.vice :as vice]
             [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.jobs.base :as jb]
             [apps.service.apps.de.jobs.io-tickets :as io-tickets]
-            [apps.util.json :as json-util]))
+            [apps.util.json :as json-util]
+            [apps.util.config :as cfg]))
 
 (defn- do-jex-submission
   [job]
   (try+
-   (jex/submit-job job)
+   (if (and (cfg/vice-k8s-enabled)
+            (= (:execution_target job) "interapps"))
+     (vice/submit-job job)
+     (jex/submit-job job))
    (catch Object _
      (log/error (:throwable &throw-context) "job submission failed")
      (throw+ {:type  :clojure-commons.exception/request-failed
