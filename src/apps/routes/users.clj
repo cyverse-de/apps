@@ -4,7 +4,8 @@
         [apps.routes.schemas.user]
         [apps.user :only [current-user]]
         [ring.util.http-response :only [ok]])
-  (:require [apps.service.users :as users]))
+  (:require [apps.service.users :as users]
+            [common-swagger-api.schema.sessions :as sessions-schema]))
 
 (defroutes users
   (POST "/by-id" []
@@ -24,7 +25,7 @@
 
   (POST "/login" []
          :query [params LoginParams]
-         :return LoginResponse
+         :return sessions-schema/LoginResponse
          :summary "User Login Service"
          :description "Terrain calls this service to record when a user logs in
           and to fetch user session info."

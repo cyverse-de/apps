@@ -1,7 +1,7 @@
 (ns apps.routes.schemas.user
   (:use [common-swagger-api.schema :only [describe]]
+        [common-swagger-api.schema.sessions :only [IPAddrParam]]
         [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.oauth :only [RedirectUrisResponse]]
         [schema.core :only [defschema]])
   (:import [java.util UUID]))
 
@@ -16,15 +16,11 @@
   {:ids (describe [UUID] "The list of user IDs")})
 
 (defschema LoginParams
-  (assoc SecuredQueryParams
-    :ip-address (describe String "The IP address obtained from the original request.")
-    :user-agent (describe String "The user agent obtained from the original request.")))
-
-(defschema LoginResponse
-  {:login_time    (describe Long "Login time as milliseconds since the epoch.")
-   :auth_redirect RedirectUrisResponse})
+  (merge SecuredQueryParams
+         IPAddrParam
+         {:user-agent (describe String "The user agent obtained from the original request.")}))
 
 (defschema LogoutParams
-  (assoc SecuredQueryParams
-    :ip-address (describe String "The IP address obtained from the original request.")
-    :login-time (describe Long "The login time returned by POST /users/login.")))
+  (merge SecuredQueryParams
+         IPAddrParam
+         {:login-time (describe Long "The login time returned by POST /users/login.")}))
