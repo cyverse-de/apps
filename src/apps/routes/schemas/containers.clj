@@ -2,19 +2,13 @@
   (:use [common-swagger-api.schema :only [->optional-param describe]]
         [common-swagger-api.schema.containers]
         [apps.routes.params :only [SecuredQueryParams]])
-  (:require [apps.util.coercions :as coercions]
-            [schema.core :as s])
+  (:require [schema.core :as s])
   (:import (java.util UUID)))
 
 (s/defschema Images
   (describe
     {:container_images [Image]}
     "A list of container images."))
-
-(s/defschema NewImage
-  (describe
-   (dissoc Image :id)
-   "The values needed to add a new image to a tool."))
 
 (s/defschema ImageId
   (describe
@@ -29,23 +23,10 @@
     {(s/optional-key :overwrite-public)
      (describe Boolean "Flag to force updates of images used by public tools.")}))
 
-(defn coerce-settings-long-values
-  "Converts any values in the given settings map that should be a Long, according to the Settings schema."
-  [settings]
-  (-> settings
-      (coercions/coerce-string->long :memory_limit)
-      (coercions/coerce-string->long :min_memory_limit)
-      (coercions/coerce-string->long :min_disk_space)))
-
 (s/defschema Entrypoint
   (describe
    {:entrypoint (s/maybe s/Str)}
    "The entrypoint for a tool container"))
-
-(s/defschema NewSettings
-  (describe
-   (->optional-param Settings :id)
-   "The values needed to add a new container to a tool."))
 
 (s/defschema CPUShares
   (describe
@@ -87,11 +68,6 @@
    {:name (s/maybe s/Str)}
    "The name given to the tool container."))
 
-(s/defschema NewDevice
-  (describe
-   (dissoc Device :id)
-   "The map needed to add a device to a container."))
-
 (s/defschema DeviceHostPath
   (describe
    {:host_path s/Str}
@@ -111,11 +87,6 @@
   (describe
    {:container_devices [Device]}
    "A list of devices associated with a tool's container."))
-
-(s/defschema NewVolume
-  (describe
-   (dissoc Volume :id)
-   "A map for adding a new volume to a container."))
 
 (def VolumeIdParam
   (describe
@@ -155,11 +126,6 @@
         (dissoc :id))
     "A map for updating data container settings."))
 
-(s/defschema NewVolumesFrom
-  (describe
-   (dissoc VolumesFrom :id)
-   "A map for adding a new container from which to bind mount volumes."))
-
 (def VolumesFromIdParam
   (describe
     UUID
@@ -169,25 +135,3 @@
   (describe
    {:container_volumes_from [VolumesFrom]}
    "The list of VolumeFroms associated with a tool's container."))
-
-(s/defschema NewPort
-  (describe
-   (dissoc Port :id)
-   "A map for adding a new port configuration to a tool container."))
-
-(s/defschema NewProxySettings
-  (describe
-   (dissoc ProxySettings :id)
-   "A map for adding new interactive app reverse proxy settings."))
-
-(s/defschema NewToolContainer
-  (describe
-   (merge
-    NewSettings
-    {DevicesParamOptional       [NewDevice]
-     VolumesParamOptional       [NewVolume]
-     VolumesFromParamOptional   [NewVolumesFrom]
-     PortsParamOptional         [NewPort]
-     ProxySettingsParamOptional NewProxySettings
-     :image                     NewImage})
-   "The settings for adding a new full container definition to a tool."))

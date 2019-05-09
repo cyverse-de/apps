@@ -40,7 +40,7 @@
     :path-params [api-name :- ApiName]
 
     (GET "/" []
-      :query   [params SecuredProxyQueryParams]
+      :query   [params TokenInfoProxyParams]
       :return  AdminTokenInfo
       :summary "Return information about an OAuth access token."
       (ok (oauth/get-admin-token-info api-name (if (:proxy-user params)
@@ -48,7 +48,7 @@
                                                  current-user))))
 
     (DELETE "/" []
-      :query   [params SecuredProxyQueryParams]
+      :query   [params TokenInfoProxyParams]
       :summary "Remove a user's OAuth access token from the DE."
       (oauth/remove-token-info api-name (if (:proxy-user params)
                                           (load-user (:proxy-user params))
