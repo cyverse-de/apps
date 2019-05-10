@@ -33,6 +33,6 @@
 
   (POST "/logout" []
          :query [params LogoutParams]
-         :summary "Record a User Logout"
-         :description "Terrain calls this service to record when a user logs out."
+         :summary sessions-schema/LogoutSummary
+         :description sessions-schema/LogoutDocs
          (ok (users/logout current-user params))))
