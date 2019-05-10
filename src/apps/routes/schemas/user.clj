@@ -1,8 +1,8 @@
 (ns apps.routes.schemas.user
   (:use [common-swagger-api.schema :only [describe]]
-        [common-swagger-api.schema.sessions :only [IPAddrParam]]
         [apps.routes.params :only [SecuredQueryParams]]
         [schema.core :only [defschema]])
+  (:require [common-swagger-api.schema.sessions :as sessions-schema])
   (:import [java.util UUID]))
 
 (defschema User
@@ -17,10 +17,9 @@
 
 (defschema LoginParams
   (merge SecuredQueryParams
-         IPAddrParam
+         sessions-schema/IPAddrParam
          {:user-agent (describe String "The user agent obtained from the original request.")}))
 
 (defschema LogoutParams
   (merge SecuredQueryParams
-         IPAddrParam
-         {:login-time (describe Long "The login time returned by POST /users/login.")}))
+         sessions-schema/LogoutParams))
