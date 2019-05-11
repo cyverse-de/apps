@@ -1,7 +1,7 @@
 (ns apps.routes.schemas.bootstrap
   (:use [common-swagger-api.schema :only [describe]]
         [common-swagger-api.schema.apps :only [SystemId]]
-        [apps.routes.schemas.webhooks :only [WebhookList]]
+        [common-swagger-api.schema.webhooks :only [WebhookList]]
         [apps.routes.schemas.workspace :only [Workspace]]
         [schema.core :only [Any defschema enum optional-key recursive]]))
 
