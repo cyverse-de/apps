@@ -1,11 +1,13 @@
 (ns apps.routes.workspaces
-  (:use [common-swagger-api.schema]
-        [apps.routes.params]
+  (:use [apps.routes.params]
         [apps.routes.schemas.workspace]
         [apps.user :only [current-user]]
+        [common-swagger-api.schema]
+        [common-swagger-api.schema.apps.workspace :only [Workspace]]
         [ring.util.http-response :only [ok]])
   (:require [apps.service.workspace :as workspace]))
 
+;; Obsolete?
 (defroutes workspaces
   (GET "/" []
         :query [params SecuredQueryParams]
