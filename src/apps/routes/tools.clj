@@ -402,7 +402,7 @@
 (defroutes tool-requests
   (GET "/" []
         :query [params ToolRequestListingParams]
-        :return ToolRequestListing
+        :return schema/ToolRequestListing
         :summary "List Tool Requests"
         :description "This endpoint lists high level details about tool requests that have been submitted.
         A user may track their own tool requests with this endpoint."
@@ -410,10 +410,10 @@
 
   (POST "/" []
          :query [params SecuredQueryParams]
-         :body [body (describe ToolRequest
+         :body [body (describe schema/ToolRequest
                        "A tool installation request. One of `source_url` or `source_upload_file`
                         fields are required, but not both.")]
-         :return ToolRequestDetails
+         :return schema/ToolRequestDetails
          :summary "Request Tool Installation"
          :description "This service submits a request for a tool to be installed so that it can be used
          from within the Discovery Environment. The installation request and all status updates
@@ -421,9 +421,9 @@
          (ok (submit-tool-request current-user body)))
 
   (GET "/status-codes" []
-        :query [params StatusCodeListingParams]
+        :query [params ToolRequestStatusCodeListingParams]
         :summary "List Tool Request Status Codes"
-        :return StatusCodeListing
+        :return schema/ToolRequestStatusCodeListing
         :description "Tool request status codes are largely arbitrary, but once they've been used once,
         they're stored in the database so that they can be reused easily. This endpoint allows the
         caller to list the known status codes."
