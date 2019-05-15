@@ -401,33 +401,26 @@
 
 (defroutes tool-requests
   (GET "/" []
-        :query [params ToolRequestListingParams]
-        :return ToolRequestListing
-        :summary "List Tool Requests"
-        :description "This endpoint lists high level details about tool requests that have been submitted.
-        A user may track their own tool requests with this endpoint."
-        (ok (tool-requests/list-tool-requests (assoc params :username (:username current-user)))))
+       :query [params ToolRequestListingParams]
+       :return schema/ToolRequestListing
+       :summary schema/ToolInstallRequestListingSummary
+       :description schema/ToolInstallRequestListingDocs
+       (ok (tool-requests/list-tool-requests (assoc params :username (:username current-user)))))
 
   (POST "/" []
-         :query [params SecuredQueryParams]
-         :body [body (describe ToolRequest
-                       "A tool installation request. One of `source_url` or `source_upload_file`
-                        fields are required, but not both.")]
-         :return ToolRequestDetails
-         :summary "Request Tool Installation"
-         :description "This service submits a request for a tool to be installed so that it can be used
-         from within the Discovery Environment. The installation request and all status updates
-         related to the tool request will be tracked in the Discovery Environment database."
-         (ok (submit-tool-request current-user body)))
+        :query [params SecuredQueryParams]
+        :body [body schema/ToolRequest]
+        :return schema/ToolRequestDetails
+        :summary schema/ToolInstallRequestSummary
+        :description schema/ToolInstallRequestDocs
+        (ok (submit-tool-request current-user body)))
 
   (GET "/status-codes" []
-        :query [params StatusCodeListingParams]
-        :summary "List Tool Request Status Codes"
-        :return StatusCodeListing
-        :description "Tool request status codes are largely arbitrary, but once they've been used once,
-        they're stored in the database so that they can be reused easily. This endpoint allows the
-        caller to list the known status codes."
-        (ok (tool-requests/list-tool-request-status-codes params))))
+       :query [params ToolRequestStatusCodeListingParams]
+       :return schema/ToolRequestStatusCodeListing
+       :summary schema/ToolInstallRequestStatusCodeListingSummary
+       :description schema/ToolInstallRequestStatusCodeListingDocs
+       (ok (tool-requests/list-tool-request-status-codes params))))
 
 (defroutes admin-tools
   (GET "/" []

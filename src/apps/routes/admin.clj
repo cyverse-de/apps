@@ -18,7 +18,11 @@
          :only [OntologyClassIRIParam
                 OntologyHierarchy
                 OntologyVersionParam]]
-        [common-swagger-api.schema.tools :only [ToolRequestIdParam]]
+        [common-swagger-api.schema.tools
+         :only [ToolRequestStatusCodeId
+                ToolRequestDetails
+                ToolRequestIdParam
+                ToolRequestListing]]
         [apps.metadata.reference-genomes
          :only [add-reference-genome
                 delete-reference-genome
@@ -52,7 +56,7 @@
     (ok (list-tool-requests params)))
 
   (DELETE "/status-codes/:status-code-id" []
-    :path-params [status-code-id :- StatusCodeId]
+    :path-params [status-code-id :- ToolRequestStatusCodeId]
     :query [params SecuredQueryParams]
     :summary "Delete a Tool Request Status Code"
     :description "This service allows administrators to delete a tool request status code provided that
