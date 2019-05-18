@@ -13,6 +13,9 @@
          :only [AppCategoryListing
                 AppCategoryAppListing
                 AppCommunityGroupNameParam]]
+        [common-swagger-api.schema.apps.reference-genomes
+         :only [ReferenceGenome
+                ReferenceGenomeIdParam]]
         [common-swagger-api.schema.integration-data :only [IntegrationData]]
         [common-swagger-api.schema.ontologies
          :only [OntologyClassIRIParam
