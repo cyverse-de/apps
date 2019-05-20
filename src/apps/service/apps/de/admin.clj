@@ -80,26 +80,35 @@
   (when-not (nil? disabled)
     (persistence/disable-app disabled app-id)))
 
+(defn- update-app-extra-info
+  "Updates any extra information specific to execution platforms or similar."
+  [{app-id :id :keys [extra]}]
+  (when-let [htcondor (:htcondor extra)]
+    (when-let [extra-requirements (:extra_requirements htcondor)]
+      (persistence/set-htcondor-extra app-id extra-requirements))))
+
 (defn- update-app-details
   "Updates high-level details and labels in an App, including deleted and disabled flags in the
    database."
-  [{app-id :id :keys [references groups] :as app}]
+  [{app-id :id :keys [references groups extra] :as app}]
   (persistence/update-app app)
   (when-not (empty? references)
     (persistence/set-app-references app-id references))
   (when-not (empty? groups)
-    (update-app-labels (select-keys app [:id :groups]))))
+    (update-app-labels (select-keys app [:id :groups])))
+  (when-not (empty? extra)
+    (update-app-extra-info app)))
 
 (defn update-app
-  "This service updates high-level details and labels in an App, and can mark or unmark the app as
-   deleted or disabled in the database."
+  "This service updates high-level details and labels in an App, extra information for particular
+   job execution systems, and can mark or unmark the app as deleted or disabled in the database."
   [{username :shortUsername} {app-name :name app-id :id :as app}]
   (transaction
    (av/validate-app-existence app-id)
    (when-not (nil? app-name)
      (categorization/validate-app-name-in-current-hierarchy username app-id app-name)
      (av/validate-app-name app-name app-id))
-   (if (empty? (select-keys app [:name :description :wiki_url :references :groups]))
+   (if (empty? (select-keys app [:name :description :wiki_url :references :groups :extra]))
      (update-app-deleted-disabled app)
      (update-app-details app))))
 

@@ -405,6 +405,12 @@
    (delete app_references (where {:app_id app-id}))
    (dorun (map (partial add-app-reference app-id) references))))
 
+(defn set-htcondor-extra
+  [app-id extra-requirements]
+  (transaction
+    (delete apps_htcondor_extra (where {:apps_id app-id}))
+    (insert apps_htcondor_extra (values {:apps_id app-id, :extra_requirements extra-requirements}))))
+
 (defn- get-job-type-id-for-system* [system-id]
   (:id (first (select :job_types (fields :id) (where {:system_id system-id})))))
 
