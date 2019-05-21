@@ -83,20 +83,10 @@
     UUID
     "A device's UUID."))
 
-(s/defschema Devices
-  (describe
-   {:container_devices [Device]}
-   "A list of devices associated with a tool's container."))
-
 (def VolumeIdParam
   (describe
     UUID
     "A volume's UUID."))
-
-(s/defschema Volumes
-  (describe
-   {:container_volumes [Volume]}
-   "A list of Volumes associated with a tool's container."))
 
 (s/defschema VolumeHostPath
   (describe
@@ -130,8 +120,3 @@
   (describe
     UUID
     "A volume from's UUID."))
-
-(s/defschema VolumesFromList
-  (describe
-   {:container_volumes_from [VolumesFrom]}
-   "The list of VolumeFroms associated with a tool's container."))
