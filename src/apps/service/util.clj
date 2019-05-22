@@ -1,7 +1,7 @@
 (ns apps.service.util
-  (:use [apps.routes.schemas.app :only [AdminAppListingJobStatsKeys]]
-        [apps.transformers :only [param->long]]
-        [apps.util.conversions :only [remove-nil-vals]])
+  (:use [apps.transformers :only [param->long]]
+        [apps.util.conversions :only [remove-nil-vals]]
+        [common-swagger-api.schema.apps.admin.apps :only [AdminAppListingJobStatsKeys]])
   (:require [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
             [kameleon.uuids :as uuids])

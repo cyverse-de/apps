@@ -1,6 +1,6 @@
 (ns apps.routes.integration-data
   (:use [common-swagger-api.schema]
-        [apps.routes.params :only [IntegrationDataIdPathParam IntegrationDataSearchParams SecuredQueryParams]]
+        [apps.routes.params :only [IntegrationDataSearchParams SecuredQueryParams]]
         [apps.user :only [current-user]]
         [ring.util.http-response :only [ok]])
   (:require [common-swagger-api.schema.integration-data :as schema]
@@ -25,7 +25,7 @@
     (ok (integration-data/add-integration-data current-user body)))
 
   (GET "/:integration-data-id" []
-    :path-params [integration-data-id :- IntegrationDataIdPathParam]
+    :path-params [integration-data-id :- schema/IntegrationDataIdPathParam]
     :query [params SecuredQueryParams]
     :summary "Get an Integration Data Record"
     :return schema/IntegrationData
@@ -33,7 +33,7 @@
     (ok (integration-data/get-integration-data current-user integration-data-id)))
 
   (PUT "/:integration-data-id" []
-    :path-params [integration-data-id :- IntegrationDataIdPathParam]
+    :path-params [integration-data-id :- schema/IntegrationDataIdPathParam]
     :query [params SecuredQueryParams]
     :summary "Update an Integration Data Record"
     :body [body (describe schema/IntegrationDataUpdate "The updated integration data information.")]
@@ -42,7 +42,7 @@
     (ok (integration-data/update-integration-data current-user integration-data-id body)))
 
   (DELETE "/:integration-data-id" []
-    :path-params [integration-data-id :- IntegrationDataIdPathParam]
+    :path-params [integration-data-id :- schema/IntegrationDataIdPathParam]
     :query [params SecuredQueryParams]
     :summary "Delete an Integration Data Record"
     :description "This service allows administrators to delete individual integration data records."
