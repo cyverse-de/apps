@@ -98,11 +98,6 @@
    {:container_path s/Str}
    "The path to a bind mounted volume in the tool container."))
 
-(s/defschema DataContainers
-  (describe
-   {:data_containers [DataContainer]}
-   "A list of data containers."))
-
 (s/defschema DataContainerIdParam
   (describe
     UUID

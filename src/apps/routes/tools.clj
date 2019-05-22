@@ -124,22 +124,6 @@
         :description "Returns a list of a public tools using the given image ID."
         (ok (image-public-tools image-id))))
 
- (defroutes data-containers
-   (GET "/" []
-         :query [params SecuredQueryParams]
-         :return DataContainers
-         :summary "List Data Containers"
-         :description "Lists all of the available data containers."
-         (ok (list-data-containers)))
-
-   (GET "/:data-container-id" []
-         :path-params [data-container-id :- DataContainerIdParam]
-         :query [params SecuredQueryParams]
-         :return DataContainer
-         :summary "Data Container"
-         :description "Returns a JSON description of a data container."
-         (ok (data-container data-container-id))))
-
 (defroutes admin-data-containers
   (PATCH "/:data-container-id" []
           :path-params [data-container-id :- DataContainerIdParam]

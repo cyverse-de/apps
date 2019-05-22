@@ -262,13 +262,6 @@
               (with container-images (fields :name :tag :url))
               (where {:id data-container-id})))))
 
-(defn list-data-containers
-  "Returns a list of all data containers."
-  []
-  {:data_containers (select data-containers
-                      (fields :id :name_prefix :read_only)
-                      (with container-images (fields :name :tag :url)))})
-
 (defn add-data-container
   [data-container-info]
   (let [image-uuid (find-or-add-image-id data-container-info)
