@@ -4,15 +4,6 @@
         [common-swagger-api.schema.analyses.listing :only [ExternalId]]
         [common-swagger-api.schema.apps
          :only [AppCategoryIdPathParam
-                AppDeleteSummary
-                AppDeletionRequest
-                AppDetailsSummary
-                AppDocumentation
-                AppDocumentationAddSummary
-                AppDocumentationRequest
-                AppDocumentationUpdateSummary
-                AppListingSummary
-                StringAppIdParam
                 SystemId]]
         [common-swagger-api.schema.apps.categories
          :only [AppCategoryListing
@@ -21,13 +12,6 @@
         [common-swagger-api.schema.apps.reference-genomes
          :only [ReferenceGenome
                 ReferenceGenomeIdParam]]
-        [common-swagger-api.schema.apps.admin.categories
-         :only [AppCategorizationDocs
-                AppCategorizationRequest
-                AppCategorizationSummary]]
-        [common-swagger-api.schema.integration-data
-         :only [IntegrationData
-                IntegrationDataIdPathParam]]
         [common-swagger-api.schema.ontologies
          :only [OntologyClassIRIParam
                 OntologyHierarchy
@@ -124,82 +108,6 @@
       :summary "Look Up an Analysis by External ID"
       :description "This endpoint is used to retrieve information about an analysis with a given external identifier."
       (ok (apps/admin-list-jobs-with-external-ids current-user [external-id])))))
-
-(defroutes admin-apps
-  (GET "/" []
-    :query [params AdminAppSearchParams]
-    :summary AppListingSummary
-    :return schema/AdminAppListing
-    :description schema/AppListingDocs
-    (ok (coerce! schema/AdminAppListing
-                 (apps/admin-search-apps current-user params))))
-
-  (POST "/" []
-    :query [params SecuredQueryParams]
-    :body [body AppCategorizationRequest]
-    :summary AppCategorizationSummary
-    :description AppCategorizationDocs
-    (ok (apps/categorize-apps current-user body)))
-
-  (POST "/shredder" []
-    :query [params SecuredQueryParams]
-    :body [body AppDeletionRequest]
-    :summary schema/AppShredderSummary
-    :description schema/AppShredderDocs
-    (ok (apps/permanently-delete-apps current-user body)))
-
-  (context "/:system-id/:app-id" []
-    :path-params [system-id :- SystemId
-                  app-id    :- StringAppIdParam]
-
-    (DELETE "/" []
-      :query [params SecuredQueryParams]
-      :summary AppDeleteSummary
-      :description schema/AppDeleteDocs
-      (ok (apps/admin-delete-app current-user system-id app-id)))
-
-    (PATCH "/" []
-      :query [params SecuredQueryParams]
-      :body [body schema/AdminAppPatchRequest]
-      :return schema/AdminAppDetails
-      :summary schema/AdminAppPatchSummary
-      :description-file "docs/apps/admin/app-label-update.md"
-      (ok (coerce! schema/AdminAppDetails
-                   (apps/admin-update-app current-user system-id (assoc body :id app-id)))))
-
-    (GET "/details" []
-      :query [params SecuredQueryParams]
-      :return schema/AdminAppDetails
-      :summary AppDetailsSummary
-      :description schema/AppDetailsDocs
-      (ok (coerce! schema/AdminAppDetails
-                   (apps/admin-get-app-details current-user system-id app-id))))
-
-    (PATCH "/documentation" []
-      :query [params SecuredQueryParams]
-      :body [body AppDocumentationRequest]
-      :return AppDocumentation
-      :summary AppDocumentationUpdateSummary
-      :description schema/AppDocumentationUpdateDocs
-      (ok (coerce! AppDocumentation
-                   (apps/admin-edit-app-docs current-user system-id app-id body))))
-
-    (POST "/documentation" []
-      :query [params SecuredQueryParams]
-      :body [body AppDocumentationRequest]
-      :return AppDocumentation
-      :summary AppDocumentationAddSummary
-      :description schema/AppDocumentationAddDocs
-      (ok (coerce! AppDocumentation
-                   (apps/admin-add-app-docs current-user system-id app-id body))))
-
-    (PUT "/integration-data/:integration-data-id" []
-      :path-params [integration-data-id :- IntegrationDataIdPathParam]
-      :query [params SecuredQueryParams]
-      :return IntegrationData
-      :summary schema/AppIntegrationDataUpdateSummary
-      :description schema/AppIntegrationDataUpdateDocs
-      (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))))
 
 (defroutes admin-categories
   (GET "/" []
