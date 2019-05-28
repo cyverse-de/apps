@@ -5,7 +5,6 @@
          :only [DataContainer
                 Device
                 Image
-                ToolContainer
                 Volume
                 VolumesFrom]]
         [common-swagger-api.schema.integration-data :only [IntegrationData]]
@@ -125,22 +124,6 @@
         :description "Returns a list of a public tools using the given image ID."
         (ok (image-public-tools image-id))))
 
- (defroutes data-containers
-   (GET "/" []
-         :query [params SecuredQueryParams]
-         :return DataContainers
-         :summary "List Data Containers"
-         :description "Lists all of the available data containers."
-         (ok (list-data-containers)))
-
-   (GET "/:data-container-id" []
-         :path-params [data-container-id :- DataContainerIdParam]
-         :query [params SecuredQueryParams]
-         :return DataContainer
-         :summary "Data Container"
-         :description "Returns a JSON description of a data container."
-         (ok (data-container data-container-id))))
-
 (defroutes admin-data-containers
   (PATCH "/:data-container-id" []
           :path-params [data-container-id :- DataContainerIdParam]
@@ -227,169 +210,6 @@
        :description schema/ToolAppListingDocs
        (ok (coerce! AppListing
                     (app-listings/user-list-apps-by-tool current-user tool-id params))))
-
-  (GET "/:tool-id/container" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return ToolContainer
-        :summary "Tool Container Information"
-        :description "This endpoint returns container information associated with a tool. This endpoint
-        returns a 404 if the tool is not run inside a container."
-        (requester tool-id (tool-container-info tool-id)))
-
-  (GET "/:tool-id/container/devices" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return Devices
-        :summary "Tool Container Device Information"
-        :description "Returns device information for the container associated with a tool."
-        (requester tool-id (tool-device-info tool-id)))
-
-  (GET "/:tool-id/container/devices/:device-id" []
-        :path-params [tool-id :- schema/ToolIdParam,
-                      device-id :- DeviceIdParam]
-        :query [params SecuredQueryParams]
-        :return Device
-        :summary "Tool Container Device Information"
-        :description "Returns device information for the container associated with a tool."
-        (requester tool-id (tool-device tool-id device-id)))
-
-  (GET "/:tool-id/container/devices/:device-id/host-path" []
-        :path-params [tool-id :- schema/ToolIdParam device-id :- DeviceIdParam]
-        :query [params SecuredQueryParams]
-        :return DeviceHostPath
-        :summary "Tool Container Device Host Path"
-        :description "Returns a device's host path."
-        (requester tool-id (device-field tool-id device-id :host_path)))
-
-  (GET "/:tool-id/container/devices/:device-id/container-path" []
-        :path-params [tool-id :- schema/ToolIdParam device-id :- DeviceIdParam]
-        :query [params SecuredQueryParams]
-        :return DeviceContainerPath
-        :summary "Tool Device Container Path"
-        :description "Returns a device's in-container path."
-        (requester tool-id (device-field tool-id device-id :container_path)))
-
-  (GET "/:tool-id/container/cpu-shares" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return CPUShares
-        :summary "Tool Container CPU Shares"
-        :description "Returns the number of shares of the CPU that the tool container will receive."
-        (requester tool-id (get-settings-field tool-id :cpu_shares)))
-
-  (GET "/:tool-id/container/memory-limit" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return MemoryLimit
-        :summary "Tool Container Memory Limit"
-        :description "Returns the maximum amount of RAM that can be allocated to the tool container (in bytes)."
-        (requester tool-id (get-settings-field tool-id :memory_limit)))
-
-  (GET "/:tool-id/container/min-memory-limit" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return MinMemoryLimit
-        :summary "Tool Container Minimum Memory Requirement"
-        :description "Returns the minimum amount of RAM that is required to run the tool container (in bytes)."
-        (requester tool-id (get-settings-field tool-id :min_memory_limit)))
-
-  (GET "/:tool-id/container/min-cpu-cores" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return MinCPUCores
-        :summary "Tool Container Minimum CPU Cores Requirement"
-        :description "Returns the minimum number of CPU cores that is required to run the tool container."
-        (requester tool-id (get-settings-field tool-id :min_cpu_cores)))
-
-  (GET "/:tool-id/container/min-disk-space" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return MinDiskSpace
-        :summary "Tool Container Minimum Disk Space"
-        :description "Returns the minimum disk space requirement for the tool container."
-        (requester tool-id (get-settings-field tool-id :min_disk_space)))
-
-  (GET "/:tool-id/container/network-mode" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return NetworkMode
-        :summary "Tool Container Network Mode"
-        :description "Returns the network mode the tool container will operate in. Usually 'bridge' or 'none'."
-        (requester tool-id (get-settings-field tool-id :network_mode)))
-
-  (GET "/:tool-id/container/working-directory" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return WorkingDirectory
-        :summary "Tool Container Working Directory"
-        :description "Sets the initial working directory for the tool container."
-        (requester tool-id (get-settings-field tool-id :working_directory)))
-
-  (GET "/:tool-id/container/entrypoint" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return Entrypoint
-        :summary "Tool Container Entrypoint"
-        :description "Get the entrypoint setting for the tool container."
-        (requester tool-id (get-settings-field tool-id :entrypoint)))
-
-  (GET "/:tool-id/container/name" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return ContainerName
-        :summary "Tool Container Name"
-        :description "The user supplied name that the container will be assigned when it runs."
-        (requester tool-id (get-settings-field tool-id :name)))
-
-  (GET "/:tool-id/container/volumes" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return Volumes
-        :summary "Tool Container Volume Information"
-        :description "Returns volume information for the container associated with a tool."
-        (requester tool-id (tool-volume-info tool-id)))
-
-  (GET "/:tool-id/container/volumes/:volume-id" []
-        :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
-        :query [params SecuredQueryParams]
-        :return Volume
-        :summary "Tool Container Volume Information"
-        :description "Returns volume information for the container associated with a tool."
-        (requester tool-id (tool-volume tool-id volume-id)))
-
-  (GET "/:tool-id/container/volumes/:volume-id/host-path" []
-        :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
-        :query [params SecuredQueryParams]
-        :return VolumeHostPath
-        :summary "Tool Container Volume Host Path"
-        :description "Returns volume host path for the container associated with a tool."
-        (requester tool-id (volume-field tool-id volume-id :host_path)))
-
-  (GET "/:tool-id/container/volumes/:volume-id/container-path" []
-        :path-params [tool-id :- schema/ToolIdParam volume-id :- VolumeIdParam]
-        :query [params SecuredQueryParams]
-        :return VolumeContainerPath
-        :summary "Tool Container Volume Container Path"
-        :description "Returns volume container path for the container associated with a tool."
-        (requester tool-id (volume-field tool-id volume-id :container_path)))
-
-  (GET "/:tool-id/container/volumes-from" []
-        :path-params [tool-id :- schema/ToolIdParam]
-        :query [params SecuredQueryParams]
-        :return VolumesFromList
-        :summary "Tool Container Volumes From Information"
-        :description "Returns a list of container names that the container associated with the tool should import volumes from."
-        (requester tool-id (tool-volumes-from-info tool-id)))
-
-  (GET "/:tool-id/container/volumes-from/:volumes-from-id" []
-        :path-params [tool-id :- schema/ToolIdParam volumes-from-id :- VolumesFromIdParam]
-        :query [params SecuredQueryParams]
-        :return VolumesFrom
-        :summary "Tool Container Volumes From Information"
-        :description "Returns the data container settings for the given `volumes-from-id` the tool
-         should import volumes from."
-        (requester tool-id (tool-volumes-from tool-id volumes-from-id)))
 
   (GET "/:tool-id/integration-data" []
         :path-params [tool-id :- schema/ToolIdParam]

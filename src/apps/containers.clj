@@ -128,12 +128,6 @@
   (delete container-images (where {:id id}))
   nil)
 
-(defn devices
-  "Returns the devices associated with the given container_setting uuid."
-  [settings-uuid]
-  (select container-devices
-          (where {:container_settings_id (uuidify settings-uuid)})))
-
 (defn device
   "Returns the device indicated by the UUID."
   [device-uuid]
@@ -179,7 +173,7 @@
                    {:container_settings_id (uuidify settings-uuid)}))))
 
 (defn modify-device
-  [settings-uuid device-uuid update-map]
+  [device-uuid update-map]
   (when-not (device? device-uuid)
     (cxu/not-found (str "device does not exist: " device-uuid)))
   (sql/update container-devices
@@ -268,13 +262,6 @@
               (with container-images (fields :name :tag :url))
               (where {:id data-container-id})))))
 
-(defn list-data-containers
-  "Returns a list of all data containers."
-  []
-  {:data_containers (select data-containers
-                      (fields :id :name_prefix :read_only)
-                      (with container-images (fields :name :tag :url)))})
-
 (defn add-data-container
   [data-container-info]
   (let [image-uuid (find-or-add-image-id data-container-info)
@@ -284,7 +271,7 @@
 
 (defn modify-data-container
   "Modifies a data container based on the update map."
-  [data-container-id {:keys [name url] :as data-container-info}]
+  [data-container-id {:keys [name] :as data-container-info}]
   (when (data-container data-container-id)
     (transaction
       (let [container-images-id (when name (find-or-add-image-id data-container-info))
@@ -502,13 +489,6 @@
       (modify-settings settings-id {field-kw new-value})
       (get-settings-field tool-id field-kw))))
 
-(defn tool-device-info
-  "Returns a container's device information based on the tool UUID."
-  [tool-uuid]
-  (let [container-info (tool-container-info tool-uuid)]
-    (if-not (nil? container-info)
-      {:container_devices (:container_devices container-info)})))
-
 (defn tool-device
   "Returns a map with information about a particular device associated with the tools container."
   [tool-uuid device-uuid]
@@ -538,7 +518,7 @@
     (let [settings-id (tool-settings-uuid tool-id)]
       (when (and (device? device-id)
                  (settings-has-device? settings-id device-id))
-        (modify-device settings-id device-id {field-kw new-value})
+        (modify-device device-id {field-kw new-value})
         (device-field tool-id device-id field-kw)))))
 
 (defn tool-volume
@@ -573,14 +553,6 @@
         (modify-volume settings-id volume-id {field-kw new-value})
         (volume-field tool-id volume-id field-kw)))))
 
-(defn tool-volumes-from
-  "Returns a map with info about a particular container from which the tool's container will mount volumes."
-  [tool-uuid volumes-from-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-volumes-from? settings-uuid volumes-from-uuid)
-        (volumes-from-settings settings-uuid (:data_containers_id (volumes-from volumes-from-uuid)))))))
-
 (defn- add-settings-volumes-from
   [settings-id vf-map]
   (transaction
@@ -594,20 +566,6 @@
   [tool-uuid vf-map]
   (assert-tool-has-settings tool-uuid)
   (add-settings-volumes-from (tool-settings-uuid tool-uuid) vf-map))
-
-(defn tool-volume-info
-  "Returns a container's volumes info based on the tool UUID."
-  [tool-uuid]
-  (let [container-info (tool-container-info tool-uuid)]
-    (if-not (nil? container-info)
-      {:container_volumes (:container_volumes container-info)})))
-
-(defn tool-volumes-from-info
-  "Returns a container's volumes-from info based on the tool UUID."
-  [tool-uuid]
-  (let [container-info (tool-container-info tool-uuid)]
-    (if-not (nil? container-info)
-      {:container_volumes_from (:container_volumes_from container-info)})))
 
 (defn port-mapping?
   "Returns true if the the specific combination of fields exists in the
@@ -655,7 +613,6 @@
         vfs            (:container_volumes_from info-map)
         ports          (:container_ports info-map)
         proxy-settings (:interactive_apps info-map)
-        settings       (dissoc info-map :container_devices :container_volumes :container_volumes_from)
         info-map       (assoc info-map :tools_id (uuidify tool-uuid))]
     (log/warn "adding container information for tool" tool-uuid ":" info-map)
     (transaction

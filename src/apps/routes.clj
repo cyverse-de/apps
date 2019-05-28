@@ -52,7 +52,6 @@
                    {:name "pipelines", :description "Pipeline endpoints."}
                    {:name "analyses", :description "Analysis endpoints."}
                    {:name "bootstrap", :description "Bootstrap endpoints."}
-                   {:name "tool-data-containers", :description "Tool Docker Data Container endpoints."}
                    {:name "tools", :description "Tool endpoints."}
                    {:name "workspaces", :description "Workspace endpoints."}
                    {:name "webhooks", :description "Webhooks endpoints."}
@@ -125,9 +124,6 @@
     (context "/bootstrap" []
       :tags ["bootstrap"]
       bootstrap-routes/bootstrap)
-    (context "/tools/data-containers" []
-      :tags ["tool-data-containers"]
-      tool-routes/data-containers)
     (context "/tools" []
       :tags ["tools"]
       tool-routes/tools)
