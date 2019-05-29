@@ -6,7 +6,6 @@
                 SecuredQueryParamsEmailRequired]]
         [apps.routes.schemas.analysis]
         [apps.routes.schemas.analysis.listing]
-        [apps.routes.schemas.app]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [common-swagger-api.schema]

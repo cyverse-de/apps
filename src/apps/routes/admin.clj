@@ -4,10 +4,6 @@
         [common-swagger-api.schema.analyses.listing :only [ExternalId]]
         [common-swagger-api.schema.apps
          :only [AppCategoryIdPathParam
-                AppDeletionRequest
-                AppDocumentation
-                AppDocumentationRequest
-                StringAppIdParam
                 SystemId]]
         [common-swagger-api.schema.apps.categories
          :only [AppCategoryListing
@@ -16,7 +12,6 @@
         [common-swagger-api.schema.apps.reference-genomes
          :only [ReferenceGenome
                 ReferenceGenomeIdParam]]
-        [common-swagger-api.schema.integration-data :only [IntegrationData]]
         [common-swagger-api.schema.ontologies
          :only [OntologyClassIRIParam
                 OntologyHierarchy
@@ -31,9 +26,7 @@
                 delete-reference-genome
                 update-reference-genome]]
         [apps.metadata.tool-requests]
-        [apps.routes.params
-         :only [IntegrationDataIdPathParam
-                SecuredQueryParams]]
+        [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.analysis.listing]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
@@ -47,7 +40,8 @@
             [apps.service.apps.de.admin :as admin]
             [apps.service.apps.de.listings :as listings]
             [apps.service.workspace :as workspace]
-            [apps.util.config :as config]))
+            [apps.util.config :as config]
+            [common-swagger-api.schema.apps.admin.apps :as schema]))
 
 (defroutes admin-tool-requests
   (GET "/" []
@@ -115,123 +109,6 @@
       :description "This endpoint is used to retrieve information about an analysis with a given external identifier."
       (ok (apps/admin-list-jobs-with-external-ids current-user [external-id])))))
 
-(defroutes admin-apps
-  (GET "/" []
-    :query [params AdminAppSearchParams]
-    :summary "List Apps"
-    :return AdminAppListing
-    :description
-    (str
-"This service allows admins to list all public apps, including apps listed under the `Trash` category:
- deleted public apps and private apps that are 'orphaned' (not categorized in any user's workspace).
- If the `search` parameter is included, then the results are filtered by the App name, description,
- integrator's name, tool name, or category name the app is under."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /avus/filter-targets")
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/filter-targets"))
-    (ok (coerce! AdminAppListing
-                 (apps/admin-search-apps current-user params))))
-
-  (POST "/" []
-    :query [params SecuredQueryParams]
-    :body [body (describe AppCategorizationRequest "An App Categorization Request.")]
-    :summary "Categorize Apps"
-    :description "This endpoint is used by the Admin interface to add or move Apps to into multiple
-    Categories."
-    (ok (apps/categorize-apps current-user body)))
-
-  (POST "/shredder" []
-    :query [params SecuredQueryParams]
-    :body [body AppDeletionRequest]
-    :summary "Permanently Deleting Apps"
-    :description "This service physically removes an App from the database, which allows
-    administrators to completely remove Apps that are causing problems."
-    (ok (apps/permanently-delete-apps current-user body)))
-
-  (context "/:system-id/:app-id" []
-    :path-params [system-id :- SystemId
-                  app-id    :- StringAppIdParam]
-
-    (DELETE "/" []
-      :query [params SecuredQueryParams]
-      :summary "Logically Deleting an App"
-      :description "An app can be marked as deleted in the DE without being completely removed from
-      the database using this service. This endpoint is the same as the non-admin endpoint,
-      except an error is not returned if the user does not own the App."
-      (ok (apps/admin-delete-app current-user system-id app-id)))
-
-    (PATCH "/" []
-      :query [params SecuredQueryParams]
-      :body [body (describe AdminAppPatchRequest "The App to update.")]
-      :return AdminAppDetails
-      :summary "Update App Details and Labels"
-      :description (str
-"This service is capable of updating high-level information of an App,
- including 'deleted' and 'disabled' flags, as well as just the labels within a single-step app that has
- already been made available for public use.
- The app's name must not duplicate the name of any other app (visible to the requesting user)
- under the same categories as this app.
-<b>Note</b>: Although this endpoint accepts all App Group and Parameter fields within the 'groups' array,
- only their 'description', 'label', and 'display' (only in parameter arguments)
- fields will be processed and updated by this endpoint."
-(get-endpoint-delegate-block
-  "metadata"
-  "GET /avus/{target-type}/{target-id}")
-"Where `{target-type}` is `app`."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /avus/filter-targets")
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/filter")
-"Please see the metadata service documentation for information about the `hierarchies` response field.")
-      (ok (coerce! AdminAppDetails
-                   (apps/admin-update-app current-user system-id (assoc body :id app-id)))))
-
-    (GET "/details" []
-      :query [params SecuredQueryParams]
-      :return AdminAppDetails
-      :summary "Get App Details"
-      :description (str
-"This service allows administrative users to view detailed informaiton about private apps."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/filter")
-"Please see the metadata service documentation for information about the `hierarchies` response field.")
-      (ok (coerce! AdminAppDetails
-                   (apps/admin-get-app-details current-user system-id app-id))))
-
-    (PATCH "/documentation" []
-      :query [params SecuredQueryParams]
-      :body [body AppDocumentationRequest]
-      :return AppDocumentation
-      :summary "Update App Documentation"
-      :description "This service is used by DE administrators to update documentation for a single
-      App"
-      (ok (coerce! AppDocumentation
-                   (apps/admin-edit-app-docs current-user system-id app-id body))))
-
-    (POST "/documentation" []
-      :query [params SecuredQueryParams]
-      :body [body AppDocumentationRequest]
-      :return AppDocumentation
-      :summary "Add App Documentation"
-      :description "This service is used by DE administrators to add documentation for a single App"
-      (ok (coerce! AppDocumentation
-                   (apps/admin-add-app-docs current-user system-id app-id body))))
-
-    (PUT "/integration-data/:integration-data-id" []
-      :path-params [integration-data-id :- IntegrationDataIdPathParam]
-      :query [params SecuredQueryParams]
-      :return IntegrationData
-      :summary "Update the Integration Data Record for an App"
-      :description "This service allows administrators to change the integration data record
-      associated with an app."
-      (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))))
-
 (defroutes admin-categories
   (GET "/" []
     :query [params SecuredQueryParams]
@@ -284,13 +161,13 @@
   (GET "/:community-id/apps" []
        :path-params [community-id :- AppCommunityGroupNameParam]
        :query [params AdminAppListingPagingParams]
-       :return AdminAppListing
+       :return schema/AdminAppListing
        :summary "List Apps in a Community"
        :description (str "Lists all of the apps under an App Community that are visible to an admin."
                          (get-endpoint-delegate-block
                            "metadata"
                            "POST /avus/filter-targets"))
-       (ok (coerce! AdminAppListing (apps/admin-list-apps-in-community current-user community-id params)))))
+       (ok (coerce! schema/AdminAppListing (apps/admin-list-apps-in-community current-user community-id params)))))
 
 (defroutes admin-ontologies
 
@@ -346,7 +223,7 @@
     :path-params [ontology-version :- OntologyVersionParam
                   root-iri :- OntologyClassIRIParam]
     :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
-    :return AdminAppListing
+    :return schema/AdminAppListing
     :summary "List Apps in a Category"
     :description (str
 "Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
@@ -354,14 +231,14 @@
 (get-endpoint-delegate-block
   "metadata"
   "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
-    (ok (coerce! AdminAppListing
+    (ok (coerce! schema/AdminAppListing
                  (apps/admin-list-apps-under-hierarchy current-user ontology-version root-iri attr params))))
 
   (GET "/:ontology-version/:root-iri/unclassified" [root-iri]
     :path-params [ontology-version :- OntologyVersionParam
                   root-iri :- OntologyClassIRIParam]
     :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
-    :return AdminAppListing
+    :return schema/AdminAppListing
     :summary "List Unclassified Apps"
     :description (str
 "Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
@@ -369,7 +246,7 @@
 (get-endpoint-delegate-block
   "metadata"
   "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
-    (ok (coerce! AdminAppListing
+    (ok (coerce! schema/AdminAppListing
                  (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params true)))))
 
 (defroutes reference-genomes

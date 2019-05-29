@@ -9,6 +9,7 @@
         [ring.util.response :only [redirect]])
   (:require [compojure.route :as route]
             [apps.routes.admin :as admin-routes]
+            [apps.routes.admin.apps :as admin-apps-routes]
             [apps.routes.analyses :as analysis-routes]
             [apps.routes.apps :as app-routes]
             [apps.routes.apps.categories :as app-category-routes]
@@ -165,7 +166,7 @@
       metadata-routes/admin-app-metadata)
     (context "/admin/apps" []
       :tags ["admin-apps"]
-      admin-routes/admin-apps)
+      admin-apps-routes/admin-apps)
     (context "/admin/ontologies" []
       :tags ["admin-ontologies"]
       admin-routes/admin-ontologies)

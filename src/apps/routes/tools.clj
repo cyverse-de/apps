@@ -1,18 +1,20 @@
 (ns apps.routes.tools
   (:use [common-swagger-api.schema]
         [common-swagger-api.schema.apps :only [AppListing ToolAppListingResponses]]
+        [common-swagger-api.schema.apps.admin.apps :only [AdminAppListing]]
         [common-swagger-api.schema.containers
          :only [DataContainer
                 Device
                 Image
                 Volume
                 VolumesFrom]]
-        [common-swagger-api.schema.integration-data :only [IntegrationData]]
+        [common-swagger-api.schema.integration-data
+         :only [IntegrationData
+                IntegrationDataIdPathParam]]
         [apps.constants :only [de-system-id]]
         [apps.containers]
         [apps.routes.params]
         [apps.routes.schemas.containers]
-        [apps.routes.schemas.app :only [AdminAppListing]]
         [apps.routes.schemas.tool]
         [apps.tools
          :only [admin-add-tools
