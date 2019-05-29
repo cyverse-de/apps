@@ -10,6 +10,7 @@
   (:require [compojure.route :as route]
             [apps.routes.admin :as admin-routes]
             [apps.routes.admin.apps :as admin-apps-routes]
+            [apps.routes.admin.reference-genomes :as admin-reference-genomes-routes]
             [apps.routes.analyses :as analysis-routes]
             [apps.routes.apps :as app-routes]
             [apps.routes.apps.categories :as app-category-routes]
@@ -172,7 +173,7 @@
       admin-routes/admin-ontologies)
     (context "/admin/reference-genomes" []
       :tags ["admin-reference-genomes"]
-      admin-routes/reference-genomes)
+      admin-reference-genomes-routes/reference-genomes)
     (context "/admin/tools/container-images" []
       :tags ["admin-container-images"]
       tool-routes/container-images)

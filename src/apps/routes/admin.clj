@@ -9,9 +9,6 @@
          :only [AppCategoryListing
                 AppCategoryAppListing
                 AppCommunityGroupNameParam]]
-        [common-swagger-api.schema.apps.reference-genomes
-         :only [ReferenceGenome
-                ReferenceGenomeIdParam]]
         [common-swagger-api.schema.ontologies
          :only [OntologyClassIRIParam
                 OntologyHierarchy
@@ -21,16 +18,11 @@
                 ToolRequestDetails
                 ToolRequestIdParam
                 ToolRequestListing]]
-        [apps.metadata.reference-genomes
-         :only [add-reference-genome
-                delete-reference-genome
-                update-reference-genome]]
         [apps.metadata.tool-requests]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.analysis.listing]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
-        [apps.routes.schemas.reference-genome]
         [apps.routes.schemas.tool]
         [apps.routes.schemas.workspace]
         [apps.user :only [current-user]]
@@ -41,8 +33,7 @@
             [apps.service.apps.de.listings :as listings]
             [apps.service.workspace :as workspace]
             [apps.util.config :as config]
-            [common-swagger-api.schema.apps.admin.apps :as schema]
-            [common-swagger-api.schema.apps.admin.reference-genomes :as reference-genomes-schema]))
+            [common-swagger-api.schema.apps.admin.apps :as schema]))
 
 (defroutes admin-tool-requests
   (GET "/" []
@@ -249,31 +240,6 @@
   "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
     (ok (coerce! schema/AdminAppListing
                  (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params true)))))
-
-(defroutes reference-genomes
-  (POST "/" []
-    :query [params SecuredQueryParams]
-    :body [body reference-genomes-schema/ReferenceGenomeAddRequest]
-    :return ReferenceGenome
-    :summary reference-genomes-schema/ReferenceGenomeAddSummary
-    :description reference-genomes-schema/ReferenceGenomeAddDocs
-    (ok (add-reference-genome body)))
-
-  (PATCH "/:reference-genome-id" []
-    :path-params [reference-genome-id :- ReferenceGenomeIdParam]
-    :query [params SecuredQueryParams]
-    :body [body reference-genomes-schema/ReferenceGenomeUpdateRequest]
-    :return ReferenceGenome
-    :summary reference-genomes-schema/ReferenceGenomeUpdateSummary
-    :description reference-genomes-schema/ReferenceGenomeUpdateDocs
-    (ok (update-reference-genome (assoc body :id reference-genome-id))))
-
-  (DELETE "/:reference-genome-id" []
-    :path-params [reference-genome-id :- ReferenceGenomeIdParam]
-    :query [params ReferenceGenomeDeletionParams]
-    :summary reference-genomes-schema/ReferenceGenomeDeleteSummary
-    :description reference-genomes-schema/ReferenceGenomeDeleteDocs
-    (ok (delete-reference-genome reference-genome-id params))))
 
 (defroutes admin-workspaces
   (GET "/" []
