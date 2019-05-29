@@ -253,31 +253,26 @@
 (defroutes reference-genomes
   (POST "/" []
     :query [params SecuredQueryParams]
-    :body [body (describe reference-genomes-schema/ReferenceGenomeRequest "The Reference Genome to add.")]
+    :body [body reference-genomes-schema/ReferenceGenomeAddRequest]
     :return ReferenceGenome
-    :summary "Add a Reference Genome"
-    :description "This endpoint adds a Reference Genome to the Discovery Environment."
+    :summary reference-genomes-schema/ReferenceGenomeAddSummary
+    :description reference-genomes-schema/ReferenceGenomeAddDocs
     (ok (add-reference-genome body)))
 
   (PATCH "/:reference-genome-id" []
     :path-params [reference-genome-id :- ReferenceGenomeIdParam]
     :query [params SecuredQueryParams]
-    :body [body (describe reference-genomes-schema/ReferenceGenomeRequest "The Reference Genome fields to update.")]
+    :body [body reference-genomes-schema/ReferenceGenomeUpdateRequest]
     :return ReferenceGenome
-    :summary "Update a Reference Genome"
-    :description "This endpoint modifies the name, path, and deleted fields of a Reference Genome in
-    the Discovery Environment."
+    :summary reference-genomes-schema/ReferenceGenomeUpdateSummary
+    :description reference-genomes-schema/ReferenceGenomeUpdateDocs
     (ok (update-reference-genome (assoc body :id reference-genome-id))))
 
   (DELETE "/:reference-genome-id" []
     :path-params [reference-genome-id :- ReferenceGenomeIdParam]
     :query [params ReferenceGenomeDeletionParams]
-    :summary "Delete a Reference Genome"
-    :description "A Reference Genome can be marked as deleted in the DE without being completely
-    removed from the database using this service. <b>Note</b>: an attempt to delete a
-    Reference Genome that is already marked as deleted is treated as a no-op rather than an
-    error condition. If the Reference Genome doesn't exist in the database at all, however,
-    then that is treated as an error condition."
+    :summary reference-genomes-schema/ReferenceGenomeDeleteSummary
+    :description reference-genomes-schema/ReferenceGenomeDeleteDocs
     (ok (delete-reference-genome reference-genome-id params))))
 
 (defroutes admin-workspaces
