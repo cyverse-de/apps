@@ -41,7 +41,8 @@
             [apps.service.apps.de.listings :as listings]
             [apps.service.workspace :as workspace]
             [apps.util.config :as config]
-            [common-swagger-api.schema.apps.admin.apps :as schema]))
+            [common-swagger-api.schema.apps.admin.apps :as schema]
+            [common-swagger-api.schema.apps.admin.reference-genomes :as reference-genomes-schema]))
 
 (defroutes admin-tool-requests
   (GET "/" []
@@ -252,7 +253,7 @@
 (defroutes reference-genomes
   (POST "/" []
     :query [params SecuredQueryParams]
-    :body [body (describe ReferenceGenomeRequest "The Reference Genome to add.")]
+    :body [body (describe reference-genomes-schema/ReferenceGenomeRequest "The Reference Genome to add.")]
     :return ReferenceGenome
     :summary "Add a Reference Genome"
     :description "This endpoint adds a Reference Genome to the Discovery Environment."
@@ -261,7 +262,7 @@
   (PATCH "/:reference-genome-id" []
     :path-params [reference-genome-id :- ReferenceGenomeIdParam]
     :query [params SecuredQueryParams]
-    :body [body (describe ReferenceGenomeRequest "The Reference Genome fields to update.")]
+    :body [body (describe reference-genomes-schema/ReferenceGenomeRequest "The Reference Genome fields to update.")]
     :return ReferenceGenome
     :summary "Update a Reference Genome"
     :description "This endpoint modifies the name, path, and deleted fields of a Reference Genome in
