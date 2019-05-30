@@ -9,9 +9,6 @@
          :only [AppCategoryListing
                 AppCategoryAppListing
                 AppCommunityGroupNameParam]]
-        [common-swagger-api.schema.apps.reference-genomes
-         :only [ReferenceGenome
-                ReferenceGenomeIdParam]]
         [common-swagger-api.schema.ontologies
          :only [OntologyClassIRIParam
                 OntologyHierarchy
@@ -21,16 +18,11 @@
                 ToolRequestDetails
                 ToolRequestIdParam
                 ToolRequestListing]]
-        [apps.metadata.reference-genomes
-         :only [add-reference-genome
-                delete-reference-genome
-                update-reference-genome]]
         [apps.metadata.tool-requests]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.analysis.listing]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
-        [apps.routes.schemas.reference-genome]
         [apps.routes.schemas.tool]
         [apps.routes.schemas.workspace]
         [apps.user :only [current-user]]
@@ -248,36 +240,6 @@
   "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
     (ok (coerce! schema/AdminAppListing
                  (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params true)))))
-
-(defroutes reference-genomes
-  (POST "/" []
-    :query [params SecuredQueryParams]
-    :body [body (describe ReferenceGenomeRequest "The Reference Genome to add.")]
-    :return ReferenceGenome
-    :summary "Add a Reference Genome"
-    :description "This endpoint adds a Reference Genome to the Discovery Environment."
-    (ok (add-reference-genome body)))
-
-  (PATCH "/:reference-genome-id" []
-    :path-params [reference-genome-id :- ReferenceGenomeIdParam]
-    :query [params SecuredQueryParams]
-    :body [body (describe ReferenceGenomeRequest "The Reference Genome fields to update.")]
-    :return ReferenceGenome
-    :summary "Update a Reference Genome"
-    :description "This endpoint modifies the name, path, and deleted fields of a Reference Genome in
-    the Discovery Environment."
-    (ok (update-reference-genome (assoc body :id reference-genome-id))))
-
-  (DELETE "/:reference-genome-id" []
-    :path-params [reference-genome-id :- ReferenceGenomeIdParam]
-    :query [params ReferenceGenomeDeletionParams]
-    :summary "Delete a Reference Genome"
-    :description "A Reference Genome can be marked as deleted in the DE without being completely
-    removed from the database using this service. <b>Note</b>: an attempt to delete a
-    Reference Genome that is already marked as deleted is treated as a no-op rather than an
-    error condition. If the Reference Genome doesn't exist in the database at all, however,
-    then that is treated as an error condition."
-    (ok (delete-reference-genome reference-genome-id params))))
 
 (defroutes admin-workspaces
   (GET "/" []
