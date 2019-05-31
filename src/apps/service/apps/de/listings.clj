@@ -488,6 +488,12 @@
     (if admin? (jobs-db/get-job-stats app-id params)
                (jobs-db/get-public-job-stats app-id params))))
 
+(defn- format-app-extra-info
+  [app-id admin?]
+  (if admin?
+    (get-app-extra-info app-id)
+    nil))
+
 (defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
   (remove-nil-vals
     {:name       image_name
@@ -511,6 +517,7 @@
              :references           (map :reference_text (:app_references details))
              :tools                (map format-app-tool tools)
              :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
+             :extra                (format-app-extra-info app-id admin?)
              :categories           (get-groups-for-app app-id)
              :suggested_categories (get-suggested-groups-for-app app-id)
              :system_id            c/system-id)

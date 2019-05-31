@@ -7,7 +7,7 @@
          parameter_values parameter_types value_type validation_rules validation_rule_arguments
          rule_type rule_subtype app_category_listing app_listing tool_listing ratings collaborators
          genome_reference created_by last_modified_by data_source tool_types
-         tool_request_status_codes tool_architectures tool_requests
+         tool_request_status_codes tool_architectures tool_requests apps_htcondor_extra
          tool_request_statuses container-images container-settings container-devices container-volumes container-volumes-from)
 
 ;; Users who have logged into the DE.  Multiple entities are associated with
@@ -49,6 +49,9 @@
 
 ;; References associated with an app.
 (defentity app_references)
+
+;; Extra info for HTCondor
+(defentity apps_htcondor_extra)
 
 ;; Information about who integrated an app or a deployed component.
 (defentity integration_data

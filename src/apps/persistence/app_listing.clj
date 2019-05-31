@@ -15,6 +15,14 @@
   [app-id]
   (first (select app_listing (where {:id app-id}))))
 
+(defn get-app-extra-info
+  [app-id]
+  (when-let [htcondor (first
+                   (select apps_htcondor_extra
+                           (fields [:extra_requirements])
+                           (where {:apps_id app-id})))]
+    {:htcondor htcondor}))
+
 (defn- get-all-group-ids-subselect
   "Gets a subselect that fetches the app_categories and its subgroup IDs with
    the stored procedure app_category_hierarchy_ids."

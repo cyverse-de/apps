@@ -17,6 +17,7 @@
             [apps.persistence.app-metadata.delete :as delete]
             [apps.persistence.app-metadata.relabel :as relabel]
             [clojure.set :as set]
+            [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
             [korma.core :as sql]))
 
@@ -404,6 +405,13 @@
   (transaction
    (delete app_references (where {:app_id app-id}))
    (dorun (map (partial add-app-reference app-id) references))))
+
+(defn set-htcondor-extra
+  [app-id extra-requirements]
+  (transaction
+    (delete apps_htcondor_extra (where {:apps_id app-id}))
+    (if-not (or (nil? extra-requirements) (empty? (string/trim extra-requirements)))
+      (insert apps_htcondor_extra (values {:apps_id app-id, :extra_requirements extra-requirements})))))
 
 (defn- get-job-type-id-for-system* [system-id]
   (:id (first (select :job_types (fields :id) (where {:system_id system-id})))))
