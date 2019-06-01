@@ -42,9 +42,10 @@
             [apps.tools.permissions :as tool-permissions]
             [apps.tools.sharing :as tool-sharing]
             [common-swagger-api.routes]                     ;; for :description-file
-            [common-swagger-api.schema.containers :as containers-schema]
             [common-swagger-api.schema.apps.permission :as perm-schema]
+            [common-swagger-api.schema.containers :as containers-schema]
             [common-swagger-api.schema.tools :as schema]
+            [common-swagger-api.schema.tools.admin :as admin-schema]
             [compojure.api.middleware :as middleware]))
 
 (def entrypoint-warning
@@ -255,9 +256,9 @@
   (POST "/" []
         :query [params SecuredQueryParams]
         :middleware [schema/coerce-tool-list-import-request]
-        :body [body (describe ToolsImportRequest "The Tools to import.")]
+        :body [body (describe admin-schema/ToolsImportRequest "The Tools to import.")]
         :responses (merge CommonResponses
-                          {200 {:schema      ToolIdsList
+                          {200 {:schema      admin-schema/ToolIdsList
                                 :description "A list of the new Tool IDs."}
                            400 {:schema      ErrorResponseExists
                                 :description "A Tool with the given `name` already exists."}})
@@ -297,7 +298,7 @@
          :path-params [tool-id :- schema/ToolIdParam]
          :query [{:keys [user overwrite-public]} ToolUpdateParams]
          :middleware [schema/coerce-tool-import-requests]
-         :body [body (describe ToolUpdateRequest "The Tool to update.")]
+         :body [body (describe admin-schema/ToolUpdateRequest "The Tool to update.")]
          :responses (merge CommonResponses
                            {200 {:schema      schema/ToolDetails
                                  :description "The Tool details."}
@@ -524,7 +525,7 @@ included in it. Any existing settings not included in the request's `container` 
         :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :middleware [schema/coerce-tool-import-requests]
-        :body [body (describe ToolUpdateRequest "The Tool to update.")]
+        :body [body (describe admin-schema/ToolUpdateRequest "The Tool to update.")]
         :responses (merge CommonResponses
                           {200 {:schema      schema/ToolDetails
                                 :description "The Tool details."}
