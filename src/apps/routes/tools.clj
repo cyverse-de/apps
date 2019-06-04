@@ -1,7 +1,7 @@
 (ns apps.routes.tools
   (:use [common-swagger-api.schema]
         [common-swagger-api.schema.apps :only [AppListing ToolAppListingResponses]]
-        [common-swagger-api.schema.apps.admin.apps :only [AdminAppListing]]
+        [common-swagger-api.schema.apps.admin.apps :only [AdminAppListing ToolAdminAppListingResponses]]
         [common-swagger-api.schema.containers
          :only [DataContainer
                 Device
@@ -249,88 +249,52 @@
   (GET "/" []
        :query [params ToolSearchParams]
        :return schema/ToolListing
-       :summary "List Tools"
-       :description "This endpoint allows admins to get a listing of all Tools."
+       :summary schema/ToolListingSummary
+       :description admin-schema/ToolListingDocs
        (ok (admin-list-tools params)))
 
   (POST "/" []
         :query [params SecuredQueryParams]
         :middleware [schema/coerce-tool-list-import-request]
-        :body [body (describe admin-schema/ToolsImportRequest "The Tools to import.")]
-        :responses (merge CommonResponses
-                          {200 {:schema      admin-schema/ToolIdsList
-                                :description "A list of the new Tool IDs."}
-                           400 {:schema      ErrorResponseExists
-                                :description "A Tool with the given `name` already exists."}})
-        :summary "Add new Tools."
-        :description (str "This service adds new Tools to the DE."
-                          entrypoint-warning
-                          volumes-warning)
+        :body [body admin-schema/ToolsImportRequest]
+        :responses admin-schema/ToolsImportResponses
+        :summary admin-schema/ToolsImportSummary
+        :description-file "docs/tools/admin/tools-import.md"
         (ok (admin-add-tools body)))
 
   (DELETE "/:tool-id" []
           :path-params [tool-id :- schema/ToolIdParam]
           :query [{:keys [user]} SecuredQueryParams]
           :coercion middleware/no-response-coercion
-          :responses (merge CommonResponses
-                            {200 {:description "The Tool was successfully deleted."}
-                             400 {:schema      ErrorResponseNotWritable
-                                  :description "The Tool is already in use by apps and could not be deleted."}
-                             404 {:schema      ErrorResponseNotFound
-                                  :description "A Tool with the given `tool-id` does not exist."}})
-          :summary "Delete a Tool"
-          :description "Deletes a tool, as long as it is not in use by any apps."
+          :responses admin-schema/ToolDeleteResponses
+          :summary admin-schema/ToolDeleteSummary
+          :description admin-schema/ToolDeleteDocs
           (ok (admin-delete-tool user tool-id)))
 
   (GET "/:tool-id" []
        :path-params [tool-id :- schema/ToolIdParam]
        :query [{:keys [user]} SecuredQueryParams]
-       :responses (merge CommonResponses
-                         {200 {:schema      schema/ToolDetails
-                               :description "The Tool details."}
-                          404 {:schema      ErrorResponseNotFound
-                               :description "The `tool-id` does not exist."}})
-       :summary "Get a Tool"
-       :description "This endpoint returns the details for one tool."
+       :responses admin-schema/ToolDetailsResponses
+       :summary schema/ToolDetailsSummary
+       :description admin-schema/ToolDetailsDocs
        (ok (get-tool user tool-id)))
 
   (PATCH "/:tool-id" []
          :path-params [tool-id :- schema/ToolIdParam]
          :query [{:keys [user overwrite-public]} ToolUpdateParams]
          :middleware [schema/coerce-tool-import-requests]
-         :body [body (describe admin-schema/ToolUpdateRequest "The Tool to update.")]
-         :responses (merge CommonResponses
-                           {200 {:schema      schema/ToolDetails
-                                 :description "The Tool details."}
-                            400 {:schema      ErrorResponseNotWritable
-                                 :description "The Tool is in use by public apps its container could not be updated."}
-                            404 {:schema      ErrorResponseNotFound
-                                 :description "The `tool-id` does not exist."}})
-         :summary "Update a Tool"
-         :description
-"This service updates a Tool definition in the DE.
-
-**Note**: If the `container` object is omitted in the request, then existing container settings will not
-be modified, but if the `container` object is present in the request, then all container settings must be
-included in it. Any existing settings not included in the request's `container` object will be removed.
-
-#### Danger Zone
-
-    Do not update container settings that are in use by tools in public apps unless it is certain the new
-    container settings will not break reproducibility for those apps.
-    If required, the `overwrite-public` flag may be used to update these settings for public tools."
+         :body [body admin-schema/ToolUpdateRequest]
+         :responses admin-schema/ToolUpdateResponses
+         :summary admin-schema/ToolUpdateSummary
+         :description-file "docs/tools/admin/tool-update.md"
          (ok (admin-update-tool user overwrite-public (assoc body :id tool-id))))
 
   (GET "/:tool-id/apps" []
        :path-params [tool-id :- schema/ToolIdParam]
        :query [params SecuredQueryParams]
-       :responses (merge CommonResponses
-                         {200 {:schema      AdminAppListing
-                               :description "The listing of Apps using the given Tool."}
-                          404 {:schema      ErrorResponseNotFound
-                               :description "The `tool-id` does not exist."}})
-       :summary "Get Apps by Tool"
-       :description "This endpoint returns a listing of Apps using the given Tool."
+       :responses ToolAdminAppListingResponses
+       :summary schema/ToolAppListingSummary
+       :description schema/ToolAppListingDocs
        (ok (coerce! AdminAppListing
                     (app-listings/list-apps-by-tool current-user tool-id params true))))
 
@@ -516,24 +480,16 @@ included in it. Any existing settings not included in the request's `container` 
         :path-params [tool-id :- schema/ToolIdParam integration-data-id :- IntegrationDataIdPathParam]
         :query [params SecuredQueryParams]
         :return IntegrationData
-        :summary "Update the Integration Data Record for a Tool"
-        :description "This service allows administrators to change the integration data record
-        associated with a tool."
+        :summary admin-schema/ToolIntegrationUpdateSummary
+        :description admin-schema/ToolIntegrationUpdateDocs
         (ok (apps/update-tool-integration-data current-user de-system-id tool-id integration-data-id)))
 
   (POST "/:tool-id/publish" []
         :path-params [tool-id :- schema/ToolIdParam]
         :query [params SecuredQueryParams]
         :middleware [schema/coerce-tool-import-requests]
-        :body [body (describe admin-schema/ToolUpdateRequest "The Tool to update.")]
-        :responses (merge CommonResponses
-                          {200 {:schema      schema/ToolDetails
-                                :description "The Tool details."}
-                           400 {:schema      ErrorResponseNotWritable
-                                :description "The Tool is already public."}
-                           404 {:schema      ErrorResponseNotFound
-                                :description "The `tool-id` does not exist."}})
-        :summary "Make a Private Tool Public"
-        :description "This service makes a Private Tool public and available to all users.
-        The request body fields are optional and allow the admin to make updates to the tool in the same request."
+        :body [body admin-schema/ToolUpdateRequest]
+        :responses admin-schema/ToolPublishResponses
+        :summary admin-schema/ToolPublishSummary
+        :description admin-schema/ToolPublishDocs
         (ok (admin-publish-tool current-user (assoc body :id tool-id)))))
