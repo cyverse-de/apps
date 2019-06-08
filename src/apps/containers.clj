@@ -26,12 +26,12 @@
             [korma.core :as sql])
   (:import java.util.Base64))
 
-(defn encode-auth [registry]
+(defn- encode-auth [registry]
   (.encodeToString (Base64/getEncoder)
                    (.getBytes
                      (json/encode (select-keys registry [:username :password])))))
 
-(defn auth-info [image-name]
+(defn- auth-info [image-name]
   (let [registry-name (string/replace image-name #"/?(?!.*/).*$" "")
         registry (get-registry registry-name)]
     (when registry
@@ -65,7 +65,7 @@
   (assert-not-nil [:image_id id] (image-info id))
   {:tools (map remove-nil-vals (get-tools-in-public-apps-by-image-id id))})
 
-(defn tool-image-info
+(defn- tool-image-info
   "Returns a map containing information about a container image. Info is looked up by the tool UUID"
   [tool-uuid & {:keys [auth?] :or {auth? false}}]
   (let [image-id (:container_images_id
@@ -91,12 +91,7 @@
                                       :url            url
                                       :osg_image_path osg_image_path}))))
 
-(defn image?
-  "Returns true if the given name and tag exist in the container_images table."
-  [image-map]
-  (not (nil? (find-matching-image image-map))))
-
-(defn image-id
+(defn- image-id
   "Returns the UUID used as the primary key in the container_images table."
   [image-map]
   (:id (find-matching-image image-map)))
@@ -128,18 +123,7 @@
   (delete container-images (where {:id id}))
   nil)
 
-(defn device
-  "Returns the device indicated by the UUID."
-  [device-uuid]
-  (first (select container-devices
-                 (where {:id (uuidify device-uuid)}))))
-
-(defn device?
-  "Returns true if the given UUID is associated with a device."
-  [device-uuid]
-  (pos? (count (select container-devices (where {:id (uuidify device-uuid)})))))
-
-(defn device-mapping?
+(defn- device-mapping?
   "Returns true if the combination of container_settings UUID, host-path, and
    container-path already exists in the container_devices table."
   [settings-uuid host-path container-path]
@@ -147,21 +131,7 @@
                                                      (= :host_path host-path)
                                                      (= :container_path container-path)))))))
 
-(defn device-mapping
-  [settings-uuid host-path container-path]
-  (first (select container-devices (where (and (= :host_path host-path)
-                                               (= :container_path container-path)
-                                               (= :container_settings_id (uuidify settings-uuid)))))))
-
-(defn settings-has-device?
-  "Returns true if the container_settings record specified by the given UUID has
-   at least one device associated with it."
-  [settings-uuid device-uuid]
-  (pos? (count (select container-devices
-                       (where {:container_settings_id (uuidify settings-uuid)
-                               :id                    (uuidify device-uuid)})))))
-
-(defn add-device
+(defn- add-device
   "Associates a device with the given container_settings UUID."
   [settings-uuid device-map]
   (when (device-mapping? settings-uuid (:host_path device-map) (:container_path device-map))
@@ -172,36 +142,7 @@
                    (select-keys device-map [:host_path :container_path])
                    {:container_settings_id (uuidify settings-uuid)}))))
 
-(defn modify-device
-  [device-uuid update-map]
-  (when-not (device? device-uuid)
-    (cxu/not-found (str "device does not exist: " device-uuid)))
-  (sql/update container-devices
-    (set-fields (select-keys update-map [:host_path :container_path :container_settings_id]))
-    (where {:id (uuidify device-uuid)})))
-
-(defn delete-device
-  [device-uuid]
-  (if (device? device-uuid)
-    (delete container-devices
-            (where {:id (uuidify device-uuid)}))))
-
-(defn volumes
-  "Returns the devices associated with the given container_settings UUID."
-  [settings-uuid]
-  (select container-volumes (where {:container_settings_id (uuidify settings-uuid)})))
-
-(defn volume
-  "Returns the volume indicated by the UUID."
-  [volume-uuid]
-  (first (select container-volumes (where {:id (uuidify volume-uuid)}))))
-
-(defn volume?
-  "Returns true if volume indicated by the UUID exists."
-  [volume-uuid]
-  (pos? (count (select container-volumes (where {:id (uuidify volume-uuid)})))))
-
-(defn volume-mapping?
+(defn- volume-mapping?
   "Returns true if the combination of container_settings UUID, host-path, and
    container-path already exists in the database."
   [settings-uuid host-path container-path]
@@ -210,22 +151,7 @@
                                    (= :host_path host-path)
                                    (= :container_path container-path)))))))
 
-(defn volume-mapping
-  [settings-uuid host-path container-path]
-  (first (select container-volumes
-                 (where (and (= :container_settings_id (uuidify settings-uuid))
-                             (= :host_path host-path)
-                             (= :container_path container-path))))))
-
-(defn settings-has-volume?
-  "Returns true if the container_settings UUID has at least one volume
-   associated with it."
-  [settings-uuid volume-uuid]
-  (pos? (count (select container-volumes
-                       (where {:container_settings_id (uuidify settings-uuid)
-                               :id                    (uuidify volume-uuid)})))))
-
-(defn add-volume
+(defn- add-volume
   "Adds a volume record to the database for the specified container_settings UUID."
   [settings-uuid volume-map]
   (when (volume-mapping? settings-uuid (:host_path volume-map) (:container_path volume-map))
@@ -236,23 +162,7 @@
                    (select-keys volume-map [:host_path :container_path])
                    {:container_settings_id (uuidify settings-uuid)}))))
 
-(defn modify-volume
-  "Modifies the container_volumes record indicated by the uuid."
-  [settings-uuid volume-uuid volume-map]
-  (when-not (volume? volume-uuid)
-    (cxu/not-found (str "volume does not exist: " volume-uuid)))
-  (sql/update container-volumes
-    (set-fields (merge {:container_settings_id (uuidify settings-uuid)}
-                       (select-keys volume-map [:host_path :container_path])))
-    (where {:id (uuidify volume-uuid)})))
-
-(defn delete-volume
-  "Deletes the volume associated with uuid in the container_volumes table."
-  [volume-uuid]
-  (when (volume? volume-uuid)
-    (delete container-volumes (where {:id (uuidify volume-uuid)}))))
-
-(defn data-container
+(defn- data-container
   "Returns a map describing a data container."
   [data-container-id]
   (assert-not-nil [:data-container-id data-container-id]
@@ -262,7 +172,7 @@
               (with container-images (fields :name :tag :url))
               (where {:id data-container-id})))))
 
-(defn add-data-container
+(defn- add-data-container
   [data-container-info]
   (let [image-uuid (find-or-add-image-id data-container-info)
         insert-values (assoc (select-keys data-container-info [:name_prefix :read_only])
@@ -293,19 +203,6 @@
            (where (assoc (select-keys data-container-info [:name_prefix :read_only])
                          :container_images_id (image-id data-container-info)))))))
 
-(defn volumes-from
-  "Returns all records from container_volumes_from associated with the UUID passed in. There
-   should only be a single result, but we're returning a seq just in case."
-  [volumes-from-uuid]
-  (first (select container-volumes-from
-                 (where {:id (uuidify volumes-from-uuid)}))))
-
-(defn volumes-from?
-  "Returns true if the volume_from record indicated by the UUID exists."
-  [volumes-from-uuid]
-  (pos? (count (select container-volumes-from
-                       (where {:id (uuidify volumes-from-uuid)})))))
-
 (defn volumes-from-mapping?
   "Returns true if the combination of the container_settings UUID and container
    already exists in the container_volumes_from table."
@@ -323,15 +220,7 @@
                  (where {:container_settings_id (uuidify settings-uuid)
                          :data_containers_id     (uuidify data-container-uuid)}))))
 
-(defn settings-has-volumes-from?
-  "Returns true if the indicated container_settings record has at least one
-   container_volumes_from record associated with it."
-  [settings-uuid volumes-from-uuid]
-  (pos? (count (select container-volumes-from
-                       (where {:container_settings_id (uuidify settings-uuid)
-                               :id                    (uuidify volumes-from-uuid)})))))
-
-(defn add-volumes-from
+(defn- add-volumes-from
   "Adds a record to container_volumes_from associated with the given
    container_settings UUID."
   [settings-uuid data-container-uuid]
@@ -339,20 +228,7 @@
           (values {:container_settings_id (uuidify settings-uuid)
                    :data_containers_id    (uuidify data-container-uuid)})))
 
-(defn delete-volumes-from
-  "Deletes a record from container_volumes_from."
-  [volumes-from-uuid]
-  (when (volumes-from? volumes-from-uuid)
-    (delete container-volumes-from
-            (where {:id (uuidify volumes-from-uuid)}))))
-
-(defn settings
-  "Returns the settings associated with the given UUID."
-  [settings-uuid]
-  (first (select container-settings
-                 (where {:id (uuidify settings-uuid)}))))
-
-(defn settings?
+(defn- settings?
   "Returns true if the given UUID is associated with a set of container settings."
   [settings-uuid]
   (pos? (count (select container-settings (where {:id (uuidify settings-uuid)})))))
@@ -377,7 +253,7 @@
      :uid
      :id]))
 
-(defn add-settings
+(defn- add-settings
   "Adds a new settings record to the database based on the parameter map."
   [settings-map]
   (insert container-settings
@@ -388,16 +264,7 @@
   [tool-uuid]
   (pos? (count (select container-settings (where {:tools_id (uuidify tool-uuid)})))))
 
-(defn tool-settings-uuid
-  "Returns the container_settings UUID for the given tool UUID."
-  [tool-uuid]
-  (:id (first (select container-settings (where {:tools_id (uuidify tool-uuid)})))))
-
-(defn- assert-tool-has-settings [tool-uuid]
-  (when-not (tool-has-settings? tool-uuid)
-    (cxu/not-found (str "Tool " tool-uuid " does not have a container."))))
-
-(defn modify-settings
+(defn- modify-settings
   "Modifies an existing set of container settings. Requires the container-settings-uuid
    and a new set of values."
   [settings-uuid settings-map]
@@ -408,12 +275,7 @@
       (set-fields values)
       (where {:id (uuidify settings-uuid)}))))
 
-(defn tool-settings
-  "Returns the top-level settings for the tool container."
-  [tool-uuid]
-  (first (select container-settings (where {:tools_id (uuidify tool-uuid)}))))
-
-(defn filter-returns
+(defn- filter-returns
   [retval]
   (-> retval remove-nil-vals remove-empty-vals))
 
@@ -476,83 +338,6 @@
            (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
 
-(defn get-settings-field
-  [tool-uuid field-kw]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings (tool-settings tool-uuid)]
-      {field-kw (field-kw settings)})))
-
-(defn update-settings-field
-  [tool-id field-kw new-value]
-  (when (tool-has-settings? tool-id)
-    (let [settings-id (tool-settings-uuid tool-id)]
-      (modify-settings settings-id {field-kw new-value})
-      (get-settings-field tool-id field-kw))))
-
-(defn tool-device
-  "Returns a map with information about a particular device associated with the tools container."
-  [tool-uuid device-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-device? settings-uuid device-uuid)
-        (dissoc (device device-uuid) :container_settings_id)))))
-
-(defn add-tool-device
-  [tool-uuid device-map]
-  (assert-tool-has-settings tool-uuid)
-  (let [settings-uuid (tool-settings-uuid tool-uuid)]
-    (dissoc
-     (if-not (device-mapping? settings-uuid (:host_path device-map) (:container_path device-map))
-       (add-device settings-uuid device-map)
-       (device-mapping settings-uuid (:host_path device-map) (:container_path device-map)))
-     :container_settings_id)))
-
-(defn device-field
-  [tool-uuid device-uuid field-kw]
-  (let [fields (tool-device tool-uuid device-uuid)]
-    (or (select-keys fields [field-kw]) nil)))
-
-(defn update-device-field
-  [tool-id device-id field-kw new-value]
-  (when (tool-has-settings? tool-id)
-    (let [settings-id (tool-settings-uuid tool-id)]
-      (when (and (device? device-id)
-                 (settings-has-device? settings-id device-id))
-        (modify-device device-id {field-kw new-value})
-        (device-field tool-id device-id field-kw)))))
-
-(defn tool-volume
-  "Returns a map with info about a particular volume associated with the tool's container."
-  [tool-uuid volume-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-volume? settings-uuid volume-uuid)
-        (dissoc (volume volume-uuid) :container_settings_id)))))
-
-(defn add-tool-volume
-  [tool-uuid volume-map]
-  (assert-tool-has-settings tool-uuid)
-  (let [settings-uuid (tool-settings-uuid tool-uuid)]
-    (dissoc
-     (if-not (volume-mapping? settings-uuid (:host_path volume-map) (:container_path volume-map))
-       (add-volume settings-uuid volume-map)
-       (volume-mapping settings-uuid (:host_path volume-map) (:container_path volume-map)))
-     :container_settings_id)))
-
-(defn volume-field
-  [tool-uuid volume-uuid field-kw]
-  (let [fields (tool-volume tool-uuid volume-uuid)]
-    (or (select-keys fields [field-kw]) nil)))
-
-(defn update-volume-field
-  [tool-id volume-id field-kw new-value]
-  (when (tool-has-settings? tool-id)
-    (let [settings-id (tool-settings-uuid tool-id)]
-      (when (and (volume? volume-id)
-                 (settings-has-volume? settings-id volume-id))
-        (modify-volume settings-id volume-id {field-kw new-value})
-        (volume-field tool-id volume-id field-kw)))))
-
 (defn- add-settings-volumes-from
   [settings-id vf-map]
   (transaction
@@ -562,12 +347,7 @@
         (add-volumes-from settings-id data-container-id))
       (volumes-from-settings settings-id data-container-id))))
 
-(defn add-tool-volumes-from
-  [tool-uuid vf-map]
-  (assert-tool-has-settings tool-uuid)
-  (add-settings-volumes-from (tool-settings-uuid tool-uuid) vf-map))
-
-(defn port-mapping?
+(defn- port-mapping?
   "Returns true if the the specific combination of fields exists in the
    database."
   [settings-uuid host-port container-port bind-to-host]
@@ -577,7 +357,7 @@
                                   (= :container_port container-port)
                                   (= :bind_to_host bind-to-host)))))))
 
-(defn add-port
+(defn- add-port
   [settings-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
   (when (port-mapping? settings-uuid host-port container-port bind-to-host)
     (cxu/exists (str "port mapping already exists: " settings-uuid " " host-port " " container-port " " bind-to-host)))
@@ -598,7 +378,7 @@
                 :ssl_cert_path
                 :ssl_key_path]))
 
-(defn add-proxy-settings
+(defn- add-proxy-settings
   "Adds a new proxy settings record to the database based on the parameter map"
   [proxy-settings]
   (insert interapps-proxy-settings
@@ -661,30 +441,3 @@
         (add-port settings-id port))
 
       (tool-container-info tool-id))))
-
-(defn delete-tool-device
-  [tool-uuid device-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-device? settings-uuid device-uuid)
-        (log/warn "deleting device" device-uuid "from tool" tool-uuid)
-        (delete-device device-uuid)
-        nil))))
-
-(defn delete-tool-volume
-  [tool-uuid volume-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-volume? settings-uuid volume-uuid)
-        (log/warn "deleting volume" volume-uuid "for tool" tool-uuid)
-        (delete-volume volume-uuid)
-        nil))))
-
-(defn delete-tool-volumes-from
-  [tool-uuid vf-uuid]
-  (when (tool-has-settings? tool-uuid)
-    (let [settings-uuid (tool-settings-uuid tool-uuid)]
-      (when (settings-has-volumes-from? settings-uuid vf-uuid)
-        (log/warn "deleting volumes-from" vf-uuid "for tool" tool-uuid)
-        (delete-volumes-from vf-uuid)
-        nil))))

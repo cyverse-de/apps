@@ -7,6 +7,18 @@
         [korma.db])
   (:require [korma.core :as sql]))
 
+;; Re-def private functions so they can be tested in this namespace.
+(def tool-image-info #'apps.containers/tool-image-info)
+(def image-id #'apps.containers/image-id)
+(def device-mapping? #'apps.containers/device-mapping?)
+(def add-device #'apps.containers/add-device)
+(def volume-mapping? #'apps.containers/volume-mapping?)
+(def add-volume #'apps.containers/add-volume)
+(def add-data-container #'apps.containers/add-data-container)
+(def add-volumes-from #'apps.containers/add-volumes-from)
+(def settings? #'apps.containers/settings?)
+(def add-settings #'apps.containers/add-settings)
+
 (def ^:dynamic image-info-map nil)
 (def ^:dynamic data-container-map nil)
 (def ^:dynamic tool-map nil)
@@ -85,10 +97,6 @@
 (use-fixtures :each with-test-data)
 
 (deftest image-tests
-  (is (not (image? {:name "test" :tag "test"})))
-
-  (is (image? {:name "discoenv/de-db" :tag "latest"}))
-
   (is (not (nil? (image-id {:name "discoenv/de-db" :tag "latest"}))))
 
   (is (= {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com" :deprecated false}
@@ -98,18 +106,6 @@
 (deftest settings-tests
   (is (not (nil? (:id settings-map))))
 
-  (is (= {:name "test"
-          :min_cpu_cores nil
-          :min_memory_limit nil
-          :min_disk_space nil
-          :cpu_shares 1024
-          :memory_limit 2048
-          :network_mode "bridge"
-          :working_directory "/work"
-          :tools_id (:id tool-map)
-          :entrypoint nil}
-         (dissoc (settings (:id settings-map)) :id)))
-
   (is (settings? (:id settings-map)))
 
   (is (tool-has-settings? (:id tool-map))))
@@ -117,39 +113,17 @@
 (deftest devices-tests
   (is (not (nil? (:id devices-map))))
 
-  (is (= {:host_path "/dev/null" :container_path "/dev/yay" :container_settings_id (:id settings-map)}
-         (dissoc (device (:id devices-map)) :id)))
-
-  (is (device? (:id devices-map)))
-
-  (is (device-mapping? (:id settings-map) "/dev/null" "/dev/yay"))
-
-  (is (settings-has-device? (:id settings-map) (:id devices-map))))
+  (is (device-mapping? (:id settings-map) "/dev/null" "/dev/yay")))
 
 (deftest volumes-tests
   (is (not (nil? (:id volume-map))))
 
-  (is (= {:host_path "/tmp" :container_path "/foo" :container_settings_id (:id settings-map)}
-         (dissoc (volume (:id volume-map)) :id)))
-
-  (is (volume? (:id volume-map)))
-
-  (is (volume-mapping? (:id settings-map) "/tmp" "/foo"))
-
-  (is (settings-has-volume? (:id settings-map) (:id volume-map))))
+  (is (volume-mapping? (:id settings-map) "/tmp" "/foo")))
 
 (deftest volumes-from-test
   (is (not (nil? (:id volumes-from-map))))
 
-  (is (= {:container_settings_id (:id settings-map)
-          :data_containers_id    (:id data-container-map)}
-         (dissoc (volumes-from (:id volumes-from-map)) :id)))
-
-  (is (volumes-from? (:id volumes-from-map)))
-
-  (is (volumes-from-mapping? (:id settings-map) (:id data-container-map)))
-
-  (is (settings-has-volumes-from? (:id settings-map) (:id volumes-from-map))))
+  (is (volumes-from-mapping? (:id settings-map) (:id data-container-map))))
 
 
 (deftest updated-tool-tests
