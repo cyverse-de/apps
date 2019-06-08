@@ -17,7 +17,8 @@
          :only [ToolRequestStatusCodeId
                 ToolRequestDetails
                 ToolRequestIdParam
-                ToolRequestListing]]
+                ToolRequestListing
+                ToolInstallRequestListingSummary]]
         [apps.metadata.tool-requests]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.analysis.listing]
@@ -40,26 +41,23 @@
   (GET "/" []
     :query [params ToolRequestListingParams]
     :return ToolRequestListing
-    :summary "List Tool Requests"
-    :description "This endpoint lists high level details about tool requests that have been submitted.
-    Administrators may use this endpoint to track tool requests for all users."
+    :summary ToolInstallRequestListingSummary
+    :description tools-admin-schema/ToolInstallRequestListingDocs
     (ok (list-tool-requests params)))
 
   (DELETE "/status-codes/:status-code-id" []
     :path-params [status-code-id :- ToolRequestStatusCodeId]
     :query [params SecuredQueryParams]
-    :summary "Delete a Tool Request Status Code"
-    :description "This service allows administrators to delete a tool request status code provided that
-    the status code isn't in use in a tool request."
+    :summary tools-admin-schema/ToolInstallRequestStatusCodeDeleteSummary
+    :description tools-admin-schema/ToolInstallRequestStatusCodeDeleteDocs
     (delete-tool-request-status-code status-code-id)
     (ok))
 
   (DELETE "/:request-id" []
     :path-params [request-id :- ToolRequestIdParam]
     :query [params SecuredQueryParams]
-    :summary "Delete a Tool Request"
-    :description "This service allows administrators to delete a tool request. This endpoint is primarily
-    intended for use in the QA cleanup suite."
+    :summary tools-admin-schema/ToolInstallRequestDeleteSummary
+    :description tools-admin-schema/ToolInstallRequestDeleteDocs
     (delete-tool-request request-id)
     (ok))
 
@@ -67,19 +65,17 @@
     :path-params [request-id :- ToolRequestIdParam]
     :query [params SecuredQueryParams]
     :return ToolRequestDetails
-    :summary "Obtain Tool Request Details"
-    :description "This service obtains detailed information about a tool request. This is the service
-    that the DE support team uses to obtain the request details."
+    :summary tools-admin-schema/ToolInstallRequestDetailsSummary
+    :description tools-admin-schema/ToolInstallRequestDetailsDocs
     (ok (get-tool-request request-id)))
 
   (POST "/:request-id/status" []
     :path-params [request-id :- ToolRequestIdParam]
     :query [params SecuredQueryParams]
-    :body [body (describe tools-admin-schema/ToolRequestStatusUpdate "A Tool Request status update.")]
+    :body [body tools-admin-schema/ToolRequestStatusUpdate]
     :return ToolRequestDetails
-    :summary "Update the Status of a Tool Request"
-    :description "This endpoint is used by Discovery Environment administrators to update the status
-    of a tool request."
+    :summary tools-admin-schema/ToolInstallRequestStatusUpdateSummary
+    :description tools-admin-schema/ToolInstallRequestStatusUpdateDocs
     (ok (update-tool-request request-id (config/uid-domain) current-user body))))
 
 (defroutes admin-analyses
