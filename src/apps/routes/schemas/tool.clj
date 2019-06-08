@@ -13,9 +13,6 @@
   (merge SecuredQueryParams
          admin-schema/ToolUpdateParams))
 
-(defschema ToolRequestStatusUpdate
-  (dissoc schema/ToolRequestStatus :updated_by :status_date))
-
 (defschema ToolRequestListingParams
   (merge SecuredQueryParams
          schema/ToolRequestListingParams))

@@ -33,7 +33,8 @@
             [apps.service.apps.de.listings :as listings]
             [apps.service.workspace :as workspace]
             [apps.util.config :as config]
-            [common-swagger-api.schema.apps.admin.apps :as schema]))
+            [common-swagger-api.schema.apps.admin.apps :as schema]
+            [common-swagger-api.schema.tools.admin :as tools-admin-schema]))
 
 (defroutes admin-tool-requests
   (GET "/" []
@@ -74,7 +75,7 @@
   (POST "/:request-id/status" []
     :path-params [request-id :- ToolRequestIdParam]
     :query [params SecuredQueryParams]
-    :body [body (describe ToolRequestStatusUpdate "A Tool Request status update.")]
+    :body [body (describe tools-admin-schema/ToolRequestStatusUpdate "A Tool Request status update.")]
     :return ToolRequestDetails
     :summary "Update the Status of a Tool Request"
     :description "This endpoint is used by Discovery Environment administrators to update the status
