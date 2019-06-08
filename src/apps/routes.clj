@@ -11,6 +11,7 @@
             [apps.routes.admin :as admin-routes]
             [apps.routes.admin.apps :as admin-apps-routes]
             [apps.routes.admin.reference-genomes :as admin-reference-genomes-routes]
+            [apps.routes.admin.tool-requests :as admin-tool-request-routes]
             [apps.routes.analyses :as analysis-routes]
             [apps.routes.apps :as app-routes]
             [apps.routes.apps.categories :as app-category-routes]
@@ -185,7 +186,7 @@
       tool-routes/admin-tools)
     (context "/admin/tool-requests" []
       :tags ["admin-tool-requests"]
-      admin-routes/admin-tool-requests)
+      admin-tool-request-routes/admin-tool-requests)
     (context "/admin/oauth" []
       :tags ["admin-oauth"]
       oauth-routes/admin-oauth)

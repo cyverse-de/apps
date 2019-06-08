@@ -13,18 +13,10 @@
          :only [OntologyClassIRIParam
                 OntologyHierarchy
                 OntologyVersionParam]]
-        [common-swagger-api.schema.tools
-         :only [ToolRequestStatusCodeId
-                ToolRequestDetails
-                ToolRequestIdParam
-                ToolRequestListing
-                ToolInstallRequestListingSummary]]
-        [apps.metadata.tool-requests]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.analysis.listing]
         [apps.routes.schemas.app]
         [apps.routes.schemas.app.category]
-        [apps.routes.schemas.tool]
         [apps.routes.schemas.workspace]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
@@ -33,50 +25,7 @@
             [apps.service.apps.de.admin :as admin]
             [apps.service.apps.de.listings :as listings]
             [apps.service.workspace :as workspace]
-            [apps.util.config :as config]
-            [common-swagger-api.schema.apps.admin.apps :as schema]
-            [common-swagger-api.schema.tools.admin :as tools-admin-schema]))
-
-(defroutes admin-tool-requests
-  (GET "/" []
-    :query [params ToolRequestListingParams]
-    :return ToolRequestListing
-    :summary ToolInstallRequestListingSummary
-    :description tools-admin-schema/ToolInstallRequestListingDocs
-    (ok (list-tool-requests params)))
-
-  (DELETE "/status-codes/:status-code-id" []
-    :path-params [status-code-id :- ToolRequestStatusCodeId]
-    :query [params SecuredQueryParams]
-    :summary tools-admin-schema/ToolInstallRequestStatusCodeDeleteSummary
-    :description tools-admin-schema/ToolInstallRequestStatusCodeDeleteDocs
-    (delete-tool-request-status-code status-code-id)
-    (ok))
-
-  (DELETE "/:request-id" []
-    :path-params [request-id :- ToolRequestIdParam]
-    :query [params SecuredQueryParams]
-    :summary tools-admin-schema/ToolInstallRequestDeleteSummary
-    :description tools-admin-schema/ToolInstallRequestDeleteDocs
-    (delete-tool-request request-id)
-    (ok))
-
-  (GET "/:request-id" []
-    :path-params [request-id :- ToolRequestIdParam]
-    :query [params SecuredQueryParams]
-    :return ToolRequestDetails
-    :summary tools-admin-schema/ToolInstallRequestDetailsSummary
-    :description tools-admin-schema/ToolInstallRequestDetailsDocs
-    (ok (get-tool-request request-id)))
-
-  (POST "/:request-id/status" []
-    :path-params [request-id :- ToolRequestIdParam]
-    :query [params SecuredQueryParams]
-    :body [body tools-admin-schema/ToolRequestStatusUpdate]
-    :return ToolRequestDetails
-    :summary tools-admin-schema/ToolInstallRequestStatusUpdateSummary
-    :description tools-admin-schema/ToolInstallRequestStatusUpdateDocs
-    (ok (update-tool-request request-id (config/uid-domain) current-user body))))
+            [common-swagger-api.schema.apps.admin.apps :as schema]))
 
 (defroutes admin-analyses
   (context "/by-external-id" []
