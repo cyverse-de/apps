@@ -60,17 +60,17 @@
 
 (defn- get-apps-client
   ([user]
-     (get-apps-client user ""))
+   (get-apps-client user ""))
   ([user state-info]
-     (apps.service.apps.combined.CombinedApps.
-      (remove nil? (get-apps-client-list user state-info))
-      user)))
+   (apps.service.apps.combined.CombinedApps.
+    (remove nil? (get-apps-client-list user state-info))
+    user)))
 
 (defn- get-apps-client-for-username
   ([username]
-     (get-apps-client-for-username username ""))
+   (get-apps-client-for-username username ""))
   ([username state-info]
-     (get-apps-client (user/load-user-as-user username username) state-info)))
+   (get-apps-client (user/load-user-as-user username username) state-info)))
 
 (defn get-app-categories
   [user params]
