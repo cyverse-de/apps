@@ -22,9 +22,11 @@
 
 (defn get-app-docs
   "Retrieves documentation details for the given app ID."
-  [user app-id]
-  (de-validation/verify-app-permission user (ap/get-app app-id) "read")
-  (get-app-docs* app-id))
+  ([user app-id]
+   (get-app-docs user app-id false))
+  ([user app-id admin?]
+   (de-validation/verify-app-permission user (ap/get-app app-id) "read" admin?)
+   (get-app-docs* app-id)))
 
 (defn edit-app-docs
   "Updates an App's documentation and modified details in the database."
