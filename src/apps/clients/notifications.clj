@@ -199,18 +199,20 @@
        dorun))
 
 (defn- format-community-admin-notification
-  [app-name {:keys [id email]} community-names]
+  [integrator-name app-name {:keys [id email]} community-names]
   {:type           "apps"
    :user           id
-   :subject        (str "App " app-name " added to one or more communities")
+   :subject        (str "Community Add Request for app: " app-name)
    :email          true
-   :email_template "app_added_to_communities"
+   :email_template "app_community_request"
    :payload        {:email_address  email
                     :app_name       app-name
+                    :app_integrator integrator-name
                     :community_list (string/join "\n" community-names)}})
 
 (defn send-community-admin-notification
-  [username app-name admin community-names]
-  (guarded-send-notification (format-community-admin-notification app-name
+  [username integrator-name app-name admin community-names]
+  (guarded-send-notification (format-community-admin-notification integrator-name
+                                                                  app-name
                                                                   (groups-client/lookup-subject username admin)
                                                                   community-names)))
