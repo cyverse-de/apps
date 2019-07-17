@@ -18,6 +18,7 @@
             [apps.persistence.jobs :as jobs-db]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.permissions :as perms]
+            [apps.service.apps.de.docs :as docs]
             [apps.service.util :as svc-util]
             [apps.tools :as tools]
             [apps.tools.permissions :as tool-perms]
@@ -494,6 +495,13 @@
     (get-app-extra-info app-id)
     nil))
 
+(defn- format-app-documentation
+  [app-id username admin?]
+  (when admin?
+    (try+
+      (docs/get-app-docs username app-id admin?)
+      (catch [:type :clojure-commons.exception/not-found] _ nil))))
+
 (defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
   (remove-nil-vals
     {:name       image_name
@@ -518,6 +526,7 @@
              :tools                (map format-app-tool tools)
              :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
              :extra                (format-app-extra-info app-id admin?)
+             :documentation        (format-app-documentation app-id username admin?)
              :categories           (get-groups-for-app app-id)
              :suggested_categories (get-suggested-groups-for-app app-id)
              :system_id            c/system-id)
