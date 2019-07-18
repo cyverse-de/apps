@@ -164,7 +164,7 @@
   (zipmap admin-set (repeat [community-name])))
 
 (defn- notify-community-admins
-  [username app-name community-names]
+  [username integrator-name app-name community-names]
   (->> community-names
        (map #(admin->communities-map % (communities/get-community-admin-set username %)))
        (apply merge-with into)
@@ -173,15 +173,24 @@
        ;; {admin1 [community1],
        ;;  admin2 [community1, community2],
        ;;  admin3 [community2, community3]}
-       (map (partial apply notifications/send-community-admin-notification username app-name))
+       (map (partial apply notifications/send-community-admin-notification username integrator-name app-name))
        dorun))
 
 (defn- publish-app-metadata
+  "Publishes all metadata sent in the publish request, including ontology AVU tags, but does not publish community tags.
+   Instead, community admins are notified that the app integrator wishes to add their app to those communities."
   [username app-id app-name avus]
-  (let [body (cheshire/encode {:avus (conj avus (beta-avu))})]
+  (let [body (as-> avus m
+                   (remove #(= (config/workspace-metadata-communities-attr) (:attr %)) m)
+                   (conj m (beta-avu))
+                   (cheshire/encode {:avus m}))]
     (metadata-client/update-avus username app-id body))
+
   (if-let [community-names (communities/extract-full-community-names avus)]
-    (notify-community-admins username app-name community-names)))
+    (notify-community-admins username
+                             (:integrator_name (amp/get-integration-data-by-app-id app-id))
+                             app-name
+                             community-names)))
 
 (defn- publish-app
   [{:keys [shortUsername] :as user} {app-id :id :keys [name references avus] :as app}]
