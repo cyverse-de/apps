@@ -72,10 +72,14 @@
   [{:keys [user] :as params}]
   (let [public-tool-ids (perms-client/get-public-tool-ids)
         perms           (perms-client/load-tool-permissions user)
-        tool-ids        (filter-listing-tool-ids (set (keys perms)) public-tool-ids params)]
-    {:tools
+        tool-ids        (filter-listing-tool-ids (set (keys perms)) public-tool-ids params)
+        paged-params    (assoc params :tool-ids tool-ids :deprecated false)
+        unpaged-params  (dissoc paged-params :limit :offset)
+        total           (count (persistence/get-tool-listing unpaged-params))]
+    {:total total
+     :tools
      (map (partial format-tool-listing perms public-tool-ids)
-          (persistence/get-tool-listing (assoc params :tool-ids tool-ids :deprecated false)))}))
+          (persistence/get-tool-listing paged-params))}))
 
 (defn get-tool
   "Obtains a tool by ID."
