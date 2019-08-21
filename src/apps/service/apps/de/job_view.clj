@@ -1,6 +1,7 @@
 (ns apps.service.apps.de.job-view
   (:use [apps.service.apps.de.validation :only [verify-app-permission]]
         [apps.service.apps.util :only [paths-accessible?]]
+        [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [try+ throw+]])
@@ -11,6 +12,12 @@
             [apps.service.apps.jobs.util :as util]
             [apps.util.service :as service]
             [clojure-commons.exception-util :as cxu]))
+
+(defn get-group-resource-requirements
+  [{task-id :task_id}]
+  (let [requirements (assert-not-nil [:tool-for-task task-id] (amp/get-resource-requirements-for-task task-id))]
+    (when-not (empty? requirements)
+      requirements)))
 
 (defn- mapped-input-subselect
   [step-id]
@@ -72,11 +79,13 @@
 (defn- format-group
   [user name-prefix include-hidden-params? step group]
   (let [params (get-parameters (:id step) (:id group) include-hidden-params?)]
-    {:id          (:id group)
-     :name        (str name-prefix (:name group))
-     :label       (str name-prefix (:label group))
-     :parameters  (mapv (partial format-parameter user step) params)
-     :step_number (:step_number step)}))
+    (remove-nil-vals
+      {:id           (:id group)
+       :name         (str name-prefix (:name group))
+       :label        (str name-prefix (:label group))
+       :parameters   (mapv (partial format-parameter user step) params)
+       :step_number  (:step_number step)
+       :requirements (get-group-resource-requirements step)})))
 
 (defn- format-groups
   [user name-prefix include-hidden-params? step]
