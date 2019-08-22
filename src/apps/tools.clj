@@ -69,11 +69,15 @@
 
 (defn list-tools
   "Obtains a listing of tools accessible to the given user."
-  [{:keys [user] :as params}]
+  [{:keys [user] :as params} admin?]
   (let [public-tool-ids (perms-client/get-public-tool-ids)
         perms           (perms-client/load-tool-permissions user)
-        tool-ids        (filter-listing-tool-ids (set (keys perms)) public-tool-ids params)
-        paged-params    (assoc params :tool-ids tool-ids :deprecated false)
+        tool-ids        (if admin?
+                          (admin-filter-listing-tool-ids public-tool-ids params)
+                          (filter-listing-tool-ids (set (keys perms)) public-tool-ids params))
+        paged-params    (if admin?
+                          (remove-nil-vals (assoc params :tool-ids tool-ids))
+                          (assoc params :tool-ids tool-ids :deprecated false))
         unpaged-params  (dissoc paged-params :limit :offset)
         total           (count (persistence/get-tool-listing unpaged-params))]
     {:total total
@@ -98,18 +102,6 @@
   [user tool-id]
   (permissions/check-tool-permissions user "read" [tool-id])
   (get-tool user tool-id))
-
-(defn admin-list-tools
-  "Obtains a listing of any tool for admin users."
-  [{:keys [user] :as params}]
-  (let [public-tool-ids (perms-client/get-public-tool-ids)
-        perms           (perms-client/load-tool-permissions user)
-        params          (-> params
-                            (assoc :tool-ids (admin-filter-listing-tool-ids public-tool-ids params))
-                            remove-nil-vals)]
-    {:tools
-     (map (partial format-tool-listing perms public-tool-ids)
-          (persistence/get-tool-listing params))}))
 
 (defn- add-new-tool
   [{:keys [container] :as tool}]
