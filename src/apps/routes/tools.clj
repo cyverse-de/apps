@@ -19,7 +19,6 @@
         [apps.tools
          :only [admin-add-tools
                 admin-delete-tool
-                admin-list-tools
                 admin-publish-tool
                 admin-update-tool
                 get-tool
@@ -120,7 +119,7 @@
        :return schema/ToolListing
        :summary schema/ToolListingSummary
        :description schema/ToolListingDocs
-       (ok (list-tools params)))
+       (ok (list-tools params false)))
 
   (POST "/" []
         :query [params SecuredQueryParamsRequired]
@@ -228,7 +227,7 @@
        :return schema/ToolListing
        :summary schema/ToolListingSummary
        :description admin-schema/ToolListingDocs
-       (ok (admin-list-tools params)))
+       (ok (list-tools params true)))
 
   (POST "/" []
         :query [params SecuredQueryParams]
