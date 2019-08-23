@@ -761,7 +761,8 @@
                   [:jt.name           :job_type]
                   [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
-          (where {:a.id (uuidify app-id)})))
+          (where {:a.id (uuidify app-id)})
+          (order :step :ASC)))
 
 (defn- mapping-base-query
   []
