@@ -179,6 +179,24 @@
              (order :date_assigned :DESC)
              (limit 1)))
 
+(defn get-tool-count
+  "Counts tools given the parameters. If search-term is not empty, results are limited to tools that
+  contain search-term in their name, description, container image name, integrator name, or integrator
+  email."
+  [{search-term :search :keys [tool-ids deprecated include-hidden] :or {include-hidden false}}]
+  (-> (select* tools)
+      (fields (raw "count(DISTINCT tools.id) AS total"))
+      (join tool_types)
+      (join :container_images {:container_images.id :tools.container_images_id})
+      (join :integration_data {:integration_data.id :tools.integration_data_id})
+      (add-search-where-clauses search-term)
+      (add-listing-where-clause tool-ids)
+      (add-deprecated-tools-clause deprecated)
+      (add-hidden-tool-types-clause include-hidden)
+      select
+      first
+      :total))
+
 (defn get-tool-listing
   "Obtains a listing of tools, with optional search and paging params."
   [{search-term :search :keys [tool-ids deprecated sort-field sort-dir limit offset include-hidden]
