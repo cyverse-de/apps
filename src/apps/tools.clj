@@ -75,11 +75,12 @@
         tool-ids        (if admin?
                           (admin-filter-listing-tool-ids public-tool-ids params)
                           (filter-listing-tool-ids (set (keys perms)) public-tool-ids params))
+        params          (assoc params :tool-ids tool-ids)
         paged-params    (if admin?
-                          (remove-nil-vals (assoc params :tool-ids tool-ids))
-                          (assoc params :tool-ids tool-ids :deprecated false))
+                          (remove-nil-vals params)
+                          (assoc params :deprecated false))
         unpaged-params  (dissoc paged-params :limit :offset)
-        total           (count (persistence/get-tool-listing unpaged-params))]
+        total           (persistence/get-tool-count unpaged-params)]
     {:total total
      :tools
      (map (partial format-tool-listing perms public-tool-ids)
