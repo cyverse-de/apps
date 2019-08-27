@@ -911,3 +911,17 @@
                (where {:id [in app-ids]
                        :deleted false}))
        (map :id)))
+
+(defn get-resource-requirements-for-task
+  [task-id]
+  (-> (select* [container-settings :c])
+      (join [:tasks :t] {:t.tool_id :c.tools_id})
+      (fields :memory_limit
+              :min_memory_limit
+              :min_cpu_cores
+              :max_cpu_cores
+              :min_disk_space)
+      (where {:t.id task-id})
+      select
+      first
+      remove-nil-vals))
