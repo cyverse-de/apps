@@ -13,11 +13,10 @@
             [apps.util.service :as service]
             [clojure-commons.exception-util :as cxu]))
 
-(defn get-group-resource-requirements
-  [{task-id :task_id}]
-  (let [requirements (assert-not-nil [:tool-for-task task-id] (amp/get-resource-requirements-for-task task-id))]
-    (when-not (empty? requirements)
-      requirements)))
+(defn get-step-resource-requirements
+  [{task-id :task_id step-number :step_number}]
+  (let [requirements (amp/get-resource-requirements-for-task task-id)]
+    (assoc requirements :step_number step-number)))
 
 (defn- mapped-input-subselect
   [step-id]
@@ -84,8 +83,7 @@
        :name         (str name-prefix (:name group))
        :label        (str name-prefix (:label group))
        :parameters   (mapv (partial format-parameter user step) params)
-       :step_number  (:step_number step)
-       :requirements (get-group-resource-requirements step)})))
+       :step_number  (:step_number step)})))
 
 (defn- format-groups
   [user name-prefix include-hidden-params? step]
@@ -96,22 +94,24 @@
   (select [:app_steps :s]
           (join :inner [:tasks :t] {:s.task_id :t.id})
           (fields :s.id [:s.step :step_number] :s.task_id [:t.name :task_name])
-          (where {:app_id app-id})))
+          (where {:app_id app-id})
+          (order :step)))
 
 (defn- format-steps
-  [user app-id include-hidden-params?]
-  (let [app-steps         (get-steps app-id)
-        multistep?        (> (count app-steps) 1)
+  [user include-hidden-params? app-steps]
+  (let [multistep?        (> (count app-steps) 1)
         group-name-prefix (fn [{task-name :task_name}] (if multistep? (str task-name " - ") ""))]
     (doall (mapcat (fn [step] (format-groups user (group-name-prefix step) include-hidden-params? step)) app-steps))))
 
 (defn- format-app
   [user {app-id :id name :name :as app} include-hidden-params?]
-  (-> (select-keys app [:id :name :description :disabled :deleted])
-      (assoc :label     name
-             :groups    (remove (comp empty? :parameters) (format-steps user app-id include-hidden-params?))
-             :app_type  "DE"
-             :system_id c/system-id)))
+  (let [app-steps (get-steps app-id)]
+    (-> (select-keys app [:id :name :description :disabled :deleted])
+        (assoc :label name
+               :requirements (map get-step-resource-requirements app-steps)
+               :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
+               :app_type "DE"
+               :system_id c/system-id))))
 
 (defn- validate-hidden-inputs [user app-id]
   (when-let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-id)))]
