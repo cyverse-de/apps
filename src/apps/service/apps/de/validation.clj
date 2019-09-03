@@ -47,15 +47,19 @@
                        :t.tool_id         nil
                        :t.external_app_id nil}))))
 
+(defn- in-trusted-registry?
+  "Determines whether or not a tool is in a trusted Docker registry. TODO: add code that actually uses this."
+  [{image-name :image_name :as tool}]
+  (let [registry (first (string/split image-name #"/" 2))]
+    (set (config/trusted-registries)) registry))
+
 (defn- remove-publishable-tools
   "A tool is publishable if the authenticated user has ownership of the tool and the Docker container that the tool
    uses is in one of the trusted Docker registries."
   [username tools]
-  (let [tool-ids          (mapv :id tools)
-        owned-id?         (comp (set (keys (perms-client/load-tool-permissions username tool-ids "own"))) :id)
-        get-registry      (fn [{image-name :image_name}] (first (string/split image-name #"/" 2)))
-        trusted-registry? (comp (set (config/trusted-registries)) get-registry)]
-    (remove (every-pred owned-id? trusted-registry?) tools)))
+  (let [tool-ids  (mapv :id tools)
+        owned-id? (comp (set (keys (perms-client/load-tool-permissions username tool-ids "own"))) :id)]
+    (remove owned-id? tools)))
 
 (defn- get-unpublishable-tools
   [username tools]
