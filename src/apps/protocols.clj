@@ -30,6 +30,8 @@
   (removeAppFavorite [_ system-id app-id])
   (addAppFavorite [_ system-id app-id])
   (isAppPublishable [_ system-id app-id])
+  (usesToolsInUntrustedRegistries [_ system-id app-id])
+  (createPublicationRequest [_ system-id app])
   (makeAppPublic [_ system-id app])
   (deleteAppRating [_ system-id app-id])
   (rateApp [_ system-id app-id rating])

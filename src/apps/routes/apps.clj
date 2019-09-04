@@ -23,7 +23,7 @@
         [apps.routes.schemas.app :only [AppSearchParams]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
-        [ring.util.http-response :only [ok]])
+        [ring.util.http-response :only [accepted ok]])
   (:require [apps.routes.schemas.permission :as perms]
             [apps.service.apps :as apps]
             [common-swagger-api.schema.apps :as schema]))
@@ -191,7 +191,11 @@
             :body [body schema/PublishAppRequest]
             :summary schema/PublishAppSummary
             :description schema/PublishAppDocs
-            (ok (apps/make-app-public current-user system-id (assoc body :id app-id))))
+            (apps/validate-app-publishable current-user system-id app-id)
+            (let [body (assoc body :id app-id)]
+              (if (apps/uses-tools-in-untrusted-registries? current-user system-id app-id)
+                (accepted (apps/create-publication-request current-user system-id body))
+                (ok (apps/make-app-public current-user system-id body)))))
 
       (DELETE "/rating" []
               :query [params SecuredQueryParams]

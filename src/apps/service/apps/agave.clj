@@ -177,6 +177,14 @@
     (validate-system-id system-id)
     [false app-publishable-error])
 
+  (usesToolsInUntrustedRegistries [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+  (createPublicationRequest [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
     (reject-app-integration-request))

@@ -203,13 +203,6 @@
     (perms-client/make-app-public shortUsername app-id))
   nil)
 
-(defn- verify-app-publishable
-  [user {app-id :id}]
-  (let [[publishable? reason] (app-publishable? user app-id)]
-    (when-not publishable?
-      (throw+ {:type  :clojure-commons.exception/bad-request-field
-               :error reason}))))
-
 (defn- verify-app-documentation
   [user {app-id :id docs :documentation}]
   (when-not (or docs (app-docs/has-docs? app-id))
@@ -226,10 +219,15 @@
 
 (defn make-app-public
   [user {app-id :id :as app}]
-  (verify-app-publishable user app)
   (verify-app-documentation user app)
   (publish-app-tools app-id)
   (publish-app user app))
+
+(defn create-publication-request
+  [{username :username} {app-id :id :as app}]
+  (transaction
+   (amp/update-app app)
+   (amp/create-publication-request username app-id)))
 
 (defn get-app
   "This service obtains an app description that can be used to build a job submission form in

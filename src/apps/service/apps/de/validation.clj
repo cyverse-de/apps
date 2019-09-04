@@ -47,12 +47,6 @@
                        :t.tool_id         nil
                        :t.external_app_id nil}))))
 
-(defn- in-trusted-registry?
-  "Determines whether or not a tool is in a trusted Docker registry. TODO: add code that actually uses this."
-  [{image-name :image_name :as tool}]
-  (let [registry (first (string/split image-name #"/" 2))]
-    (set (config/trusted-registries)) registry))
-
 (defn- remove-publishable-tools
   "A tool is publishable if the authenticated user has ownership of the tool and the Docker container that the tool
    uses is in one of the trusted Docker registries."
@@ -91,6 +85,16 @@
           (= 1 (count task-ids))    [true]
           (seq private-apps)        [false "contains private apps" private-apps]
           :else                     [true])))
+
+(defn uses-tools-in-untrusted-registries?
+  "Determines whether or not any of the tools used by an app are in an untrusted Docker repository."
+  [app-id]
+  (let [trusted-registries     (set (config/trusted-registries))
+        public-tool-ids        (set (perms-client/get-public-tool-ids))
+        private-tool?          #(not (contains? public-tool-ids (:id %)))
+        get-registry           (comp first #(string/split % #"/" 2) :image_name)
+        in-untrusted-registry? #(not (contains? trusted-registries (get-registry %)))]
+    (some (every-pred in-untrusted-registry? private-tool?) (get-app-tools app-id))))
 
 (defn- verify-app-not-public
   "Verifies that an app has not been made public."

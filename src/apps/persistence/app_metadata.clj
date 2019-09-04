@@ -19,7 +19,8 @@
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
-            [korma.core :as sql]))
+            [korma.core :as sql])
+  (:import [java.util UUID]))
 
 (def param-multi-input-type "MultiFileSelector")
 (def param-flex-input-type "FileFolderInput")
@@ -393,6 +394,32 @@
                         :integration_date (when publish? (sqlfn now)))
                  (remove-nil-vals))]
      (sql/update apps (set-fields app) (where {:id app-id})))))
+
+(defn- get-app-publication-status-code-id
+  [status-code]
+  (-> (select* :app_publication_request_status_codes)
+      (fields :id)
+      (where {:name status-code})
+      select
+      first
+      :id))
+
+(defn create-publication-request
+  "Creates an app publication request."
+  [username app-id]
+  (let [user-id        (get-user-id username)
+        request-id     (UUID/randomUUID)
+        status-code-id (get-app-publication-status-code-id "Submitted")]
+
+    (insert :app_publication_requests
+            (values {:id           request-id
+                     :requestor_id user-id
+                     :app_id       app-id}))
+
+    (insert :app_publication_request_statuses
+            (values {:app_publication_request_id             request-id
+                     :app_publication_request_status_code_id status-code-id
+                     :updater_id                             user-id}))))
 
 (defn add-app-reference
   "Adds an App's reference to the database."

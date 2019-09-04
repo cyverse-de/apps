@@ -7,6 +7,7 @@
         [slingshot.slingshot :only [try+ throw+]]
         [service-logging.thread-context :only [with-logging-context]])
   (:require [clojure.tools.logging :as log]
+            [clojure-commons.exception-util :as cxu]
             [mescal.de :as agave]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
@@ -159,6 +160,20 @@
   [user system-id app-id]
   (let [[publishable? reason] (.isAppPublishable (get-apps-client user) system-id app-id)]
     (remove-nil-vals {:publishable publishable? :reason reason})))
+
+(defn validate-app-publishable
+  [user system-id app-id]
+  (let [[publishable? reason] (.isAppPublishable (get-apps-client user) system-id app-id)]
+    (when-not publishable?
+      (cxu/bad-request reason))))
+
+(defn uses-tools-in-untrusted-registries?
+  [user system-id app-id]
+  (.usesToolsInUntrustedRegistries (get-apps-client user) system-id app-id))
+
+(defn create-publication-request
+  [user system-id app]
+  (.createPublicationRequest (get-apps-client user) system-id app))
 
 (defn make-app-public
   [user system-id app]

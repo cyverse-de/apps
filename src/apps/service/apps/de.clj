@@ -132,6 +132,14 @@
     (validate-system-id system-id)
     (app-validation/app-publishable? user (uuidify app-id)))
 
+  (usesToolsInUntrustedRegistries [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-validation/uses-tools-in-untrusted-registries? (uuidify app-id)))
+
+  (createPublicationRequest [_ system-id app]
+    (validate-system-id system-id)
+    (app-metadata/create-publication-request user (update app :id uuidify)))
+
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
     (app-metadata/make-app-public user (update app :id uuidify)))
