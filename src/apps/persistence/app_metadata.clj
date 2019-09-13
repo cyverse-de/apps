@@ -6,7 +6,7 @@
         [apps.user :only [current-user]]
         [apps.util.assertions]
         [apps.util.conversions :only [remove-nil-vals]]
-        [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit]]
+        [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit conditional-where]]
         [kameleon.util :only [normalize-string]]
         [kameleon.util.search :only [format-query-wildcards]]
         [kameleon.uuids :only [uuidify]]
@@ -952,3 +952,20 @@
       select
       first
       remove-nil-vals))
+
+(defn list-app-publication-requests
+  [app-id requestor include-completed]
+  (-> (select* [:app_publication_requests :apr])
+      (join [:users :u] {:apr.requestor_id :u.id})
+      (fields :apr.id
+              :apr.app_id
+              [(sqlfn regexp_replace :u.username "@.*" "") :requestor])
+      (conditional-where app-id {:apr.app_id app-id})
+      (conditional-where requestor {(sqlfn regexp_replace :u.username "@.*" "") requestor})
+      (conditional-where (not include-completed)
+                         (not (exists (subselect [:app_publication_request_statuses :aprs]
+                                                 (join [:app_publication_request_status_codes :aprsc]
+                                                       {:aprs.app_publication_request_status_code_id :aprsc.id})
+                                                 (where {:aprs.app_publication_request_id :apr.id
+                                                         :aprsc.name                      "Completion"})))))
+      select))

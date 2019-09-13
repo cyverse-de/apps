@@ -1,6 +1,8 @@
 (ns apps.routes.admin.apps
   (:use [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.app :only [AdminAppSearchParams]]
+        [apps.routes.schemas.app
+         :only [AdminAppSearchParams
+                AppPublicationRequestSearchParams]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [common-swagger-api.schema]
@@ -32,6 +34,14 @@
         :summary AppCategorizationSummary
         :description AppCategorizationDocs
         (ok (apps/categorize-apps current-user body)))
+
+  (GET "/publication-requests" []
+       :query [params AppPublicationRequestSearchParams]
+       :summary schema/AppPublicationRequestsSummary
+       :description schema/AppPublicationRequestsDocs
+       :return schema/AppPublicationRequestListing
+       (ok (coerce! schema/AppPublicationRequestListing
+                    (apps/list-app-publication-requests current-user params))))
 
   (POST "/shredder" []
         :query [params SecuredQueryParams]

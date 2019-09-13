@@ -639,3 +639,15 @@
   (->> (amp/get-app-parameters app-id)
        (filter (comp amp/param-ds-input-types :type))
        (mapv #(str (:step_id %) "_" (:id %)))))
+
+(defn- format-app-publication-request
+  [user {app-id :app_id :keys [id requestor]}]
+  {:id        id
+   :app       (get-app-details user app-id false)
+   :requestor requestor})
+
+(defn list-app-publication-requests
+  "Lists app publication requests, optionally filtering the listing by app ID or requestor."
+  [user {app-id :app_id include-completed :include_completed :keys [requestor]}]
+  (mapv (partial format-app-publication-request user)
+        (amp/list-app-publication-requests app-id requestor include-completed)))

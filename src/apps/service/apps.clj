@@ -332,6 +332,10 @@
   [user body]
   (transaction (.categorizeApps (get-apps-client user) body)))
 
+(defn list-app-publication-requests
+  [user params]
+  {:publication_requests (.listAppPublicationRequests (get-apps-client user) params)})
+
 (defn permanently-delete-apps
   [user body]
   (.permanentlyDeleteApps (get-apps-client user) body))

@@ -242,6 +242,9 @@
     (validate-system-ids (set (mapcat (fn [m] (map :system_id (:category_ids m))) categories)))
     (app-categorization/categorize-apps categories))
 
+  (listAppPublicationRequests [_ params]
+    (listings/list-app-publication-requests user params))
+
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req)
     (app-metadata/permanently-delete-apps user req))

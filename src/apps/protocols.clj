@@ -59,6 +59,7 @@
   (getParamDefinitions [_ system-id app-id])
   (stopJobStep [_ job-step])
   (categorizeApps [_ body])
+  (listAppPublicationRequests [_ params])
   (permanentlyDeleteApps [_ body])
   (adminDeleteApp [_ system-id app-id])
   (adminUpdateApp [_ system-id body])

@@ -20,3 +20,7 @@
 (defschema AdminAppSearchParams
   (merge SecuredQueryParams
          admin-schema/AdminAppSearchParams))
+
+(defschema AppPublicationRequestSearchParams
+  (merge SecuredQueryParams
+         admin-schema/AppPublicationRequestSearchParams))

@@ -219,6 +219,9 @@
                     (.categorizeApps (util/get-apps-client clients system-id) {:categories categories}))
                   requests-by-system-id))))
 
+  (listAppPublicationRequests [_ params]
+    (mapcat #(.listAppPublicationRequests % params) clients))
+
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req)
     (let [requests-for-system (group-by :system_id (:app_ids req))]
