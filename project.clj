@@ -22,7 +22,7 @@
                  [medley "1.1.0"]
                  [metosin/compojure-api "1.1.12"]
                  [org.cyverse/authy "2.8.0"]
-                 [org.cyverse/clojure-commons "2.8.3"]
+                 [org.cyverse/clojure-commons "3.0.4"]
                  [org.cyverse/kameleon "3.0.4"]
                  [org.cyverse/mescal "3.1.1"]
                  [org.cyverse/metadata-client "3.1.1"]

@@ -2,6 +2,7 @@
   "DE app metadata services."
   (:use [clojure.java.io :only [reader]]
         [clojure-commons.client :only [build-url]]
+        [clojure-commons.core :only [unique-by]]
         [apps.persistence.app-groups :only [add-app-to-category
                                             decategorize-app
                                             get-app-subcategory-id
@@ -191,9 +192,6 @@
                              (:integrator_name (amp/get-integration-data-by-app-id app-id))
                              app-name
                              community-names)))
-
-(defn- unique-by [f s]
-  (vals (into {} (map (juxt f identity) s))))
 
 (defn- publish-app
   [{:keys [shortUsername username] :as user} {app-id :id :keys [name references avus] :as app}]
