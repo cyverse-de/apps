@@ -1,5 +1,5 @@
 (ns apps.routes.admin.apps
-  (:use [apps.routes.params :only [SecuredQueryParams]]
+  (:use [apps.routes.params :only [SecuredQueryParams SecuredQueryParamsEmailRequired]]
         [apps.routes.schemas.app
          :only [AdminAppSearchParams
                 AppPublicationRequestSearchParams]]
@@ -15,6 +15,7 @@
                 IntegrationDataIdPathParam]]
         [ring.util.http-response :only [ok]])
   (:require [apps.service.apps :as apps]
+            [clojure-commons.exception-util :as cxu]
             [common-swagger-api.routes]                     ;; for :description-file
             [common-swagger-api.schema.apps :as apps-schema]
             [common-swagger-api.schema.apps.admin.apps :as schema]))
@@ -101,4 +102,15 @@
          :return IntegrationData
          :summary schema/AppIntegrationDataUpdateSummary
          :description schema/AppIntegrationDataUpdateDocs
-         (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))))
+         (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))
+
+    (POST "/publish" []
+          :query [params SecuredQueryParamsEmailRequired]
+          :body [body apps-schema/PublishAppRequest]
+          :summary apps-schema/PublishAppSummary
+          :description apps-schema/PublishAppDocs
+          (apps/validate-app-publishable current-user system-id app-id)
+          (let [body (assoc body :id app-id)]
+            (if (apps/uses-tools-in-untrusted-registries? current-user system-id app-id)
+              (cxu/bad-request (str "App " app-id " uses tools in untrusted registries"))
+              (ok (apps/make-app-public current-user system-id body)))))))

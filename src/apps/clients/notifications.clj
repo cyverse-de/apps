@@ -216,3 +216,21 @@
                                                                   app-name
                                                                   (groups-client/lookup-subject username admin)
                                                                   community-names)))
+
+(defn- format-app-published-notification
+  [app-name app-id {:keys [id email]}]
+  {:type           "apps"
+   :user           id
+   :subject        (str "App " app-name " published")
+   :email          true
+   :email_template "app_publication_completion"
+   :payload        {:email_address email
+                    :app-name      app-name
+                    :app-id        app-id}})
+
+(defn send-app-published-notification
+  [username app-name {app-id :app_id requestor-username :requestor}]
+  (guarded-send-notification
+   (format-app-published-notification app-name
+                                      app-id
+                                      (groups-client/lookup-subject username requestor-username))))

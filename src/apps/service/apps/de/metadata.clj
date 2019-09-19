@@ -192,16 +192,26 @@
                              app-name
                              community-names)))
 
+(defn- unique-by [f s]
+  (vals (into {} (map (juxt f identity) s))))
+
 (defn- publish-app
-  [{:keys [shortUsername] :as user} {app-id :id :keys [name references avus] :as app}]
-  (transaction
-    (amp/update-app app true)
-    (when (:documentation app) (app-docs/add-app-docs user app-id app))
-    (when references (amp/set-app-references app-id references))
-    (decategorize-app app-id)
-    (publish-app-metadata shortUsername app-id (or name (amp/get-app-name app-id)) avus)
-    (perms-client/make-app-public shortUsername app-id))
-  nil)
+  [{:keys [shortUsername username] :as user} {app-id :id :keys [name references avus] :as app}]
+  (let [publication-requests (amp/list-app-publication-requests app-id nil false)
+        request-ids          (mapv :id publication-requests)]
+    (transaction
+     (amp/update-app app true)
+     (when (:documentation app) (app-docs/add-app-docs user app-id app))
+     (when references (amp/set-app-references app-id references))
+     (decategorize-app app-id)
+     (publish-app-metadata shortUsername app-id (or name (amp/get-app-name app-id)) avus)
+     (perms-client/make-app-public shortUsername app-id)
+     (when (seq publication-requests)
+       (amp/mark-app-publication-requests-complete request-ids username)))
+    (let [updated-app (amp/get-app app-id)]
+      (mapv (partial notifications/send-app-published-notification shortUsername (:name updated-app))
+            (unique-by :requestor publication-requests)))
+  nil))
 
 (defn- verify-app-documentation
   [user {app-id :id docs :documentation}]
@@ -224,9 +234,12 @@
   (publish-app user app))
 
 (defn create-publication-request
-  [{username :username} {app-id :id :as app}]
+  [{username :username short-username :shortUsername :as user} {app-id :id :keys [name references avus] :as app}]
   (transaction
    (amp/update-app app)
+   (when (:documentation app) (app-docs/add-app-docs user app-id app))
+   (when references (amp/set-app-references app-id references))
+   (publish-app-metadata short-username app-id (or name (amp/get-app-name app-id)) avus)
    (amp/create-publication-request username app-id)))
 
 (defn get-app

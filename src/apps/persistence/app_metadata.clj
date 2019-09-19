@@ -969,3 +969,14 @@
                                                  (where {:aprs.app_publication_request_id :apr.id
                                                          :aprsc.name                      "Completion"})))))
       select))
+
+(defn mark-app-publication-requests-complete
+  [request-ids updater-username]
+  (let [status-code-id (get-app-publication-status-code-id "Completion")
+        user-id        (get-user-id updater-username)]
+    (insert :app_publication_request_statuses
+            (values (mapv (fn [request-id]
+                            {:app_publication_request_id             request-id
+                             :app_publication_request_status_code_id status-code-id
+                             :updater_id                             user-id})
+                          request-ids)))))
