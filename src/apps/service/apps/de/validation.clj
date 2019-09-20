@@ -48,8 +48,7 @@
                        :t.external_app_id nil}))))
 
 (defn- remove-publishable-tools
-  "A tool is publishable if the authenticated user has ownership of the tool and the Docker container that the tool
-   uses is in one of the trusted Docker registries."
+  "A tool is publishable if the authenticated user has ownership of the tool."
   [username tools]
   (let [tool-ids  (mapv :id tools)
         owned-id? (comp (set (keys (perms-client/load-tool-permissions username tool-ids "own"))) :id)]
