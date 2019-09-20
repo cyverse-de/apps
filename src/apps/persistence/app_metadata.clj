@@ -6,7 +6,7 @@
         [apps.user :only [current-user]]
         [apps.util.assertions]
         [apps.util.conversions :only [remove-nil-vals]]
-        [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit]]
+        [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit conditional-where]]
         [kameleon.util :only [normalize-string]]
         [kameleon.util.search :only [format-query-wildcards]]
         [kameleon.uuids :only [uuidify]]
@@ -19,7 +19,8 @@
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
-            [korma.core :as sql]))
+            [korma.core :as sql])
+  (:import [java.util UUID]))
 
 (def param-multi-input-type "MultiFileSelector")
 (def param-flex-input-type "FileFolderInput")
@@ -393,6 +394,32 @@
                         :integration_date (when publish? (sqlfn now)))
                  (remove-nil-vals))]
      (sql/update apps (set-fields app) (where {:id app-id})))))
+
+(defn- get-app-publication-status-code-id
+  [status-code]
+  (-> (select* :app_publication_request_status_codes)
+      (fields :id)
+      (where {:name status-code})
+      select
+      first
+      :id))
+
+(defn create-publication-request
+  "Creates an app publication request."
+  [username app-id]
+  (let [user-id        (get-user-id username)
+        request-id     (UUID/randomUUID)
+        status-code-id (get-app-publication-status-code-id "Submitted")]
+
+    (insert :app_publication_requests
+            (values {:id           request-id
+                     :requestor_id user-id
+                     :app_id       app-id}))
+
+    (insert :app_publication_request_statuses
+            (values {:app_publication_request_id             request-id
+                     :app_publication_request_status_code_id status-code-id
+                     :updater_id                             user-id}))))
 
 (defn add-app-reference
   "Adds an App's reference to the database."
@@ -925,3 +952,31 @@
       select
       first
       remove-nil-vals))
+
+(defn list-app-publication-requests
+  [app-id requestor include-completed]
+  (-> (select* [:app_publication_requests :apr])
+      (join [:users :u] {:apr.requestor_id :u.id})
+      (fields :apr.id
+              :apr.app_id
+              [(sqlfn regexp_replace :u.username "@.*" "") :requestor])
+      (conditional-where app-id {:apr.app_id app-id})
+      (conditional-where requestor {(sqlfn regexp_replace :u.username "@.*" "") requestor})
+      (conditional-where (not include-completed)
+                         (not (exists (subselect [:app_publication_request_statuses :aprs]
+                                                 (join [:app_publication_request_status_codes :aprsc]
+                                                       {:aprs.app_publication_request_status_code_id :aprsc.id})
+                                                 (where {:aprs.app_publication_request_id :apr.id
+                                                         :aprsc.name                      "Completion"})))))
+      select))
+
+(defn mark-app-publication-requests-complete
+  [request-ids updater-username]
+  (let [status-code-id (get-app-publication-status-code-id "Completion")
+        user-id        (get-user-id updater-username)]
+    (insert :app_publication_request_statuses
+            (values (mapv (fn [request-id]
+                            {:app_publication_request_id             request-id
+                             :app_publication_request_status_code_id status-code-id
+                             :updater_id                             user-id})
+                          request-ids)))))

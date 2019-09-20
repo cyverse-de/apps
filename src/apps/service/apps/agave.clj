@@ -177,6 +177,14 @@
     (validate-system-id system-id)
     [false app-publishable-error])
 
+  (usesToolsInUntrustedRegistries [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+  (createPublicationRequest [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
     (reject-app-integration-request))
@@ -258,6 +266,9 @@
     (validate-system-ids (set (map :system_id categories)))
     (validate-system-ids (set (mapcat (fn [m] (map :system_id (:category_ids m))) categories)))
     (reject-categorization-request))
+
+  (listAppPublicationRequests [_ _]
+    [])
 
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req))

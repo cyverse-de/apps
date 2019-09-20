@@ -1,6 +1,8 @@
 (ns apps.routes.admin.apps
-  (:use [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.app :only [AdminAppSearchParams]]
+  (:use [apps.routes.params :only [SecuredQueryParams SecuredQueryParamsEmailRequired]]
+        [apps.routes.schemas.app
+         :only [AdminAppSearchParams
+                AppPublicationRequestSearchParams]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [common-swagger-api.schema]
@@ -13,6 +15,7 @@
                 IntegrationDataIdPathParam]]
         [ring.util.http-response :only [ok]])
   (:require [apps.service.apps :as apps]
+            [clojure-commons.exception-util :as cxu]
             [common-swagger-api.routes]                     ;; for :description-file
             [common-swagger-api.schema.apps :as apps-schema]
             [common-swagger-api.schema.apps.admin.apps :as schema]))
@@ -32,6 +35,14 @@
         :summary AppCategorizationSummary
         :description AppCategorizationDocs
         (ok (apps/categorize-apps current-user body)))
+
+  (GET "/publication-requests" []
+       :query [params AppPublicationRequestSearchParams]
+       :summary schema/AppPublicationRequestsSummary
+       :description schema/AppPublicationRequestsDocs
+       :return schema/AppPublicationRequestListing
+       (ok (coerce! schema/AppPublicationRequestListing
+                    (apps/list-app-publication-requests current-user params))))
 
   (POST "/shredder" []
         :query [params SecuredQueryParams]
@@ -91,4 +102,15 @@
          :return IntegrationData
          :summary schema/AppIntegrationDataUpdateSummary
          :description schema/AppIntegrationDataUpdateDocs
-         (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))))
+         (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))
+
+    (POST "/publish" []
+          :query [params SecuredQueryParamsEmailRequired]
+          :body [body apps-schema/PublishAppRequest]
+          :summary apps-schema/PublishAppSummary
+          :description apps-schema/PublishAppDocs
+          (apps/validate-app-publishable current-user system-id app-id)
+          (let [body (assoc body :id app-id)]
+            (if (apps/uses-tools-in-untrusted-registries? current-user system-id app-id)
+              (cxu/bad-request (str "App " app-id " uses tools in untrusted registries"))
+              (ok (apps/make-app-public current-user system-id body)))))))

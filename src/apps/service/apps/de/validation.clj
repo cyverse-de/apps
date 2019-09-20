@@ -48,14 +48,11 @@
                        :t.external_app_id nil}))))
 
 (defn- remove-publishable-tools
-  "A tool is publishable if the authenticated user has ownership of the tool and the Docker container that the tool
-   uses is in one of the trusted Docker registries."
+  "A tool is publishable if the authenticated user has ownership of the tool."
   [username tools]
-  (let [tool-ids          (mapv :id tools)
-        owned-id?         (comp (set (keys (perms-client/load-tool-permissions username tool-ids "own"))) :id)
-        get-registry      (fn [{image-name :image_name}] (first (string/split image-name #"/" 2)))
-        trusted-registry? (comp (set (config/trusted-registries)) get-registry)]
-    (remove (every-pred owned-id? trusted-registry?) tools)))
+  (let [tool-ids  (mapv :id tools)
+        owned-id? (comp (set (keys (perms-client/load-tool-permissions username tool-ids "own"))) :id)]
+    (remove owned-id? tools)))
 
 (defn- get-unpublishable-tools
   [username tools]
@@ -87,6 +84,16 @@
           (= 1 (count task-ids))    [true]
           (seq private-apps)        [false "contains private apps" private-apps]
           :else                     [true])))
+
+(defn uses-tools-in-untrusted-registries?
+  "Determines whether or not any of the tools used by an app are in an untrusted Docker repository."
+  [app-id]
+  (let [trusted-registries     (set (config/trusted-registries))
+        public-tool-ids        (set (perms-client/get-public-tool-ids))
+        private-tool?          #(not (contains? public-tool-ids (:id %)))
+        get-registry           (comp first #(string/split % #"/" 2) :image_name)
+        in-untrusted-registry? #(not (contains? trusted-registries (get-registry %)))]
+    (some (every-pred in-untrusted-registry? private-tool?) (get-app-tools app-id))))
 
 (defn- verify-app-not-public
   "Verifies that an app has not been made public."

@@ -129,6 +129,12 @@
   (isAppPublishable [_ system-id app-id]
     (.isAppPublishable (util/get-apps-client clients system-id) system-id app-id))
 
+  (usesToolsInUntrustedRegistries [_ system-id app-id]
+    (.usesToolsInUntrustedRegistries (util/get-apps-client clients system-id) system-id app-id))
+
+  (createPublicationRequest [_ system-id app]
+    (.createPublicationRequest (util/get-apps-client clients system-id) system-id app))
+
   (makeAppPublic [_ system-id app]
     (.makeAppPublic (util/get-apps-client clients system-id) system-id app))
 
@@ -212,6 +218,9 @@
       (dorun (map (fn [[system-id categories]]
                     (.categorizeApps (util/get-apps-client clients system-id) {:categories categories}))
                   requests-by-system-id))))
+
+  (listAppPublicationRequests [_ params]
+    (mapcat #(.listAppPublicationRequests % params) clients))
 
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req)

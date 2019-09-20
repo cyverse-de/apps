@@ -132,6 +132,14 @@
     (validate-system-id system-id)
     (app-validation/app-publishable? user (uuidify app-id)))
 
+  (usesToolsInUntrustedRegistries [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-validation/uses-tools-in-untrusted-registries? (uuidify app-id)))
+
+  (createPublicationRequest [_ system-id app]
+    (validate-system-id system-id)
+    (app-metadata/create-publication-request user (update app :id uuidify)))
+
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)
     (app-metadata/make-app-public user (update app :id uuidify)))
@@ -233,6 +241,9 @@
     (validate-system-ids (set (map :system_id categories)))
     (validate-system-ids (set (mapcat (fn [m] (map :system_id (:category_ids m))) categories)))
     (app-categorization/categorize-apps categories))
+
+  (listAppPublicationRequests [_ params]
+    (listings/list-app-publication-requests user params))
 
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req)

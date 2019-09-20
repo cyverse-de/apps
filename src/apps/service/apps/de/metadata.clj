@@ -2,6 +2,7 @@
   "DE app metadata services."
   (:use [clojure.java.io :only [reader]]
         [clojure-commons.client :only [build-url]]
+        [clojure-commons.core :only [unique-by]]
         [apps.persistence.app-groups :only [add-app-to-category
                                             decategorize-app
                                             get-app-subcategory-id
@@ -193,22 +194,22 @@
                              community-names)))
 
 (defn- publish-app
-  [{:keys [shortUsername] :as user} {app-id :id :keys [name references avus] :as app}]
-  (transaction
-    (amp/update-app app true)
-    (when (:documentation app) (app-docs/add-app-docs user app-id app))
-    (when references (amp/set-app-references app-id references))
-    (decategorize-app app-id)
-    (publish-app-metadata shortUsername app-id (or name (amp/get-app-name app-id)) avus)
-    (perms-client/make-app-public shortUsername app-id))
-  nil)
-
-(defn- verify-app-publishable
-  [user {app-id :id}]
-  (let [[publishable? reason] (app-publishable? user app-id)]
-    (when-not publishable?
-      (throw+ {:type  :clojure-commons.exception/bad-request-field
-               :error reason}))))
+  [{:keys [shortUsername username] :as user} {app-id :id :keys [name references avus] :as app}]
+  (let [publication-requests (amp/list-app-publication-requests app-id nil false)
+        request-ids          (mapv :id publication-requests)
+        app-name             (or name (amp/get-app-name app-id))]
+    (transaction
+     (amp/update-app app true)
+     (when (:documentation app) (app-docs/add-app-docs user app-id app))
+     (when references (amp/set-app-references app-id references))
+     (decategorize-app app-id)
+     (publish-app-metadata shortUsername app-id app-name avus)
+     (perms-client/make-app-public shortUsername app-id)
+     (when (seq publication-requests)
+       (amp/mark-app-publication-requests-complete request-ids username)))
+    (mapv (partial notifications/send-app-published-notification shortUsername app-name)
+          (unique-by :requestor publication-requests))
+    nil))
 
 (defn- verify-app-documentation
   [user {app-id :id docs :documentation}]
@@ -226,10 +227,18 @@
 
 (defn make-app-public
   [user {app-id :id :as app}]
-  (verify-app-publishable user app)
   (verify-app-documentation user app)
   (publish-app-tools app-id)
   (publish-app user app))
+
+(defn create-publication-request
+  [{username :username short-username :shortUsername :as user} {app-id :id :keys [name references avus] :as app}]
+  (transaction
+   (amp/update-app app)
+   (when (:documentation app) (app-docs/add-app-docs user app-id app))
+   (when references (amp/set-app-references app-id references))
+   (publish-app-metadata short-username app-id (or name (amp/get-app-name app-id)) avus)
+   (amp/create-publication-request username app-id)))
 
 (defn get-app
   "This service obtains an app description that can be used to build a job submission form in
