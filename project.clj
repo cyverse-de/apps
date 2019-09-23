@@ -37,7 +37,8 @@
                  [com.novemberain/langohr "3.7.0"]
                  [me.raynes/fs "1.4.6"]
                  [mvxcvi/clj-pgp "0.8.0"]
-                 [pandect "0.6.1"]]
+                 [pandect "0.6.1"]
+                 [ring/ring-jetty-adapter "1.6.0"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
   :plugins [[lein-swank "1.4.4"]
