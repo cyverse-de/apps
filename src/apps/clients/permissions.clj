@@ -130,8 +130,8 @@
 (defn make-tool-public
   [tool-id]
   (try+
-    (delete-tool-resource tool-id)
-    (catch [:status 404] _))
+   (delete-tool-resource tool-id)
+   (catch [:status 404] _))
   (register-public-tool tool-id))
 
 (defn- resource-sharing-log-msg

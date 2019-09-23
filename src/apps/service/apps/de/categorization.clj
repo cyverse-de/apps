@@ -25,10 +25,10 @@
 (defn validate-app-name-in-current-hierarchy
   [username app-id app-name]
   (validate-app-name-in-hierarchy-avus
-    username
-    app-id
-    app-name
-    (:avus (metadata-client/list-avus username app-id))))
+   username
+   app-id
+   app-name
+   (:avus (metadata-client/list-avus username app-id))))
 
 (defn- validate-app
   [app-id category-ids]

@@ -48,10 +48,10 @@
   [parent-category-id child-index]
   ((comp :id first)
    (select
-     :app_category_group
-     (fields [:child_category_id :id])
-     (where {:parent_category_id parent-category-id
-             :child_index child-index}))))
+    :app_category_group
+    (fields [:child_category_id :id])
+    (where {:parent_category_id parent-category-id
+            :child_index child-index}))))
 
 (defn create-app-group
   "Creates a database entry for an app group, with an UUID and the given
@@ -67,22 +67,22 @@
    position of the parent's subgroups."
   ([parent-group-id subgroup-id]
    (transaction
-     (let [index (:index (first (select :app_category_group
-                                        (aggregate (max :child_index) :index)
-                                        (where {:parent_category_id parent-group-id}))))]
-     (add-subgroup parent-group-id (if (not (nil? index)) (inc index) 0) subgroup-id))))
+    (let [index (:index (first (select :app_category_group
+                                       (aggregate (max :child_index) :index)
+                                       (where {:parent_category_id parent-group-id}))))]
+      (add-subgroup parent-group-id (if (not (nil? index)) (inc index) 0) subgroup-id))))
   ([parent-group-id index subgroup-id]
-  (insert :app_category_group
-          (values {:parent_category_id parent-group-id
-                   :child_category_id subgroup-id
-                   :child_index index}))))
+   (insert :app_category_group
+           (values {:parent_category_id parent-group-id
+                    :child_category_id subgroup-id
+                    :child_index index}))))
 
 (defn delete-app-category
   "Deletes an App Category and all of its subcategories from the database. Delete will cascade to
   the app_category_group table and app categorizations in app_category_app table."
   [category-id]
   (delete app_categories
-    (where {:id [in (subselect (sqlfn :app_category_hierarchy_ids category-id))]})))
+          (where {:id [in (subselect (sqlfn :app_category_hierarchy_ids category-id))]})))
 
 (defn update-app-category
   "Updates an app category's name in the database."
@@ -109,18 +109,18 @@
   "Checks if the app category with the given ID contains a subcategory with the given name."
   [category-id name]
   (seq (select app_categories
-         (join [:app_category_group :acg]
-               {:acg.child_category_id :id})
-         (where {:acg.parent_category_id category-id
-                 :name name}))))
+               (join [:app_category_group :acg]
+                     {:acg.child_category_id :id})
+               (where {:acg.parent_category_id category-id
+                       :name name}))))
 
 (defn category-ancestor-of-subcategory?
   "Checks if the app category ID is a parent or ancestor of the subcategory ID in the
    app_category_group table."
   [category-id subcategory-id]
   (seq (select :app_category_group
-         (where {:child_category_id [in (subselect (sqlfn :app_category_hierarchy_ids category-id))]})
-         (where {:child_category_id subcategory-id}))))
+               (where {:child_category_id [in (subselect (sqlfn :app_category_hierarchy_ids category-id))]})
+               (where {:child_category_id subcategory-id}))))
 
 (defn category-contains-apps?
   "Checks if the app category with the given ID directly contains any apps."
@@ -131,8 +131,8 @@
   "Checks if the app category with the given ID or any of its subcategories contain any apps."
   [category-id]
   (seq (select :app_category_app
-         (where {:app_category_id
-                 [in (subselect (sqlfn :app_category_hierarchy_ids category-id))]}))))
+               (where {:app_category_id
+                       [in (subselect (sqlfn :app_category_hierarchy_ids category-id))]}))))
 
 (defn app-in-category?
   "Determines whether or not an app is in an app category."
@@ -153,8 +153,8 @@
   "Removes an app from an app category."
   [app-id category-id]
   (delete :app_category_app
-    (where {:app_category_id category-id
-            :app_id          app-id})))
+          (where {:app_category_id category-id
+                  :app_id          app-id})))
 
 (defn get-groups-for-app
   "Retrieves a listing of all groups the app with the given ID is listed under."

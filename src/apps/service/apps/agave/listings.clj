@@ -35,8 +35,8 @@
   ([subject-info-for {:keys [owner] :as app-listing}]
    (if-let [subject-info (some-> owner subject-info-for)]
      (assoc (dissoc app-listing :owner)
-       :integrator_name  (:name subject-info (:integrator_name app-listing))
-       :integrator_email (:email subject-info (:integrator_email app-listing)))
+            :integrator_name  (:name subject-info (:integrator_name app-listing))
+            :integrator_email (:email subject-info (:integrator_email app-listing)))
      (dissoc app-listing :owner))))
 
 (defn- add-app-details-integrator-info
@@ -65,19 +65,19 @@
 (defn list-apps-with-ontology
   [agave term params admin?]
   (try+
-    (-> (select-keys (.listAppsWithOntology agave term) [:total :apps])
-        add-app-integrator-info
-        (add-app-listing-job-stats params admin?)
-        (sort-apps params {:default-sort-field "name"})
-        (apply-offset params)
-        (apply-limit params)
-        (format-app-listing-job-stats admin?))
-    (catch [:error_code ce/ERR_UNAVAILABLE] _
-      (log/error (:throwable &throw-context) "Agave app listing timed out")
-      nil)
-    (catch clj-http-error? _
-      (log/error (:throwable &throw-context) "HTTP error returned by Agave")
-      nil)))
+   (-> (select-keys (.listAppsWithOntology agave term) [:total :apps])
+       add-app-integrator-info
+       (add-app-listing-job-stats params admin?)
+       (sort-apps params {:default-sort-field "name"})
+       (apply-offset params)
+       (apply-limit params)
+       (format-app-listing-job-stats admin?))
+   (catch [:error_code ce/ERR_UNAVAILABLE] _
+     (log/error (:throwable &throw-context) "Agave app listing timed out")
+     nil)
+   (catch clj-http-error? _
+     (log/error (:throwable &throw-context) "HTTP error returned by Agave")
+     nil)))
 
 (defn- fix-search-params
   [params admin?]

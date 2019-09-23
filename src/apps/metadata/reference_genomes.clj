@@ -46,7 +46,7 @@
   [& uuids]
   (if (seq uuids)
     (select (reference-genome-base-query)
-      (where {:id [in uuids]}))
+            (where {:id [in uuids]}))
     (select (reference-genome-base-query))))
 
 (defn list-reference-genomes
@@ -60,25 +60,25 @@
 (defn- get-valid-reference-genome
   [reference-genome-id]
   (assert-not-nil [:reference-genome-id reference-genome-id]
-    (first (get-reference-genomes-by-id reference-genome-id))))
+                  (first (get-reference-genomes-by-id reference-genome-id))))
 
 (defn- validate-reference-genome-path
   "Verifies that a reference genome with the same path doesn't already exist."
   ([path id]
-     (if (seq (get-reference-genomes-where {:path path :id ['not= id]}))
-       (cxu/exists "Another reference genome with the given path already exists." :path path)))
+   (if (seq (get-reference-genomes-where {:path path :id ['not= id]}))
+     (cxu/exists "Another reference genome with the given path already exists." :path path)))
   ([path]
-     (if (seq (get-reference-genomes-where {:path path}))
-       (cxu/exists "A reference genome with the given path already exists." :path path))))
+   (if (seq (get-reference-genomes-where {:path path}))
+     (cxu/exists "A reference genome with the given path already exists." :path path))))
 
 (defn- validate-reference-genome-name
   "Verifies that a reference genome with the same name doesn't already exist."
   ([name id]
-     (if (seq (get-reference-genomes-where {:name name :id ['not= id]}))
-       (cxu/exists "Another reference genome with the given name already exists." :name name)))
+   (if (seq (get-reference-genomes-where {:name name :id ['not= id]}))
+     (cxu/exists "Another reference genome with the given name already exists." :name name)))
   ([name]
-     (if (seq (get-reference-genomes-where {:name name}))
-       (cxu/exists "A reference genome with the given name already exists." :name name))))
+   (if (seq (get-reference-genomes-where {:name name}))
+     (cxu/exists "A reference genome with the given name already exists." :name name))))
 
 (defn get-reference-genome
   "Gets a reference genome by its ID."
@@ -102,8 +102,8 @@
   (validate-reference-genome-name name reference-genome-id)
   (sql/update genome_reference
               (set-fields (assoc (select-keys reference-genome [:name :path :deleted])
-                            :last_modified_by (get-user-id (:username current-user))
-                            :last_modified_on (sqlfn now)))
+                                 :last_modified_by (get-user-id (:username current-user))
+                                 :last_modified_on (sqlfn now)))
               (where {:id reference-genome-id}))
   (get-reference-genome reference-genome-id))
 

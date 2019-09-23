@@ -44,18 +44,18 @@
 (defn get-default-value
   "Gets the default value for a property and a set of list of selectable arguments."
   ([{default-value :value prop-type :type} args]
-     (cond
-      (ref-genome-property-types prop-type) (ref-gen-info default-value)
-      (not (seq args))                      default-value
-      (map? default-value)                  default-value
-      (vector? default-value)               default-value
-      :else                                 (find-default-arg args)))
+   (cond
+     (ref-genome-property-types prop-type) (ref-gen-info default-value)
+     (not (seq args))                      default-value
+     (map? default-value)                  default-value
+     (vector? default-value)               default-value
+     :else                                 (find-default-arg args)))
   ([property args data-object]
-     (let [info-type       (:file_info_type data-object)
-           output-filename (:output_filename data-object)]
-       (cond (ref-genome-property-types info-type) (ref-gen-info (:value property))
-             (string/blank? output-filename)       (get-default-value property args)
-             :else                                 output-filename))))
+   (let [info-type       (:file_info_type data-object)
+         output-filename (:output_filename data-object)]
+     (cond (ref-genome-property-types info-type) (ref-gen-info (:value property))
+           (string/blank? output-filename)       (get-default-value property args)
+           :else                                 output-filename))))
 
 (defn translate-property
   "Translates a property from its internal format to its external format."
@@ -68,33 +68,33 @@
         info-type (:file_info_type data-obj)]
     (if (nil? data-obj)
       (assoc (dissoc property :validator :value)
-        :arguments    args
-        :required     (get-in property [:validator :required] false)
-        :validators   (validators-from-rules rules)
-        :defaultValue (get-default-value property args))
+             :arguments    args
+             :required     (get-in property [:validator :required] false)
+             :validators   (validators-from-rules rules)
+             :defaultValue (get-default-value property args))
       (assoc (dissoc property :validator :value)
-        :arguments    args
-        :validators   (validators-from-rules rules)
-        :defaultValue (get-default-value property args data-obj)
-        :data_object  (dissoc data-obj
-                              :cmdSwitch :name :description :id :label :order :required
-                              :file_info_type_id :format_id :multiplicity)
-        :name         (:cmdSwitch data-obj (:name property))
-        :description  (:description data-obj (:description property))
-        :id           (:id data-obj (:id property))
-        :label        (:name data-obj (:label property))
-        :order        (:order data-obj (:order property))
-        :required     (:required data-obj (:required property false))
-        :type         (property-type-for type mult info-type)))))
+             :arguments    args
+             :validators   (validators-from-rules rules)
+             :defaultValue (get-default-value property args data-obj)
+             :data_object  (dissoc data-obj
+                                   :cmdSwitch :name :description :id :label :order :required
+                                   :file_info_type_id :format_id :multiplicity)
+             :name         (:cmdSwitch data-obj (:name property))
+             :description  (:description data-obj (:description property))
+             :id           (:id data-obj (:id property))
+             :label        (:name data-obj (:label property))
+             :order        (:order data-obj (:order property))
+             :required     (:required data-obj (:required property false))
+             :type         (property-type-for type mult info-type)))))
 
 (defn translate-property-group
   "Translates a property group from its internal format to its external format."
   [property-group]
   (assoc property-group
-    :properties (map translate-property (:properties property-group))))
+         :properties (map translate-property (:properties property-group))))
 
 (defn translate-template
   "Translates a template from its internal format to its external format."
   [template]
   (assoc template
-    :groups (map translate-property-group (get-property-groups template))))
+         :groups (map translate-property-group (get-property-groups template))))

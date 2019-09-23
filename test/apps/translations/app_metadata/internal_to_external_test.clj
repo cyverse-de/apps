@@ -5,9 +5,9 @@
 (defn- remove-ids
   [v]
   (cond
-   (sequential? v) (map #(dissoc % :id) v)
-   (map? v)        (dissoc v :id)
-   :else           v))
+    (sequential? v) (map #(dissoc % :id) v)
+    (map? v)        (dissoc v :id)
+    :else           v))
 
 (defn- remove-ids-from-prop
   [m]

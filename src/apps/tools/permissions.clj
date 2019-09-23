@@ -29,10 +29,10 @@
 (defn has-tool-permission
   [user tool-id required-level]
   (try+
-    (seq (permissions/load-tool-permissions user [tool-id] required-level))
-    (catch clj-http-error? {:keys [body]}
-      (throw+ {:type   ::permission-load-failure
-               :reason (permissions/extract-error-message body)}))))
+   (seq (permissions/load-tool-permissions user [tool-id] required-level))
+   (catch clj-http-error? {:keys [body]}
+     (throw+ {:type   ::permission-load-failure
+              :reason (permissions/extract-error-message body)}))))
 
 (defn- format-tool-permissions
   [perms {:keys [id name]}]

@@ -66,9 +66,9 @@
   [_]
   {:formats
    (map remove-nil-vals
-     (select data_formats
-             (fields :id :name :label)
-             (order :display_order)))})
+        (select data_formats
+                (fields :id :name :label)
+                (order :display_order)))})
 
 (defn- list-data-sources
   "Obtains a listing of data sources."
@@ -96,10 +96,10 @@
   [_]
   {:info_types
    (map remove-nil-vals
-     (select info_type
-             (fields :id :name :label)
-             (where {:deprecated false})
-             (order :display_order)))})
+        (select info_type
+                (fields :id :name :label)
+                (where {:deprecated false})
+                (order :display_order)))})
 
 (defn- list-property-types
   "Obtains the property types for the metadata element listing service.
@@ -111,9 +111,9 @@
   (let [tool-type-id (get-tool-type tool-type tool-id)]
     {:parameter_types
      (map remove-nil-vals
-       (if (nil? tool-type-id)
-         (select (base-parameter-type-query))
-         (parameter-types-for-tool-type (base-parameter-type-query) tool-type-id)))}))
+          (if (nil? tool-type-id)
+            (select (base-parameter-type-query))
+            (parameter-types-for-tool-type (base-parameter-type-query) tool-type-id)))}))
 
 (defn- list-rule-types
   "Obtains the list of rule types for the metadata element listing service."
@@ -122,9 +122,9 @@
    (mapv
     (fn [m]
       (remove-nil-vals
-        (assoc (dissoc m :value_type)
-          :value_types             (mapv :name (:value_type m))
-          :rule_description_format (:rule_description_format m ""))))
+       (assoc (dissoc m :value_type)
+              :value_types             (mapv :name (:value_type m))
+              :rule_description_format (:rule_description_format m ""))))
     (select rule_type
             (fields [:rule_type.id :id]
                     [:rule_type.name :name]
@@ -162,11 +162,11 @@
   [params]
   (reduce merge {} (map #(% params) (vals listing-fns))))
 
-  (defn list-elements "Lists selected workflow elements.  This function handles requests to list
+(defn list-elements "Lists selected workflow elements.  This function handles requests to list
    various different types of workflow elements."
   [elm-type params]
-    (cond
-      (= elm-type "all")               (list-all params)
-      (contains? listing-fns elm-type) ((listing-fns elm-type) params)
-      :else (throw+ {:type ::unrecognized_workflow_component_type
-                     :name elm-type})))
+  (cond
+    (= elm-type "all")               (list-all params)
+    (contains? listing-fns elm-type) ((listing-fns elm-type) params)
+    :else (throw+ {:type ::unrecognized_workflow_component_type
+                   :name elm-type})))

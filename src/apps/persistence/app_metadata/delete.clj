@@ -39,8 +39,8 @@
   "Permanently removes an app from the database."
   [app-id]
   (transaction
-    (let [tasks    (tasks-for-app app-id)
-          task-ids (mapv :id tasks)]
-      (log/warn (:username current-user) "permanently deleting App" app-id)
-      (remove-app app-id)
-      (dorun (map delete-orphaned-task task-ids)))))
+   (let [tasks    (tasks-for-app app-id)
+         task-ids (mapv :id tasks)]
+     (log/warn (:username current-user) "permanently deleting App" app-id)
+     (remove-app app-id)
+     (dorun (map delete-orphaned-task task-ids)))))

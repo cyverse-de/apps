@@ -79,11 +79,11 @@
   [user name-prefix include-hidden-params? step group]
   (let [params (get-parameters (:id step) (:id group) include-hidden-params?)]
     (remove-nil-vals
-      {:id           (:id group)
-       :name         (str name-prefix (:name group))
-       :label        (str name-prefix (:label group))
-       :parameters   (mapv (partial format-parameter user step) params)
-       :step_number  (:step_number step)})))
+     {:id           (:id group)
+      :name         (str name-prefix (:name group))
+      :label        (str name-prefix (:label group))
+      :parameters   (mapv (partial format-parameter user step) params)
+      :step_number  (:step_number step)})))
 
 (defn- format-groups
   [user name-prefix include-hidden-params? step]

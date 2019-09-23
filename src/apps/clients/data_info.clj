@@ -24,9 +24,9 @@
      (http/post (data-info-url "path-info")
                 {:query-params (remove-vals nil?
                                             (assoc (secured-params user)
-                                                    :validation-behavior validation-behavior
-                                                    :filter-include filter-include
-                                                    :filter-exclude filter-exclude))
+                                                   :validation-behavior validation-behavior
+                                                   :filter-include filter-include
+                                                   :filter-exclude filter-exclude))
                  :body         (cheshire/encode {:paths paths :ids ids})
                  :content-type :json
                  :as           :json}))))
@@ -99,13 +99,13 @@
   [user paths & {:as ticket-params}]
   (when (seq paths)
     (:body
-      (http/post (data-info-url "tickets")
-                 {:query-params (merge (secured-params user)
-                                       {:public true}
-                                       ticket-params)
-                  :body         (cheshire/encode {:paths paths})
-                  :content-type :json
-                  :as           :json}))))
+     (http/post (data-info-url "tickets")
+                {:query-params (merge (secured-params user)
+                                      {:public true}
+                                      ticket-params)
+                 :body         (cheshire/encode {:paths paths})
+                 :content-type :json
+                 :as           :json}))))
 
 (defn delete-tickets
   [user tickets & {:as ticket-params}]

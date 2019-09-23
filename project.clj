@@ -41,7 +41,8 @@
                  [ring/ring-jetty-adapter "1.6.0"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
-  :plugins [[lein-swank "1.4.4"]
+  :plugins [[lein-cljfmt "0.6.4"]
+            [lein-swank "1.4.4"]
             [test2junit "1.1.3"]
             [jonase/eastwood "0.3.5"]]
   :profiles {:dev {:plugins        [[lein-ring "0.12.5"]]

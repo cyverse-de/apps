@@ -15,9 +15,9 @@
 
 (defn- internal-selection-args
   ([]
-     (internal-selection-args nil))
+   (internal-selection-args nil))
   ([default]
-     (external-selection-args default)))
+   (external-selection-args default)))
 
 (deftest build-validator-for-property-test
   (is (= {:required true :rules []}

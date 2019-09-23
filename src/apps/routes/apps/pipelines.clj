@@ -10,38 +10,38 @@
 
 (defroutes pipelines
   (POST "/" []
-        :query [params SecuredQueryParamsRequired]
-        :body [body PipelineCreateRequest]
-        :return Pipeline
-        :summary PipelineCreateSummary
-        :description PipelineCreateDocs
-        (ok (coerce! Pipeline
-                     (apps/add-pipeline current-user body))))
+    :query [params SecuredQueryParamsRequired]
+    :body [body PipelineCreateRequest]
+    :return Pipeline
+    :summary PipelineCreateSummary
+    :description PipelineCreateDocs
+    (ok (coerce! Pipeline
+                 (apps/add-pipeline current-user body))))
 
   (context "/:app-id" []
     :path-params [app-id :- AppIdParam]
 
     (PUT "/" []
-         :query [params SecuredQueryParamsEmailRequired]
-         :body [body PipelineUpdateRequest]
-         :return Pipeline
-         :summary PipelineUpdateSummary
-         :description PipelineUpdateDocs
-         (ok (coerce! Pipeline
-                      (apps/update-pipeline current-user (assoc body :id app-id)))))
+      :query [params SecuredQueryParamsEmailRequired]
+      :body [body PipelineUpdateRequest]
+      :return Pipeline
+      :summary PipelineUpdateSummary
+      :description PipelineUpdateDocs
+      (ok (coerce! Pipeline
+                   (apps/update-pipeline current-user (assoc body :id app-id)))))
 
     (POST "/copy" []
-          :query [params SecuredQueryParamsRequired]
-          :return Pipeline
-          :summary PipelineCopySummary
-          :description PipelineCopyDocs
-          (ok (coerce! Pipeline
-                       (apps/copy-pipeline current-user app-id))))
+      :query [params SecuredQueryParamsRequired]
+      :return Pipeline
+      :summary PipelineCopySummary
+      :description PipelineCopyDocs
+      (ok (coerce! Pipeline
+                   (apps/copy-pipeline current-user app-id))))
 
     (GET "/ui" []
-         :query [params SecuredQueryParamsEmailRequired]
-         :return Pipeline
-         :summary PipelineEditingViewSummary
-         :description PipelineEditingViewDocs
-         (ok (coerce! Pipeline
-                      (apps/edit-pipeline current-user app-id))))))
+      :query [params SecuredQueryParamsEmailRequired]
+      :return Pipeline
+      :summary PipelineEditingViewSummary
+      :description PipelineEditingViewDocs
+      (ok (coerce! Pipeline
+                   (apps/edit-pipeline current-user app-id))))))

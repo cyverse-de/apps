@@ -56,8 +56,8 @@
           inputs-for-step  (.buildInputs this params-for-step)
           params-for-step  (.buildParams this params-for-step (concat outputs outputs-for-step))]
       (assoc (ca/build-config inputs-for-step outputs-for-step params-for-step)
-        :stdout stdout
-        :stderr stderr)))
+             :stdout stdout
+             :stderr stderr)))
 
   (buildEnvironment [this step]
     (ca/build-environment (:config submission) defaults (params (:id step))))

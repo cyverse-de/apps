@@ -93,27 +93,27 @@
     {:keys [implementor_email implementor test] :as implementation} :implementation
     :as tool}]
   (transaction
-    (let [integration-data-id (when implementation
-                                (:id (get-integration-data implementor_email implementor)))
-          type-id (get-tool-type-id-for-tool tool)
-          tool (-> tool
-                   (assoc :integration_data_id integration-data-id
-                          :tool_type_id        type-id)
-                   (dissoc :id)
-                   filter-valid-tool-values
-                   remove-nil-vals)]
-      (when-not (empty? tool)
-        (sql/update tools (set-fields tool) (where {:id tool-id})))
-      (when-not (empty? test)
-        (delete tool_test_data_files (where {:tool_id tool-id}))
-        (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
-        (dorun (map (partial add-tool-data-file tool-id false) (:output_files test)))))))
+   (let [integration-data-id (when implementation
+                               (:id (get-integration-data implementor_email implementor)))
+         type-id (get-tool-type-id-for-tool tool)
+         tool (-> tool
+                  (assoc :integration_data_id integration-data-id
+                         :tool_type_id        type-id)
+                  (dissoc :id)
+                  filter-valid-tool-values
+                  remove-nil-vals)]
+     (when-not (empty? tool)
+       (sql/update tools (set-fields tool) (where {:id tool-id})))
+     (when-not (empty? test)
+       (delete tool_test_data_files (where {:tool_id tool-id}))
+       (dorun (map (partial add-tool-data-file tool-id true) (:input_files test)))
+       (dorun (map (partial add-tool-data-file tool-id false) (:output_files test)))))))
 
 (defn delete-tool
   [tool-id]
   (transaction
-    (remove-tool-from-tasks tool-id)
-    (delete tools (where {:id tool-id}))))
+   (remove-tool-from-tasks tool-id)
+   (delete tools (where {:id tool-id}))))
 
 (defn- add-listing-where-clause
   [query tool-ids]
@@ -132,11 +132,11 @@
                                    ['like (sqlfn lower search-term)])]
       (where base-query
              (or
-               (search-clause :tools.name)
-               (search-clause :tools.description)
-               (search-clause :container_images.name)
-               (search-clause :integration_data.integrator_name)
-               (search-clause :integration_data.integrator_email))))
+              (search-clause :tools.name)
+              (search-clause :tools.description)
+              (search-clause :container_images.name)
+              (search-clause :integration_data.integrator_name)
+              (search-clause :integration_data.integrator_email))))
     base-query))
 
 (defn- add-hidden-tool-types-clause

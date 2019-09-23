@@ -172,8 +172,8 @@
   "Formats a single status record for a tool request."
   [req-status]
   (assoc req-status
-    :status_date (.getTime (:status_date req-status))
-    :comments    (or (:comments req-status) "")))
+         :status_date (.getTime (:status_date req-status))
+         :comments    (or (:comments req-status) "")))
 
 (defn- get-tool-request-details
   "Retrieves the details of a single tool request from the database."
@@ -228,7 +228,7 @@
 (defn- format-tool-request-dates
   [{:keys [date_submitted date_updated] :as tool-request}]
   (assoc tool-request :date_submitted (.getTime date_submitted)
-                      :date_updated   (.getTime date_updated)))
+         :date_updated   (.getTime date_updated)))
 
 (defn list-tool-requests
   "Lists tool requests."

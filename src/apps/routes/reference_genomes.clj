@@ -8,16 +8,16 @@
 
 (defroutes reference-genomes
   (GET "/" []
-        :query [params ReferenceGenomeListingParams]
-        :return schema/ReferenceGenomesList
-        :summary schema/ReferenceGenomeListingSummary
-        :description schema/ReferenceGenomeListingDocs
-        (ok (list-reference-genomes params)))
+    :query [params ReferenceGenomeListingParams]
+    :return schema/ReferenceGenomesList
+    :summary schema/ReferenceGenomeListingSummary
+    :description schema/ReferenceGenomeListingDocs
+    (ok (list-reference-genomes params)))
 
   (GET "/:reference-genome-id" []
-        :path-params [reference-genome-id :- schema/ReferenceGenomeIdParam]
-        :query [params SecuredQueryParams]
-        :return schema/ReferenceGenome
-        :summary schema/ReferenceGenomeDetailsSummary
-        :description schema/ReferenceGenomeDetailsDocs
-        (ok (get-reference-genome reference-genome-id))))
+    :path-params [reference-genome-id :- schema/ReferenceGenomeIdParam]
+    :query [params SecuredQueryParams]
+    :return schema/ReferenceGenome
+    :summary schema/ReferenceGenomeDetailsSummary
+    :description schema/ReferenceGenomeDetailsDocs
+    (ok (get-reference-genome reference-genome-id))))

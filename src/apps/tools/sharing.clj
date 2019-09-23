@@ -59,13 +59,13 @@
   (if-let [tool (first (tools-db/get-tools-by-id [tool-id]))]
     (let [share-failure (partial tool-sharing-failure tool-id tool level)]
       (try+
-        (if-not (perms/has-tool-permission username tool-id "own")
-          (share-failure (tool-sharing-msg :not-allowed tool-id))
-          (if-let [failure-reason (perms-client/share-tool tool-id sharee level)]
-            (share-failure failure-reason)
-            (tool-sharing-success tool-id tool level)))
-        (catch [:type :apps.tools.permissions/permission-load-failure] {:keys [reason]}
-          (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
+       (if-not (perms/has-tool-permission username tool-id "own")
+         (share-failure (tool-sharing-msg :not-allowed tool-id))
+         (if-let [failure-reason (perms-client/share-tool tool-id sharee level)]
+           (share-failure failure-reason)
+           (tool-sharing-success tool-id tool level)))
+       (catch [:type :apps.tools.permissions/permission-load-failure] {:keys [reason]}
+         (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
     (tool-sharing-failure tool-id nil level (tool-sharing-msg :not-found tool-id))))
 
 (defn unshare-tool-with-subject
@@ -73,19 +73,19 @@
   (if-let [tool (first (tools-db/get-tools-by-id [tool-id]))]
     (let [share-failure (partial tool-unsharing-failure tool-id tool)]
       (try+
-        (if-not (perms/has-tool-permission username tool-id "own")
-          (share-failure (tool-sharing-msg :not-allowed tool-id))
-          (if-let [failure-reason (perms-client/unshare-tool tool-id sharee)]
-            (share-failure failure-reason)
-            (tool-unsharing-success tool-id tool)))
-        (catch [:type :apps.tools.permissions/permission-load-failure] {:keys [reason]}
-          (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
+       (if-not (perms/has-tool-permission username tool-id "own")
+         (share-failure (tool-sharing-msg :not-allowed tool-id))
+         (if-let [failure-reason (perms-client/unshare-tool tool-id sharee)]
+           (share-failure failure-reason)
+           (tool-unsharing-success tool-id tool)))
+       (catch [:type :apps.tools.permissions/permission-load-failure] {:keys [reason]}
+         (share-failure (tool-sharing-msg :load-failure tool-id reason)))))
     (tool-unsharing-failure tool-id nil (tool-sharing-msg :not-found tool-id))))
 
 (defn- share-tools-with-subject
   [sharer {sharee :subject :keys [tools]}]
   (let [responses (for [{:keys [tool_id permission]} tools]
-                    (share-tool-with-subject sharer sharee tool_id permission) )]
+                    (share-tool-with-subject sharer sharee tool_id permission))]
     (cn/send-tool-sharing-notifications (:shortUsername sharer) sharee responses)
     {:subject sharee
      :tools   responses}))

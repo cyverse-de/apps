@@ -18,9 +18,9 @@
 (defn get-app-extra-info
   [app-id]
   (when-let [htcondor (first
-                   (select apps_htcondor_extra
-                           (fields [:extra_requirements])
-                           (where {:apps_id app-id})))]
+                       (select apps_htcondor_extra
+                               (fields [:extra_requirements])
+                               (where {:apps_id app-id})))]
     {:htcondor htcondor}))
 
 (defn- get-all-group-ids-subselect
@@ -28,32 +28,32 @@
    the stored procedure app_category_hierarchy_ids."
   [app_group_id]
   (subselect
-    (sqlfn :app_category_hierarchy_ids app_group_id)))
+   (sqlfn :app_category_hierarchy_ids app_group_id)))
 
 (defn- get-fav-group-id-subselect
   "Gets a subselect that fetches the ID for the Favorites group at the given
    index under the app_categories with the given ID."
   [workspace_root_group_id favorites_group_index]
   (subselect
-    :app_category_group
-    (fields :child_category_id)
-    (where {:parent_category_id workspace_root_group_id
-            :child_index favorites_group_index})))
+   :app_category_group
+   (fields :child_category_id)
+   (where {:parent_category_id workspace_root_group_id
+           :child_index favorites_group_index})))
 
 (defn- get-is-fav-sqlfn
   "Gets a sqlfn that retuns true if the App ID in its subselect is found in the
    Favorites group with the ID returned by get-fav-group-id-subselect."
   [workspace_root_group_id favorites_group_index]
   (let [fav_group_id_subselect (get-fav-group-id-subselect
-                                 workspace_root_group_id
-                                 favorites_group_index)]
+                                workspace_root_group_id
+                                favorites_group_index)]
     (sqlfn* :exists
             (subselect
-              :app_category_app
-              (where {:app_category_app.app_id
-                      :app_listing.id})
-              (where {:app_category_app.app_category_id
-                      fav_group_id_subselect})))))
+             :app_category_app
+             (where {:app_category_app.app_id
+                     :app_listing.id})
+             (where {:app_category_app.app_category_id
+                     fav_group_id_subselect})))))
 
 (defn- get-app-listing-orphaned-condition
   []
@@ -87,11 +87,11 @@
    an app group and all of its descendents."
   [base_listing_query app_group_id]
   (-> base_listing_query
-    (join :app_category_app
-          (= :app_category_app.app_id
-             :app_listing.id))
-    (where {:app_category_app.app_category_id
-            [in (get-all-group-ids-subselect app_group_id)]})))
+      (join :app_category_app
+            (= :app_category_app.app_id
+               :app_listing.id))
+      (where {:app_category_app.app_category_id
+              [in (get-all-group-ids-subselect app_group_id)]})))
 
 (defn- add-app-group-plus-public-apps-where-clause
   "Adds a where clause to an analysis listing query to restrict app results to
@@ -99,13 +99,13 @@
    integrated by a user."
   [query app-group-id username public-app-ids]
   (-> query
-    (join :app_category_app
-          (= :app_category_app.app_id
-             :app_listing.id))
-    (where (or {:app_category_app.app_category_id
-                [in (get-all-group-ids-subselect app-group-id)]}
-               {:integrator_username username
-                :id                  [in (seq public-app-ids)]}))))
+      (join :app_category_app
+            (= :app_category_app.app_id
+               :app_listing.id))
+      (where (or {:app_category_app.app_category_id
+                  [in (get-all-group-ids-subselect app-group-id)]}
+                 {:integrator_username username
+                  :id                  [in (seq public-app-ids)]}))))
 
 (defn- add-public-apps-by-user-where-clause
   "Adds a where clause to an analysis listing query to restrict app results to
@@ -153,13 +153,13 @@
 (defn count-apps-in-group-for-user
   "Counts all of the apps in an app group and all of its descendents."
   ([app-group-id query-opts]
-    ((comp :total first)
-      (-> (get-app-count-base-query query-opts)
+   ((comp :total first)
+    (-> (get-app-count-base-query query-opts)
         (add-app-group-where-clause app-group-id)
         (select))))
   ([app-group-id username {:keys [public-app-ids] :as query-opts}]
-    ((comp :total first)
-      (-> (get-app-count-base-query query-opts)
+   ((comp :total first)
+    (-> (get-app-count-base-query query-opts)
         (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
         (select)))))
 
@@ -191,8 +191,8 @@
   "Add user's is_favorite column to apps listing query results"
   [listing-query workspace_root_group_id favorites_group_index]
   (let [is_fav_subselect (get-is-fav-sqlfn
-                           workspace_root_group_id
-                           favorites_group_index)]
+                          workspace_root_group_id
+                          favorites_group_index)]
     (fields listing-query [is_fav_subselect :is_favorite])))
 
 (defn- add-app-listing-ratings-fields
@@ -244,13 +244,13 @@
    given workspace (as returned by fetch-workspace-by-user-id) to mark
    whether each app is a favorite and to include the user's rating in each app."
   ([app-group-id workspace faves-index query-opts]
-    (-> (get-app-listing-base-query workspace faves-index query-opts)
-      (add-app-group-where-clause app-group-id)
-      (select)))
+   (-> (get-app-listing-base-query workspace faves-index query-opts)
+       (add-app-group-where-clause app-group-id)
+       (select)))
   ([app-group-id workspace faves-index {:keys [public-app-ids] :as query-opts} username]
-    (-> (get-app-listing-base-query workspace faves-index query-opts)
-      (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
-      (select))))
+   (-> (get-app-listing-base-query workspace faves-index query-opts)
+       (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
+       (select))))
 
 (defn- get-job-stats-fields
   "Adds query fields via subselects for an app's job_count_completed and job_last_completed timestamp."
@@ -299,8 +299,8 @@
   (let [root_app_ids (get-visible-root-app-group-ids workspace_id)
         select-ids-fn #(str "SELECT * FROM app_category_hierarchy_ids('" % "')")
         union_select_ids (str/join
-                           " UNION "
-                           (map select-ids-fn root_app_ids))]
+                          " UNION "
+                          (map select-ids-fn root_app_ids))]
     (raw (str "(" union_select_ids ")"))))
 
 (defn- get-deployed-component-search-subselect
@@ -309,11 +309,11 @@
   [search_term]
   (sqlfn* :exists
           (subselect
-            :tool_listing
-            (where {:app_listing.id
-                    :tool_listing.app_id})
-            (where {(sqlfn lower :tool_listing.name)
-                    [like (sqlfn lower search_term)]}))))
+           :tool_listing
+           (where {:app_listing.id
+                   :tool_listing.app_id})
+           (where {(sqlfn lower :tool_listing.name)
+                   [like (sqlfn lower search_term)]}))))
 
 (defn- add-search-term-where-clauses
   "Adds where clauses to a base App search query to restrict results to apps that
@@ -395,10 +395,10 @@
 (defn- add-deleted-and-orphaned-where-clause
   [query public-app-ids]
   (where query
-    (or {:deleted true
-         :id      [in (seq public-app-ids)]}
-        (and (get-app-listing-orphaned-condition)
-             {:id [not-in (seq public-app-ids)]}))))
+         (or {:deleted true
+              :id      [in (seq public-app-ids)]}
+             (and (get-app-listing-orphaned-condition)
+                  {:id [not-in (seq public-app-ids)]}))))
 
 (defn count-deleted-and-orphaned-apps
   "Counts the number of deleted, public apps, plus apps that are not listed under any category."

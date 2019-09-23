@@ -39,34 +39,34 @@
 (defn multiplicity-for
   [prop-type mult]
   (cond
-   (input-property-types prop-type)      (input-multiplicity-for prop-type mult)
-   (output-property-types prop-type)     (output-multiplicity-for prop-type mult)
-   (ref-genome-property-types prop-type) "One"
-   :else                                 mult))
+    (input-property-types prop-type)      (input-multiplicity-for prop-type mult)
+    (output-property-types prop-type)     (output-multiplicity-for prop-type mult)
+    (ref-genome-property-types prop-type) "One"
+    :else                                 mult))
 
 (defn property-type-for
   [prop-type mult info-type]
   (cond
-   (ref-genome-property-types info-type) info-type
-   (input-property-types prop-type)      (input-property-type-for mult prop-type)
-   (output-property-types prop-type)     (output-property-type-for mult prop-type)
-   :else                                 prop-type))
+    (ref-genome-property-types info-type) info-type
+    (input-property-types prop-type)      (input-property-type-for mult prop-type)
+    (output-property-types prop-type)     (output-property-type-for mult prop-type)
+    :else                                 prop-type))
 
 (defn generic-property-type-for
   [prop-type]
   (cond
-   (input-property-types prop-type)      "Input"
-   (output-property-types prop-type)     "Output"
-   (ref-genome-property-types prop-type) "Input"
-   :else                                  prop-type))
+    (input-property-types prop-type)      "Input"
+    (output-property-types prop-type)     "Output"
+    (ref-genome-property-types prop-type) "Input"
+    :else                                  prop-type))
 
 (defn get-property-groups
   "Gets the list of property groups "
   [template]
   (cond
-   (map? (:groups template))        (get-property-groups (:groups template))
-   (sequential? (:groups template)) (:groups template)
-   :else                            []))
+    (map? (:groups template))        (get-property-groups (:groups template))
+    (sequential? (:groups template)) (:groups template)
+    :else                            []))
 
 (defn data-obj-type-for
   [prop-type orig-data-obj-type]

@@ -22,13 +22,13 @@
 
 (defschema AdminCategorySearchParams
   (assoc SecuredQueryParams
-    (optional-key :name)
-    (describe [String] "Category names to search for.")))
+         (optional-key :name)
+         (describe [String] "Category names to search for.")))
 
 (defschema AdminAppListingPagingParams
   (assoc AppListingPagingParams
-    SortFieldOptionalKey
-    (describe (apply enum AdminAppListingValidSortFields) SortFieldDocs)))
+         SortFieldOptionalKey
+         (describe (apply enum AdminAppListingValidSortFields) SortFieldDocs)))
 
 (defschema AppCategoryInfo
   (merge categories-schema/AppCategoryBase
@@ -73,5 +73,5 @@
 
 (defschema AdminOntologyAppListingPagingParams
   (assoc OntologyAppListingPagingParams
-    SortFieldOptionalKey
-    (describe (apply enum AdminAppListingValidSortFields) SortFieldDocs)))
+         SortFieldOptionalKey
+         (describe (apply enum AdminAppListingValidSortFields) SortFieldDocs)))

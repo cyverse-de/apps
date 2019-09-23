@@ -10,7 +10,7 @@
 (defn- format-analysis
   [category-keyword response]
   (remove-vals nil? (assoc (select-keys response [:analysis_id :analysis_name])
-                      :category_id (str (category-keyword response)))))
+                           :category_id (str (category-keyword response)))))
 
 (defn- format-payload
   [category-keyword action responses]

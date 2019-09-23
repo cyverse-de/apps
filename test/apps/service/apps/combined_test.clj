@@ -42,24 +42,24 @@
     client3-apps-listing))
 
 (def combined-client (apps.service.apps.combined.CombinedApps.
-                       [(TestClient1.) (TestClient2.) (TestClient3.)]
-                       "someuser"))
+                      [(TestClient1.) (TestClient2.) (TestClient3.)]
+                      "someuser"))
 
 (deftest CombinedApps-listAppsUnderHierarchy-test
   (let [{:keys [total apps]} (.listAppsUnderHierarchy combined-client
-                                                          "root-iri"
-                                                          "attr"
-                                                          {:sort-field "id"})]
+                                                      "root-iri"
+                                                      "attr"
+                                                      {:sort-field "id"})]
     (testing "Test CombinedApps.listAppsWithMetadata app count and apps list."
       (is (= total 8))
       (is (= (set apps) combined-app-set)))))
 
 (deftest CombinedApps-adminListAppsUnderHierarchy-test
   (let [{:keys [total apps]} (.adminListAppsUnderHierarchy combined-client
-                                                               "ontology-version"
-                                                               "root-iri"
-                                                               "attr"
-                                                               {:sort-field "id"})]
+                                                           "ontology-version"
+                                                           "root-iri"
+                                                           "attr"
+                                                           {:sort-field "id"})]
     (testing "Test CombinedApps.adminListAppsUnderHierarchy app count and apps list."
       (is (= total 8))
       (is (= (set apps) combined-app-set)))))

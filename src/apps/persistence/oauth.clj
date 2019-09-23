@@ -23,11 +23,11 @@
   "Replaces an existing access token in the database."
   [api-name username expires-at refresh-token access-token]
   (sql/update :access_tokens
-    (set-fields {:token         (pgp/encrypt access-token)
-                 :expires_at    expires-at
-                 :refresh_token (pgp/encrypt refresh-token)})
-    (where {:webapp  api-name
-            :user_id (user-id-subselect username)})))
+              (set-fields {:token         (pgp/encrypt access-token)
+                           :expires_at    expires-at
+                           :refresh_token (pgp/encrypt refresh-token)})
+              (where {:webapp  api-name
+                      :user_id (user-id-subselect username)})))
 
 (defn- insert-access-token
   "Inserts a new access token into the database."

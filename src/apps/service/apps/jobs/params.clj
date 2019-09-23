@@ -60,8 +60,8 @@
   [value]
   {:value
    (assoc value
-     :display (:display value (:name value ""))
-     :value   (:value value (:name value "")))})
+          :display (:display value (:name value ""))
+          :value   (:value value (:name value "")))})
 
 (defn- format-scalar-value
   [value]
@@ -128,8 +128,8 @@
    (if (contains? config (keyword id))
      (let [prop-value (get-prop-value user config prop)]
        (assoc prop
-         :value        prop-value
-         :defaultValue prop-value))
+              :value        prop-value
+              :defaultValue prop-value))
      prop)))
 
 (defn- update-app-props

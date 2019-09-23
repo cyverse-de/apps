@@ -28,13 +28,13 @@
 (defn- job-sharing-success
   [job-id job level input-share-errs output-share-err-msg app-share-err-msg]
   (remove-nil-values
-    {:analysis_id   job-id
-     :analysis_name (get-job-name job-id job)
-     :permission    level
-     :input_errors  input-share-errs
-     :outputs_error output-share-err-msg
-     :app_error     app-share-err-msg
-     :success       true}))
+   {:analysis_id   job-id
+    :analysis_name (get-job-name job-id job)
+    :permission    level
+    :input_errors  input-share-errs
+    :outputs_error output-share-err-msg
+    :app_error     app-share-err-msg
+    :success       true}))
 
 (defn- job-sharing-failure
   [job-id job level reason]
@@ -48,11 +48,11 @@
 (defn- job-unsharing-success
   [job-id job input-unshare-errs output-unshare-err-msg]
   (remove-nil-values
-    {:analysis_id   job-id
-     :analysis_name (get-job-name job-id job)
-     :input_errors  input-unshare-errs
-     :outputs_error output-unshare-err-msg
-     :success       true}))
+   {:analysis_id   job-id
+    :analysis_name (get-job-name job-id job)
+    :input_errors  input-unshare-errs
+    :outputs_error output-unshare-err-msg
+    :success       true}))
 
 (defn- job-unsharing-failure
   [job-id job reason]

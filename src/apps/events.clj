@@ -23,7 +23,7 @@
   (lb/ack channel delivery-tag)
   (log/info (format "[events/ping-handler] [%s] [%s]" routing-key (String. msg)))
   (lb/publish channel (cfg/exchange-name) "events.apps.pong"
-    (.print (JsonFormat/printer)
-      (.. (PingMessages$Pong/newBuilder)
-        (setPongFrom "apps")
-        (build)))))
+              (.print (JsonFormat/printer)
+                      (.. (PingMessages$Pong/newBuilder)
+                          (setPongFrom "apps")
+                          (build)))))

@@ -14,10 +14,10 @@
 (defn- with-test-reference-genome
   [f]
   (transaction
-    (binding [test-reference-genome-1 (add-reference-genome {:name "foo reference" :path "/path/to/foo"})
-              test-reference-genome-2 (add-reference-genome {:name "bar reference" :path "/path/to/bar"})]
-      (f))
-    (rollback)))
+   (binding [test-reference-genome-1 (add-reference-genome {:name "foo reference" :path "/path/to/foo"})
+             test-reference-genome-2 (add-reference-genome {:name "bar reference" :path "/path/to/bar"})]
+     (f))
+   (rollback)))
 
 (use-fixtures :each with-test-reference-genome)
 

@@ -117,9 +117,9 @@
 (defn- load-htcondor-extra-requirements
   [app-id]
   (first
-    (select :apps_htcondor_extra
-            (fields [:extra_requirements])
-            (where {:apps_id app-id}))))
+   (select :apps_htcondor_extra
+           (fields [:extra_requirements])
+           (where {:apps_id app-id}))))
 
 (defn build-extra
   [request-builder app]

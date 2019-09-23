@@ -11,4 +11,4 @@
     :summary "Service Information"
     :description "This endpoint provides the name of the service and its version."
     ((if (and expecting (not= expecting (:app-name config/svc-info))) internal-server-error ok)
-      (commons-service/get-docs-status config/svc-info server-name server-port config/docs-uri expecting))))
+     (commons-service/get-docs-status config/svc-info server-name server-port config/docs-uri expecting))))

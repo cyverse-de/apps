@@ -102,7 +102,6 @@
   (is (= {:name "discoenv/de-db" :tag "latest" :url "https://www.google.com" :deprecated false}
          (dissoc (image-info (image-id {:name "discoenv/de-db" :tag "latest"})) :id))))
 
-
 (deftest settings-tests
   (is (not (nil? (:id settings-map))))
 
@@ -124,7 +123,6 @@
   (is (not (nil? (:id volumes-from-map))))
 
   (is (volumes-from-mapping? (:id settings-map) (:id data-container-map))))
-
 
 (deftest updated-tool-tests
   (sql/update tools

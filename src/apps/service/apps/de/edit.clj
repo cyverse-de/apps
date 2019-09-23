@@ -29,64 +29,64 @@
   "Retrieves the details for a single-step app."
   [app-id]
   (first (select apps
-           (fields :id
-                   :name
-                   :description
-                   :integration_date
-                   :edited_date)
-           (with app_references)
-           (with tasks
-             (fields :id)
-             (with parameter_groups
-               (order :display_order)
-               (fields :id
-                       :name
-                       :description
-                       :label
-                       [:is_visible :isVisible])
-               (with parameters
-                 (order :display_order)
-                 (with file_parameters
-                   (with info_type)
-                   (with data_formats)
-                   (with data_source))
-                 (with parameter_types
-                   (with value_type))
-                 (with validation_rules
-                   (with rule_type)
-                   (with validation_rule_arguments
-                     (order :ordering)
-                     (fields :argument_value))
-                   (fields :id
-                           [:rule_type.name :type]
-                           [:rule_type.id :type_id])
-                   (where {:rule_type.deprecated false}))
-                 (with parameter_values
-                       (fields :id
-                               :parent_id
-                               :name
-                               :value
-                               [:label :display]
-                               :description
-                               [:is_default :isDefault])
-                       (order [:parent_id :display_order] :ASC))
                  (fields :id
                          :name
-                         :label
                          :description
-                         [:ordering :order]
-                         :required
-                         [:is_visible :isVisible]
-                         :omit_if_blank
-                         [:parameter_types.name :type]
-                         [:value_type.name :value_type]
-                         [:info_type.name :file_info_type]
-                         :file_parameters.is_implicit
-                         :file_parameters.repeat_option_flag
-                         :file_parameters.retain
-                         [:data_source.name :data_source]
-                         [:data_formats.name :format]))))
-           (where {:id app-id}))))
+                         :integration_date
+                         :edited_date)
+                 (with app_references)
+                 (with tasks
+                       (fields :id)
+                       (with parameter_groups
+                             (order :display_order)
+                             (fields :id
+                                     :name
+                                     :description
+                                     :label
+                                     [:is_visible :isVisible])
+                             (with parameters
+                                   (order :display_order)
+                                   (with file_parameters
+                                         (with info_type)
+                                         (with data_formats)
+                                         (with data_source))
+                                   (with parameter_types
+                                         (with value_type))
+                                   (with validation_rules
+                                         (with rule_type)
+                                         (with validation_rule_arguments
+                                               (order :ordering)
+                                               (fields :argument_value))
+                                         (fields :id
+                                                 [:rule_type.name :type]
+                                                 [:rule_type.id :type_id])
+                                         (where {:rule_type.deprecated false}))
+                                   (with parameter_values
+                                         (fields :id
+                                                 :parent_id
+                                                 :name
+                                                 :value
+                                                 [:label :display]
+                                                 :description
+                                                 [:is_default :isDefault])
+                                         (order [:parent_id :display_order] :ASC))
+                                   (fields :id
+                                           :name
+                                           :label
+                                           :description
+                                           [:ordering :order]
+                                           :required
+                                           [:is_visible :isVisible]
+                                           :omit_if_blank
+                                           [:parameter_types.name :type]
+                                           [:value_type.name :value_type]
+                                           [:info_type.name :file_info_type]
+                                           :file_parameters.is_implicit
+                                           :file_parameters.repeat_option_flag
+                                           :file_parameters.retain
+                                           [:data_source.name :data_source]
+                                           [:data_formats.name :format]))))
+                 (where {:id app-id}))))
 
 (defn- format-validator
   [validator]
@@ -98,7 +98,7 @@
 (defn- format-param-value
   [param-value]
   (remove-nil-vals
-    (dissoc param-value :parent_id)))
+   (dissoc param-value :parent_id)))
 
 (defn- format-tree-param-children
   [param-map group]
@@ -149,25 +149,25 @@
                           (conj file-param-keys :repeat_option_flag)
                           file-param-keys)]
     (if (contains?
-          (set/difference persistence/param-file-types persistence/param-input-reference-types)
-          param-type)
+         (set/difference persistence/param-file-types persistence/param-input-reference-types)
+         param-type)
       (assoc param :file_parameters (select-keys param file-param-keys))
       param)))
 
 (defn- format-default-value
   [{param-type :type :as param} default-value]
   (assoc param
-    :defaultValue
-    (when default-value
-      (cond
-        (contains? persistence/param-reference-genome-types param-type)
-        (format-reference-genome-value default-value)
+         :defaultValue
+         (when default-value
+           (cond
+             (contains? persistence/param-reference-genome-types param-type)
+             (format-reference-genome-value default-value)
 
-        (job-util/input-type? param-type)
-        {:path default-value}
+             (job-util/input-type? param-type)
+             {:path default-value}
 
-        :else
-        default-value))))
+             :else
+             default-value))))
 
 (defn- format-param
   [{param-type :type
@@ -198,7 +198,7 @@
 (defn- format-group
   [group]
   (remove-nil-vals
-    (update-in group [:parameters] (partial map format-param))))
+   (update-in group [:parameters] (partial map format-param))))
 
 (defn- format-app-tool
   [tool]
@@ -212,13 +212,13 @@
       (throw+ {:type  :clojure-commons.exception/not-writeable
                :error "App contains no steps and cannot be copied or modified."}))
     (remove-nil-vals
-      (-> app
-          (assoc :references (map :reference_text (:app_references app))
-                 :tools      (map format-app-tool (persistence/get-app-tools (:id app)))
-                 :groups     (map format-group (:parameter_groups task))
-                 :system_id  c/system-id)
-          (dissoc :app_references
-                  :tasks)))))
+     (-> app
+         (assoc :references (map :reference_text (:app_references app))
+                :tools      (map format-app-tool (persistence/get-app-tools (:id app)))
+                :groups     (map format-group (:parameter_groups task))
+                :system_id  c/system-id)
+         (dissoc :app_references
+                 :tasks)))))
 
 (defn get-app-ui
   "This service prepares a JSON response for editing an App in the client."
@@ -235,17 +235,17 @@
                                      arguments      :arguments
                                      :as            parameter-value}]
   (let [insert-values (remove-nil-vals
-                        (assoc parameter-value :id (uuidify param-value-id)
-                                               :parameter_id param-id
-                                               :parent_id parent-id
-                                               :display_order display-order))
+                       (assoc parameter-value :id (uuidify param-value-id)
+                              :parameter_id param-id
+                              :parent_id parent-id
+                              :display_order display-order))
         param-value-id (:id (persistence/add-app-parameter-value insert-values))
         update-sub-arg-mapper (partial update-parameter-argument param-id param-value-id)]
     (remove-nil-vals
-        (assoc parameter-value
-          :id        param-value-id
-          :arguments (when arguments (doall (map-indexed update-sub-arg-mapper arguments)))
-          :groups    (when groups    (doall (map-indexed update-sub-arg-mapper groups)))))))
+     (assoc parameter-value
+            :id        param-value-id
+            :arguments (when arguments (doall (map-indexed update-sub-arg-mapper arguments)))
+            :groups    (when groups    (doall (map-indexed update-sub-arg-mapper groups)))))))
 
 (defn- update-parameter-tree-root
   "Adds a tree selection parameter's root and its child arguments and groups."
@@ -266,13 +266,13 @@
                         :or {retain (contains? persistence/param-output-types param-type)}
                         :as file-parameter}]
   (remove-nil-vals
-    (if (contains? persistence/param-input-reference-types param-type)
-      {:parameter_id   param-id
-       :file_info_type param-type
-       :format         "Unspecified"
-       :data_source    "file"}
-      (assoc file-parameter :parameter_id param-id
-                            :retain retain))))
+   (if (contains? persistence/param-input-reference-types param-type)
+     {:parameter_id   param-id
+      :file_info_type param-type
+      :format         "Unspecified"
+      :data_source    "file"}
+     (assoc file-parameter :parameter_id param-id
+            :retain retain))))
 
 (defn- get-rule-type
   "Gets information about a named rule type."
@@ -355,8 +355,8 @@
                                    :as parameter}]
   (validate-parameter parameter)
   (let [update-values (assoc parameter :parameter_group_id group-id
-                                       :display_order display-order
-                                       :isVisible visible)
+                             :display_order display-order
+                             :isVisible visible)
         param-exists (and param-id (persistence/get-app-parameter param-id task-id))
         param-id (if param-exists
                    param-id
@@ -377,12 +377,12 @@
 
     (when (contains? persistence/param-file-types param-type)
       (persistence/add-file-parameter
-        (format-file-parameter-for-save param-id param-type file-parameter)))
+       (format-file-parameter-for-save param-id param-type file-parameter)))
 
     (remove-nil-vals
-        (assoc parameter
-          :arguments (when (contains? persistence/param-list-types param-type)
-                       (update-param-selection-arguments param-type param-id arguments))))))
+     (assoc parameter
+            :arguments (when (contains? persistence/param-list-types param-type)
+                         (update-param-selection-arguments param-type param-id arguments))))))
 
 (defn- update-app-group
   "Adds or updates an App group and its parameters."
@@ -395,8 +395,8 @@
     (when group-exists
       (persistence/update-app-group update-values))
     (assoc group
-      :id group-id
-      :parameters (doall (map-indexed (partial update-app-parameter task-id group-id) parameters)))))
+           :id group-id
+           :parameters (doall (map-indexed (partial update-app-parameter task-id group-id) parameters)))))
 
 (defn- delete-app-parameter-orphans
   "Deletes parameters no longer associated with an App group."
@@ -427,22 +427,22 @@
   [user {app-id :id app-name :name :keys [references groups] :as app}]
   (verify-app-editable user (persistence/get-app app-id))
   (transaction
-    (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
-    (validate-app-name app-name app-id)
-    (persistence/update-app app)
-    (let [tool-id (->> app :tools first :id)
-          app-task (->> (get-app-details app-id) :tasks first)
-          task-id (:id app-task)
-          current-param-ids (map :id (mapcat :parameters (:parameter_groups app-task)))]
+   (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
+   (validate-app-name app-name app-id)
+   (persistence/update-app app)
+   (let [tool-id (->> app :tools first :id)
+         app-task (->> (get-app-details app-id) :tasks first)
+         task-id (:id app-task)
+         current-param-ids (map :id (mapcat :parameters (:parameter_groups app-task)))]
       ;; Copy the App's current name, description, and tool ID to its task
-      (persistence/update-task jp/de-client-name (assoc app :id task-id :tool_id tool-id))
+     (persistence/update-task jp/de-client-name (assoc app :id task-id :tool_id tool-id))
       ;; CORE-6266 prevent duplicate key errors from reused param value IDs
-      (when-not (empty? current-param-ids)
-        (persistence/remove-parameter-values current-param-ids))
-      (when-not (empty? references)
-        (persistence/set-app-references app-id references))
-      (update-app-groups task-id groups))
-    (get-app-ui user app-id)))
+     (when-not (empty? current-param-ids)
+       (persistence/remove-parameter-values current-param-ids))
+     (when-not (empty? references)
+       (persistence/set-app-references app-id references))
+     (update-app-groups task-id groups))
+   (get-app-ui user app-id)))
 
 (defn get-user-subcategory
   [username index]
@@ -466,19 +466,19 @@
   "This service will add a single-step App, including the information at its top level."
   [{:keys [username] :as user} {app-name :name :keys [references groups] :as app}]
   (transaction
-    (let [cat-id  (get-user-subcategory username (workspace-dev-app-category-index))
-          _       (validate-app-name app-name nil [cat-id])
-          app-id  (:id (persistence/add-app app user))
-          tool-id (->> app :tools first :id)
-          task-id (-> (assoc app :id app-id :tool_id tool-id)
-                      (add-single-step-task)
-                      (:id))]
-      (add-app-to-user-dev-category user app-id)
-      (when-not (empty? references)
-        (persistence/set-app-references app-id references))
-      (dorun (map-indexed (partial update-app-group task-id) groups))
-      (permissions/register-private-app (:shortUsername user) app-id)
-      (get-app-ui user app-id))))
+   (let [cat-id  (get-user-subcategory username (workspace-dev-app-category-index))
+         _       (validate-app-name app-name nil [cat-id])
+         app-id  (:id (persistence/add-app app user))
+         tool-id (->> app :tools first :id)
+         task-id (-> (assoc app :id app-id :tool_id tool-id)
+                     (add-single-step-task)
+                     (:id))]
+     (add-app-to-user-dev-category user app-id)
+     (when-not (empty? references)
+       (persistence/set-app-references app-id references))
+     (dorun (map-indexed (partial update-app-group task-id) groups))
+     (permissions/register-private-app (:shortUsername user) app-id)
+     (get-app-ui user app-id))))
 
 (defn- name-too-long?
   "Determines if a name is too long to be extended for a copy name."

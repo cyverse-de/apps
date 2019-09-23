@@ -20,9 +20,9 @@
 
 (s/defschema SecuredQueryParamsRequired
   (merge StandardUserQueryParams
-    {:email      (describe NonBlankString "The user's email address")
-     :first-name (describe NonBlankString "The user's first name")
-     :last-name  (describe NonBlankString "The user's last name")}))
+         {:email      (describe NonBlankString "The user's email address")
+          :first-name (describe NonBlankString "The user's first name")
+          :last-name  (describe NonBlankString "The user's last name")}))
 
 (s/defschema SecuredQueryParamsEmailRequired
   (-> SecuredQueryParamsRequired
@@ -31,7 +31,7 @@
 
 (s/defschema SecuredQueryParams
   (-> SecuredQueryParamsEmailRequired
-    (->optional-param :email)))
+      (->optional-param :email)))
 
 (s/defschema TokenInfoProxyParams
   (merge SecuredQueryParams
@@ -52,7 +52,7 @@
 
    :value
    (describe (s/maybe String)
-     "The search value. If `field` is `name` or `app_name`, then `value` can be contained anywhere,
+             "The search value. If `field` is `name` or `app_name`, then `value` can be contained anywhere,
       case-insensitive, in the corresponding field.")})
 
 (s/defschema AnalysisListingParams
