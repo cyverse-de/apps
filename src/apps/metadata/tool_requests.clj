@@ -227,7 +227,8 @@
 
 (defn- format-tool-request-dates
   [{:keys [date_submitted date_updated] :as tool-request}]
-  (assoc tool-request :date_submitted (.getTime date_submitted)
+  (assoc tool-request
+         :date_submitted (.getTime date_submitted)
          :date_updated   (.getTime date_updated)))
 
 (defn list-tool-requests

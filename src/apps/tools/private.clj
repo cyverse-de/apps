@@ -30,7 +30,8 @@
   [type {:keys [pids_limit memory_limit] :or {pids_limit   (cfg/private-tool-pids-limit)
                                               memory_limit (cfg/private-tool-memory-limit)}
          :as   container}]
-  (assoc container :network_mode (if (= type "interactive") "bridge" "none")
+  (assoc container
+         :network_mode (if (= type "interactive") "bridge" "none")
          :pids_limit   (restrict-private-tool-setting pids_limit   (cfg/private-tool-pids-limit))
          :memory_limit (restrict-private-tool-setting memory_limit (cfg/private-tool-memory-limit))))
 

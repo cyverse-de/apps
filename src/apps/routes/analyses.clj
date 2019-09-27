@@ -25,8 +25,8 @@
     :return listing-schema/AnalysisList
     :summary listing-schema/AnalysesListingSummary
     :description listing-schema/AnalysesListingDocs
-       ;; JSON query params are not currently supported by compojure-api,
-       ;; so we have to decode the String filter param and validate it here.
+    ;; JSON query params are not currently supported by compojure-api,
+    ;; so we have to decode the String filter param and validate it here.
     (ok (coerce! listing-schema/AnalysisList
                  (apps/list-jobs current-user
                                  (coercions/coerce!

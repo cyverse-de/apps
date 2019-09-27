@@ -54,7 +54,8 @@
   (let [job-suffix (str "analysis-" (inc job-number))
         job-config (substitute-param-values path-map (:job_config submission config))
         config     (substitute-param-values path-map config)]
-    (assoc submission :job_config job-config
+    (assoc submission
+           :job_config job-config
            :config     config
            :group      (config/jex-batch-group-name)
            :name       (str (:name submission) "-" job-suffix)
@@ -81,7 +82,8 @@
          job-status    (if (jp/completed? parent-status)
                          jp/canceled-status
                          (submit-job-in-batch apps-client user submission total path-map))]
-     (assoc results :parent-status parent-status
+     (assoc results
+            :parent-status parent-status
             :total         (inc total)
             :batch-status  (update batch-status job-status (fnil inc 0))))))
 
