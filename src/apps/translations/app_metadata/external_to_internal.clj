@@ -36,14 +36,14 @@
                         (:label property ""))]
     (when (contains? io-property-types prop-type)
       (assoc data-object
-        :cmdSwitch      (:name property "")
-        :description    (:description property "")
-        :id             (:id property)
-        :name           data-obj-name
-        :order          (:order property 0)
-        :required       (:required property false)
-        :file_info_type (data-obj-type-for (:type property) (:file_info_type data-object))
-        :multiplicity   (multiplicity-for (:type property) (:multiplicity data-object))))))
+             :cmdSwitch      (:name property "")
+             :description    (:description property "")
+             :id             (:id property)
+             :name           data-obj-name
+             :order          (:order property 0)
+             :required       (:required property false)
+             :file_info_type (data-obj-type-for (:type property) (:file_info_type data-object))
+             :multiplicity   (multiplicity-for (:type property) (:multiplicity data-object))))))
 
 (defn translate-property
   "Translates a property from its external format to its internal format."
@@ -51,20 +51,20 @@
   (assoc (dissoc property
                  :arguments :validators :defaultValue :data_source :file_info_type :format
                  :is_implicit :multiplicity :retain)
-    :validator     (build-validator-for-property property)
-    :value         (get-default-value property)
-    :data_object   (populate-data-object property (:data_object property {}))
-    :type          (generic-property-type-for (:type property))
-    :omit_if_blank (:omit_if_blank property false)))
+         :validator     (build-validator-for-property property)
+         :value         (get-default-value property)
+         :data_object   (populate-data-object property (:data_object property {}))
+         :type          (generic-property-type-for (:type property))
+         :omit_if_blank (:omit_if_blank property false)))
 
 (defn translate-property-group
   "Translates a property group from its external format to its internal format."
   [property-group]
   (assoc property-group
-    :properties (map translate-property (:properties property-group))))
+         :properties (map translate-property (:properties property-group))))
 
 (defn translate-template
   "Translates a template from its external format to its internal format."
   [template]
   (assoc template
-    :groups (map translate-property-group (get-property-groups template))))
+         :groups (map translate-property-group (get-property-groups template))))

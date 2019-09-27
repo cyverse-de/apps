@@ -123,9 +123,9 @@
 (defn- prep-submission
   [{:keys [config] :as submission}]
   (assoc submission
-    :config               (:job_config submission config)
-    :output_dir           (build-result-folder-path submission)
-    :create_output_subdir false))
+         :config               (:job_config submission config)
+         :output_dir           (build-result-folder-path submission)
+         :create_output_subdir false))
 
 (defn- build-submission
   [user submission]

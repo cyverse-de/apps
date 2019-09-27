@@ -72,11 +72,11 @@
 (defn- prepare-common-job-step-submission
   [job-info job-step {:keys [config] :as submission}]
   (assoc submission
-    :config               (:job_config submission config)
-    :create_output_subdir false
-    :output_dir           (:result_folder_path job-info)
-    :starting_step        (:app_step_number job-step)
-    :step_number          (:step_number job-step)))
+         :config               (:job_config submission config)
+         :create_output_subdir false
+         :output_dir           (:result_folder_path job-info)
+         :starting_step        (:app_step_number job-step)
+         :step_number          (:step_number job-step)))
 
 (def prepare-de-job-step-submission prepare-common-job-step-submission)
 
@@ -89,8 +89,8 @@
   (let [app-step   (get-current-app-step job-info job-step)
         submission (prepare-common-job-step-submission job-info job-step submission)]
     (assoc submission
-      :app_id      (:external_app_id app-step)
-      :paramPrefix (:step_id app-step))))
+           :app_id      (:external_app_id app-step)
+           :paramPrefix (:step_id app-step))))
 
 (defn- prepare-job-step-submission
   [job-info job-step submission]
@@ -183,8 +183,8 @@
              (fn [config]
                (reduce (fn [config io-map]
                          (assoc config
-                           (build-config-input-id io-map)
-                           (get-input-path combined-client job config app-steps io-map)))
+                                (build-config-input-id io-map)
+                                (get-input-path combined-client job config app-steps io-map)))
                        config io-mappings))))
 
 (defn- add-mapped-inputs

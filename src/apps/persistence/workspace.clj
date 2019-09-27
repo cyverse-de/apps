@@ -63,9 +63,9 @@
 (defn create-workspace
   [username]
   (transaction
-    (-> (users/get-user-id username)
-        (create-workspace*)
-        (add-root-app-category)))
+   (-> (users/get-user-id username)
+       (create-workspace*)
+       (add-root-app-category)))
   (get-workspace username))
 
 (defn list-workspaces

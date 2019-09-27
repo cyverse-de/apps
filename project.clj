@@ -24,7 +24,7 @@
                  [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "3.0.4"]
                  [org.cyverse/kameleon "3.0.4"]
-                 [org.cyverse/mescal "3.1.1"]
+                 [org.cyverse/mescal "3.1.2"]
                  [org.cyverse/metadata-client "3.1.1"]
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/common-cfg "2.8.1"]
@@ -41,7 +41,8 @@
                  [ring/ring-jetty-adapter "1.6.0"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
-  :plugins [[lein-swank "1.4.4"]
+  :plugins [[lein-cljfmt "0.6.4"]
+            [lein-swank "1.4.4"]
             [test2junit "1.1.3"]
             [jonase/eastwood "0.3.5"]]
   :profiles {:dev {:plugins        [[lein-ring "0.12.5"]]

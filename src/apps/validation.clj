@@ -53,9 +53,9 @@
    symbol or a string."
   [path k]
   (let [key-name (cond
-                  (keyword? k) (name k)
-                  (symbol? k)  (name k)
-                  :else        k)]
+                   (keyword? k) (name k)
+                   (symbol? k)  (name k)
+                   :else        k)]
     (if (blank? path) key-name (str path "." key-name))))
 
 (defn- add-index
@@ -77,13 +77,13 @@
    third argument, if provided, contains a function that can be used to validate
    the contents of the object."
   ([m]
-     (validate-json-object m ""))
+   (validate-json-object m ""))
   ([m path]
-     (validate-json-object m path nil))
+   (validate-json-object m path nil))
   ([m path obj-val-fn]
-     (validate-value map? m #(expecting-json-object-exception path))
-     (when (fn? obj-val-fn)
-       (obj-val-fn m path))))
+   (validate-value map? m #(expecting-json-object-exception path))
+   (when (fn? obj-val-fn)
+     (obj-val-fn m path))))
 
 (defn validate-json-array
   "Validates a JSON array to verify that it is, in fact, an array.  The first
@@ -92,13 +92,13 @@
    argument, if provided, contains a function that can be used to validate each
    element in the array."
   ([s]
-     (validate-json-array s ""))
+   (validate-json-array s ""))
   ([s path]
-     (validate-json-array s path nil))
+   (validate-json-array s path nil))
   ([s path elm-val-fn]
-     (validate-value sequential? s #(expecting-json-array-exception path))
-     (when (fn? elm-val-fn)
-       (dorun (map #(elm-val-fn % (add-index path %2)) s (range))))))
+   (validate-value sequential? s #(expecting-json-array-exception path))
+   (when (fn? elm-val-fn)
+     (dorun (map #(elm-val-fn % (add-index path %2)) s (range))))))
 
 (defn validate-json-object-array
   "Validates a JSON array containing JSON objects to verify that it is an array
@@ -108,12 +108,12 @@
    conains a function that can be used to validate the fields within each
    element of the array."
   ([s]
-     (validate-json-object-array s ""))
+   (validate-json-object-array s ""))
   ([s path]
-     (validate-json-object-array s path nil))
+   (validate-json-object-array s path nil))
   ([s path elm-val-fn]
-     (let [comp-val-fn #(validate-json-object % %2 elm-val-fn)]
-       (validate-json-array s path comp-val-fn))))
+   (let [comp-val-fn #(validate-json-object % %2 elm-val-fn)]
+     (validate-json-array s path comp-val-fn))))
 
 (defn validate-json-array-field
   "Validates a field in a JSON object that is expected to contain a sequence.
@@ -123,13 +123,13 @@
    map in the original request JSON.  The fourth argument, if present, contains
    a function that will be used to validate each element in the sequence."
   ([m k]
-     (validate-json-array-field m k ""))
+   (validate-json-array-field m k ""))
   ([m k path]
-     (validate-json-array-field m k path nil))
+   (validate-json-array-field m k path nil))
   ([m k path elm-val-fn]
-     (let [path (add-field path k)]
-       (validate-json-field* m k path)
-       (validate-json-array (m k) path elm-val-fn))))
+   (let [path (add-field path k)]
+     (validate-json-field* m k path)
+     (validate-json-array (m k) path elm-val-fn))))
 
 (defn validate-json-object-array-field
   "Validates a field in a JSON object that is expected to contain a sequence
@@ -140,48 +140,48 @@
    fourth argument, if present, contains a function that will be used to
    validate the contents of each element in the sequence."
   ([m k]
-     (validate-json-object-array-field m k ""))
+   (validate-json-object-array-field m k ""))
   ([m k path]
-     (validate-json-object-array-field m k path nil))
+   (validate-json-object-array-field m k path nil))
   ([m k path elm-val-fn]
-     (let [path (add-field path k)]
-       (validate-json-field* m k path)
-       (validate-json-object-array (m k) path elm-val-fn))))
+   (let [path (add-field path k)]
+     (validate-json-field* m k path)
+     (validate-json-object-array (m k) path elm-val-fn))))
 
 (defn validate-json-object-field
   "Validates a field in a JSON object that is expected to contain another JSON
    object.  The first parameter contains a map representing a JSON object."
   ([m k]
-     (validate-json-object-field m k ""))
+   (validate-json-object-field m k ""))
   ([m k path]
-     (validate-json-object-field m k path nil))
+   (validate-json-object-field m k path nil))
   ([m k path obj-val-fn]
-     (let [path (add-field path k)]
-       (validate-json-field* m k path)
-       (validate-json-object (m k) path obj-val-fn))))
+   (let [path (add-field path k)]
+     (validate-json-field* m k path)
+     (validate-json-object (m k) path obj-val-fn))))
 
 (defn validate-required-json-string-field
   "Verifies that a required JSON string field is present and not blank in a JSON
    object.  The given path is a string representation of the path up to the
    current JSON object."
   ([m k]
-     (validate-required-json-string-field m k ""))
+   (validate-required-json-string-field m k ""))
   ([m k path]
-     (let [path (add-field path k)
-           v    (m k)]
-       (validate-json-field* m k path)
-       (validate-value string? v #(expecting-string-exception path))
-       (validate-value (comp not blank?) v
-                       #(blank-json-field-value-exception path)))))
+   (let [path (add-field path k)
+         v    (m k)]
+     (validate-json-field* m k path)
+     (validate-value string? v #(expecting-string-exception path))
+     (validate-value (comp not blank?) v
+                     #(blank-json-field-value-exception path)))))
 
 (defn validate-json-field
   "Verifies that a JSON field is present in a JSON object that has been
    translated to a map.  The given path is a string representation of the
    path up to the current JSON element."
   ([m k]
-     (validate-json-field m k ""))
+   (validate-json-field m k ""))
   ([m k path]
-     (validate-json-field* m k (add-field path k))))
+   (validate-json-field* m k (add-field path k))))
 
 (defn- brief-tool-details-base-query
   []

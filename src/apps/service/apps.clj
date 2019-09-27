@@ -31,8 +31,8 @@
   [{:keys [api-name] :as server-info} state-info username]
   (if-let [token-info (op/get-access-token api-name username)]
     (assoc (merge server-info token-info)
-      :token-callback  (partial op/store-access-token api-name username)
-      :reauth-callback (partial authorization-redirect server-info username state-info))
+           :token-callback  (partial op/store-access-token api-name username)
+           :reauth-callback (partial authorization-redirect server-info username state-info))
     (authorization-redirect server-info username state-info)))
 
 (defn- get-agave-client
@@ -271,22 +271,22 @@
   [{:keys [username id] :as job}]
   (with-logging-context {}
     (try+
-      (log/info "synchronizing the job status for" id)
-      (transaction (jobs/sync-job-status (get-apps-client-for-username username) job))
-      (catch Object _
-        (log/error (:throwable &throw-context) "unable to sync the job status for job" id)))))
+     (log/info "synchronizing the job status for" id)
+     (transaction (jobs/sync-job-status (get-apps-client-for-username username) job))
+     (catch Object _
+       (log/error (:throwable &throw-context) "unable to sync the job status for job" id)))))
 
 (defn sync-job-statuses
   []
   (tc/with-logging-context @logging-context-map
     (try+
-      (log/info "synchronizing job statuses")
-      (dorun (map sync-job-status (jp/list-incomplete-jobs)))
-      (catch Object _
-        (log/error (:throwable &throw-context)
-                   "error while obtaining the list of jobs to synchronize."))
-      (finally
-        (log/info "done synchronizing job statuses")))))
+     (log/info "synchronizing job statuses")
+     (dorun (map sync-job-status (jp/list-incomplete-jobs)))
+     (catch Object _
+       (log/error (:throwable &throw-context)
+                  "error while obtaining the list of jobs to synchronize."))
+     (finally
+       (log/info "done synchronizing job statuses")))))
 
 (defn update-job
   [user job-id body]

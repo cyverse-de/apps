@@ -8,7 +8,7 @@
 (def
   ^{:doc "The authenticated user or nil if the service is unsecured."
     :dynamic true}
-   current-user nil)
+  current-user nil)
 
 (defn user-from-attributes
   [user-attributes]
@@ -20,7 +20,7 @@
                :user (select-keys user-attributes [:username :shortUsername :first-name :last-name :email])}))
     (-> (select-keys user-attributes [:password :email :first-name :last-name])
         (assoc :username (str uid "@" (uid-domain))
-          :shortUsername uid))))
+               :shortUsername uid))))
 
 (defmacro with-user
   "Performs a task with the given user information bound to current-user."

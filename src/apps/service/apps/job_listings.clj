@@ -82,17 +82,17 @@
 (defn format-admin-job
   [rep-steps job]
   (remove-nil-vals
-    (assoc (format-base-job job)
-      :external_ids     (vec (.getArray (:external_ids job)))
-      :interactive_urls (interactive-urls job rep-steps))))
+   (assoc (format-base-job job)
+          :external_ids     (vec (.getArray (:external_ids job)))
+          :interactive_urls (interactive-urls job rep-steps))))
 
 (defn format-job
   [apps-client perms app-tables rep-steps job]
   (remove-nil-vals
-    (assoc (format-base-job job)
-      :app_disabled     (app-disabled? app-tables (:system_id job) (:app_id job))
-      :can_share        (job-supports-sharing? apps-client perms rep-steps job)
-      :interactive_urls (interactive-urls job rep-steps))))
+   (assoc (format-base-job job)
+          :app_disabled     (app-disabled? app-tables (:system_id job) (:app_id job))
+          :can_share        (job-supports-sharing? apps-client perms rep-steps job)
+          :interactive_urls (interactive-urls job rep-steps))))
 
 (defn- list-jobs*
   [{:keys [username]} search-params types analysis-ids]
@@ -153,7 +153,7 @@
 (defn- get-job-step-history
   [apps-client step]
   (assoc (format-job-step step)
-    :updates (.getJobStepHistory apps-client step)))
+         :updates (.getJobStepHistory apps-client step)))
 
 (defn get-job-history
   [apps-client job-id]

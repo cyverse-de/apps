@@ -17,12 +17,12 @@
 (defn get-path-list-contents
   [user path]
   (try+
-    (when (seq path) (data-info/get-path-list-contents user path))
-    (catch Object _
-      (log/error (:throwable &throw-context)
-                 "job submission failed: Could not get file contents of Path List input"
-                 path)
-      (throw+))))
+   (when (seq path) (data-info/get-path-list-contents user path))
+   (catch Object _
+     (log/error (:throwable &throw-context)
+                "job submission failed: Could not get file contents of Path List input"
+                path)
+     (throw+))))
 
 (defn get-path-list-contents-map
   [user paths]

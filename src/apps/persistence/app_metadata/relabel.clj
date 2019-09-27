@@ -64,13 +64,13 @@
   "Verifies that a parameter value belongs to a specific parameter."
   [parameter-id param-value-id]
   (assert-not-nil
-    [:parameter_value_id param-value-id]
-    (first
-      (select [:parameter_values :v]
-              (join [:parameters :p]
-                    {:p.id :v.parameter_id})
-              (where {:p.id parameter-id
-                      :v.id param-value-id})))))
+   [:parameter_value_id param-value-id]
+   (first
+    (select [:parameter_values :v]
+            (join [:parameters :p]
+                  {:p.id :v.parameter_id})
+            (where {:p.id parameter-id
+                    :v.id param-value-id})))))
 
 (def ^:private generated-selection-list-info-types
   "The list of info types for which selection lists are generated."
@@ -81,8 +81,8 @@
   [parameter-id {:keys [id display description arguments groups]}]
   (get-parameter-value parameter-id id)
   (let [update-vals (remove-nil-vals
-                      {:description description
-                       :label       display})]
+                     {:description description
+                      :label       display})]
     (when (seq update-vals)
       (sql/update parameter_values (set-fields update-vals) (where {:id id}))))
   (when (seq arguments)
@@ -90,7 +90,7 @@
 
   (when (seq groups)
     (dorun
-      (map (partial update-parameter-value-labels parameter-id) groups))))
+     (map (partial update-parameter-value-labels parameter-id) groups))))
 
 (defn- update-parameter-values
   "Updates the labels in parameter values."
@@ -103,8 +103,8 @@
   [group-id {:keys [id description label arguments] :as parameter}]
   (let [{:keys [info_type]} (get-parameter-in-group group-id id)
         update-vals (remove-nil-vals
-                      {:description description
-                       :label       label})]
+                     {:description description
+                      :label       label})]
     (when (seq update-vals)
       (sql/update parameters (set-fields update-vals) (where {:id id})))
     (when (seq arguments)
@@ -115,9 +115,9 @@
   [task-id {:keys [id name description label] :as group}]
   (get-parameter-group-in-task task-id id)
   (let [update-vals (remove-nil-vals
-                      {:name        name
-                       :description description
-                       :label       label})]
+                     {:name        name
+                      :description description
+                      :label       label})]
     (when (seq update-vals)
       (sql/update parameter_groups (set-fields update-vals) (where {:id id}))))
   (dorun (map (partial update-parameter-labels id) (:parameters group))))

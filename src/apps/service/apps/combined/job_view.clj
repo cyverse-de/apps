@@ -11,10 +11,10 @@
 (defn- reformat-group
   [app-name step-id group]
   (assoc group
-    :name       (str app-name " - " (:name group))
-    :label      (str app-name " - " (:label group))
-    :parameters (mapv (fn [prop] (assoc prop :id (str step-id "_" (:id prop))))
-                      (:parameters group))))
+         :name       (str app-name " - " (:name group))
+         :label      (str app-name " - " (:label group))
+         :parameters (mapv (fn [prop] (assoc prop :id (str step-id "_" (:id prop))))
+                           (:parameters group))))
 
 (defn- get-mapped-props
   [step-id]
@@ -50,22 +50,22 @@
           external-app-id     (:external_app_id step)]
       (cond
        ;; We're out of steps.
-       (nil? step)
-       acc
+        (nil? step)
+        acc
 
        ;; The current step is an external step.
-       external-app-id
-       (recur (concat acc (get-external-groups clients step system-id external-app-id))
-              groups
-              steps
-              (inc step-number))
+        external-app-id
+        (recur (concat acc (get-external-groups clients step system-id external-app-id))
+               groups
+               steps
+               (inc step-number))
 
        ;; The current step is a regular or interactive DE step.
-       :else
-       (recur (concat acc (take-while before-current-step groups))
-              (drop-while before-current-step groups)
-              steps
-              (inc step-number))))))
+        :else
+        (recur (concat acc (take-while before-current-step groups))
+               (drop-while before-current-step groups)
+               steps
+               (inc step-number))))))
 
 (defn- format-app-submission-info
   [app clients current-client]

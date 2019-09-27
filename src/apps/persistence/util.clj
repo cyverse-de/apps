@@ -12,7 +12,7 @@
   [array-type array-items]
   ;; This transaction is required in order for *current-conn* to be non-nil, in case we're not already in a transaction.
   (transaction
-    (.createArrayOf (:connection *current-conn*) array-type (into-array array-items))))
+   (.createArrayOf (:connection *current-conn*) array-type (into-array array-items))))
 
 (defn sqlfn-any-array
   "Returns a SQL function ANY(ARRAY(...)) for use in a `where` clause, since using an `IN(...)` with a large (>32k) list
@@ -31,6 +31,4 @@
     (and start_date end_date) (sql/where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
     (and (not start_date) end_date) (sql/where query {:end_date [<= (date->timestamp end_date)]})
     (and (not end_date) start_date) (sql/where query {:end_date [>= (date->timestamp start_date)]})
-    :else query
-    )
-  )
+    :else query))

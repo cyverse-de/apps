@@ -97,15 +97,15 @@
 (defroutes admin-communities
 
   (GET "/:community-id/apps" []
-       :path-params [community-id :- AppCommunityGroupNameParam]
-       :query [params AdminAppListingPagingParams]
-       :return schema/AdminAppListing
-       :summary "List Apps in a Community"
-       :description (str "Lists all of the apps under an App Community that are visible to an admin."
-                         (get-endpoint-delegate-block
-                           "metadata"
-                           "POST /avus/filter-targets"))
-       (ok (coerce! schema/AdminAppListing (apps/admin-list-apps-in-community current-user community-id params)))))
+    :path-params [community-id :- AppCommunityGroupNameParam]
+    :query [params AdminAppListingPagingParams]
+    :return schema/AdminAppListing
+    :summary "List Apps in a Community"
+    :description (str "Lists all of the apps under an App Community that are visible to an admin."
+                      (get-endpoint-delegate-block
+                       "metadata"
+                       "POST /avus/filter-targets"))
+    (ok (coerce! schema/AdminAppListing (apps/admin-list-apps-in-community current-user community-id params)))))
 
 (defroutes admin-ontologies
 
@@ -114,10 +114,10 @@
     :return ActiveOntologyDetailsList
     :summary "List Ontology Details"
     :description (str
-"Lists Ontology details saved in the metadata service."
-(get-endpoint-delegate-block
-  "metadata"
-  "GET /ontologies"))
+                  "Lists Ontology details saved in the metadata service."
+                  (get-endpoint-delegate-block
+                   "metadata"
+                   "GET /ontologies"))
     (ok (admin/list-ontologies current-user)))
 
   (DELETE "/:ontology-version" []
@@ -125,11 +125,11 @@
     :query [params SecuredQueryParams]
     :summary "Delete an Ontology"
     :description (str
-"Marks an Ontology as deleted in the metadata service.
+                  "Marks an Ontology as deleted in the metadata service.
  Returns `ERR_ILLEGAL_ARGUMENT` when attempting to delete the active `ontology-version`."
-(get-endpoint-delegate-block
-  "metadata"
-  "DELETE /admin/ontologies/{ontology-version}"))
+                  (get-endpoint-delegate-block
+                   "metadata"
+                   "DELETE /admin/ontologies/{ontology-version}"))
     (admin/delete-ontology current-user ontology-version))
 
   (POST "/:ontology-version" []
@@ -143,18 +143,18 @@
     (ok (admin/set-category-ontology-version current-user ontology-version)))
 
   (GET "/:ontology-version/:root-iri" []
-       :path-params [ontology-version :- OntologyVersionParam
-                     root-iri :- OntologyClassIRIParam]
-       :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
-       :return OntologyHierarchy
-       :summary "Get App Category Hierarchy"
-       :description (str
-"Gets the list of app categories that are visible to the user for the given `ontology-version`,
+    :path-params [ontology-version :- OntologyVersionParam
+                  root-iri :- OntologyClassIRIParam]
+    :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
+    :return OntologyHierarchy
+    :summary "Get App Category Hierarchy"
+    :description (str
+                  "Gets the list of app categories that are visible to the user for the given `ontology-version`,
  rooted at the given `root-iri`."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter")
-"Please see the metadata service documentation for response information.")
+                  (get-endpoint-delegate-block
+                   "metadata"
+                   "POST /ontologies/{ontology-version}/{root-iri}/filter")
+                  "Please see the metadata service documentation for response information.")
     (ok (listings/get-app-hierarchy current-user ontology-version root-iri attr)))
 
   (GET "/:ontology-version/:root-iri/apps" []
@@ -164,11 +164,11 @@
     :return schema/AdminAppListing
     :summary "List Apps in a Category"
     :description (str
-"Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
+                  "Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
  that are visible to the user."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
+                  (get-endpoint-delegate-block
+                   "metadata"
+                   "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
     (ok (coerce! schema/AdminAppListing
                  (apps/admin-list-apps-under-hierarchy current-user ontology-version root-iri attr params))))
 
@@ -179,11 +179,11 @@
     :return schema/AdminAppListing
     :summary "List Unclassified Apps"
     :description (str
-"Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
+                  "Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
  its subcategories, for the given `ontology-version`."
-(get-endpoint-delegate-block
-  "metadata"
-  "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
+                  (get-endpoint-delegate-block
+                   "metadata"
+                   "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
     (ok (coerce! schema/AdminAppListing
                  (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params true)))))
 

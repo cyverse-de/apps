@@ -9,8 +9,8 @@
 
 (defschema WorkspaceDeletionParams
   (assoc SecuredQueryParams
-    :username
-    (describe [String] "The username to search for. Can be repeated to search for multiple usernames")))
+         :username
+         (describe [String] "The username to search for. Can be repeated to search for multiple usernames")))
 
 (defschema WorkspaceListingParams
   (->optional-param WorkspaceDeletionParams :username))

@@ -18,7 +18,7 @@
 (defn- build-callback-url
   [id]
   (str (assoc (curl/url (config/agave-callback-base) (str id))
-         :query "status=${JOB_STATUS}&external-id=${JOB_ID}&end-time=${JOB_END_TIME}")))
+              :query "status=${JOB_STATUS}&external-id=${JOB_ID}&end-time=${JOB_END_TIME}")))
 
 (defn- format-submission
   [agave job-id result-folder-path {:keys [config] :as submission}]
@@ -76,10 +76,10 @@
   (try+
    (let [job-info (.sendJobSubmission agave job)]
      (assoc job-info
-       :name      (:name submission)
-       :notify    (:notify submission false)
-       :startdate (determine-start-time job)
-       :username  (:username user)))
+            :name      (:name submission)
+            :notify    (:notify submission false)
+            :startdate (determine-start-time job)
+            :username  (:username user)))
    (catch Object _
      (when-not (:parent_id submission)
        (throw+)))))

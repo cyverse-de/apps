@@ -27,16 +27,16 @@
   [agave app-names sharee app-id level]
   (let [category-id (:id (.hpcAppGroup agave))]
     (try-share-app-with-subject
-      agave sharee app-id level
-      #(app-permissions/app-sharing-success app-names jp/agave-client-name app-id level category-id category-id)
-      (partial
-        app-permissions/app-sharing-failure app-names jp/agave-client-name app-id level category-id category-id))))
+     agave sharee app-id level
+     #(app-permissions/app-sharing-success app-names jp/agave-client-name app-id level category-id category-id)
+     (partial
+      app-permissions/app-sharing-failure app-names jp/agave-client-name app-id level category-id category-id))))
 
 (defn unshare-app-with-subject
   [agave app-names sharee app-id]
   (let [category-id (:id (.hpcAppGroup agave))]
     (try-share-app-with-subject
-      agave sharee app-id nil
-      #(app-permissions/app-unsharing-success app-names jp/agave-client-name app-id category-id)
-      (partial
-        app-permissions/app-unsharing-failure app-names jp/agave-client-name app-id category-id))))
+     agave sharee app-id nil
+     #(app-permissions/app-unsharing-success app-names jp/agave-client-name app-id category-id)
+     (partial
+      app-permissions/app-unsharing-failure app-names jp/agave-client-name app-id category-id))))

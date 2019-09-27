@@ -18,18 +18,18 @@
 
 (defn- format-webhook [{:keys [id type] :as webhook}]
   (assoc webhook
-    :topics (get-webhook-topics id)
-    :type (get-webhook-type type)))
+         :topics (get-webhook-topics id)
+         :type (get-webhook-type type)))
 
 (defn get-webhooks [user]
   (transaction
-    (let [webhooks (select [:webhooks :w]
-                           (join [:users :u] {:w.user_id :u.id})
-                           (join [:webhooks_type :wt] {:w.type_id :wt.id})
-                           (fields [:w.id :id] [:wt.type :type] [:w.url :url])
-                           (where {(sqlfn regexp_replace :u.username "@.*" "")
-                                   user}))]
-      (map format-webhook webhooks))))
+   (let [webhooks (select [:webhooks :w]
+                          (join [:users :u] {:w.user_id :u.id})
+                          (join [:webhooks_type :wt] {:w.type_id :wt.id})
+                          (fields [:w.id :id] [:wt.type :type] [:w.url :url])
+                          (where {(sqlfn regexp_replace :u.username "@.*" "")
+                                  user}))]
+     (map format-webhook webhooks))))
 
 (defn list-webhooks [user]
   {:webhooks (get-webhooks user)})
@@ -56,9 +56,9 @@
 (defn add-webhooks [user {:keys [webhooks]}]
   (let [user_id (get-user-id (str user "@" (config/uid-domain)))]
     (transaction
-      (delete :webhooks (where {:user_id user_id}))
-      (doseq [{:keys [url type topics]} webhooks]
-        (add-webhook user_id url type topics))))
+     (delete :webhooks (where {:user_id user_id}))
+     (doseq [{:keys [url type topics]} webhooks]
+       (add-webhook user_id url type topics))))
   (list-webhooks user))
 
 (defn list-topics []

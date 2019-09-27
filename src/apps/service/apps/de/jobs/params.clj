@@ -95,14 +95,14 @@
 
 (defn value-for-param
   ([config io-maps output-value-map default-values param]
-     (let [qual-id  (util/param->qual-id param)
-           qual-key (keyword qual-id)]
-       (cond (contains? io-maps qual-id)        (output-value-map (io-maps qual-id))
-             (contains? config qual-key)        (config qual-key)
-             (contains? default-values qual-id) (default-values qual-id)
-             :else                              nil)))
+   (let [qual-id  (util/param->qual-id param)
+         qual-key (keyword qual-id)]
+     (cond (contains? io-maps qual-id)        (output-value-map (io-maps qual-id))
+           (contains? config qual-key)        (config qual-key)
+           (contains? default-values qual-id) (default-values qual-id)
+           :else                              nil)))
   ([config default-values param]
-     (value-for-param config {} {} default-values param)))
+   (value-for-param config {} {} default-values param)))
 
 (defn- determine-opt-arg
   [param-name param-value]
@@ -113,15 +113,15 @@
 
 (defn- build-arg
   ([param param-name param-value]
-     (let [param-name        (string/trim param-name)
-           param-value       (string/trim (str param-value))
-           [opt-arg opt-val] (determine-opt-arg param-name param-value)]
-       {:id    (:id param)
-        :name  opt-arg
-        :order (:order param 0)
-        :value (stringify opt-val)}))
+   (let [param-name        (string/trim param-name)
+         param-value       (string/trim (str param-value))
+         [opt-arg opt-val] (determine-opt-arg param-name param-value)]
+     {:id    (:id param)
+      :name  opt-arg
+      :order (:order param 0)
+      :value (stringify opt-val)}))
   ([param param-value]
-     (build-arg param (or (:name param) "") param-value)))
+   (build-arg param (or (:name param) "") param-value)))
 
 (defn generic-args
   [param param-value]
@@ -170,8 +170,8 @@
   [{:keys [repeat_option_flag name] :as param} preprocessor index value]
   (let [name (if (and (pos? index) (not repeat_option_flag)) "" name)]
     (build-arg
-      (assoc param :name name)
-      ((fnil preprocessor "") value))))
+     (assoc param :name name)
+     ((fnil preprocessor "") value))))
 
 (defn input-args
   [{:keys [is_implicit omit_if_blank] :as param} param-value preprocessor]
@@ -214,32 +214,32 @@
   (let [param-value (value-for-param config io-maps output-value-map default-values param)
         param-type  (:type param)]
     (cond
-     (= "TreeSelection" param-type)
-     (.buildTreeSelectionArgs formatter param param-value)
+      (= "TreeSelection" param-type)
+      (.buildTreeSelectionArgs formatter param param-value)
 
-     (re-find #"Selection\z" param-type)
-     (.buildSelectionArgs formatter param param-value)
+      (re-find #"Selection\z" param-type)
+      (.buildSelectionArgs formatter param param-value)
 
-     (= "Flag" param-type)
-     (.buildFlagArgs formatter param param-value)
+      (= "Flag" param-type)
+      (.buildFlagArgs formatter param param-value)
 
-     (util/input-types param-type)
-     (.buildInputArgs formatter param param-value)
+      (util/input-types param-type)
+      (.buildInputArgs formatter param param-value)
 
-     (util/output-types param-type)
-     (.buildOutputArgs formatter param param-value)
+      (util/output-types param-type)
+      (.buildOutputArgs formatter param param-value)
 
-     (= "ReferenceGenome" param-type)
-     (.buildReferenceGenomeArgs formatter param param-value)
+      (= "ReferenceGenome" param-type)
+      (.buildReferenceGenomeArgs formatter param param-value)
 
-     (= "ReferenceSequence" param-type)
-     (.buildReferenceSequenceArgs formatter param param-value)
+      (= "ReferenceSequence" param-type)
+      (.buildReferenceSequenceArgs formatter param param-value)
 
-     (= "ReferenceAnnotation" param-type)
-     (.buildReferenceAnnotationArgs formatter param param-value)
+      (= "ReferenceAnnotation" param-type)
+      (.buildReferenceAnnotationArgs formatter param param-value)
 
-     :else
-     (.buildGenericArgs formatter param param-value))))
+      :else
+      (.buildGenericArgs formatter param param-value))))
 
 (defn build-params
   [formatter config io-maps outputs default-values params]

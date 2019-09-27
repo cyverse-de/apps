@@ -29,26 +29,26 @@
    source/target mapping IDs and step names."
   [app-id]
   (select app_steps
-    (with input_mapping
-          (fields :source_step
-                  :target_step)
-          (group :source_step
-                 :target_step))
-    (join [:tasks :t]
-          {:task_id :t.id})
-    (join [:job_types :jt]
-          {:t.job_type_id :jt.id})
-    (join [:apps :app]
-          {:app_id :app.id})
-    (fields :app_steps.id
-            :step
-            :t.name
-            :t.description
-            :jt.system_id
-            :task_id
-            :t.external_app_id)
-    (where {:app.id app-id})
-    (order :step :ASC)))
+          (with input_mapping
+                (fields :source_step
+                        :target_step)
+                (group :source_step
+                       :target_step))
+          (join [:tasks :t]
+                {:task_id :t.id})
+          (join [:job_types :jt]
+                {:t.job_type_id :jt.id})
+          (join [:apps :app]
+                {:app_id :app.id})
+          (fields :app_steps.id
+                  :step
+                  :t.name
+                  :t.description
+                  :jt.system_id
+                  :task_id
+                  :t.external_app_id)
+          (where {:app.id app-id})
+          (order :step :ASC)))
 
 (defn- format-step
   "Formats step fields for the client."
@@ -168,10 +168,10 @@
    steps normally can't be distinguished without examining the associated task."
   [app-id steps]
   (doall
-    (map-indexed (fn [step-number step]
-                   (assoc (add-pipeline-step app-id step-number step)
-                     :app_type (:app_type step)))
-                 steps)))
+   (map-indexed (fn [step-number step]
+                  (assoc (add-pipeline-step app-id step-number step)
+                         :app_type (:app_type step)))
+                steps)))
 
 (defn- add-app-steps-mappings
   [{app-id :id steps :steps mappings :mappings}]
@@ -182,22 +182,22 @@
   [user app]
   (validate-pipeline app)
   (transaction
-    (let [app-id (:id (add-app app user))]
-      (add-app-to-user-dev-category user app-id)
-      (add-app-steps-mappings (assoc app :id app-id))
-      (permissions/register-private-app (:shortUsername user) app-id)
-      app-id)))
+   (let [app-id (:id (add-app app user))]
+     (add-app-to-user-dev-category user app-id)
+     (add-app-steps-mappings (assoc app :id app-id))
+     (permissions/register-private-app (:shortUsername user) app-id)
+     app-id)))
 
 (defn- update-pipeline-app
   [user app]
   (validate-pipeline app)
   (transaction
-    (let [app-id (:id app)]
-      (verify-app-editable user (get-app app-id))
-      (update-app app)
-      (remove-app-steps app-id)
-      (add-app-steps-mappings app)
-      app-id)))
+   (let [app-id (:id app)]
+     (verify-app-editable user (get-app app-id))
+     (update-app app)
+     (remove-app-steps app-id)
+     (add-app-steps-mappings app)
+     app-id)))
 
 (defn- prepare-pipeline-step
   "Prepares a single step in a pipeline for submission to apps. DE steps can be left as-is.

@@ -74,18 +74,18 @@
 (defn- multi-input-max-paths-exceeded
   [max-paths path path-count]
   (throw+
-    {:type       :clojure-commons.exception/illegal-argument
-     :error      (format "Multi-Input Path List exceeds the maximum of %d allowed paths." max-paths)
-     :path       path
-     :path-count path-count}))
+   {:type       :clojure-commons.exception/illegal-argument
+    :error      (format "Multi-Input Path List exceeds the maximum of %d allowed paths." max-paths)
+    :path       path
+    :path-count path-count}))
 
 (defn- max-path-list-size-exceeded
   [list-type max-size path actual-size]
   (throw+
-    {:type      :clojure-commons.exception/illegal-argument
-     :error     (format "%s file exceeds maximum size of %d bytes." list-type max-size)
-     :path      path
-     :file-size actual-size}))
+   {:type      :clojure-commons.exception/illegal-argument
+    :error     (format "%s file exceeds maximum size of %d bytes." list-type max-size)
+    :path      path
+    :file-size actual-size}))
 
 (defn- validate-path-list-stats
   [list-type max-paths path-list-stats]
@@ -138,10 +138,10 @@
 (defn- save-batch
   [user job-types app submission output-dir]
   (transaction
-    (let [batch-id (save-batch* user app submission output-dir)]
-      (save-batch-step batch-id (first job-types))
-      (perms-client/register-private-analysis (:shortUsername user) batch-id)
-      batch-id)))
+   (let [batch-id (save-batch* user app submission output-dir)]
+     (save-batch-step batch-id (first job-types))
+     (perms-client/register-private-analysis (:shortUsername user) batch-id)
+     batch-id)))
 
 (defn- pre-submit-batch-validation
   [input-params-by-id input-paths-by-id path-list-stats]

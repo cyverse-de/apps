@@ -11,41 +11,41 @@
 
 (defroutes admin-tool-requests
   (GET "/" []
-       :query [params ToolRequestListingParams]
-       :return schema/ToolRequestListing
-       :summary schema/ToolInstallRequestListingSummary
-       :description admin-schema/ToolInstallRequestListingDocs
-       (ok (list-tool-requests params)))
+    :query [params ToolRequestListingParams]
+    :return schema/ToolRequestListing
+    :summary schema/ToolInstallRequestListingSummary
+    :description admin-schema/ToolInstallRequestListingDocs
+    (ok (list-tool-requests params)))
 
   (DELETE "/status-codes/:status-code-id" []
-          :path-params [status-code-id :- schema/ToolRequestStatusCodeId]
-          :query [params SecuredQueryParams]
-          :summary admin-schema/ToolInstallRequestStatusCodeDeleteSummary
-          :description admin-schema/ToolInstallRequestStatusCodeDeleteDocs
-          (delete-tool-request-status-code status-code-id)
-          (ok))
+    :path-params [status-code-id :- schema/ToolRequestStatusCodeId]
+    :query [params SecuredQueryParams]
+    :summary admin-schema/ToolInstallRequestStatusCodeDeleteSummary
+    :description admin-schema/ToolInstallRequestStatusCodeDeleteDocs
+    (delete-tool-request-status-code status-code-id)
+    (ok))
 
   (context "/:request-id" []
     :path-params [request-id :- schema/ToolRequestIdParam]
 
     (DELETE "/" []
-            :query [params SecuredQueryParams]
-            :summary admin-schema/ToolInstallRequestDeleteSummary
-            :description admin-schema/ToolInstallRequestDeleteDocs
-            (delete-tool-request request-id)
-            (ok))
+      :query [params SecuredQueryParams]
+      :summary admin-schema/ToolInstallRequestDeleteSummary
+      :description admin-schema/ToolInstallRequestDeleteDocs
+      (delete-tool-request request-id)
+      (ok))
 
     (GET "/" []
-         :query [params SecuredQueryParams]
-         :return schema/ToolRequestDetails
-         :summary admin-schema/ToolInstallRequestDetailsSummary
-         :description admin-schema/ToolInstallRequestDetailsDocs
-         (ok (get-tool-request request-id)))
+      :query [params SecuredQueryParams]
+      :return schema/ToolRequestDetails
+      :summary admin-schema/ToolInstallRequestDetailsSummary
+      :description admin-schema/ToolInstallRequestDetailsDocs
+      (ok (get-tool-request request-id)))
 
     (POST "/status" []
-          :query [params SecuredQueryParams]
-          :body [body admin-schema/ToolRequestStatusUpdate]
-          :return schema/ToolRequestDetails
-          :summary admin-schema/ToolInstallRequestStatusUpdateSummary
-          :description admin-schema/ToolInstallRequestStatusUpdateDocs
-          (ok (update-tool-request request-id (config/uid-domain) current-user body)))))
+      :query [params SecuredQueryParams]
+      :body [body admin-schema/ToolRequestStatusUpdate]
+      :return schema/ToolRequestDetails
+      :summary admin-schema/ToolInstallRequestStatusUpdateSummary
+      :description admin-schema/ToolInstallRequestStatusUpdateDocs
+      (ok (update-tool-request request-id (config/uid-domain) current-user body)))))

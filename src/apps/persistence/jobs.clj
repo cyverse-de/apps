@@ -556,39 +556,39 @@
 (defn update-job
   "Updates an existing job in the database."
   ([id {:keys [status end_date deleted name description]}]
-     (when (or status end_date deleted name description)
-       (sql/update :jobs
-         (set-fields (remove-nil-values {:status          status
-                                         :end_date        end_date
-                                         :deleted         deleted
-                                         :job_name        name
-                                         :job_description description}))
-         (where {:id id}))))
+   (when (or status end_date deleted name description)
+     (sql/update :jobs
+                 (set-fields (remove-nil-values {:status          status
+                                                 :end_date        end_date
+                                                 :deleted         deleted
+                                                 :job_name        name
+                                                 :job_description description}))
+                 (where {:id id}))))
   ([id status end-date]
-     (update-job id {:status   status
-                     :end_date end-date})))
+   (update-job id {:status   status
+                   :end_date end-date})))
 
 (defn update-job-step-number
   "Updates an existing job step in the database using the job ID and the step number as keys."
   [job-id step-number {:keys [external_id status end_date start_date]}]
   (when (or external_id status end_date start_date)
     (sql/update :job_steps
-      (set-fields (remove-nil-values {:external_id external_id
-                                      :status      status
-                                      :end_date    end_date
-                                      :start_date  start_date}))
-      (where {:job_id      job-id
-              :step_number step-number}))))
+                (set-fields (remove-nil-values {:external_id external_id
+                                                :status      status
+                                                :end_date    end_date
+                                                :start_date  start_date}))
+                (where {:job_id      job-id
+                        :step_number step-number}))))
 
 (defn cancel-job-step-numbers
   "Marks a job step as canceled in the database."
   [job-id step-numbers]
   (sql/update :job_steps
-    (set-fields {:status     canceled-status
-                 :start_date (sqlfn coalesce :start_date (sqlfn now))
-                 :end_date   (sqlfn now)})
-    (where {:job_id      job-id
-            :step_number [in step-numbers]})))
+              (set-fields {:status     canceled-status
+                           :start_date (sqlfn coalesce :start_date (sqlfn now))
+                           :end_date   (sqlfn now)})
+              (where {:job_id      job-id
+                      :step_number [in step-numbers]})))
 
 (defn get-job-step-number
   "Retrieves a job step from the database by its step number."
@@ -603,19 +603,19 @@
   [job-id external-id status end-date]
   (when (or status end-date)
     (sql/update :job_steps
-      (set-fields (remove-nil-values {:status   status
-                                      :end_date end-date}))
-      (where {:job_id      job-id
-              :external_id external-id}))))
+                (set-fields (remove-nil-values {:status   status
+                                                :end_date end-date}))
+                (where {:job_id      job-id
+                        :external_id external-id}))))
 
 (defn update-job-steps
   "Updates all steps for a job in the database."
   [job-id status end-date]
   (when (or status end-date)
     (sql/update :job_steps
-      (set-fields (remove-nil-values {:status   status
-                                      :end_date end-date}))
-      (where {:job_id job-id}))))
+                (set-fields (remove-nil-values {:status   status
+                                                :end_date end-date}))
+                (where {:job_id job-id}))))
 
 (defn list-incomplete-jobs
   []
@@ -660,8 +660,8 @@
 (defn delete-jobs
   [ids]
   (sql/update :jobs
-    (set-fields {:deleted true})
-    (where {:id [in ids]})))
+              (set-fields {:deleted true})
+              (where {:id [in ids]})))
 
 (defn get-jobs
   [ids]
@@ -735,7 +735,7 @@
 (defn get-public-job-stats
   [^String app-id params]
   (merge {:job_count_completed 0}
-         (-> (get-job-stats-base-query app-id )
+         (-> (get-job-stats-base-query app-id)
              (util/add-date-limits-where-clause params)
              select
              first)))

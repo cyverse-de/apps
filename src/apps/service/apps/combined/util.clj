@@ -9,8 +9,8 @@
 (defn apply-default-search-params
   [params]
   (assoc params
-    :sort-field (or (:sort-field params) "name")
-    :sort-dir   (or (:sort-dir params) "ASC")))
+         :sort-field (or (:sort-field params) "name")
+         :sort-dir   (or (:sort-dir params) "ASC")))
 
 (defn combine-app-listings
   "Expects results to be a list of maps in a format like {:total int, :apps []}"

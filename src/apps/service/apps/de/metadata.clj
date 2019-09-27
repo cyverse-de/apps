@@ -61,8 +61,8 @@
   [user req]
   (println "Permanently deleting some apps: " req)
   (transaction
-    (dorun (map permanently-delete-app (app-ids-from-deletion-request req)))
-    (amp/remove-workflow-map-orphans))
+   (dorun (map permanently-delete-app (app-ids-from-deletion-request req)))
+   (amp/remove-workflow-map-orphans))
   nil)
 
 (defn delete-apps
@@ -104,7 +104,7 @@
     (when (or (> 1 rating) (> rating 5))
       (throw+ {:type  :clojure-commons.exception/bad-request-field
                :error (str "Rating must be an integer between 1 and 5 inclusive."
-                                " Invalid rating (" rating ") for App ID " app-id)}))
+                           " Invalid rating (" rating ") for App ID " app-id)}))
     (when-not (contains? (perms-client/get-public-app-ids) app-id)
       (throw+ {:type  :clojure-commons.exception/bad-request-field
                :error (str "Unable to rate private app, " app-id)}))
@@ -126,8 +126,8 @@
   "Gets the current user's Favorites category ID."
   [user]
   (get-app-subcategory-id
-    (:root_category_id (get-workspace (:username user)))
-    (config/workspace-favorites-app-category-index)))
+   (:root_category_id (get-workspace (:username user)))
+   (config/workspace-favorites-app-category-index)))
 
 (defn add-app-favorite
   "Adds the given app to the current user's favorites list."
@@ -143,7 +143,7 @@
   [user app-id]
   (let [app (amp/get-app app-id)
         fav-category-id (get-favorite-category-id user)]
-  (remove-app-from-category app-id fav-category-id))
+    (remove-app-from-category app-id fav-category-id))
   nil)
 
 (defn- beta-avu
@@ -182,9 +182,9 @@
    Instead, community admins are notified that the app integrator wishes to add their app to those communities."
   [username app-id app-name avus]
   (let [body (as-> avus m
-                   (remove #(= (config/workspace-metadata-communities-attr) (:attr %)) m)
-                   (conj m (beta-avu))
-                   (cheshire/encode {:avus m}))]
+               (remove #(= (config/workspace-metadata-communities-attr) (:attr %)) m)
+               (conj m (beta-avu))
+               (cheshire/encode {:avus m}))]
     (metadata-client/update-avus username app-id body))
 
   (if-let [community-names (communities/extract-full-community-names avus)]

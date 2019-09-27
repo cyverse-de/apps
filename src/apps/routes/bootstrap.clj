@@ -8,8 +8,8 @@
 
 (defroutes bootstrap
   (GET "/" []
-       :query [params SecuredQueryParams]
-       :return schema/AppsBootstrapResponse
-       :summary "Bootstrap Service"
-       :description "Returns information that the Discovery Environment UI uses to initialize a user's session."
-       (ok (svc/bootstrap current-user))))
+    :query [params SecuredQueryParams]
+    :return schema/AppsBootstrapResponse
+    :summary "Bootstrap Service"
+    :description "Returns information that the Discovery Environment UI uses to initialize a user's session."
+    (ok (svc/bootstrap current-user))))

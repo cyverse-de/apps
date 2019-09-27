@@ -163,8 +163,8 @@
   ([implementor name]
    (sql/delete :tools (sql/where {:name name}))
    (tools/admin-add-tools {:tools [(assoc tool-definition
-                                    :name           name
-                                    :implementation (implementation-for-user implementor))]})))
+                                          :name           name
+                                          :implementation (implementation-for-user implementor))]})))
 
 (defn delete-tool [tool-id]
   (sql/delete :tools (sql/where {:id tool-id})))

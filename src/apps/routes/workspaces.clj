@@ -10,9 +10,9 @@
 ;; Obsolete?
 (defroutes workspaces
   (GET "/" []
-        :query [params SecuredQueryParams]
-        :return Workspace
-        :summary "Obtain user workspace information."
-        :description "This endpoint returns information about the workspace belonging to the
+    :query [params SecuredQueryParams]
+    :return Workspace
+    :summary "Obtain user workspace information."
+    :description "This endpoint returns information about the workspace belonging to the
         authenticated user."
-        (ok (workspace/get-workspace current-user))))
+    (ok (workspace/get-workspace current-user))))

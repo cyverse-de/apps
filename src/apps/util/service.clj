@@ -16,12 +16,12 @@
   "Parses a JSON request body."
   [body]
   (try+
-    (if (string? body)
-      (cheshire/decode body true)
-      (cheshire/decode-stream (reader body) true))
-    (catch Exception e
-      (throw+ {:type  :clojure-commons.exception/invalid-json
-               :error (str e)}))))
+   (if (string? body)
+     (cheshire/decode body true)
+     (cheshire/decode-stream (reader body) true))
+   (catch Exception e
+     (throw+ {:type  :clojure-commons.exception/invalid-json
+              :error (str e)}))))
 
 (def not-found ca/not-found)
 (def not-owner ca/not-owner)

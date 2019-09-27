@@ -16,7 +16,7 @@
         defaults (ca/build-default-values-map params)
         params   (group-by :step_id params)]
     (apps.service.apps.de.jobs.condor.JobRequestFormatter.
-       user email submission app io-maps defaults params)))
+     user email submission app io-maps defaults params)))
 
 (defn build-submission
   [user submission]

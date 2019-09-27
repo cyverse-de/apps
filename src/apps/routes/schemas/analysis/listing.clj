@@ -8,7 +8,7 @@
 
 (defschema AdminAnalysis
   (assoc schema/BaseAnalysis
-    :external_ids (describe [schema/ExternalId] "The list of external identifiers.")))
+         :external_ids (describe [schema/ExternalId] "The list of external identifiers.")))
 
 (defschema AdminAnalysisList
   {:analyses (describe [AdminAnalysis] "The list of anlayses.")})

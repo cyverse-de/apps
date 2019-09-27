@@ -18,28 +18,28 @@
   "Obtains detailed information about a tool request."
   [uuid]
   (first
-    (select [:tool_requests :tr]
-            (fields :tr.id
-                    [:requestor.username :submitted_by]
-                    :tr.phone
-                    :tr.tool_id
-                    [:tr.tool_name :name]
-                    :tr.description
-                    :tr.source_url
-                    [:tr.doc_url :documentation_url]
-                    :tr.version
-                    :tr.attribution
-                    :tr.multithreaded
-                    [:architecture.name :architecture]
-                    :tr.test_data_path
-                    [:tr.instructions :cmd_line]
-                    :tr.additional_info
-                    :tr.additional_data_file)
-            (join [:users :requestor]
-                  {:tr.requestor_id :requestor.id})
-            (join [:tool_architectures :architecture]
-                  {:tr.tool_architecture_id :architecture.id})
-            (where {:tr.id uuid}))))
+   (select [:tool_requests :tr]
+           (fields :tr.id
+                   [:requestor.username :submitted_by]
+                   :tr.phone
+                   :tr.tool_id
+                   [:tr.tool_name :name]
+                   :tr.description
+                   :tr.source_url
+                   [:tr.doc_url :documentation_url]
+                   :tr.version
+                   :tr.attribution
+                   :tr.multithreaded
+                   [:architecture.name :architecture]
+                   :tr.test_data_path
+                   [:tr.instructions :cmd_line]
+                   :tr.additional_info
+                   :tr.additional_data_file)
+           (join [:users :requestor]
+                 {:tr.requestor_id :requestor.id})
+           (join [:tool_architectures :architecture]
+                 {:tr.tool_architecture_id :architecture.id})
+           (where {:tr.id uuid}))))
 
 (defn get-tool-request-history
   "Obtains detailed information about the history of a tool request."
@@ -98,18 +98,18 @@
       statuses   :statuses}]
   (let [status-clause (if (nil? statuses) nil ['in statuses])]
     (select
-      [(subselect [(list-tool-requests-subselect user) :req]
-                  (fields :id :name :version :requested_by :tool_id
-                          [(sqlfn :first :status_date) :date_submitted]
-                          [(sqlfn :last :status) :status]
-                          [(sqlfn :last :status_date) :date_updated]
-                          [(sqlfn :last :updated_by) :updated_by])
-                  (group :id :name :version :requested_by :tool_id)
-                  (order (or sort-field :date_submitted) (or sort-order :ASC))
-                  (limit row-limit)
-                  (offset row-offset))
-       :reqs]
-      (where-if-defined {:status status-clause}))))
+     [(subselect [(list-tool-requests-subselect user) :req]
+                 (fields :id :name :version :requested_by :tool_id
+                         [(sqlfn :first :status_date) :date_submitted]
+                         [(sqlfn :last :status) :status]
+                         [(sqlfn :last :status_date) :date_updated]
+                         [(sqlfn :last :updated_by) :updated_by])
+                 (group :id :name :version :requested_by :tool_id)
+                 (order (or sort-field :date_submitted) (or sort-order :ASC))
+                 (limit row-limit)
+                 (offset row-offset))
+      :reqs]
+     (where-if-defined {:status status-clause}))))
 
 (defn get-request-id-for-tool
   [tool-id]

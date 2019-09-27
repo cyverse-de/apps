@@ -35,7 +35,7 @@
                     :email      "ipctest@cyverse.org"
                     :first-name "IPC"
                     :last-name  "Test"}]
-                  (f)))
+    (f)))
 
 (defn run-integration-tests [f]
   (when (System/getenv "RUN_INTEGRATION_TESTS")

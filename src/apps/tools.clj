@@ -41,8 +41,8 @@
                                              :deprecated image_deprecated
                                              :url        image_url})})
              :tool_request   (when tool_request_id (remove-nil-vals
-                                                     {:id     tool_request_id
-                                                      :status tool_request_status})))
+                                                    {:id     tool_request_id
+                                                     :status tool_request_status})))
       (dissoc :container_entrypoint
               :image_name
               :image_deprecated
@@ -95,8 +95,8 @@
         container      (clojure.set/rename-keys (tool-container-info tool-id) {:ports :container_ports})
         implementation (persistence/get-tool-implementation-details tool-id)]
     (assoc tool
-         :container container
-         :implementation implementation)))
+           :container container
+           :implementation implementation)))
 
 (defn user-get-tool
   "Obtains tool details for a user."
@@ -116,9 +116,9 @@
   "Adds a list of tools to the database, returning a list of IDs of the tools added."
   [{:keys [tools]}]
   (transaction
-    (let [tool-ids (doall (map add-new-tool tools))]
-      (dorun (map perms-client/register-public-tool tool-ids))
-      {:tool_ids tool-ids})))
+   (let [tool-ids (doall (map add-new-tool tools))]
+     (dorun (map perms-client/register-public-tool tool-ids))
+     {:tool_ids tool-ids})))
 
 (defn verify-tool-name-version-for-update
   "Given the current tool and the tool values for update,
@@ -132,19 +132,19 @@
 (defn admin-update-tool
   [user overwrite-public {:keys [id container] :as tool}]
   (transaction
-    (verify-tool-name-version-for-update (persistence/get-tool id) tool)
-    (persistence/update-tool tool)
-    (when container
-      (set-tool-container id overwrite-public container))
-    (get-tool user id)))
+   (verify-tool-name-version-for-update (persistence/get-tool id) tool)
+   (persistence/update-tool tool)
+   (when container
+     (set-tool-container id overwrite-public container))
+   (get-tool user id)))
 
 (defn delete-tool
   [tool-id]
   (persistence/delete-tool tool-id)
   (try+
-    (perms-client/delete-tool-resource tool-id)
-    (catch [:status 404] _
-      (log/warn "tool resource" tool-id "not found by permissions service")))
+   (perms-client/delete-tool-resource tool-id)
+   (catch [:status 404] _
+     (log/warn "tool resource" tool-id "not found by permissions service")))
   nil)
 
 (defn admin-delete-tool

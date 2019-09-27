@@ -14,7 +14,7 @@
   "Builds the server info to pass to authy."
   [server-info token-callback]
   (assoc (dissoc server-info :api-name)
-    :token-callback token-callback))
+         :token-callback token-callback))
 
 (def ^:private server-info-fn-for
   (memoize #(->> {:agave (when (config/agave-enabled) config/agave-oauth-settings)}

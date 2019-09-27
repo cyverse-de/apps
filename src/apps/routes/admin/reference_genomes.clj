@@ -14,25 +14,25 @@
 
 (defroutes reference-genomes
   (POST "/" []
-        :query [params SecuredQueryParams]
-        :body [body schema/ReferenceGenomeAddRequest]
-        :return ReferenceGenome
-        :summary schema/ReferenceGenomeAddSummary
-        :description schema/ReferenceGenomeAddDocs
-        (ok (add-reference-genome body)))
+    :query [params SecuredQueryParams]
+    :body [body schema/ReferenceGenomeAddRequest]
+    :return ReferenceGenome
+    :summary schema/ReferenceGenomeAddSummary
+    :description schema/ReferenceGenomeAddDocs
+    (ok (add-reference-genome body)))
 
   (DELETE "/:reference-genome-id" []
-          :path-params [reference-genome-id :- ReferenceGenomeIdParam]
-          :query [params ReferenceGenomeDeletionParams]
-          :summary schema/ReferenceGenomeDeleteSummary
-          :description schema/ReferenceGenomeDeleteDocs
-          (ok (delete-reference-genome reference-genome-id params)))
+    :path-params [reference-genome-id :- ReferenceGenomeIdParam]
+    :query [params ReferenceGenomeDeletionParams]
+    :summary schema/ReferenceGenomeDeleteSummary
+    :description schema/ReferenceGenomeDeleteDocs
+    (ok (delete-reference-genome reference-genome-id params)))
 
   (PATCH "/:reference-genome-id" []
-         :path-params [reference-genome-id :- ReferenceGenomeIdParam]
-         :query [params SecuredQueryParams]
-         :body [body schema/ReferenceGenomeUpdateRequest]
-         :return ReferenceGenome
-         :summary schema/ReferenceGenomeUpdateSummary
-         :description schema/ReferenceGenomeUpdateDocs
-         (ok (update-reference-genome (assoc body :id reference-genome-id)))))
+    :path-params [reference-genome-id :- ReferenceGenomeIdParam]
+    :query [params SecuredQueryParams]
+    :body [body schema/ReferenceGenomeUpdateRequest]
+    :return ReferenceGenome
+    :summary schema/ReferenceGenomeUpdateSummary
+    :description schema/ReferenceGenomeUpdateDocs
+    (ok (update-reference-genome (assoc body :id reference-genome-id)))))

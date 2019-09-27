@@ -29,7 +29,7 @@
 (defn- encode-auth [registry]
   (.encodeToString (Base64/getEncoder)
                    (.getBytes
-                     (json/encode (select-keys registry [:username :password])))))
+                    (json/encode (select-keys registry [:username :password])))))
 
 (defn- auth-info [image-name]
   (let [registry-name (string/replace image-name #"/?(?!.*/).*$" "")
@@ -41,8 +41,8 @@
   "Returns a map containing only publicly-permissible image info (no auth)"
   [image-uuid]
   (first (select container-images
-                (fields :name :tag :url :deprecated :id :osg_image_path)
-                (where {:id (uuidify image-uuid)}))))
+                 (fields :name :tag :url :deprecated :id :osg_image_path)
+                 (where {:id (uuidify image-uuid)}))))
 
 (defn image-info
   "Returns a map containing information about a container image. Info is looked up by the image UUID."
@@ -57,8 +57,8 @@
   "Returns a list of all defined images."
   []
   {:container_images
-    (select container-images
-      (fields :name :tag :url :deprecated :id :osg_image_path))})
+   (select container-images
+           (fields :name :tag :url :deprecated :id :osg_image_path))})
 
 (defn image-public-tools
   [id]
@@ -110,11 +110,11 @@
         (validate-image-not-used-in-public-apps image-id))
       (log/warn user "updating image" image-id image-info)
       (sql/update container-images
-        (set-fields update-info)
-        (where (= :id (uuidify image-id)))))
+                  (set-fields update-info)
+                  (where (= :id (uuidify image-id)))))
     (first
-      (select container-images
-        (where (= :id (uuidify image-id)))))))
+     (select container-images
+             (where (= :id (uuidify image-id)))))))
 
 (defn delete-image
   [id user]
@@ -166,11 +166,11 @@
   "Returns a map describing a data container."
   [data-container-id]
   (assert-not-nil [:data-container-id data-container-id]
-    (first
-      (select data-containers
-              (fields :id :name_prefix :read_only)
-              (with container-images (fields :name :tag :url))
-              (where {:id data-container-id})))))
+                  (first
+                   (select data-containers
+                           (fields :id :name_prefix :read_only)
+                           (with container-images (fields :name :tag :url))
+                           (where {:id data-container-id})))))
 
 (defn- add-data-container
   [data-container-info]
@@ -184,24 +184,24 @@
   [data-container-id {:keys [name] :as data-container-info}]
   (when (data-container data-container-id)
     (transaction
-      (let [container-images-id (when name (find-or-add-image-id data-container-info))
-            umap (-> data-container-info
-                     (select-keys [:name_prefix :read_only])
-                     (assoc :container_images_id container-images-id)
-                     remove-nil-vals)]
-        (when-not (empty? umap)
-          (sql/update data-containers
-            (set-fields umap)
-            (where {:id data-container-id})))
-        (data-container data-container-id)))))
+     (let [container-images-id (when name (find-or-add-image-id data-container-info))
+           umap (-> data-container-info
+                    (select-keys [:name_prefix :read_only])
+                    (assoc :container_images_id container-images-id)
+                    remove-nil-vals)]
+       (when-not (empty? umap)
+         (sql/update data-containers
+                     (set-fields umap)
+                     (where {:id data-container-id})))
+       (data-container data-container-id)))))
 
 (defn- find-data-container-id
   "Returns the UUID used as the primary key in the data_containers table."
   [data-container-info]
   (:id (first
-         (select data-containers
-           (where (assoc (select-keys data-container-info [:name_prefix :read_only])
-                         :container_images_id (image-id data-container-info)))))))
+        (select data-containers
+                (where (assoc (select-keys data-container-info [:name_prefix :read_only])
+                              :container_images_id (image-id data-container-info)))))))
 
 (defn volumes-from-mapping?
   "Returns true if the combination of the container_settings UUID and container
@@ -216,7 +216,7 @@
   (first (select container-volumes-from
                  (fields :id)
                  (with data-containers (fields :name_prefix :read_only)
-                   (with container-images (fields :name :tag :url)))
+                       (with container-images (fields :name :tag :url)))
                  (where {:container_settings_id (uuidify settings-uuid)
                          :data_containers_id     (uuidify data-container-uuid)}))))
 
@@ -236,22 +236,22 @@
 (defn- filter-container-settings
   [settings-map]
   (select-keys settings-map
-    [:pids_limit
-     :cpu_shares
-     :memory_limit
-     :min_memory_limit
-     :min_cpu_cores
-     :max_cpu_cores
-     :min_disk_space
-     :network_mode
-     :working_directory
-     :name
-     :entrypoint
-     :tools_id
-     :interactive_apps_proxy_settings_id
-     :skip_tmp_mount
-     :uid
-     :id]))
+               [:pids_limit
+                :cpu_shares
+                :memory_limit
+                :min_memory_limit
+                :min_cpu_cores
+                :max_cpu_cores
+                :min_disk_space
+                :network_mode
+                :working_directory
+                :name
+                :entrypoint
+                :tools_id
+                :interactive_apps_proxy_settings_id
+                :skip_tmp_mount
+                :uid
+                :id]))
 
 (defn- add-settings
   "Adds a new settings record to the database based on the parameter map."
@@ -272,8 +272,8 @@
     (cxu/not-found (str "Container settings do not exist for UUID: " settings-uuid)))
   (let [values (filter-container-settings settings-map)]
     (sql/update container-settings
-      (set-fields values)
-      (where {:id (uuidify settings-uuid)}))))
+                (set-fields values)
+                (where {:id (uuidify settings-uuid)}))))
 
 (defn- filter-returns
   [retval]
@@ -320,17 +320,17 @@
                            :entrypoint
                            :uid)
                    (with container-devices
-                     (fields :host_path :container_path :id))
+                         (fields :host_path :container_path :id))
                    (with container-volumes
-                     (fields :host_path :container_path :id))
+                         (fields :host_path :container_path :id))
                    (with container-volumes-from
-                     (fields :id)
-                     (with data-containers
-                       (fields :name_prefix :read_only)
-                       (with container-images
-                         (fields :name :tag :url :deprecated :osg_image_path))))
+                         (fields :id)
+                         (with data-containers
+                               (fields :name_prefix :read_only)
+                               (with container-images
+                                     (fields :name :tag :url :deprecated :osg_image_path))))
                    (with ports
-                     (fields :host_port :container_port :bind_to_host :id))
+                         (fields :host_port :container_port :bind_to_host :id))
                    (where {:tools_id id}))
            first
            add-interapps-info
@@ -341,21 +341,21 @@
 (defn- add-settings-volumes-from
   [settings-id vf-map]
   (transaction
-    (let [data-container-id (or (find-data-container-id vf-map)
-                                (:id (add-data-container vf-map)))]
-      (when-not (volumes-from-mapping? settings-id data-container-id)
-        (add-volumes-from settings-id data-container-id))
-      (volumes-from-settings settings-id data-container-id))))
+   (let [data-container-id (or (find-data-container-id vf-map)
+                               (:id (add-data-container vf-map)))]
+     (when-not (volumes-from-mapping? settings-id data-container-id)
+       (add-volumes-from settings-id data-container-id))
+     (volumes-from-settings settings-id data-container-id))))
 
 (defn- port-mapping?
   "Returns true if the the specific combination of fields exists in the
    database."
   [settings-uuid host-port container-port bind-to-host]
   (pos? (count (select ports
-                      (where (and (= :container_settings_id (uuidify settings-uuid))
-                                  (= :host_port host-port)
-                                  (= :container_port container-port)
-                                  (= :bind_to_host bind-to-host)))))))
+                       (where (and (= :container_settings_id (uuidify settings-uuid))
+                                   (= :host_port host-port)
+                                   (= :container_port container-port)
+                                   (= :bind_to_host bind-to-host)))))))
 
 (defn- add-port
   [settings-uuid {host-port :host_port container-port :container_port bind-to-host :bind_to_host :as port-map}]
@@ -422,22 +422,22 @@
   (when-not overwrite-public
     (validate-tool-not-used-in-public-apps tool-id))
   (transaction
-    (delete container-settings (where {:tools_id tool-id}))
-    (let [img-id      (find-or-add-image-id (:image settings))
-          settings    (assoc settings :tools_id tool-id)
-          settings-id (:id (add-settings settings))]
-      (update-tool {:id tool-id :container_images_id img-id})
-      (when-not (nil? interactive_apps)
-        (modify-settings settings-id
-                         {:interactive_apps_proxy_settings_id
-                          (uuidify (:id (add-proxy-settings interactive_apps)))}))
-      (doseq [device container_devices]
-        (add-device settings-id device))
-      (doseq [volume container_volumes]
-        (add-volume settings-id volume))
-      (doseq [volume container_volumes_from]
-        (add-settings-volumes-from settings-id volume))
-      (doseq [port container_ports]
-        (add-port settings-id port))
+   (delete container-settings (where {:tools_id tool-id}))
+   (let [img-id      (find-or-add-image-id (:image settings))
+         settings    (assoc settings :tools_id tool-id)
+         settings-id (:id (add-settings settings))]
+     (update-tool {:id tool-id :container_images_id img-id})
+     (when-not (nil? interactive_apps)
+       (modify-settings settings-id
+                        {:interactive_apps_proxy_settings_id
+                         (uuidify (:id (add-proxy-settings interactive_apps)))}))
+     (doseq [device container_devices]
+       (add-device settings-id device))
+     (doseq [volume container_volumes]
+       (add-volume settings-id volume))
+     (doseq [volume container_volumes_from]
+       (add-settings-volumes-from settings-id volume))
+     (doseq [port container_ports]
+       (add-port settings-id port))
 
-      (tool-container-info tool-id))))
+     (tool-container-info tool-id))))

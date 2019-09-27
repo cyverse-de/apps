@@ -10,7 +10,7 @@
 (defn- format-app
   [category-keyword response]
   (remove-vals nil? (assoc (select-keys response [:app_id :app_name])
-                      :category_id (str (category-keyword response)))))
+                           :category_id (str (category-keyword response)))))
 
 (defn- format-payload
   [category-keyword action responses]

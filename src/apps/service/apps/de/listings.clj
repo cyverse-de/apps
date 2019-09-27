@@ -62,11 +62,11 @@
         (assoc :app-ids             app-ids
                :pre-matched-app-ids (when-not (some empty? [search_term app-ids category-attrs])
                                       (metadata-client/filter-targets-by-ontology-search
-                                        short-username
-                                        category-attrs
-                                        search_term
-                                        app-ids
-                                        :validate false)))
+                                       short-username
+                                       category-attrs
+                                       search_term
+                                       app-ids
+                                       :validate false)))
         remove-nil-vals)))
 
 (defn list-hierarchies
@@ -149,7 +149,7 @@
   "Formats any virtual groups that should appear in a user's workspace."
   [user workspace params]
   (remove :is_public
-    (map (fn [[_ {f :format-group}]] (f user workspace params)) virtual-group-fns)))
+          (map (fn [[_ {f :format-group}]] (f user workspace params)) virtual-group-fns)))
 
 (defn- add-private-virtual-groups
   [user group workspace params]
@@ -222,7 +222,7 @@
   "Formats app category information for the admin app category search."
   [category]
   (assoc (select-keys category [:id :name :owner])
-    :system_id de-system-id))
+         :system_id de-system-id))
 
 (defn search-admin-app-groups
   "Searches for admin app categories by name."
@@ -270,12 +270,12 @@
    :rating map."
   [{:keys [average_rating total_ratings user_rating comment_id] :as app}]
   (-> app
-    (dissoc :average_rating :total_ratings :user_rating :comment_id)
-    (assoc :rating (remove-nil-vals
-                     {:average average_rating
-                      :total total_ratings
-                      :user user_rating
-                      :comment_id comment_id}))))
+      (dissoc :average_rating :total_ratings :user_rating :comment_id)
+      (assoc :rating (remove-nil-vals
+                      {:average average_rating
+                       :total total_ratings
+                       :user user_rating
+                       :comment_id comment_id}))))
 
 (defn- app-can-run?
   [{tool-count :tool_count external-app-count :external_app_count task-count :task_count}]
@@ -413,9 +413,9 @@
         beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps_in_group))
         apps_in_group  (map (partial format-app-listing false perms beta-ids-set public-app-ids) apps_in_group)]
     (assoc app_group
-      :system_id de-system-id
-      :total     total
-      :apps      apps_in_group)))
+           :system_id de-system-id
+           :total     total
+           :apps      apps_in_group)))
 
 (defn list-apps-in-group
   "This service lists all of the apps in an app group and all of its
@@ -462,10 +462,10 @@
   "Retrieves the details for a single app."
   [app-id]
   (assert-not-nil [:app-id app-id]
-    (first (select apps
-                   (with app_references)
-                   (with integration_data)
-                   (where {:id app-id})))))
+                  (first (select apps
+                                 (with app_references)
+                                 (with integration_data)
+                                 (where {:id app-id})))))
 
 (defn- format-wiki-url
   "CORE-6510: Remove the wiki_url from app details responses if the App has documentation saved."
@@ -486,8 +486,8 @@
 (defn- format-app-details-job-stats
   [^String app-id params admin?]
   (remove-nil-vals
-    (if admin? (jobs-db/get-job-stats app-id params)
-               (jobs-db/get-public-job-stats app-id params))))
+   (if admin? (jobs-db/get-job-stats app-id params)
+       (jobs-db/get-public-job-stats app-id params))))
 
 (defn- format-app-extra-info
   [app-id admin?]
@@ -499,15 +499,15 @@
   [app-id username admin?]
   (when admin?
     (try+
-      (docs/get-app-docs username app-id admin?)
-      (catch [:type :clojure-commons.exception/not-found] _ nil))))
+     (docs/get-app-docs username app-id admin?)
+     (catch [:type :clojure-commons.exception/not-found] _ nil))))
 
 (defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
   (remove-nil-vals
-    {:name       image_name
-     :tag        image_tag
-     :url        image_url
-     :deprecated deprecated}))
+   {:name       image_name
+    :tag        image_tag
+    :url        image_url
+    :deprecated deprecated}))
 
 (defn- format-app-tool [tool]
   (assoc (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution]))
@@ -518,20 +518,20 @@
   [username details tools admin?]
   (let [app-id (:id details)]
     (-> details
-      (select-keys [:id :integration_date :edited_date :deleted :disabled :wiki_url
-                    :integrator_name :integrator_email])
-      (assoc :name                 (:name details "")
-             :description          (:description details "")
-             :references           (map :reference_text (:app_references details))
-             :tools                (map format-app-tool tools)
-             :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
-             :extra                (format-app-extra-info app-id admin?)
-             :documentation        (format-app-documentation app-id username admin?)
-             :categories           (get-groups-for-app app-id)
-             :suggested_categories (get-suggested-groups-for-app app-id)
-             :system_id            c/system-id)
-      (format-app-hierarchies username)
-      format-wiki-url)))
+        (select-keys [:id :integration_date :edited_date :deleted :disabled :wiki_url
+                      :integrator_name :integrator_email])
+        (assoc :name                 (:name details "")
+               :description          (:description details "")
+               :references           (map :reference_text (:app_references details))
+               :tools                (map format-app-tool tools)
+               :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
+               :extra                (format-app-extra-info app-id admin?)
+               :documentation        (format-app-documentation app-id username admin?)
+               :categories           (get-groups-for-app app-id)
+               :suggested_categories (get-suggested-groups-for-app app-id)
+               :system_id            c/system-id)
+        (format-app-hierarchies username)
+        format-wiki-url)))
 
 ;; FIXME: remove the code to bypass the permission checks for admin users when we have a better
 ;; way to implement this.
@@ -550,28 +550,28 @@
    with fields required by the client."
   [query task-param-entity]
   (with query task-param-entity
-              (join :parameter_values {:parameter_values.parameter_id :id})
-              (fields :id
-                      :name
-                      :label
-                      :description
-                      :required
-                      :parameter_values.value
-                      [:data_format :format])))
+        (join :parameter_values {:parameter_values.parameter_id :id})
+        (fields :id
+                :name
+                :label
+                :description
+                :required
+                :parameter_values.value
+                [:data_format :format])))
 
 (defn- get-tasks
   "Fetches a list of tasks for the given IDs with their inputs and outputs."
   [task-ids]
   (select tasks
-    (join job_types)
-    (fields [:job_types.system_id :system_id]
-            [:tasks.id            :id]
-            [:tasks.tool_id       :tool_id]
-            [:tasks.name          :name]
-            [:tasks.description   :description])
-    (with-task-params inputs)
-    (with-task-params outputs)
-    (where (in :tasks.id task-ids))))
+          (join job_types)
+          (fields [:job_types.system_id :system_id]
+                  [:tasks.id            :id]
+                  [:tasks.tool_id       :tool_id]
+                  [:tasks.name          :name]
+                  [:tasks.description   :description])
+          (with-task-params inputs)
+          (with-task-params outputs)
+          (where (in :tasks.id task-ids))))
 
 (defn- format-task-file-param
   [file-parameter]
@@ -580,8 +580,8 @@
 (defn- format-task-output
   [{:keys [label value] :as output}]
   (-> output
-    (assoc :label (first (remove string/blank? [value label])))
-    format-task-file-param))
+      (assoc :label (first (remove string/blank? [value label])))
+      format-task-file-param))
 
 (defn- format-task
   [user {:keys [tool_id] :as task}]
@@ -618,8 +618,8 @@
   (perms/check-app-permissions username "read" [app-id])
   (let [app (get-app app-id)
         tasks (:tasks (first (select apps
-                               (with tasks (fields :tool_id))
-                               (where {:apps.id app-id}))))
+                                     (with tasks (fields :tool_id))
+                                     (where {:apps.id app-id}))))
         tool-ids (map :tool_id tasks)]
     {:tools (get-tools-by-id tool-ids)}))
 
