@@ -51,16 +51,43 @@
        (mapcat (partial build-environment-entries config default-values))
        (into {})))
 
+(defn- filter-min-requirement-keys
+  [m]
+  (select-keys m [:min_memory_limit
+                  :min_cpu_cores
+                  :min_disk_space]))
+
+(defn- limit-container-min-requirement
+  [container req-key-min req-key-max]
+  (if (and (contains? container req-key-min)
+           (contains? container req-key-max))
+    (assoc container req-key-min (min (get container req-key-min)
+                                      (get container req-key-max)))
+    container))
+
+(defn- reconcile-container-requirements
+  "reconcile submission requirement requests with tool requirements"
+  [container requirements]
+  (-> container
+      (merge
+        (merge-with max
+                    (filter-min-requirement-keys container)
+                    (filter-min-requirement-keys requirements)))
+      (limit-container-min-requirement :min_memory_limit :memory_limit)
+      (limit-container-min-requirement :min_cpu_cores :max_cpu_cores)))
+
 (defn- add-container-info
-  [{tool-id :id :as component}]
+  [{tool-id :id :as component} requirements]
   (dissoc
    (if (c/tool-has-settings? tool-id)
-     (assoc component :container (c/tool-container-info tool-id :auth? true))
+     (assoc component :container (-> tool-id
+                                     (c/tool-container-info :auth? true)
+                                     (reconcile-container-requirements requirements)))
      component)
    :id))
 
 (defn- load-step-component
-  [task-id]
+  [task-id requirements]
   (-> (select* :tasks)
       (join :tools {:tasks.tool_id :tools.id})
       (join :tool_types {:tools.tool_type_id :tool_types.id})
@@ -75,21 +102,22 @@
       (where {:tasks.id task-id})
       (select)
       (first)
-      (add-container-info)
+      (add-container-info requirements)
       (remove-nil-vals)))
 
 (defn build-component
-  [{task-id :task_id}]
-  (assert-not-nil [:tool-for-task task-id] (load-step-component task-id)))
+  [{task-id :task_id} requirements]
+  (assert-not-nil [:tool-for-task task-id] (load-step-component task-id requirements)))
 
 (defn build-step
-  [request-builder steps step]
+  [request-builder requirements steps step]
   (let [config  (.buildConfig request-builder steps step)
         stdout  (:stdout config)
-        stderr  (:stderr config)]
+        stderr  (:stderr config)
+        step_requirements (first (filter #(= (:step_number step) (:step_number %)) requirements))]
     (conj steps
           (remove-nil-vals
-           {:component   (.buildComponent request-builder step)
+           {:component   (.buildComponent request-builder step step_requirements)
             :environment (.buildEnvironment request-builder step)
             :config      (dissoc config :stdout :stderr)
             :stdout      stdout
@@ -101,7 +129,7 @@
   (select [:app_steps :s]
           (join [:tasks :t] {:s.task_id :t.id})
           (fields [:s.id              :id]
-                  [:s.step            :step]
+                  [:s.step            :step_number]
                   [:s.task_id         :task_id]
                   [:t.external_app_id :external_app_id])
           (where {:s.app_id app-id})
@@ -112,7 +140,7 @@
   (->> (load-steps (:id app))
        (drop (dec (:starting_step submission 1)))
        (take-while (comp nil? :external_app_id))
-       (reduce #(.buildStep request-builder %1 %2) [])))
+       (reduce #(.buildStep request-builder (:requirements submission) %1 %2) [])))
 
 (defn- load-htcondor-extra-requirements
   [app-id]

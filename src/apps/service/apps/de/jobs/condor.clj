@@ -62,11 +62,11 @@
   (buildEnvironment [this step]
     (ca/build-environment (:config submission) defaults (params (:id step))))
 
-  (buildComponent [this step]
-    (ca/build-component step))
+  (buildComponent [this step requirements]
+    (ca/build-component step requirements))
 
-  (buildStep [this steps step]
-    (ca/build-step this steps step))
+  (buildStep [this requirements steps step]
+    (ca/build-step this requirements steps step))
 
   (buildSteps [this]
     (ca/build-steps this app submission))
