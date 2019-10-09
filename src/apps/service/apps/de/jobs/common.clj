@@ -70,9 +70,9 @@
   [container requirements]
   (-> container
       (merge
-        (merge-with max
-                    (filter-min-requirement-keys container)
-                    (filter-min-requirement-keys requirements)))
+       (merge-with max
+                   (filter-min-requirement-keys container)
+                   (filter-min-requirement-keys requirements)))
       (limit-container-min-requirement :min_memory_limit :memory_limit)
       (limit-container-min-requirement :min_cpu_cores :max_cpu_cores)))
 
