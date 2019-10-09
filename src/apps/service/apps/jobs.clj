@@ -82,13 +82,14 @@
   (let [end-date (db/timestamp-from-str end-date)]
     (.updateJobStatus apps-client job-step job status end-date)
     (when batch (update-batch-status batch end-date))
-    (send-job-status-update apps-client (or batch job) job-step)))
+    (send-job-status-update apps-client (or batch job) job-step)
+    (first (jp/get-job-steps-by-external-id (:external_id job-step)))))
 
 (defn update-job-status
   [apps-client job-step job batch status end-date]
   (cond
-    (jp/completed? (:status job))      (log-spurious-job-update job)
-    (jp/completed? (:status job-step)) (log-spurious-job-step-update job job-step)
+    (jp/completed? (:status job))      (do (log-spurious-job-update job) job-step)
+    (jp/completed? (:status job-step)) (do (log-spurious-job-step-update job job-step) job-step)
     :else                              (update-job-status* apps-client job-step job batch status end-date)))
 
 (defn- find-incomplete-job-steps

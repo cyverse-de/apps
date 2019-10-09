@@ -244,11 +244,12 @@
               job         (jobs/lock-job job-id)
               batch       (when-let [parent-id (:parent_id job)] (jp/get-job-by-id parent-id))
               apps-client (get-apps-client-for-username (:username job))]
-          (doseq [{status :status sent-on :sent_on} updates]
-            (let [end-date (when (jp/completed? status) (str sent-on))
-                  job-step (first (jp/get-job-steps-by-external-id external-id))]
-              (when (jp/status-follows? status (:status job-step))
-                (jobs/update-job-status apps-client job-step job batch status end-date))))
+          (reduce (fn [job-step {status :status sent-on :sent_on}]
+                    (if (jp/status-follows? status (:status job-step))
+                      (let [end-date (when (jp/completed? status) (str sent-on))]
+                        (jobs/update-job-status apps-client job-step job batch status end-date))
+                      job-step))
+                  job-step updates)
           (jp/mark-job-status-updates-propagated (mapv :id updates))
           nil)))))
   ([job-id external-id status end-date]
