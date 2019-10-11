@@ -35,6 +35,7 @@
 
   (POST "/" []
     :query [params SecuredQueryParamsEmailRequired]
+    :middleware [schema/coerce-analysis-submission-requirements]
     :body [body schema/AnalysisSubmission]
     :return schema/AnalysisResponse
     :summary listing-schema/AnalysisSubmitSummary
