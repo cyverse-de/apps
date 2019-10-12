@@ -238,7 +238,8 @@
    (when (:documentation app) (app-docs/add-app-docs user app-id app))
    (when references (amp/set-app-references app-id references))
    (publish-app-metadata short-username app-id (or name (amp/get-app-name app-id)) avus)
-   (amp/create-publication-request username app-id)))
+   (amp/create-publication-request username app-id)
+   nil))
 
 (defn get-app
   "This service obtains an app description that can be used to build a job submission form in
