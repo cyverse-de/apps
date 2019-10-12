@@ -224,8 +224,8 @@
    :email          true
    :email_template "app_publication_completion"
    :payload        {:email_address email
-                    :app-name      app-name
-                    :app-id        app-id}})
+                    :appname       app-name
+                    :appid         app-id}})
 
 (defn send-app-published-notification
   [username app-name {app-id :app_id requestor-username :requestor}]
