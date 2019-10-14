@@ -146,16 +146,6 @@
        ((juxt :id :job_name :description))
        (zipmap [:id :name :description])))
 
-(defn delete-job
-  [user job-id]
-  (validate-jobs-for-user user [job-id] "write")
-  (jp/delete-jobs [job-id]))
-
-(defn delete-jobs
-  [user job-ids]
-  (validate-jobs-for-user user job-ids "write")
-  (jp/delete-jobs job-ids))
-
 (defn get-parameter-values
   [apps-client user job-id]
   (validate-jobs-for-user user [job-id] "read")
@@ -233,18 +223,32 @@
   (let [^Runnable target #(stop-batch-jobs-thread apps-client status-to-set parent-id)]
     (.start (Thread. target (str "batch_stop_" parent-id)))))
 
+(defn- stop-job*
+  [apps-client user job-id status-to-set]
+  (let [{:keys [status] :as job} (jp/get-job-by-id job-id)
+        running-children (jp/list-running-child-jobs job-id)]
+    (when-not (and (jp/completed? status) (empty? running-children))
+
+      ;; A parent job should be stopped right away, to prevent further child jobs from submitting.
+      (stop-single-job apps-client status-to-set job true)
+      (if (not (empty? running-children))
+        (async-stop-batch-jobs apps-client status-to-set job-id)))))
+
 (defn stop-job
   [apps-client user job-id status-to-set]
   (validate-jobs-for-user user [job-id] "write")
-  (let [{:keys [status] :as job} (jp/get-job-by-id job-id)
-        running-children (jp/list-running-child-jobs job-id)]
-    (when (and (jp/completed? status) (empty? running-children))
-      (service/bad-request (str "job, " job-id ", is already completed or canceled")))
+  (stop-job* apps-client user job-id status-to-set))
 
-    ;; A parent job should be stopped right away, to prevent further child jobs from submitting.
-    (stop-single-job apps-client status-to-set job true)
-    (if (not (empty? running-children))
-      (async-stop-batch-jobs apps-client status-to-set job-id))))
+(defn delete-jobs
+  [apps-client user job-ids]
+  (validate-jobs-for-user user job-ids "write")
+  (doseq [job-id job-ids]
+    (stop-job* apps-client user job-id jp/canceled-status))
+  (jp/delete-jobs job-ids))
+
+(defn delete-job
+  [apps-client user job-id]
+  (delete-jobs apps-client user [job-id]))
 
 (defn get-job-history
   [apps-client user job-id]

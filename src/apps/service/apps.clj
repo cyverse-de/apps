@@ -295,12 +295,12 @@
 
 (defn delete-job
   [user job-id]
-  (jobs/delete-job user job-id)
+  (jobs/delete-job (get-apps-client user) user job-id)
   nil)
 
 (defn delete-jobs
   [user body]
-  (jobs/delete-jobs user (:analyses body))
+  (jobs/delete-jobs (get-apps-client user) user (:analyses body))
   nil)
 
 (defn get-job-history
