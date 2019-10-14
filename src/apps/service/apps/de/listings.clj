@@ -533,6 +533,15 @@
         (format-app-hierarchies username)
         format-wiki-url)))
 
+;; This function was split from `get-app-details` to provide a way for administrative endopints to skip permission
+;; checks without including the app stat information.
+(defn- get-app-details*
+  [username app-id admin?]
+  (let [details (load-app-details app-id)
+        tools   (get-app-tools app-id)]
+    (->> (format-app-details username details tools admin?)
+         (remove-nil-vals))))
+
 ;; FIXME: remove the code to bypass the permission checks for admin users when we have a better
 ;; way to implement this.
 (defn get-app-details
@@ -540,10 +549,7 @@
   [{username :shortUsername} app-id admin?]
   (when-not admin?
     (perms/check-app-permissions username "read" [app-id]))
-  (let [details (load-app-details app-id)
-        tools   (get-app-tools app-id)]
-    (->> (format-app-details username details tools admin?)
-         (remove-nil-vals))))
+  (get-app-details* username app-id admin?))
 
 (defn- with-task-params
   "Includes a list of related file parameters in the query's result set,
@@ -641,9 +647,9 @@
        (mapv #(str (:step_id %) "_" (:id %)))))
 
 (defn- format-app-publication-request
-  [user {app-id :app_id :keys [id requestor]}]
+  [{username :shortUsername} {app-id :app_id :keys [id requestor]}]
   {:id        id
-   :app       (get-app-details user app-id false)
+   :app       (get-app-details* username app-id false)
    :requestor requestor})
 
 (defn list-app-publication-requests
