@@ -65,9 +65,9 @@
    templates in the app are associated with any single-step apps that are not public. Returns
    a flag indicating whether or not the app is publishable along with the reason the app isn't
    publishable if it's not."
-  [{username :shortUsername} app-id]
+  [{username :shortUsername} app-id admin?]
   (validate-app-existence app-id)
-  (perms/check-app-permissions username "own" [app-id])
+  (when-not admin? (perms/check-app-permissions username "own" [app-id]))
   (let [task-ids            (task-ids-for-app app-id)
         unrunnable-tasks    (list-unrunnable-tasks task-ids)
         tools               (get-app-tools app-id)

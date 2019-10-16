@@ -157,13 +157,13 @@
   (.addAppFavorite (get-apps-client user) system-id app-id))
 
 (defn app-publishable?
-  [user system-id app-id]
-  (let [[publishable? reason] (.isAppPublishable (get-apps-client user) system-id app-id)]
+  [user system-id app-id & admin?]
+  (let [[publishable? reason] (.isAppPublishable (get-apps-client user) system-id app-id admin?)]
     (remove-nil-vals {:publishable publishable? :reason reason})))
 
 (defn validate-app-publishable
-  [user system-id app-id]
-  (let [[publishable? reason] (.isAppPublishable (get-apps-client user) system-id app-id)]
+  [user system-id app-id & admin?]
+  (let [[publishable? reason] (.isAppPublishable (get-apps-client user) system-id app-id admin?)]
     (when-not publishable?
       (cxu/bad-request reason))))
 

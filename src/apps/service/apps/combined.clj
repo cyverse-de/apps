@@ -126,8 +126,8 @@
   (addAppFavorite [_ system-id app-id]
     (.addAppFavorite (util/get-apps-client clients system-id) system-id app-id))
 
-  (isAppPublishable [_ system-id app-id]
-    (.isAppPublishable (util/get-apps-client clients system-id) system-id app-id))
+  (isAppPublishable [_ system-id app-id admin?]
+    (.isAppPublishable (util/get-apps-client clients system-id) system-id app-id admin?))
 
   (usesToolsInUntrustedRegistries [_ system-id app-id]
     (.usesToolsInUntrustedRegistries (util/get-apps-client clients system-id) system-id app-id))

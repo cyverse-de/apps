@@ -173,7 +173,7 @@
     (validate-system-id system-id)
     (reject-app-favorite-request))
 
-  (isAppPublishable [_ system-id app-id]
+  (isAppPublishable [_ system-id app-id _]
     (validate-system-id system-id)
     [false app-publishable-error])
 
