@@ -109,7 +109,7 @@
       :body [body apps-schema/PublishAppRequest]
       :summary apps-schema/PublishAppSummary
       :description apps-schema/PublishAppDocs
-      (apps/validate-app-publishable current-user system-id app-id)
+      (apps/validate-app-publishable current-user system-id app-id true)
       (let [body (assoc body :id app-id)]
         (if (apps/uses-tools-in-untrusted-registries? current-user system-id app-id)
           (cxu/bad-request (str "App " app-id " uses tools in untrusted registries"))

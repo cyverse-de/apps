@@ -128,9 +128,9 @@
     (validate-system-id system-id)
     (app-metadata/add-app-favorite user (uuidify app-id)))
 
-  (isAppPublishable [_ system-id app-id]
+  (isAppPublishable [_ system-id app-id admin?]
     (validate-system-id system-id)
-    (app-validation/app-publishable? user (uuidify app-id)))
+    (app-validation/app-publishable? user (uuidify app-id) admin?))
 
   (usesToolsInUntrustedRegistries [_ system-id app-id]
     (validate-system-id system-id)
