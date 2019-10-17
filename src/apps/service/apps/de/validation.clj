@@ -73,7 +73,7 @@
         tools               (get-app-tools app-id)
         public-app-ids      (perms-client/get-public-app-ids)
         is-public?          (contains? public-app-ids app-id)
-        unpublishable-tools (get-unpublishable-tools username tools)
+        unpublishable-tools (when-not admin? (get-unpublishable-tools username tools))
         deprecated-tools    (filter :deprecated tools)
         private-apps        (private-apps-for task-ids public-app-ids)]
     (cond is-public?                [false "app is already public"]
