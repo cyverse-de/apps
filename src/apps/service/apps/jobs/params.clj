@@ -4,6 +4,7 @@
         [kameleon.uuids :only [uuidify]]
         [slingshot.slingshot :only [throw+]])
   (:require [cheshire.core :as cheshire]
+            [clojure.set :as sets]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
             [apps.persistence.app-metadata :as ap]
@@ -144,12 +145,39 @@
   [user config groups]
   (map (partial update-app-group user config) groups))
 
+(defn- update-resource-reqs
+  "Finds a resource request from the given `requested-reqs`
+   that matches the step number in the given `step-reqs`,
+   converts the matching request into default requirement settings,
+   and returns the results merged with `step-reqs`."
+  [requested-reqs step-reqs]
+  (when-let [requested-step-reqs (->> requested-reqs
+                                      (filter #(= (:step_number %) (:step_number step-reqs)))
+                                      first)]
+    (merge step-reqs
+           (-> requested-step-reqs
+               (select-keys [:min_memory_limit
+                             :min_cpu_cores
+                             :min_disk_space])
+               (sets/rename-keys {:min_memory_limit :default_memory
+                                  :min_cpu_cores    :default_cpu_cores
+                                  :min_disk_space   :default_disk_space})))))
+
+(defn- update-resources-reqs
+  "Converts resource requests from the original submission JSON into default requirement settings,
+   merging them with their corresponding step requirements in the relaunch response JSON."
+  [reqs requested-reqs]
+  (->> reqs
+       (mapv (partial update-resource-reqs requested-reqs))
+       remove-nil-vals))
+
 (defn get-job-relaunch-info
   [apps-client user {system-id :system_id app-id :app_id :as job}]
-  (let [submission (get-job-submission job)]
-    (update (assoc (.getAppJobView apps-client system-id app-id) :debug (:debug submission false))
-            :groups
-            (partial update-app-groups user (:config submission)))))
+  (let [{:keys [debug config requirements] :or {debug false}} (get-job-submission job)]
+    (-> (.getAppJobView apps-client system-id app-id)
+        (assoc :debug debug)
+        (update :groups (partial update-app-groups user config))
+        (update :requirements update-resources-reqs requirements))))
 
 (defn get-submission-launch-info
   [apps-client user {system-id :system_id app-id :app_id :as submission}]
