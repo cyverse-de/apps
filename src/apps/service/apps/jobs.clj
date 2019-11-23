@@ -12,6 +12,7 @@
             [apps.service.apps.jobs.params :as job-params]
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.service.apps.jobs.sharing :as job-sharing]
+            [apps.service.apps.jobs.resubmit :as resubmit]
             [apps.service.apps.jobs.submissions :as submissions]
             [apps.service.apps.jobs.util :as ju]
             [apps.util.service :as service]))
@@ -164,6 +165,12 @@
   (if-let [submission (sp/get-submission-by-id submission-id)]
     (job-params/get-submission-launch-info apps-client user submission)
     (cxu/not-found "submission information not found")))
+
+(defn relaunch-jobs
+  [apps-client user job-ids]
+  (validate-jobs-for-user user job-ids "read")
+  (resubmit/resubmit-jobs apps-client user (map jp/get-job-by-id job-ids))
+  nil)
 
 (defn- stop-job-steps
   "Stops an individual step in a job."
