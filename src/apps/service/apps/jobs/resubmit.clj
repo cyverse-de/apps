@@ -1,10 +1,40 @@
 (ns apps.service.apps.jobs.resubmit
-  (:require [apps.service.apps.jobs.submissions :as submissions]
+  (:use [slingshot.slingshot :only [try+ throw+]])
+  (:require [apps.clients.data-info :as data-info]
+            [apps.service.apps.jobs.submissions :as submissions]
             [apps.service.apps.jobs.submissions.async :as async]
             [cheshire.core :as cheshire]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as exception-util]
             [kameleon.uuids :as uuids]))
+
+(defn- get-paths-exist
+  [user paths]
+  (try+
+   (data-info/get-paths-exist user paths)
+   (catch Object _
+     (log/error (:throwable &throw-context)
+                "job resubmission failed: Could not lookup output folder existence.")
+     (throw+))))
+
+(defn- filter-existing-output-paths
+  [user output-paths]
+  (as-> output-paths p
+    (remove string/blank? p)
+    (get-paths-exist user p)
+    (:paths p)
+    (group-by val p)
+    (get p true)
+    (map first p)))
+
+(defn- find-existing-output-dirs
+  [user jobs]
+  (->> jobs
+       (map :submission)
+       (remove #(:create_output_subdir % true))
+       (map :output_dir)
+       (filter-existing-output-paths user)))
 
 (defn- decode-job-submission
   [{:keys [id submission] :as job}]
@@ -45,7 +75,11 @@
 (defn resubmit-jobs
   [apps-client user jobs]
   (let [jobs                  (map (comp format-resubmission decode-job-submission) jobs)
-        [ht-jobs single-jobs] ((juxt filter remove) :is_batch jobs)]
+        [ht-jobs single-jobs] ((juxt filter remove) :is_batch jobs)
+        existing-output-dirs  (find-existing-output-dirs user jobs)]
+    (when-not (empty? existing-output-dirs)
+      (exception-util/exists "One or more output folders already exist." :paths existing-output-dirs))
+
     (when-not (empty? single-jobs)
       (async/resubmit-jobs apps-client user single-jobs))
     (doseq [ht-job ht-jobs]
