@@ -142,7 +142,14 @@
    {:keys [submission]}]
   (let [job-status (->> submission
                         (submit/submit-and-register-private-job apps-client user)
-                        :status)]
+                        :status)
+        parent-id  (:parent_id submission)]
+    ;; Reset parent job to submitted when relaunching one of its subjobs
+    (when (and parent-id
+               (= job-status jp/submitted-status)
+               (jp/completed? (jp/get-job-status parent-id)))
+      (jp/update-job parent-id jp/submitted-status nil))
+
     (assoc results
            :total         (inc total)
            :batch-status  (update batch-status job-status (fnil inc 0)))))
