@@ -5,11 +5,8 @@
         [korma.db :only [transaction]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [clojure-commons.error-codes :as ce]
-            [clojure-commons.file-utils :as ft]
             [kameleon.db :as db]
             [apps.clients.data-info :as data-info]
-            [apps.clients.notifications :as notifications]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
@@ -17,7 +14,6 @@
             [apps.service.apps.jobs.submissions.async :as async]
             [apps.service.apps.jobs.submissions.submit :as submit]
             [apps.util.config :as config]
-            [apps.util.service :as service]
             [apps.service.apps.jobs.util :as util]))
 
 (defn- get-app-params

@@ -4,6 +4,7 @@
         [slingshot.slingshot :only [try+ throw+]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [clojure-commons.exception-util :as exception-util]
             [clojure-commons.file-utils :as ft]
             [apps.clients.notifications :as notifications]
             [apps.persistence.jobs :as jp]
@@ -14,13 +15,12 @@
 
 (defn- max-batch-paths-exceeded
   [max-paths first-list-path first-list-count]
-  (throw+
-   {:type       :clojure-commons.exception/illegal-argument
-    :error      (str "The HT Analysis Path List exceeds the maximum of "
-                     max-paths
-                     " allowed paths.")
-    :path       first-list-path
-    :path-count first-list-count}))
+  (exception-util/illegal-argument
+   (str "The HT Analysis Path List exceeds the maximum of "
+        max-paths
+        " allowed paths.")
+   :path       first-list-path
+   :path-count first-list-count))
 
 (defn- validate-path-lists
   [path-lists]
@@ -29,8 +29,7 @@
     (when (> first-list-count (config/ht-path-list-max-paths))
       (max-batch-paths-exceeded (config/ht-path-list-max-paths) first-list-path first-list-count))
     (when-not (every? (comp (partial = first-list-count) count second) path-lists)
-      (throw+ {:type  :clojure-commons.exception/illegal-argument
-               :error "All HT Analysis Path Lists must have the same number of paths."}))
+      (exception-util/illegal-argument "All HT Analysis Path Lists must have the same number of paths."))
     path-lists))
 
 (defn- map-slice
@@ -109,7 +108,7 @@
                                 :batch-status  {jp/submitted-status 0}}
                                path-maps)
          total-jobs    (:total job-stats)
-         success-count (get (:batch-status job-stats) jp/submitted-status)
+         success-count (get-in job-stats [:batch-status jp/submitted-status])
          parent-job    (job-listings/list-job apps-client parent-id)
          message       (format "%s %d analyses of %d %s"
                                (:name parent-job)
@@ -135,3 +134,44 @@
   [apps-client user ht-paths submission output-dir parent-id]
   (let [^Runnable target #(submit-batch-jobs-thread apps-client user ht-paths submission output-dir parent-id)]
     (.start (Thread. target (str "batch_submit_" parent-id)))))
+
+(defn- resubmit-job-reducer
+  [apps-client
+   user
+   {:keys [total batch-status] :as results}
+   {:keys [submission]}]
+  (let [job-status (->> submission
+                        (submit/submit-and-register-private-job apps-client user)
+                        :status)
+        parent-id  (:parent_id submission)]
+    ;; Reset parent job to submitted when relaunching one of its subjobs
+    (when (and parent-id
+               (= job-status jp/submitted-status)
+               (jp/completed? (jp/get-job-status parent-id)))
+      (jp/update-job parent-id jp/submitted-status nil))
+
+    (assoc results
+           :total         (inc total)
+           :batch-status  (update batch-status job-status (fnil inc 0)))))
+
+(defn- resubmit-jobs-thread
+  [apps-client {username :shortUsername email-address :email :as user} jobs]
+  (try+
+   (let [resubmit-stats (reduce (partial resubmit-job-reducer apps-client user)
+                                {:total        0
+                                 :batch-status {jp/submitted-status 0}}
+                                jobs)
+         total-jobs     (:total resubmit-stats)
+         success-count  (get-in resubmit-stats [:batch-status jp/submitted-status])
+         message        (format "%d of %d analyses successfully relaunched" success-count total-jobs)]
+     (if (> success-count 0)
+       (notifications/send-job-status-update username email-address (first jobs) message)
+       (throw+ "all relaunch submissions failed.")))
+   (catch Object _
+     (log/error (:throwable &throw-context) "relaunch job submissions failed.")
+     (notifications/send-job-status-update user (first jobs)))))
+
+(defn resubmit-jobs
+  [apps-client user jobs]
+  (let [^Runnable target #(resubmit-jobs-thread apps-client user jobs)]
+    (.start (Thread. target (str "resubmit_" (:username user) "_" (-> jobs first :id))))))

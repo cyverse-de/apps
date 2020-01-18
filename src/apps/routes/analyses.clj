@@ -8,6 +8,7 @@
         [apps.routes.schemas.analysis.listing]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
+        [common-swagger-api.routes]                         ;; for :description-file
         [common-swagger-api.schema]
         [common-swagger-api.schema.apps :only [AppJobView]]
         [ring.util.http-response :only [ok]])
@@ -50,6 +51,13 @@
     :summary perms-schema/AnalysisPermissionListingSummary
     :description perms-schema/AnalysisPermissionListingDocs
     (ok (apps/list-job-permissions current-user (:analyses body) params)))
+
+  (POST "/relauncher" []
+    :query [params SecuredQueryParams]
+    :body [{:keys [analyses]} schema/AnalysesRelauncherRequest]
+    :summary schema/AnalysesRelauncherSummary
+    :description-file "docs/analyses/relauncher.md"
+    (ok (apps/relaunch-jobs current-user analyses)))
 
   (POST "/sharing" []
     :query [params SecuredQueryParams]
