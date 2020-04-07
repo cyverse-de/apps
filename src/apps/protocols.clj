@@ -14,6 +14,7 @@
   (listAppsInCommunity [_ community-id params])
   (adminListAppsInCommunity [_ community-id params])
   (searchApps [_ search-term params])
+  (listSingleApp [_ system-id app-id])
   (adminSearchApps [_ search-term params])
   (canEditApps [_])
   (addApp [_ system-id app])

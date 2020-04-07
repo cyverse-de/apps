@@ -392,6 +392,13 @@
       ((partial query-spy "get-apps-for-admin::search_query:"))
       select))
 
+(defn get-single-app
+  "Fetches a listing for a single app."
+  [{workspace-id :id :as workspace} favorites-group-index app-id]
+  (as-> (get-app-listing-base-query workspace favorites-group-index {:app-ids [app-id]}) q
+    (query-spy "get-single-app::search-query:" q)
+    (select q)))
+
 (defn- add-deleted-and-orphaned-where-clause
   [query public-app-ids]
   (where query

@@ -113,6 +113,10 @@
         (listings/search-apps agave search-term params false)
         (.emptyAppListing agave))))
 
+  (listSingleApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (listings/list-app agave app-id))
+
   (adminSearchApps [self search-term params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)

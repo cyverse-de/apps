@@ -69,6 +69,9 @@
   (searchApps [_ _ params]
     (listings/list-apps user params false))
 
+  (listSingleApp [_ _ app-id]
+    (listings/list-app user (uuidify app-id)))
+
   (adminSearchApps [_ _ params]
     (listings/list-apps user params true))
 

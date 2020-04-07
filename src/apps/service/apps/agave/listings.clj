@@ -62,6 +62,12 @@
       (apply-limit params)
       (format-app-listing-job-stats false)))
 
+(defn list-app
+  [agave app-id]
+  (-> (.listApps agave [app-id] {})
+      add-app-integrator-info
+      (select-keys [:total :apps])))
+
 (defn list-apps-with-ontology
   [agave term params admin?]
   (try+
