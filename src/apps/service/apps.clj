@@ -104,6 +104,10 @@
   [user {:keys [search] :as params}]
   (.searchApps (get-apps-client user) search params))
 
+(defn list-single-app
+  [user system-id app-id]
+  (.listSingleApp (get-apps-client user) system-id app-id))
+
 (defn admin-search-apps
   [user {:keys [search] :as params}]
   (.adminSearchApps (get-apps-client user) search params))

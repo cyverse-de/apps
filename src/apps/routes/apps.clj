@@ -126,6 +126,14 @@
         :description schema/AppCopyDocs
         (ok (apps/copy-app current-user system-id app-id)))
 
+      (GET "/listing" []
+        :query [params SecuredQueryParams]
+        :summary schema/SingleAppListingSummary
+        :return schema/AppListing
+        :description schema/SingleAppListingDocs
+        (ok (coerce! schema/AppListing
+                     (apps/list-single-app current-user system-id app-id))))
+
       (GET "/details" []
         :query [params SecuredQueryParams]
         :return schema/AppDetails

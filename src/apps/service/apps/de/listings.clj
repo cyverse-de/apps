@@ -458,6 +458,20 @@
     {:total total
      :apps  apps}))
 
+(defn list-app
+  "This service retrieves app listing information for a single app."
+  [{:keys [username shortUsername]} app-id]
+  (perms/check-app-permissions shortUsername "read" [app-id])
+  (let [workspace      (get-workspace username)
+        perms          (perms-client/load-app-permissions shortUsername)
+        total          (count-apps-for-user nil (:id workspace) {:app-ids [app-id]})
+        apps           (get-single-app workspace (workspace-favorites-app-category-index) app-id)
+        beta-ids-set   (app-ids->beta-ids-set shortUsername [app-id])
+        public-app-ids (perms-client/get-public-app-ids)
+        apps           (map (partial format-app-listing false perms beta-ids-set public-app-ids) apps)]
+    {:total total
+     :apps  apps}))
+
 (defn- load-app-details
   "Retrieves the details for a single app."
   [app-id]
