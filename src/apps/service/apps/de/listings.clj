@@ -97,7 +97,7 @@
    :id         trash-category-id
    :name       "Trash"
    :is_public  true
-   :total      (count-deleted-and-orphaned-apps params)})
+   :total      (future (count-deleted-and-orphaned-apps params))})
 
 (defn list-trashed-apps
   "Lists the public, deleted apps and orphaned apps."
@@ -111,7 +111,7 @@
    :id        my-public-apps-id
    :name      "My public apps"
    :is_public false
-   :total     (count-public-apps-by-user username params)})
+   :total     (future (count-public-apps-by-user username params))})
 
 (defn list-my-public-apps
   "Lists the public apps belonging to the user with the given workspace."
@@ -129,7 +129,7 @@
    :id        shared-with-me-id
    :name      "Shared with me"
    :is_public false
-   :total     (count-shared-apps workspace (workspace-favorites-app-category-index) params)})
+   :total     (future (count-shared-apps workspace (workspace-favorites-app-category-index) params))})
 
 (defn list-apps-shared-with-me
   [_ workspace params]
@@ -145,11 +145,16 @@
 
 (def ^:private virtual-group-ids (set (keys virtual-group-fns)))
 
+(defn- realize-virtual-group
+  [group]
+  (reduce (fn [group k] (if (future? (group k)) (update group k deref) group)) group (keys group)))
+
 (defn- format-private-virtual-groups
   "Formats any virtual groups that should appear in a user's workspace."
   [user workspace params]
-  (remove :is_public
-          (map (fn [[_ {f :format-group}]] (f user workspace params)) virtual-group-fns)))
+  (doall (map realize-virtual-group ;; resolve immediately to start futures executing
+    (remove :is_public
+      (map (fn [[_ {f :format-group}]] (f user workspace params)) virtual-group-fns)))))
 
 (defn- add-private-virtual-groups
   [user group workspace params]
@@ -383,6 +388,7 @@
   [{:keys [shortUsername] :as user} workspace group-id perms {:keys [public-app-ids] :as params}]
   (when-let [format-fns (virtual-group-fns group-id)]
     (-> ((:format-group format-fns) user workspace params)
+        (realize-virtual-group)
         (assoc :apps (let [app-listing  ((:format-listing format-fns) user workspace params)
                            beta-ids-set (app-ids->beta-ids-set shortUsername (map :id app-listing))]
                        (map (partial format-app-listing false perms beta-ids-set public-app-ids) app-listing))))))
