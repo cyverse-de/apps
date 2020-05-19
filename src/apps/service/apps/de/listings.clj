@@ -388,10 +388,10 @@
   [{:keys [shortUsername] :as user} workspace group-id perms {:keys [public-app-ids] :as params}]
   (when-let [format-fns (virtual-group-fns group-id)]
     (-> ((:format-group format-fns) user workspace params)
-        (realize-virtual-group)
         (assoc :apps (let [app-listing  ((:format-listing format-fns) user workspace params)
                            beta-ids-set (app-ids->beta-ids-set shortUsername (map :id app-listing))]
-                       (map (partial format-app-listing false perms beta-ids-set public-app-ids) app-listing))))))
+                       (map (partial format-app-listing false perms beta-ids-set public-app-ids) app-listing)))
+        (realize-virtual-group))))
 
 (defn- count-apps-in-group
   "Counts the number of apps in an app group, including virtual app groups that may be included."
