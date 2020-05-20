@@ -97,7 +97,7 @@
    :id         trash-category-id
    :name       "Trash"
    :is_public  true
-   :total      (future (count-deleted-and-orphaned-apps params))})
+   :total      (delay (count-deleted-and-orphaned-apps params))})
 
 (defn list-trashed-apps
   "Lists the public, deleted apps and orphaned apps."
@@ -145,24 +145,24 @@
 
 (def ^:private virtual-group-ids (set (keys virtual-group-fns)))
 
-(defn- realize-virtual-group
+(defn- realize-group
   [group]
-  (reduce (fn [group k] (if (future? (group k)) (update group k deref) group)) group (keys group)))
+  (reduce (fn [group k] (if (or (future? (group k)) (delay? (group k))) (update group k deref) group)) group (keys group)))
 
 (defn- format-private-virtual-groups
   "Formats any virtual groups that should appear in a user's workspace."
   [user workspace params]
-  (doall (map realize-virtual-group ;; resolve immediately to start futures executing
-    (remove :is_public
+  (map realize-group
+    (doall (remove :is_public ;; resolve immediately to start futures executing
       (map (fn [[_ {f :format-group}]] (f user workspace params)) virtual-group-fns)))))
 
 (defn- add-private-virtual-groups
   [user group workspace params]
   (let [virtual-groups (format-private-virtual-groups user workspace params)
-        actual-count   (count-apps-in-group-for-user
-                        (:id group)
-                        (:username user)
-                        params)]
+        actual-count   (future (count-apps-in-group-for-user
+                                 (:id group)
+                                 (:username user)
+                                 params))]
     (-> group
         (update-in [:categories] concat virtual-groups)
         (assoc :total actual-count))))
@@ -391,7 +391,7 @@
         (assoc :apps (let [app-listing  ((:format-listing format-fns) user workspace params)
                            beta-ids-set (app-ids->beta-ids-set shortUsername (map :id app-listing))]
                        (map (partial format-app-listing false perms beta-ids-set public-app-ids) app-listing)))
-        (realize-virtual-group))))
+        (realize-group))))
 
 (defn- count-apps-in-group
   "Counts the number of apps in an app group, including virtual app groups that may be included."
