@@ -8,6 +8,7 @@
         [service-logging.thread-context :only [with-logging-context]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
+            [clojure.walk :as walk]
             [mescal.de :as agave]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
@@ -76,7 +77,9 @@
 (defn get-app-categories
   [user params]
   (let [client (get-apps-client user "type=apps")]
-    {:categories (transaction (.listAppCategories client params))}))
+    {:categories (transaction
+                   (walk/prewalk (fn [x] (if (or (future? x) (delay? x)) (deref x) x))
+                     (.listAppCategories client params)))}))
 
 (defn list-apps-in-category
   [user system-id category-id params]
