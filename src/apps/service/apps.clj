@@ -364,7 +364,8 @@
 
 (defn get-admin-app-categories
   [user params]
-  {:categories (.getAdminAppCategories (get-apps-client user) params)})
+  (walk/prewalk (fn [x] (if (or (future? x) (delay? x)) (deref x) x))
+    {:categories (.getAdminAppCategories (get-apps-client user) params)}))
 
 (defn search-admin-app-categories
   [user params]
