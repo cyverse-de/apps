@@ -102,6 +102,10 @@
   [{:keys [username]} {:keys [filter include-hidden]} types analysis-ids]
   (jp/count-jobs-of-types username filter include-hidden types analysis-ids))
 
+(defn- count-job-statuses
+  [{:keys [username]} {:keys [filter include-hidden]} types analysis-ids]
+  (jp/count-jobs-of-statuses username filter include-hidden types analysis-ids))
+
 (defn list-jobs
   [apps-client user {:keys [sort-field] :as params}]
   (let [perms            (perms-client/load-analysis-permissions (:shortUsername user))
@@ -112,9 +116,10 @@
         jobs             (list-jobs* user search-params types analysis-ids)
         rep-steps        (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))
         app-tables       (.loadAppTables apps-client jobs)]
-    {:analyses  (mapv (partial format-job apps-client perms app-tables rep-steps) jobs)
-     :timestamp (str (System/currentTimeMillis))
-     :total     (count-jobs user params types analysis-ids)}))
+    {:analyses     (mapv (partial format-job apps-client perms app-tables rep-steps) jobs)
+     :timestamp    (str (System/currentTimeMillis))
+     :status-count (count-job-statuses user params types analysis-ids)
+     :total        (count-jobs user params types analysis-ids)}))
 
 (defn admin-list-jobs-with-external-ids [external-ids]
   (let [jobs      (jp/list-jobs-by-external-id external-ids)
