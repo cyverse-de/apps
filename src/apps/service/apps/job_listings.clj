@@ -115,10 +115,11 @@
         types            (.getJobTypes apps-client)
         jobs             (list-jobs* user search-params types analysis-ids)
         rep-steps        (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))
-        app-tables       (.loadAppTables apps-client jobs)]
+        app-tables       (.loadAppTables apps-client jobs)
+        status-count     (future (count-job-statuses user params types analysis-ids))]
     {:analyses     (mapv (partial format-job apps-client perms app-tables rep-steps) jobs)
      :timestamp    (str (System/currentTimeMillis))
-     :status-count (count-job-statuses user params types analysis-ids)
+     :status-count @status-count
      :total        (count-jobs user params types analysis-ids)}))
 
 (defn admin-list-jobs-with-external-ids [external-ids]
