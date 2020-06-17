@@ -1,6 +1,7 @@
 (ns apps.routes.analyses
   (:use [apps.routes.params
          :only [AnalysisListingParams
+                AnalysisStatParams
                 FilterParams
                 SecuredQueryParams
                 SecuredQueryParamsEmailRequired]]
@@ -33,6 +34,18 @@
                                  (coercions/coerce!
                                   (assoc AnalysisListingParams listing-schema/OptionalKeyFilter [FilterParams])
                                   (assoc params :filter (json/from-json filter)))))))
+  (GET "/stats" []
+      :query [{:keys [filter] :as params} AnalysisStatParams]
+      :return schema/AnalysisStats
+      :summary schema/AnalysisStatSummary
+      :description schema/AnalysisStatDescription
+      ;; JSON query params are not currently supported by compojure-api,
+      ;; so we have to decode the String filter param and validate it here.
+      (ok (coerce! schema/AnalysisStats
+                   (apps/list-job-stats current-user
+                                   (coercions/coerce!
+                                     (assoc AnalysisStatParams listing-schema/OptionalKeyFilter [FilterParams])
+                                     (assoc params :filter (json/from-json filter)))))))
 
   (POST "/" []
     :query [params SecuredQueryParamsEmailRequired]

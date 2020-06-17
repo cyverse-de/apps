@@ -8,7 +8,8 @@
                 SortFieldOptionalKey
                 StandardUserQueryParams]]
         [common-swagger-api.schema.common :only [IncludeHiddenParams]])
-  (:require [common-swagger-api.schema.analyses.listing :as analyses-schema]
+  (:require [common-swagger-api.schema.analyses :as analysis-schema]
+            [common-swagger-api.schema.analyses.listing :as listing-schema]
             [common-swagger-api.schema.apps.elements :as elements-schema]
             [common-swagger-api.schema.tools :as tools-schema]
             [schema.core :as s])
@@ -56,7 +57,10 @@
       case-insensitive, in the corresponding field.")})
 
 (s/defschema AnalysisListingParams
-  (merge SecuredQueryParams analyses-schema/AnalysisListingParams))
+  (merge SecuredQueryParams listing-schema/AnalysisListingParams))
+
+(s/defschema AnalysisStatParams
+  (merge SecuredQueryParams analysis-schema/AnalysisStatParams))
 
 (s/defschema ToolSearchParams
   (merge SecuredQueryParams tools-schema/ToolSearchParams))

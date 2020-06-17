@@ -122,6 +122,13 @@
      :status-count @status-count
      :total        (count-jobs user params types analysis-ids)}))
 
+(defn list-job-stats
+  [apps-client user params]
+  (let [perms            (perms-client/load-analysis-permissions (:shortUsername user))
+        analysis-ids     (set (keys perms))
+        types            (.getJobTypes apps-client)]
+    {:status-count (count-job-statuses user params types analysis-ids)}))
+
 (defn admin-list-jobs-with-external-ids [external-ids]
   (let [jobs      (jp/list-jobs-by-external-id external-ids)
         rep-steps (group-by :job_id (jp/list-representative-job-steps (mapv :id jobs)))]
