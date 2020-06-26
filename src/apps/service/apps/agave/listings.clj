@@ -9,9 +9,13 @@
             [clojure.tools.logging :as log]
             [clojure-commons.error-codes :as ce :refer [clj-http-error?]]))
 
+;; TODO: restore the job stats gathering when we have a more efficient way to do this.
 (defn- add-agave-job-stats
   [{:keys [id] :as app} params admin?]
-  (merge app (if admin?
+  (merge app {:job_count_completed 0
+              :job_count           0
+              :job_count_failed    0})
+  #_(merge app (if admin?
                (jobs-db/get-job-stats id params)
                (jobs-db/get-public-job-stats id params))))
 

@@ -252,6 +252,8 @@
        (add-app-group-plus-public-apps-where-clause app-group-id username public-app-ids)
        (select))))
 
+;; TODO: reinsert the subselect for the date a job for the app was most recently completed as soon as we
+;; can do it efficiently
 (defn- get-job-stats-fields
   "Adds query fields via subselects for an app's job_count_completed and job_last_completed timestamp."
   [query query-opts]
@@ -262,13 +264,10 @@
                               :status "Completed"})
                       (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
-           :job_count_completed]
-          [(subselect :jobs
-                      (aggregate (max :end_date) :job_last_completed)
-                      (where {:app_id (raw "app_listing.id::varchar")
-                              :status "Completed"}))
-           :job_last_completed]))
+           :job_count_completed]))
 
+;; TODO: reinsert the subselect for the date the app was most recently used as soon as we can do it
+;; efficiently
 (defn- get-admin-job-stats-fields
   "Adds query fields via subselects for an app's job_count, job_count_failed, and last_used timestamp."
   [query query-opts]
@@ -285,11 +284,7 @@
                               :status "Failed"})
                       (util/add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
-           :job_count_failed]
-          [(subselect :jobs
-                      (aggregate (max :start_date) :last_used)
-                      (where {:app_id (raw "app_listing.id::varchar")}))
-           :last_used]))
+           :job_count_failed]))
 
 (defn- get-public-group-ids-subselect
   "Gets a subselect that fetches the workspace app_categories ID, public root
