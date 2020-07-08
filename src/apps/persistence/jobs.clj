@@ -289,14 +289,28 @@
       (aggregate (count :*) :count)
       (add-internal-app-clause include-hidden)))
 
+(defn- count-jobs-of-types-query
+  [username filter include-hidden types accessible-ids]
+  (-> (select* (add-job-query-filter-clause (count-jobs-base include-hidden) username filter))
+      (where {:j.deleted false})
+      (where {:j.id (util/sqlfn-any-array "uuid" accessible-ids)})
+      (where (not (exists (job-type-subselect types))))))
+
 (defn count-jobs-of-types
   "Counts the number of undeleted jobs of the given types in the database for a user."
   [username filter include-hidden types accessible-ids]
-  ((comp :count first)
-   (select (add-job-query-filter-clause (count-jobs-base include-hidden) username filter)
-           (where {:j.deleted false})
-           (where {:j.id (util/sqlfn-any-array "uuid" accessible-ids)})
-           (where (not (exists (job-type-subselect types)))))))
+  (-> (count-jobs-of-types-query username filter include-hidden types accessible-ids)
+      (select)
+      (first)
+      (:count)))
+
+(defn count-jobs-of-statuses
+  "Counts the number of undeleted jobs of the given types grouped by statuses in the database for a user."
+  [username filter include-hidden types accessible-ids]
+  (-> (count-jobs-of-types-query username filter include-hidden types accessible-ids)
+      (fields :j.status)
+      (group :j.status)
+      (select)))
 
 (defn- translate-sort-field
   "Translates the sort field sent to get-jobs to a value that can be used in the query."

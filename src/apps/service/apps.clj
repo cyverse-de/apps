@@ -226,6 +226,10 @@
   [user params]
   (.listJobs (get-apps-client user) params))
 
+(defn list-job-stats
+  [user params]
+  (.listJobStats (get-apps-client user) params))
+
 (defn- format-job-submission-response
   [job-info]
   (-> job-info

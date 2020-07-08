@@ -177,6 +177,9 @@
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
+  (listJobStats [self params]
+    (job-listings/list-job-stats self user params))
+
   (adminListJobsWithExternalIds [_ external-ids]
     (job-listings/admin-list-jobs-with-external-ids external-ids))
 
