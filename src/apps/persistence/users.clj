@@ -1,5 +1,6 @@
 (ns apps.persistence.users
-  (:use [kameleon.uuids :only [uuidify]]
+  (:use [clojure-commons.core :only [remove-nil-values]]
+        [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]])
   (:require [korma.core :as sql])
   (:import [java.sql Timestamp]))
@@ -46,9 +47,10 @@
   "Recrds when a user logs into the DE."
   [user-id ip-address user-agent]
   (insert :logins
-          (values {:user_id    user-id
-                   :ip_address ip-address
-                   :user_agent user-agent})))
+          (values (remove-nil-values
+                   {:user_id    user-id
+                    :ip_address ip-address
+                    :user_agent user-agent}))))
 
 (defn record-login
   "Records when a user logs into the DE. Returns the recorded login time."
