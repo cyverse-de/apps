@@ -14,6 +14,9 @@
   <!-- Jargon Logging -->
   <logger name="org.irods.jargon" level="ERROR" />
 
+  <!-- Change level to DEBUG to log database queries. -->
+  <logger name="kameleon.util" level="WARN"/>
+
   <logger name="apps.service.callbacks" level="INFO" />
   <logger name="apps.util.json" level="DEBUG" />
 
