@@ -42,31 +42,26 @@
   (listAppsUnderHierarchy [_ root-iri attr params]
     (let [unpaged-params (dissoc params :limit :offset)]
       (->> (map #(future (.listAppsUnderHierarchy % root-iri attr unpaged-params)) clients)
-           (remove nil?)
-           (util/combine-concurrent-app-listings params))))
+           (util/combine-app-listings params))))
 
   (adminListAppsUnderHierarchy [_ ontology-version root-iri attr params]
     (let [unpaged-params (dissoc params :limit :offset)]
       (->> (map #(future (.adminListAppsUnderHierarchy % ontology-version root-iri attr unpaged-params)) clients)
-           (remove nil?)
-           (util/combine-concurrent-app-listings params))))
+           (util/combine-app-listings params))))
 
   (listAppsInCommunity [_ community-id params]
     (let [unpaged-params (dissoc params :limit :offset)]
       (->> (map #(future (.listAppsInCommunity % community-id unpaged-params)) clients)
-           (remove nil?)
-           (util/combine-concurrent-app-listings params))))
+           (util/combine-app-listings params))))
 
   (adminListAppsInCommunity [_ community-id params]
     (let [unpaged-params (dissoc params :limit :offset)]
       (->> (map #(future (.adminListAppsInCommunity % community-id unpaged-params)) clients)
-           (remove nil?)
-           (util/combine-concurrent-app-listings params))))
+           (util/combine-app-listings params))))
 
   (searchApps [_ search-term params]
     (->> (map #(future (.searchApps % search-term (select-keys params [:search :app-type]))) clients)
-         (remove nil?)
-         (util/combine-concurrent-app-listings params)))
+         (util/combine-app-listings params)))
 
   (listSingleApp [_ system-id app-id]
     (.listSingleApp (util/get-apps-client clients system-id) system-id app-id))
@@ -74,8 +69,7 @@
   (adminSearchApps [_ search-term params]
     (let [known-params [:search :app-subset :start_date :end_date :app-type]]
       (->> (map #(future (.adminSearchApps % search-term (select-keys params known-params))) clients)
-           (remove nil?)
-           (util/combine-concurrent-app-listings params))))
+           (util/combine-app-listings params))))
 
   (canEditApps [_]
     (some #(.canEditApps %) clients))
