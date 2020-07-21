@@ -15,18 +15,14 @@
 (defn combine-app-listings
   "Expects results to be a list of maps in a format like {:total int, :apps []}"
   [params results]
-  (let [params (apply-default-search-params params)]
+  (let [params      (apply-default-search-params params)
+        maybe-deref (fn [r] (if (future? r) @r r))
+        results     (remove nil? (map maybe-deref results))]
     (-> {:total (apply + (map :total results))
          :apps  (mapcat :apps results)}
         (sort-apps params)
         (apply-offset params)
         (apply-limit params))))
-
-(defn combine-concurrent-app-listings
-  "Expects results to be a list of futures that can be dereferenced to return a map in a format like
-   {:total int, :apps []}"
-  [params results]
-  (combine-app-listings params (mapv deref results)))
 
 (defn get-apps-client
   ([clients]
