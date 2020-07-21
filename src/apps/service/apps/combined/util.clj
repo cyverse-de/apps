@@ -22,6 +22,12 @@
         (apply-offset params)
         (apply-limit params))))
 
+(defn combine-concurrent-app-listings
+  "Expects results to be a list of futures that can be dereferenced to return a map in a format like
+   {:total int, :apps []}"
+  [params results]
+  (combine-app-listings params (mapv deref results)))
+
 (defn get-apps-client
   ([clients]
    (or (first (filter #(.supportsSystemId % jp/de-client-name) clients))
