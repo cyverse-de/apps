@@ -60,7 +60,7 @@
            (util/combine-app-listings params))))
 
   (searchApps [_ search-term params]
-    (->> (map #(future (.searchApps % search-term (select-keys params [:search :app-type]))) clients)
+    (->> (map #(future (.searchApps % search-term (select-keys params [:search :app-type :new]))) clients)
          (util/combine-app-listings params)))
 
   (listSingleApp [_ system-id app-id]

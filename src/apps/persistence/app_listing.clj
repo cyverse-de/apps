@@ -383,6 +383,23 @@
       ((partial query-spy "get-apps-for-user::search_query:"))
       select))
 
+(defn new-get-apps-for-user
+  "Fetches Apps in all public groups and groups in `workspace`
+   (as returned by fetch-workspace-by-user-id),
+   marking whether each app is a favorite and including the user's rating in each app by the user_id
+   found in workspace.
+  If search_term is not empty, results are limited to apps that contain search_term in their name,
+   description, integrator_name, or tool name(s)."
+  [search_term {workspace_id :id :as workspace} favorites_group_index query_opts]
+  (let [app-ids (find-matching-app-ids search_term query_opts)]
+    (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
+        (where {:id [in app-ids]})
+        (where {:deleted false})
+        (where {:integrator_name [not= c/internal-app-integrator]})
+        (add-app-category-where-clause workspace_id query_opts)
+        ((partial query-spy "get-apps-for-user::search_query:"))
+        select)))
+
 (defn get-apps-for-admin
   "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
    job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
