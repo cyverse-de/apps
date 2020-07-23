@@ -453,7 +453,7 @@
         params         (augment-search-params search_term params shortUsername admin?)
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
         total          (count-apps-fn search_term (:id workspace) params)
-        app-listing-fn (if (:new params)
+        app-listing-fn (if (:new params true)
                          (if admin? new-get-apps-for-admin new-get-apps-for-user)
                          (if admin? get-apps-for-admin get-apps-for-user))
         apps           (app-listing-fn search_term
