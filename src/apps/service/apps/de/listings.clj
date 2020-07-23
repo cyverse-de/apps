@@ -441,7 +441,11 @@
 
 (defn list-apps
   "This service fetches a paged list of apps in the user's workspace and all public app groups,
-   further filtering results by a search term if the `search` parameter is present."
+   further filtering results by a search term if the `search` parameter is present.
+
+   Note: the :new parameter is intended to be used for debugging. I'll remove it when the performance
+   improvements are done. In the meantime, I want to be able to easily switch back to the old search
+   queries in case any bugs are identified."
   [{:keys [username shortUsername]} params admin?]
   (let [search_term    (curl/url-decode (:search params))
         workspace      (get-workspace username)

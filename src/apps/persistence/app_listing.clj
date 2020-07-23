@@ -369,6 +369,7 @@
       first
       :total))
 
+;; Note: this function will be removed when the performance improvement changes are complete.
 (defn get-apps-for-user
   "Fetches Apps in all public groups and groups in `workspace`
    (as returned by fetch-workspace-by-user-id),
@@ -383,6 +384,7 @@
       ((partial query-spy "get-apps-for-user::search_query:"))
       select))
 
+;; Note: this function will be renamed when the performance improvement changes are complete.
 (defn new-get-apps-for-user
   "Fetches Apps in all public groups and groups in `workspace`
    (as returned by fetch-workspace-by-user-id),
@@ -400,6 +402,7 @@
         ((partial query-spy "get-apps-for-user::search_query:"))
         select)))
 
+;; Note: this function will be removed when the performance improvement changes are complete.
 (defn get-apps-for-admin
   "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
    job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
@@ -413,6 +416,7 @@
       ((partial query-spy "get-apps-for-admin::search_query:"))
       select))
 
+;; Note: this function will be renamed when the performance improvement changes are complete.
 (defn new-get-apps-for-admin
   "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
    job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
