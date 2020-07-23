@@ -1,6 +1,6 @@
 (ns apps.persistence.app-listing
   (:use [apps.persistence.app-groups :only [get-visible-root-app-group-ids]]
-        [apps.persistence.app-search :only [find-matching-app-ids]]
+        [apps.persistence.app-search :only [count-matching-app-ids find-matching-app-ids]]
         [apps.persistence.entities]
         [apps.util.conversions :only [date->timestamp]]
         [kameleon.queries]
@@ -357,6 +357,17 @@
       first
       :total))
 
+(defn new-count-apps-for-user
+  "Counts Apps in all public groups and groups under the given workspace_id.
+   If search_term is not empty, results are limited to apps that contain search_term in their name,
+   description, integrator_name, or tool name(s).
+
+   Note: as far as I can tell the where clauses for the category are defunct. I'm ignoring them in
+   this implementation of the function for now. The workspace ID parameter can be removed completely
+   once the old implementation of this function has been removed."
+  [search-term _ params]
+  (count-matching-app-ids search-term params))
+
 (defn count-apps-for-admin
   "Counts Apps in all public groups and groups under the given workspace_id.
    If search_term is not empty, results are limited to apps that contain search_term in their name,
@@ -368,6 +379,17 @@
       select
       first
       :total))
+
+(defn new-count-apps-for-admin
+  "Counts Apps in all public groups and groups under the given workspace_id.
+   If search_term is not empty, results are limited to apps that contain search_term in their name,
+   description, integrator_name, or tool name(s).
+
+   Note: as far as I can tell the where clauses for the category are defunct. I'm ignoring them in
+   this implementation of the function for now. The workspace ID parameter can be removed completely
+   once the old implementation of this function has been removed."
+  [search-term _ params]
+  (count-matching-app-ids search-term (assoc params :admin true)))
 
 ;; Note: this function will be removed when the performance improvement changes are complete.
 (defn get-apps-for-user
@@ -392,13 +414,10 @@
    found in workspace.
   If search_term is not empty, results are limited to apps that contain search_term in their name,
    description, integrator_name, or tool name(s)."
-  [search_term {workspace_id :id :as workspace} favorites_group_index query_opts]
+  [search_term workspace favorites_group_index query_opts]
   (let [app-ids (find-matching-app-ids search_term query_opts)]
     (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
         (where {:id [in app-ids]})
-        (where {:deleted false})
-        (where {:integrator_name [not= c/internal-app-integrator]})
-        (add-app-category-where-clause workspace_id query_opts)
         ((partial query-spy "get-apps-for-user::search_query:"))
         select)))
 
@@ -421,11 +440,10 @@
   "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
    job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
    for each result."
-  [search_term {workspace_id :id :as workspace} favorites_group_index query_opts]
-  (let [app-ids (find-matching-app-ids search_term query_opts)]
+  [search_term workspace favorites_group_index query_opts]
+  (let [app-ids (find-matching-app-ids search_term (assoc query_opts :admin true))]
     (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
         (where {:id [in app-ids]})
-        (add-app-category-where-clause workspace_id query_opts)
         (get-job-stats-fields query_opts)
         (get-admin-job-stats-fields query_opts)
         ((partial query-spy "get-apps-for-admin::search_query:"))

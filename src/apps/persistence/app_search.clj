@@ -2,7 +2,8 @@
   (:use [kameleon.queries :only [add-query-offset add-query-limit add-query-sorting]]
         [kameleon.util :only [query-spy]]
         [kameleon.util.search :only [format-query-wildcards]]
-        [korma.core :exclude [update]]))
+        [korma.core :exclude [update]])
+  (:require [apps.constants :as c]))
 
 (defn- get-app-search-orphaned-condition
   []
@@ -65,6 +66,15 @@
                    {(sqlfn lower :i.integrator_name) [like (sqlfn lower search-term)]}
                    {(sqlfn lower :tool.name)         [like (sqlfn lower search-term)]})))))
 
+(defn- add-non-admin-where-clauses
+  "If the admin option is not set, adds clauses to exclude apps that are not available in
+   non-administrative app listings."
+  [q {admin? :admin}]
+  (if-not admin?
+    (where q {:a.deleted         false
+              :i.integrator_name [not= c/internal-app-integrator]})
+    q))
+
 (defn- get-app-search-base-query
   "Gets an app search select query. This function returns only a list of matching app IDs."
   [search-term query-opts]
@@ -78,7 +88,16 @@
     (add-app-type-where-clause q query-opts)
     (add-omitted-app-id-where-clause q query-opts)
     (add-agave-pipeline-where-clause q query-opts)
-    (add-search-term-where-clauses q search-term (:pre-matched-app-ids query-opts))))
+    (add-search-term-where-clauses q search-term (:pre-matched-app-ids query-opts))
+    (add-non-admin-where-clauses q query-opts)))
+
+(defn count-matching-app-ids
+  "Counts the identifiers that match a set of search parameters."
+  [search-term query-opts]
+  (as-> (get-app-search-base-query search-term query-opts) q
+    (fields q (raw "count(DISTINCT a.id) AS total"))
+    (query-spy "count-matching-app-ids::search_query:" q)
+    (:total (first (select q)))))
 
 (defn find-matching-app-ids
   "Finds the identifiers of apps that match a set of search parameters."
