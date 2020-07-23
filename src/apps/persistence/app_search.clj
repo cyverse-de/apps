@@ -71,7 +71,7 @@
   (as-> (select* [:apps :a]) q
     (join q [:integration_data :i] {:a.integration_data_id :i.id})
     (join q [:app_steps :s] {:a.id :s.app_id})
-    (join q [:tasks :t] {:s.app_id :t.id})
+    (join q [:tasks :t] {:s.task_id :t.id})
     (join q [:tools :tool] {:t.tool_id :tool.id})
     (join q [:job_types :jt] {:t.job_type_id :jt.id})
     (add-app-id-where-clause q query-opts)
@@ -87,4 +87,5 @@
     (modifier q "DISTINCT")
     (fields q :a.id)
     (query-spy "find-matching-app-ids::search_query:" q)
-    (select q)))
+    (select q)
+    (map :id q)))
