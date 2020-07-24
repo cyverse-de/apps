@@ -59,15 +59,17 @@
       (->> (map #(future (.adminListAppsInCommunity % community-id unpaged-params)) clients)
            (util/combine-app-listings params))))
 
+  ;; Note: the :new parameter can go away when the performance improvement changes are done.
   (searchApps [_ search-term params]
-    (->> (map #(future (.searchApps % search-term (select-keys params [:search :app-type]))) clients)
+    (->> (map #(future (.searchApps % search-term (select-keys params [:search :app-type :new]))) clients)
          (util/combine-app-listings params)))
 
   (listSingleApp [_ system-id app-id]
     (.listSingleApp (util/get-apps-client clients system-id) system-id app-id))
 
+  ;; Note: the :new parameter can go away when the performance improvement changes are done.
   (adminSearchApps [_ search-term params]
-    (let [known-params [:search :app-subset :start_date :end_date :app-type]]
+    (let [known-params [:search :app-subset :start_date :end_date :app-type :new]]
       (->> (map #(future (.adminSearchApps % search-term (select-keys params known-params))) clients)
            (util/combine-app-listings params))))
 

@@ -441,7 +441,11 @@
 
 (defn list-apps
   "This service fetches a paged list of apps in the user's workspace and all public app groups,
-   further filtering results by a search term if the `search` parameter is present."
+   further filtering results by a search term if the `search` parameter is present.
+
+   Note: the :new parameter is intended to be used for debugging. I'll remove it when the performance
+   improvements are done. In the meantime, I want to be able to easily switch back to the old search
+   queries in case any bugs are identified."
   [{:keys [username shortUsername]} params admin?]
   (let [search_term    (curl/url-decode (:search params))
         workspace      (get-workspace username)
@@ -451,9 +455,13 @@
                            (assoc :orphans admin?)
                            fix-sort-params)
         params         (augment-search-params search_term params shortUsername admin?)
-        count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
+        count-apps-fn  (if (:new params true)
+                         (if admin? new-count-apps-for-admin new-count-apps-for-user)
+                         (if admin? count-apps-for-admin count-apps-for-user))
         total          (count-apps-fn search_term (:id workspace) params)
-        app-listing-fn (if admin? get-apps-for-admin get-apps-for-user)
+        app-listing-fn (if (:new params true)
+                         (if admin? new-get-apps-for-admin new-get-apps-for-user)
+                         (if admin? get-apps-for-admin get-apps-for-user))
         apps           (app-listing-fn search_term
                                        workspace
                                        (workspace-favorites-app-category-index)

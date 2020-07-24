@@ -1,5 +1,6 @@
 (ns apps.persistence.app-listing
   (:use [apps.persistence.app-groups :only [get-visible-root-app-group-ids]]
+        [apps.persistence.app-search :only [count-matching-app-ids find-matching-app-ids]]
         [apps.persistence.entities]
         [apps.util.conversions :only [date->timestamp]]
         [kameleon.queries]
@@ -207,11 +208,11 @@
                  (= :ratings.user_id
                     user-id)))))
 
-(defn- get-all-apps-listing-base-query
+(defn- get-base-app-listing-base-query
   "Gets an app_listing select query, setting any query limits and sorting
    found in the query_opts, using the given workspace (as returned by
    fetch-workspace-by-user-id) to mark whether each app is a favorite and to
-   include the user's rating in each app.."
+   include the user's rating in each app."
   [workspace favorites_group_index query_opts]
   (let [user_id (:user_id workspace)
         workspace_root_group_id (:root_category_id workspace)
@@ -224,13 +225,21 @@
         (add-app-listing-base-query-fields)
         (add-app-listing-is-favorite-field workspace_root_group_id favorites_group_index)
         (add-app-listing-ratings-fields user_id)
-        (add-app-id-where-clause query_opts)
-        (add-app-type-where-clause query_opts)
-        (add-omitted-app-id-where-clause query_opts)
-        (add-agave-pipeline-where-clause query_opts)
         (add-query-limit row_limit)
         (add-query-offset row_offset)
         (add-query-sorting sort_field sort_dir))))
+
+(defn- get-all-apps-listing-base-query
+  "Gets an app_listing select query, setting any query limits and sorting
+   found in the query_opts, using the given workspace (as returned by
+   fetch-workspace-by-user-id) to mark whether each app is a favorite and to
+   include the user's rating in each app.."
+  [workspace favorites_group_index query_opts]
+  (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
+      (add-app-id-where-clause query_opts)
+      (add-app-type-where-clause query_opts)
+      (add-omitted-app-id-where-clause query_opts)
+      (add-agave-pipeline-where-clause query_opts)))
 
 (defn- get-app-listing-base-query
   "Adds a where clause to the get-all-apps-listing-base-query, filtering out `deleted` apps."
@@ -348,6 +357,17 @@
       first
       :total))
 
+(defn new-count-apps-for-user
+  "Counts Apps in all public groups and groups under the given workspace_id.
+   If search_term is not empty, results are limited to apps that contain search_term in their name,
+   description, integrator_name, or tool name(s).
+
+   Note: as far as I can tell the where clauses for the category are defunct. I'm ignoring them in
+   this implementation of the function for now. The workspace ID parameter can be removed completely
+   once the old implementation of this function has been removed."
+  [search-term _ params]
+  (count-matching-app-ids search-term params))
+
 (defn count-apps-for-admin
   "Counts Apps in all public groups and groups under the given workspace_id.
    If search_term is not empty, results are limited to apps that contain search_term in their name,
@@ -360,12 +380,24 @@
       first
       :total))
 
+(defn new-count-apps-for-admin
+  "Counts Apps in all public groups and groups under the given workspace_id.
+   If search_term is not empty, results are limited to apps that contain search_term in their name,
+   description, integrator_name, or tool name(s).
+
+   Note: as far as I can tell the where clauses for the category are defunct. I'm ignoring them in
+   this implementation of the function for now. The workspace ID parameter can be removed completely
+   once the old implementation of this function has been removed."
+  [search-term _ params]
+  (count-matching-app-ids search-term (assoc params :admin true)))
+
+;; Note: this function will be removed when the performance improvement changes are complete.
 (defn get-apps-for-user
   "Fetches Apps in all public groups and groups in `workspace`
    (as returned by fetch-workspace-by-user-id),
    marking whether each app is a favorite and including the user's rating in each app by the user_id
    found in workspace.
-   If search_term is not empty, results are limited to apps that contain search_term in their name,
+  If search_term is not empty, results are limited to apps that contain search_term in their name,
    description, integrator_name, or tool name(s)."
   [search_term {workspace_id :id :as workspace} favorites_group_index query_opts]
   (-> (get-app-listing-base-query workspace favorites_group_index query_opts)
@@ -374,6 +406,22 @@
       ((partial query-spy "get-apps-for-user::search_query:"))
       select))
 
+;; Note: this function will be renamed when the performance improvement changes are complete.
+(defn new-get-apps-for-user
+  "Fetches Apps in all public groups and groups in `workspace`
+   (as returned by fetch-workspace-by-user-id),
+   marking whether each app is a favorite and including the user's rating in each app by the user_id
+   found in workspace.
+  If search_term is not empty, results are limited to apps that contain search_term in their name,
+   description, integrator_name, or tool name(s)."
+  [search_term workspace favorites_group_index query_opts]
+  (let [app-ids (find-matching-app-ids search_term query_opts)]
+    (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
+        (where {:id [in app-ids]})
+        ((partial query-spy "get-apps-for-user::search_query:"))
+        select)))
+
+;; Note: this function will be removed when the performance improvement changes are complete.
 (defn get-apps-for-admin
   "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
    job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
@@ -386,6 +434,20 @@
       (get-admin-job-stats-fields query_opts)
       ((partial query-spy "get-apps-for-admin::search_query:"))
       select))
+
+;; Note: this function will be renamed when the performance improvement changes are complete.
+(defn new-get-apps-for-admin
+  "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
+   job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
+   for each result."
+  [search_term workspace favorites_group_index query_opts]
+  (let [app-ids (find-matching-app-ids search_term (assoc query_opts :admin true))]
+    (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
+        (where {:id [in app-ids]})
+        (get-job-stats-fields query_opts)
+        (get-admin-job-stats-fields query_opts)
+        ((partial query-spy "get-apps-for-admin::search_query:"))
+        select)))
 
 (defn get-single-app
   "Fetches a listing for a single app."
