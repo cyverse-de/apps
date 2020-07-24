@@ -5,7 +5,7 @@
         [korma.core :exclude [update]])
   (:require [apps.constants :as c]))
 
-(defn- get-app-search-orphaned-condition
+(defn- get-app-category-subselect
   []
   (subselect [:app_category_app :aca] (where {:aca.app_id :a.id})))
 
@@ -14,7 +14,7 @@
   (if (and orphans (seq public-app-ids))
     (where q (or {:a.id [in app-ids]}
                  (and {:a.id [not-in public-app-ids]}
-                      (not (exists (get-app-search-orphaned-condition))))))
+                      (not (exists (get-app-category-subselect))))))
     (where q {:a.id [in app-ids]})))
 
 (defn- add-app-type-where-clause
