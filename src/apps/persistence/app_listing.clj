@@ -537,6 +537,11 @@
   (when-not (empty? app-ids)
     (select (get-app-listing-base-query workspace favorites-group-index (assoc params :app-ids app-ids)))))
 
+(defn new-list-apps-by-id
+  "Lists all apps with an ID in the the given app-ids list."
+  [workspace favorites-group-index app-ids params]
+  (new-get-apps-for-user nil workspace favorites-group-index (assoc params :app-ids app-ids)))
+
 (defn admin-list-apps-by-id
   "Lists all apps with an ID in the the given app-ids list,
    including job_count, job_count_failed, job_count_completed, last_used timestamp, and
@@ -546,6 +551,19 @@
     (-> (get-app-listing-base-query workspace favorites-group-index (assoc params :app-ids app-ids))
         (get-job-stats-fields params)
         (get-admin-job-stats-fields params)
+        select)))
+
+(defn new-admin-list-apps-by-id
+  "Lists all apps with an ID in the the given app-ids list,
+   including job_count, job_count_failed, job_count_completed, last_used timestamp, and
+   job_last_completed timestamp fields for each result."
+  [workspace favorites-group-index app-ids params]
+  (let [app-ids (find-matching-app-ids nil (assoc params :app-ids app-ids))]
+    (-> (get-base-app-listing-base-query workspace favorites-group-index params)
+        (get-job-stats-fields params)
+        (get-admin-job-stats-fields params)
+        (where {:id [in app-ids]})
+        ((partial query-spy "admin-list-apps-by-id::search_query:"))
         select)))
 
 (defn get-all-app-ids
