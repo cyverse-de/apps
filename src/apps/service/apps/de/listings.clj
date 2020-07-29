@@ -51,9 +51,6 @@
       public-app-ids)
     accessible-app-ids))
 
-(defn- admin-search-app-ids
-  [public-app-ids])
-
 (defn- augment-search-params
   [search_term {:keys [app-ids public-app-ids app-subset] :as params} short-username admin?]
   (let [category-attrs (set (workspace-metadata-category-attrs))
