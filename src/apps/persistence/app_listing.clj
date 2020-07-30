@@ -348,18 +348,6 @@
 (defn count-apps-for-user
   "Counts Apps in all public groups and groups under the given workspace_id.
    If search_term is not empty, results are limited to apps that contain search_term in their name,
-   description, integrator_name, or tool name(s)."
-  [search_term workspace_id {:keys [pre-matched-app-ids] :as params}]
-  (-> (get-app-count-base-query params)
-      (add-search-term-where-clauses search_term pre-matched-app-ids)
-      (add-app-category-where-clause workspace_id params)
-      select
-      first
-      :total))
-
-(defn new-count-apps-for-user
-  "Counts Apps in all public groups and groups under the given workspace_id.
-   If search_term is not empty, results are limited to apps that contain search_term in their name,
    description, integrator_name, or tool name(s).
 
    Note: as far as I can tell the where clauses for the category are defunct. I'm ignoring them in
@@ -372,42 +360,10 @@
   "Counts Apps in all public groups and groups under the given workspace_id.
    If search_term is not empty, results are limited to apps that contain search_term in their name,
    description, integrator_name, or tool name(s)."
-  [search_term workspace_id {:keys [pre-matched-app-ids] :as params}]
-  (-> (get-all-apps-count-base-query params)
-      (add-search-term-where-clauses search_term pre-matched-app-ids)
-      (add-app-category-where-clause workspace_id params)
-      select
-      first
-      :total))
-
-(defn new-count-apps-for-admin
-  "Counts Apps in all public groups and groups under the given workspace_id.
-   If search_term is not empty, results are limited to apps that contain search_term in their name,
-   description, integrator_name, or tool name(s).
-
-   Note: as far as I can tell the where clauses for the category are defunct. I'm ignoring them in
-   this implementation of the function for now. The workspace ID parameter can be removed completely
-   once the old implementation of this function has been removed."
   [search-term _ params]
   (count-matching-app-ids search-term (assoc params :admin true)))
 
-;; Note: this function will be removed when the performance improvement changes are complete.
 (defn get-apps-for-user
-  "Fetches Apps in all public groups and groups in `workspace`
-   (as returned by fetch-workspace-by-user-id),
-   marking whether each app is a favorite and including the user's rating in each app by the user_id
-   found in workspace.
-  If search_term is not empty, results are limited to apps that contain search_term in their name,
-   description, integrator_name, or tool name(s)."
-  [search_term {workspace_id :id :as workspace} favorites_group_index query_opts]
-  (-> (get-app-listing-base-query workspace favorites_group_index query_opts)
-      (add-search-term-where-clauses search_term (:pre-matched-app-ids query_opts))
-      (add-app-category-where-clause workspace_id query_opts)
-      ((partial query-spy "get-apps-for-user::search_query:"))
-      select))
-
-;; Note: this function will be renamed when the performance improvement changes are complete.
-(defn new-get-apps-for-user
   "Fetches Apps in all public groups and groups in `workspace`
    (as returned by fetch-workspace-by-user-id),
    marking whether each app is a favorite and including the user's rating in each app by the user_id
@@ -421,22 +377,7 @@
         ((partial query-spy "get-apps-for-user::search_query:"))
         select)))
 
-;; Note: this function will be removed when the performance improvement changes are complete.
 (defn get-apps-for-admin
-  "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
-   job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
-   for each result."
-  [search_term {workspace_id :id :as workspace} favorites_group_index query_opts]
-  (-> (get-all-apps-listing-base-query workspace favorites_group_index query_opts)
-      (add-search-term-where-clauses search_term (:pre-matched-app-ids query_opts))
-      (add-app-category-where-clause workspace_id query_opts)
-      (get-job-stats-fields query_opts)
-      (get-admin-job-stats-fields query_opts)
-      ((partial query-spy "get-apps-for-admin::search_query:"))
-      select))
-
-;; Note: this function will be renamed when the performance improvement changes are complete.
-(defn new-get-apps-for-admin
   "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
    job_count_failed, job_count_completed, last_used timestamp, and job_last_completed timestamp fields
    for each result."
@@ -534,26 +475,9 @@
 (defn list-apps-by-id
   "Lists all apps with an ID in the the given app-ids list."
   [workspace favorites-group-index app-ids params]
-  (when-not (empty? app-ids)
-    (select (get-app-listing-base-query workspace favorites-group-index (assoc params :app-ids app-ids)))))
-
-(defn new-list-apps-by-id
-  "Lists all apps with an ID in the the given app-ids list."
-  [workspace favorites-group-index app-ids params]
-  (new-get-apps-for-user nil workspace favorites-group-index (assoc params :app-ids app-ids)))
+  (get-apps-for-user nil workspace favorites-group-index (assoc params :app-ids app-ids)))
 
 (defn admin-list-apps-by-id
-  "Lists all apps with an ID in the the given app-ids list,
-   including job_count, job_count_failed, job_count_completed, last_used timestamp, and
-   job_last_completed timestamp fields for each result."
-  [workspace favorites-group-index app-ids params]
-  (when-not (empty? app-ids)
-    (-> (get-app-listing-base-query workspace favorites-group-index (assoc params :app-ids app-ids))
-        (get-job-stats-fields params)
-        (get-admin-job-stats-fields params)
-        select)))
-
-(defn new-admin-list-apps-by-id
   "Lists all apps with an ID in the the given app-ids list,
    including job_count, job_count_failed, job_count_completed, last_used timestamp, and
    job_last_completed timestamp fields for each result."
