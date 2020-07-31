@@ -2,8 +2,7 @@
   (:use [cemerick.url :only [url]]
         [kameleon.uuids :only [uuidify]]
         [apps.clients.notifications :only [interapps-url]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [apps.validation :only [get-valid-user-id]])
+        [apps.util.conversions :only [remove-nil-vals]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.permissions :as job-permissions]
@@ -11,6 +10,7 @@
             [apps.service.util :as util]
             [apps.util.config :as config]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [kameleon.db :as db]))
 
 (defn- job-timestamp
@@ -73,10 +73,9 @@
     :batch_status    (when (:is_batch job) (format-batch-status id))}))
 
 (defn- interactive-urls
-  [job rep-steps]
-  (let [user-id       (get-valid-user-id (:username job))
-        interactive?  (fn [step] (= (:job_type step) jp/interactive-job-type))
-        get-url       (fn [step] (str (interapps-url (url (config/interapps-base)) user-id (:external_id step))))]
+  [{user-id :user_id :as job} rep-steps]
+  (let [interactive? (fn [step] (= (:job_type step) jp/interactive-job-type))
+        get-url      (fn [step] (str (interapps-url (url (config/interapps-base)) user-id (:external_id step))))]
     (seq (map get-url (filter interactive? (rep-steps (:id job)))))))
 
 (defn format-admin-job

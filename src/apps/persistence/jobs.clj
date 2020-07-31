@@ -339,6 +339,7 @@
               :j.start_date
               :j.status
               :j.username
+              :j.user_id
               :j.app_wiki_url
               :j.job_type
               :j.parent_id
