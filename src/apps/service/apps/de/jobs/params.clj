@@ -119,7 +119,8 @@
      {:id    (:id param)
       :name  opt-arg
       :order (:order param 0)
-      :value (stringify opt-val)}))
+      :value (stringify opt-val)
+      :type  (:type param)}))
   ([param param-value]
    (build-arg param (or (:name param) "") param-value)))
 
@@ -169,9 +170,10 @@
 (defn- build-input-arg
   [{:keys [repeat_option_flag name] :as param} preprocessor index value]
   (let [name (if (and (pos? index) (not repeat_option_flag)) "" name)]
-    (build-arg
-     (assoc param :name name)
-     ((fnil preprocessor "") value))))
+    (-> (build-arg
+         (assoc param :name name)
+         ((fnil preprocessor "") value))
+        (assoc :path value))))
 
 (defn input-args
   [{:keys [is_implicit omit_if_blank] :as param} param-value preprocessor]
