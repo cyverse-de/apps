@@ -42,10 +42,9 @@
 (defn- format-job-for-status-update
   [apps-client {job-id :id user-id :user_id}]
   (let [job        (jp/get-job-by-id job-id)
-        app-tables (.loadAppTables apps-client [job])
         rep-steps  (jp/list-representative-job-steps [job-id])
         rep-steps  (group-by (some-fn :parent_id :job_id) rep-steps)]
-    (assoc (listings/format-job apps-client nil app-tables rep-steps job) :user_id user-id)))
+    (assoc (listings/format-job apps-client nil rep-steps job) :user_id user-id)))
 
 (defn- send-job-status-update
   [apps-client {prev-status :status :as original-job} {step-type :job_type :as job-step}]

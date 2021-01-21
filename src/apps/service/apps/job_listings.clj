@@ -17,12 +17,6 @@
   [timestamp]
   (str (or (db/millis-from-timestamp timestamp) 0)))
 
-(defn- app-disabled?
-  [app-tables system-id app-id]
-  (let [qualified-id  (apps-util/qualified-app-id system-id app-id)
-        disabled-flag (:disabled (first (remove nil? (map #(% qualified-id) app-tables))))]
-    (if (nil? disabled-flag) true disabled-flag)))
-
 (defn- batch-child-status
   [{:keys [status]}]
   (cond (jp/completed? status) :completed
@@ -85,11 +79,12 @@
           :external_ids     (vec (.getArray (:external_ids job)))
           :interactive_urls (interactive-urls job rep-steps))))
 
+;; The `:app_disabled` field is now deprecated and always returns `false`.
 (defn format-job
-  [apps-client perms app-tables rep-steps job]
+  [apps-client perms rep-steps job]
   (remove-nil-vals
    (assoc (format-base-job job)
-          :app_disabled     (app-disabled? app-tables (:system_id job) (:app_id job))
+          :app_disabled     false
           :can_share        (job-supports-sharing? apps-client perms rep-steps job)
           :interactive_urls (interactive-urls job rep-steps))))
 
@@ -114,9 +109,8 @@
         types            (.getJobTypes apps-client)
         jobs             (list-jobs* user search-params types analysis-ids)
         rep-steps        (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))
-        app-tables       (.loadAppTables apps-client jobs)
         status-count     (future (count-job-statuses user params types analysis-ids))]
-    {:analyses     (mapv (partial format-job apps-client perms app-tables rep-steps) jobs)
+    {:analyses     (mapv (partial format-job apps-client perms rep-steps) jobs)
      :timestamp    (str (System/currentTimeMillis))
      :status-count @status-count
      :total        (count-jobs user params types analysis-ids)}))
@@ -136,9 +130,8 @@
 (defn list-job
   [apps-client job-id]
   (let [job-info   (jp/get-job-by-id job-id)
-        app-tables (.loadAppTables apps-client [job-info])
         rep-steps  (group-by :job_id (jp/list-representative-job-steps [job-id]))]
-    (format-job apps-client nil app-tables rep-steps job-info)))
+    (format-job apps-client nil rep-steps job-info)))
 
 (defn- build-job-step-listing
   [job-id steps format-step]
