@@ -17,6 +17,7 @@
             [apps.persistence.app-metadata :refer [get-app get-app-tools] :as amp]
             [apps.persistence.jobs :as jobs-db]
             [apps.service.apps.de.constants :as c]
+            [apps.service.apps.de.limits :as limits]
             [apps.service.apps.de.permissions :as perms]
             [apps.service.apps.de.docs :as docs]
             [apps.service.util :as svc-util]

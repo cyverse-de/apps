@@ -11,6 +11,15 @@
             [clojure.string :as str]
             [apps.persistence.util :as util]))
 
+;; The `app_listing` view has an array aggregate column that we need to be able to extract. This tells
+;; `clojure.java.jdbc` how to convert the array to a (possibly nested) vector.
+(extend-protocol clojure.java.jdbc/IResultSetReadColumn
+  org.postgresql.jdbc.PgArray
+  (result-set-read-column [x _2 _3]
+    (letfn [(object-array? [x] (instance? (Class/forName "[Ljava.lang.Object;") x))
+            (expand [x] (if (object-array? x) (mapv expand x) x))]
+      (mapv expand (.getArray x)))))
+
 (defn get-app-listing
   "Retrieves all app listing fields from the database for the given App ID."
   [app-id]
