@@ -197,6 +197,11 @@
           :disabled
           :overall_job_type))
 
+(defn- add-app-listing-job-types-field
+  "Adds the job_types field to apps listing query results"
+  [listing-query]
+  (fields listing-query :job_types))
+
 (defn- add-app-listing-is-favorite-field
   "Add user's is_favorite column to apps listing query results"
   [listing-query workspace_root_group_id favorites_group_index]
@@ -232,6 +237,7 @@
     (-> (select* app_listing)
         (modifier "DISTINCT")
         (add-app-listing-base-query-fields)
+        (add-app-listing-job-types-field)
         (add-app-listing-is-favorite-field workspace_root_group_id favorites_group_index)
         (add-app-listing-ratings-fields user_id)
         (add-query-limit row_limit)

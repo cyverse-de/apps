@@ -298,26 +298,31 @@
     (svc-util/format-job-stats app admin?)
     app))
 
-(defn- format-app-listing
-  "Formats certain app fields into types more suitable for the client."
-  [admin? perms beta-ids-set public-app-ids {:keys [id] :as app}]
-  (-> (assoc app :can_run (app-can-run? app))
-      (dissoc :tool_count :task_count :external_app_count :lower_case_name)
-      (format-app-listing-job-stats admin?)
-      (format-app-ratings)
-      (format-app-pipeline-eligibility)
-      (format-app-permissions perms)
-      (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
-      (assoc :beta (contains? beta-ids-set id))
-      (assoc :is_public (contains? public-app-ids id))
-      (remove-nil-vals)))
-
 (defn- app-ids->beta-ids-set
   "Filters the given list of app-ids into a set containing the ids of apps marked as `beta`"
   [username app-ids]
   (let [beta-avu {:attr (workspace-metadata-beta-attr-iri)
                   :value (workspace-metadata-beta-value)}]
     (set (metadata-client/filter-by-avus username app-ids [beta-avu]))))
+
+(defn- get-app-listing-formatter
+  "Returns a function that can be used to format the listing for a single app. Using a higher order function for this
+   makes it easier to consolidate repetitive tasks without degrating performance."
+  [user admin? perms app-ids public-app-ids]
+  (let [beta-ids-set        (app-ids->beta-ids-set (:shortUsername user) app-ids)
+        limit-check-results (limits/load-limit-check-results user)]
+    (fn [{:keys [id] :as app}]
+      (-> (assoc app :can_run (app-can-run? app))
+          (dissoc :tool_count :task_count :external_app_count :lower_case_name :job_types)
+          (format-app-listing-job-stats admin?)
+          (format-app-ratings)
+          (format-app-pipeline-eligibility)
+          (format-app-permissions perms)
+          (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
+          (assoc :beta (contains? beta-ids-set id))
+          (assoc :is_public (contains? public-app-ids id))
+          (assoc :limitChecks (limits/format-app-limit-check-results limit-check-results app))
+          (remove-nil-vals)))))
 
 (defn- filter-app-ids-by-community
   "Filters the given list of app-ids into a set containing the ids of apps tagged with the given community-id"
@@ -327,17 +332,17 @@
     (set (metadata-client/filter-by-avus username app-ids [community-avu]))))
 
 (defn- app-listing-by-id
-  [{:keys [username shortUsername]} params perms app-ids admin?]
+  [{:keys [username] :as user} params perms app-ids admin?]
   (let [workspace      (get-optional-workspace username)
         faves-index    (workspace-favorites-app-category-index)
-        beta-ids-set   (app-ids->beta-ids-set shortUsername app-ids)
         public-app-ids (perms-client/get-public-app-ids)
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
         total          (if (empty? app-ids) 0 (count-apps-fn nil (:id workspace) (assoc params :app-ids app-ids)))
         app-listing-fn (if admin? admin-list-apps-by-id list-apps-by-id)
-        app-listing    (app-listing-fn workspace faves-index app-ids (fix-sort-params params))]
+        app-listing    (app-listing-fn workspace faves-index app-ids (fix-sort-params params))
+        format-app     (get-app-listing-formatter user admin? perms app-ids public-app-ids)]
     {:total total
-     :apps  (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) app-listing)}))
+     :apps  (map format-app app-listing)}))
 
 (defn list-apps-by-tool
   "Lists all apps accessible to the user that use the given tool."
@@ -383,13 +388,13 @@
 
 (defn- list-apps-in-virtual-group
   "Formats a listing for a virtual group."
-  [{:keys [shortUsername] :as user} workspace group-id perms {:keys [public-app-ids] :as params}]
+  [user workspace group-id perms {:keys [public-app-ids] :as params}]
   (when-let [format-fns (virtual-group-fns group-id)]
-    (-> ((:format-group format-fns) user workspace params)
-        (assoc :apps (let [app-listing  ((:format-listing format-fns) user workspace params)
-                           beta-ids-set (app-ids->beta-ids-set shortUsername (map :id app-listing))]
-                       (map (partial format-app-listing false perms beta-ids-set public-app-ids) app-listing)))
-        (realize-group))))
+    (let [app-listing ((:format-listing format-fns) user workspace params)
+          format-app  (get-app-listing-formatter user false perms (map :id app-listing) public-app-ids)]
+      (-> ((:format-group format-fns) user workspace params)
+          (assoc :apps (map format-app app-listing))
+          (realize-group)))))
 
 (defn- count-apps-in-group
   "Counts the number of apps in an app group, including virtual app groups that may be included."
@@ -408,14 +413,14 @@
 
 (defn- list-apps-in-real-group
   "This service lists all of the apps in a real app group and all of its descendents."
-  [{:keys [shortUsername] :as user} workspace category-id perms {:keys [public-app-ids] :as params}]
+  [user workspace category-id perms {:keys [public-app-ids] :as params}]
   (let [app_group      (->> (get-app-category category-id)
                             (assert-not-nil ["category_id" category-id])
                             remove-nil-vals)
         total          (count-apps-in-group user workspace app_group params)
         apps_in_group  (get-apps-in-group user workspace app_group params)
-        beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps_in_group))
-        apps_in_group  (map (partial format-app-listing false perms beta-ids-set public-app-ids) apps_in_group)]
+        format-app     (get-app-listing-formatter user false perms (map :id apps_in_group) public-app-ids)
+        apps_in_group  (map format-app apps_in_group)]
     (assoc app_group
            :system_id de-system-id
            :total     total
@@ -440,39 +445,38 @@
 (defn list-apps
   "This service fetches a paged list of apps in the user's workspace and all public app groups,
    further filtering results by a search term if the `search` parameter is present."
-  [{:keys [username shortUsername]} params admin?]
+  [{:keys [username shortUsername] :as user} params admin?]
   (let [search_term    (curl/url-decode (:search params))
         workspace      (get-workspace username)
         perms          (perms-client/load-app-permissions shortUsername)
         params         (-> params
-                           (augment-listing-params shortUsername perms)
-                           (assoc :orphans admin?)
-                           fix-sort-params)
+                                (augment-listing-params shortUsername perms)
+                                (assoc :orphans admin?)
+                                fix-sort-params)
         params         (augment-search-params search_term params shortUsername admin?)
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
         total          (count-apps-fn search_term (:id workspace) params)
         app-listing-fn (if admin? get-apps-for-admin get-apps-for-user)
         apps           (app-listing-fn search_term
-                                       workspace
-                                       (workspace-favorites-app-category-index)
-                                       params)
-        beta-ids-set   (app-ids->beta-ids-set shortUsername (map :id apps))
+                                            workspace
+                                            (workspace-favorites-app-category-index)
+                                            params)
         public-app-ids (:public-app-ids params)
-        apps           (map (partial format-app-listing admin? perms beta-ids-set public-app-ids) apps)]
+        format-app     (get-app-listing-formatter user admin? perms (map :id apps) public-app-ids)]
     {:total total
-     :apps  apps}))
+     :apps  (map format-app apps)}))
 
 (defn list-app
   "This service retrieves app listing information for a single app."
-  [{:keys [username shortUsername]} app-id]
+  [{:keys [username shortUsername] :as user} app-id]
   (perms/check-app-permissions shortUsername "read" [app-id])
   (let [workspace      (get-workspace username)
         perms          (perms-client/load-app-permissions shortUsername)
         total          (count-apps-for-user nil (:id workspace) {:app-ids [app-id]})
         apps           (get-single-app workspace (workspace-favorites-app-category-index) app-id)
-        beta-ids-set   (app-ids->beta-ids-set shortUsername [app-id])
         public-app-ids (perms-client/get-public-app-ids)
-        apps           (map (partial format-app-listing false perms beta-ids-set public-app-ids) apps)]
+        format-app     (get-app-listing-formatter user false perms [app-id] public-app-ids)
+        apps           (map format-app apps)]
     {:total total
      :apps  apps}))
 
