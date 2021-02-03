@@ -1,5 +1,5 @@
 (ns apps.service.workspace
-  (:use [korma.db :only [transaction]])
+  (:use [apps.util.db :only [transaction]])
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.persistence.workspace :as wp]))
 

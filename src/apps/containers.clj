@@ -13,12 +13,12 @@
         [apps.persistence.tools :only [update-tool]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals remove-empty-vals]]
+        [apps.util.db :only [transaction]]
         [apps.validation :only [validate-image-not-used-in-public-apps
                                 validate-image-not-used
                                 validate-tool-not-used-in-public-apps]]
         [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]])
+        [korma.core :exclude [update]])
   (:require [cheshire.core :as json]
             [clojure.string :as string]
             [clojure.tools.logging :as log]

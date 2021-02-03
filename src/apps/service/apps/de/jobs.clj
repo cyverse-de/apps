@@ -1,9 +1,9 @@
 (ns apps.service.apps.de.jobs
   (:use [apps.persistence.users :only [get-user-id]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [apps.util.db :only [transaction]]
         [clojure-commons.file-utils :only [build-result-folder-path]]
         [korma.core :only [sqlfn]]
-        [korma.db :only [transaction]]
         [medley.core :only [dissoc-in]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.constants :as c]

@@ -1,5 +1,5 @@
 (ns apps.service.apps.jobs
-  (:use [korma.db :only [transaction]]
+  (:use [apps.util.db :only [transaction]]
         [slingshot.slingshot :only [try+]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]

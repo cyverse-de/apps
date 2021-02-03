@@ -2,9 +2,9 @@
   (:use [apps.persistence.entities]
         [apps.user :only [load-user]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [apps.util.db :only [transaction]]
         [clojure.java.io :only [reader]]
         [korma.core :exclude [update]]
-        [korma.db]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.notifications :as cn]
             [apps.persistence.tool-requests :as queries]

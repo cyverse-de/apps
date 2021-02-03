@@ -1,5 +1,5 @@
 (ns apps.service.apps.jobs.permissions
-  (:use [korma.db :only [transaction]])
+  (:use [apps.util.db :only [transaction]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.util :as ju]

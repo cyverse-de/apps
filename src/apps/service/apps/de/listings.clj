@@ -414,13 +414,13 @@
 (defn- list-apps-in-real-group
   "This service lists all of the apps in a real app group and all of its descendents."
   [user workspace category-id perms {:keys [public-app-ids] :as params}]
-  (let [app_group      (->> (get-app-category category-id)
+  (let [app_group     (->> (get-app-category category-id)
                             (assert-not-nil ["category_id" category-id])
                             remove-nil-vals)
-        total          (count-apps-in-group user workspace app_group params)
-        apps_in_group  (get-apps-in-group user workspace app_group params)
-        format-app     (get-app-listing-formatter user false perms (map :id apps_in_group) public-app-ids)
-        apps_in_group  (map format-app apps_in_group)]
+        total         (count-apps-in-group user workspace app_group params)
+        apps_in_group (get-apps-in-group user workspace app_group params)
+        format-app    (get-app-listing-formatter user false perms (map :id apps_in_group) public-app-ids)
+        apps_in_group (map format-app apps_in_group)]
     (assoc app_group
            :system_id de-system-id
            :total     total
@@ -450,17 +450,17 @@
         workspace      (get-workspace username)
         perms          (perms-client/load-app-permissions shortUsername)
         params         (-> params
-                                (augment-listing-params shortUsername perms)
-                                (assoc :orphans admin?)
-                                fix-sort-params)
+                           (augment-listing-params shortUsername perms)
+                           (assoc :orphans admin?)
+                           fix-sort-params)
         params         (augment-search-params search_term params shortUsername admin?)
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
         total          (count-apps-fn search_term (:id workspace) params)
         app-listing-fn (if admin? get-apps-for-admin get-apps-for-user)
         apps           (app-listing-fn search_term
-                                            workspace
-                                            (workspace-favorites-app-category-index)
-                                            params)
+                                       workspace
+                                       (workspace-favorites-app-category-index)
+                                       params)
         public-app-ids (:public-app-ids params)
         format-app     (get-app-listing-formatter user admin? perms (map :id apps) public-app-ids)]
     {:total total

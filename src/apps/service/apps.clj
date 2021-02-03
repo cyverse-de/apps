@@ -2,8 +2,8 @@
   (:use [apps.constants :only [de-system-id]]
         [apps.service.oauth :only [authorization-uri has-access-token]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [apps.util.db :only [transaction]]
         [kameleon.uuids :only [uuidify]]
-        [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+ throw+]]
         [service-logging.thread-context :only [with-logging-context]])
   (:require [clojure.tools.logging :as log]

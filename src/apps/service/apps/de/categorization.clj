@@ -2,8 +2,8 @@
   (:use [apps.persistence.app-groups :only [add-app-to-category decategorize-app get-app-category]]
         [apps.persistence.app-listing :only [get-app-listing]]
         [apps.util.assertions :only [assert-not-nil]]
-        [kameleon.uuids :only [uuidify]]
-        [korma.db :only [transaction]])
+        [apps.util.db :only [transaction]]
+        [kameleon.uuids :only [uuidify]])
   (:require [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
             [apps.service.apps.de.validation :as av]

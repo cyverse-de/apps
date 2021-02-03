@@ -1,7 +1,7 @@
 (ns apps.persistence.workspace
   (:use [apps.persistence.entities :only [workspace]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]])
+        [apps.util.db :only [transaction]]
+        [korma.core :exclude [update]])
   (:require [apps.persistence.app-groups :as app-groups]
             [apps.persistence.users :as users]
             [apps.util.config :as config]

@@ -3,13 +3,13 @@
         [apps.persistence.app-search :only [count-matching-app-ids find-matching-app-ids]]
         [apps.persistence.entities]
         [apps.util.conversions :only [date->timestamp]]
+        [apps.util.db :only [add-date-limits-where-clause]]
         [kameleon.queries]
         [kameleon.util :only [query-spy]]
         [kameleon.util.search]
         [korma.core :exclude [update]])
   (:require [apps.constants :as c]
-            [clojure.string :as str]
-            [apps.persistence.util :as util]))
+            [clojure.string :as str]))
 
 ;; The `app_listing` view has an array aggregate column that we need to be able to extract. This tells
 ;; `clojure.java.jdbc` how to convert the array to a (possibly nested) vector.
@@ -286,7 +286,7 @@
                       (aggregate (count :id) :job_count_completed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Completed"})
-                      (util/add-date-limits-where-clause query-opts)
+                      (add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_completed]))
 
@@ -299,14 +299,14 @@
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count)
                       (where {:app_id (raw "app_listing.id::varchar")})
-                      (util/add-date-limits-where-clause query-opts)
+                      (add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count]
           [(subselect [:jobs :j]
                       (aggregate (count :id) :job_count_failed)
                       (where {:app_id (raw "app_listing.id::varchar")
                               :status "Failed"})
-                      (util/add-date-limits-where-clause query-opts)
+                      (add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_failed]))
 
