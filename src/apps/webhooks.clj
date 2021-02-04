@@ -1,6 +1,6 @@
 (ns apps.webhooks
-  (:use [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
+  (:use [apps.util.db :only [transaction]]
+        [korma.core :exclude [update]]
         [apps.persistence.users :only [get-user-id]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]

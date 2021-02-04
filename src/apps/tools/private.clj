@@ -1,7 +1,7 @@
 (ns apps.tools.private
   (:use [apps.constants :only [executable-tool-type]]
+        [apps.util.db :only [transaction]]
         [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
-        [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.containers :as containers]

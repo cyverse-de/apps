@@ -2,8 +2,8 @@
   "Functions used to remove apps from the database."
   (:use [apps.persistence.entities]
         [apps.user :only [current-user]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]])
+        [apps.util.db :only [transaction]]
+        [korma.core :exclude [update]])
   (:require [clojure.tools.logging :as log]))
 
 (defn- tasks-for-app

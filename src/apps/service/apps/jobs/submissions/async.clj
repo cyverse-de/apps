@@ -1,6 +1,6 @@
 (ns apps.service.apps.jobs.submissions.async
-  (:use [clojure-commons.core :only [remove-nil-values]]
-        [korma.db :only [transaction]]
+  (:use [apps.util.db :only [transaction]]
+        [clojure-commons.core :only [remove-nil-values]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]

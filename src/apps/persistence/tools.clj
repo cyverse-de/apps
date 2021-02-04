@@ -7,13 +7,13 @@
                                               remove-tool-from-tasks]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [apps.util.db :only [transaction]]
         [clojure.string :only [upper-case blank?]]
         [kameleon.queries :only [add-query-limit
                                  add-query-offset
                                  add-query-sorting]]
         [kameleon.util.search :only [format-query-wildcards]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]])
+        [korma.core :exclude [update]])
   (:require [apps.constants :as c]
             [clojure.tools.logging :as log]
             [korma.core :as sql]))

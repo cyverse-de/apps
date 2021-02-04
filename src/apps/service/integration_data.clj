@@ -1,5 +1,5 @@
 (ns apps.service.integration-data
-  (:use [korma.db :only [transaction]]
+  (:use [apps.util.db :only [transaction]]
         [medley.core :only [remove-vals]])
   (:require [apps.persistence.app-metadata :as amp]
             [apps.persistence.tools :as tools-db]

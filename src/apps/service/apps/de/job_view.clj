@@ -9,6 +9,7 @@
             [apps.metadata.params :as mp]
             [apps.persistence.app-metadata :as amp]
             [apps.service.apps.de.constants :as c]
+            [apps.service.apps.de.limits :as limits]
             [apps.service.apps.jobs.util :as util]
             [apps.util.service :as service]
             [clojure-commons.exception-util :as cxu]))
@@ -105,13 +106,15 @@
 
 (defn- format-app
   [user {app-id :id name :name :as app} include-hidden-params?]
-  (let [app-steps (get-steps app-id)]
+  (let [app-steps           (get-steps app-id)
+        limit-check-results (limits/load-limit-check-results user)]
     (-> (select-keys app [:id :name :description :disabled :deleted])
         (assoc :label name
                :requirements (map get-step-resource-requirements app-steps)
                :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
                :app_type "DE"
-               :system_id c/system-id))))
+               :system_id c/system-id
+               :limitChecks (limits/format-app-limit-check-results limit-check-results app)))))
 
 (defn- validate-hidden-inputs [user app-id]
   (when-let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-id)))]

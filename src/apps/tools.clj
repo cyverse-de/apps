@@ -2,9 +2,9 @@
   (:use [apps.containers :only [add-tool-container set-tool-container tool-container-info]]
         [apps.persistence.entities :only [tools]]
         [apps.util.conversions :only [remove-nil-vals]]
+        [apps.util.db :only [transaction]]
         [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
         [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.tools :as persistence]

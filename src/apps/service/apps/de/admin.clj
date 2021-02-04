@@ -1,8 +1,8 @@
 (ns apps.service.apps.de.admin
-  (:use [korma.db :only [transaction]]
-        [apps.persistence.app-metadata.relabel :only [update-app-labels]]
+  (:use [apps.persistence.app-metadata.relabel :only [update-app-labels]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.config :only [workspace-public-id]]
+        [apps.util.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
   (:require [clojure.tools.logging :as log]
             [apps.clients.email :as email]

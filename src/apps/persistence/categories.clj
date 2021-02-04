@@ -1,7 +1,7 @@
 (ns apps.persistence.categories
   (:use [apps.persistence.users :only [get-user-id]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]]))
+        [apps.util.db :only [transaction]]
+        [korma.core :exclude [update]]))
 
 (defn add-hierarchy-version
   [username version]

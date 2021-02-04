@@ -1,7 +1,7 @@
 (ns apps.persistence.docker-registries
   (:use [apps.persistence.entities :only [docker-registries]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]])
+        [apps.util.db :only [transaction]]
+        [korma.core :exclude [update]])
   (:require [korma.core :as sql]))
 
 (defn get-registries

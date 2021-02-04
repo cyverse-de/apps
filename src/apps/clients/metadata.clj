@@ -61,7 +61,7 @@
                                       app-id))
 
 (defn filter-targets-by-ontology-search
-  [username category-attrs search-term app-ids & {:keys [validate :or {validate true}]}]
+  [username category-attrs search-term app-ids & {:keys [validate] :or {validate true}}]
   (if-let [active-hierarchy-version (get-active-hierarchy-version :validate validate)]
     (metadata-client/filter-targets-by-ontology-search (config/metadata-client)
                                                        username

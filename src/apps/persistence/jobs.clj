@@ -3,13 +3,13 @@
    submitted to any excecution service."
   (:use [apps.persistence.entities :only [job-status-updates]]
         [apps.persistence.users :only [get-user-id]]
+        [apps.util.db :only [add-date-limits-where-clause sqlfn-any-array]]
         [clojure-commons.core :only [remove-nil-values]]
         [kameleon.db :only [now-str]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.constants :as c]
-            [apps.persistence.util :as util]
             [cheshire.core :as cheshire]
             [clojure.set :as set]
             [clojure.string :as string]
@@ -293,7 +293,7 @@
   [username filter include-hidden types accessible-ids]
   (-> (select* (add-job-query-filter-clause (count-jobs-base include-hidden) username filter))
       (where {:j.deleted false})
-      (where {:j.id (util/sqlfn-any-array "uuid" accessible-ids)})
+      (where {:j.id (sqlfn-any-array "uuid" accessible-ids)})
       (where (not (exists (job-type-subselect types))))))
 
 (defn count-jobs-of-types
@@ -391,7 +391,7 @@
   [username search-params types accessible-ids]
   (-> (select* (add-job-query-filter-clause (job-base-query) username (:filter search-params)))
       (where {:j.deleted false})
-      (where {:j.id (util/sqlfn-any-array "uuid" accessible-ids)})
+      (where {:j.id (sqlfn-any-array "uuid" accessible-ids)})
       (where (not (exists (job-type-subselect types))))
       (add-internal-app-clause (:include-hidden search-params))
       (add-order search-params)
@@ -742,7 +742,7 @@
           :job_count_failed 0
           :job_count_completed 0}
          (-> (get-job-stats-base-query app-id)
-             (util/add-date-limits-where-clause params)
+             (add-date-limits-where-clause params)
              get-job-stats-fields
              select
              first)))
@@ -751,7 +751,7 @@
   [^String app-id params]
   (merge {:job_count_completed 0}
          (-> (get-job-stats-base-query app-id)
-             (util/add-date-limits-where-clause params)
+             (add-date-limits-where-clause params)
              select
              first)))
 

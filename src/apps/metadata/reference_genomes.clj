@@ -6,7 +6,6 @@
         [apps.util.conversions :only [date->timestamp]]
         [clojure.string :only [blank?]]
         [korma.core :exclude [update]]
-        [korma.db]
         [slingshot.slingshot :only [throw+]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]

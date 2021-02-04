@@ -6,12 +6,12 @@
         [apps.user :only [current-user]]
         [apps.util.assertions]
         [apps.util.conversions :only [remove-nil-vals]]
+        [apps.util.db :only [transaction]]
         [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit conditional-where]]
         [kameleon.util :only [normalize-string]]
         [kameleon.util.search :only [format-query-wildcards]]
         [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [korma.db :only [transaction]])
+        [korma.core :exclude [update]])
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-listing :as app-listing]
             [apps.persistence.app-metadata.delete :as delete]

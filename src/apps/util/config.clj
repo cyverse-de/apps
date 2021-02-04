@@ -276,6 +276,11 @@
   [props config-valid configs agave-enabled]
   "apps.pgp.key-password" "notprod")
 
+(cc/defprop-optstr analyses-base
+  "The base URL for the analyses service."
+  [props config-valid configs]
+  "apps.analyses.base-url" "http://analyses")
+
 (def data-info-base
   (memoize
    (fn []

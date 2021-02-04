@@ -1,5 +1,5 @@
 (ns apps.service.apps.jobs.submissions.submit
-  (:use [korma.db :only [transaction]])
+  (:use [apps.util.db :only [transaction]])
   (:require [apps.clients.permissions :as perms-client]))
 
 (defn submit-and-register-private-job

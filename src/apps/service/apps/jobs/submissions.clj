@@ -1,8 +1,8 @@
 (ns apps.service.apps.jobs.submissions
-  (:use [clojure-commons.core :only [remove-nil-values]]
+  (:use [apps.util.db :only [transaction]]
+        [clojure-commons.core :only [remove-nil-values]]
         [slingshot.slingshot :only [try+ throw+]]
-        [kameleon.uuids :only [uuid]]
-        [korma.db :only [transaction]])
+        [kameleon.uuids :only [uuid]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [kameleon.db :as db]

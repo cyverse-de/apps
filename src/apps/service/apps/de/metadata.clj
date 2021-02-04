@@ -10,10 +10,10 @@
         [apps.service.apps.de.validation :only [app-publishable?
                                                 validate-app-existence
                                                 verify-app-permission]]
+        [apps.util.db :only [transaction]]
         [apps.validation :only [get-valid-user-id]]
         [apps.workspace :only [get-workspace]]
         [kameleon.uuids :only [uuidify]]
-        [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+ try+]])
   (:require [apps.clients.notifications :as notifications]
             [apps.clients.metadata :as metadata-client]

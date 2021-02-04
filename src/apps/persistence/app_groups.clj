@@ -1,17 +1,16 @@
 (ns apps.persistence.app-groups
   (:use [apps.persistence.entities]
+        [apps.util.db :only [sql-array transaction]]
         [korma.core :exclude [update]]
-        [korma.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
-  (:require [apps.persistence.util :as util]
-            [kameleon.uuids :refer [uuid]]
+  (:require [kameleon.uuids :refer [uuid]]
             [korma.core :as sql]))
 
 (defn get-app-group-hierarchy
   "Gets the app group hierarchy rooted at the node with the given identifier."
   [root-id {:keys [agave-enabled app-ids] :or {agave-enabled "false"}}]
   (if (seq app-ids)
-    (select (sqlfn :app_category_hierarchy root-id (Boolean/parseBoolean agave-enabled) (util/sql-array "uuid" app-ids)))
+    (select (sqlfn :app_category_hierarchy root-id (Boolean/parseBoolean agave-enabled) (sql-array "uuid" app-ids)))
     (select (sqlfn :app_category_hierarchy root-id (Boolean/parseBoolean agave-enabled)))))
 
 (defn get-visible-workspaces
