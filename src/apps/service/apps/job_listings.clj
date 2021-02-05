@@ -76,7 +76,7 @@
   [rep-steps job]
   (remove-nil-vals
    (assoc (format-base-job job)
-          :external_ids     (vec (.getArray (:external_ids job)))
+          :external_ids     (:external_ids job)
           :interactive_urls (interactive-urls job rep-steps))))
 
 ;; The `:app_disabled` field is now deprecated and always returns `false`.
