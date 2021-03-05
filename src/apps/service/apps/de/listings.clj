@@ -305,11 +305,19 @@
                   :value (workspace-metadata-beta-value)}]
     (set (metadata-client/filter-by-avus username app-ids [beta-avu]))))
 
+(defn- app-ids->certified-ids-set
+  "Filters the given list of app-ids into a set containing the ids of apps marked as `certified`"
+  [username app-ids]
+  (let [certified-avu {:attr  (workspace-metadata-certified-apps-attr)
+                       :value (workspace-metadata-certified-apps-value)}]
+    (set (metadata-client/filter-by-avus username app-ids [certified-avu]))))
+
 (defn- get-app-listing-formatter
   "Returns a function that can be used to format the listing for a single app. Using a higher order function for this
    makes it easier to consolidate repetitive tasks without degrating performance."
-  [user admin? perms app-ids public-app-ids]
-  (let [beta-ids-set        (app-ids->beta-ids-set (:shortUsername user) app-ids)
+  [{username :shortUsername :as user} admin? perms app-ids public-app-ids]
+  (let [beta-ids-set        (app-ids->beta-ids-set username app-ids)
+        certified-ids-set   (app-ids->certified-ids-set username app-ids)
         limit-check-results (limits/load-limit-check-results user)]
     (fn [{:keys [id] :as app}]
       (-> (assoc app :can_run (app-can-run? app))
@@ -320,6 +328,7 @@
           (format-app-permissions perms)
           (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
           (assoc :beta (contains? beta-ids-set id))
+          (assoc :isBlessed (contains? certified-ids-set id))
           (assoc :is_public (contains? public-app-ids id))
           (assoc :limitChecks (limits/format-app-limit-check-results limit-check-results app))
           (remove-nil-vals)))))

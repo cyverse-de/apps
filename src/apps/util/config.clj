@@ -173,6 +173,16 @@
   [props config-valid configs]
   "apps.workspace.metadata.communities.attr" "cyverse-community")
 
+(cc/defprop-optstr workspace-metadata-certified-apps-attr
+  "A metadata attr that can be applied to an app that has been reviewed and certified by DE administrators."
+  [props config-valid configs]
+  "apps.workspace.metadata.certified.attr" "cyverse-blessed")
+
+(cc/defprop-optstr workspace-metadata-certified-apps-value
+  "The value of the AVU to apply to an app that has been reviewed and certified by DE administrators."
+  [props config-valid configs]
+  "apps.workspace.metadata.certified.value" "true")
+
 (cc/defprop-str uid-domain
   "The domain name to append to the user identifier to get the fully qualified
    user identifier."
