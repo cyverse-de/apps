@@ -263,6 +263,14 @@
     (validate-system-id system-id)
     (app-admin/update-app user (update-in body [:id] uuidify)))
 
+  (adminBlessApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-admin/bless-app user app-id))
+
+  (adminRemoveAppBlessing [_ system-id app-id]
+    (validate-system-id system-id)
+    (app-admin/remove-app-blessing user app-id))
+
   (getAdminAppCategories [_ params]
     (listings/get-admin-app-groups user params))
 

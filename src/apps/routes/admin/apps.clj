@@ -2,7 +2,11 @@
   (:use [apps.routes.params :only [SecuredQueryParams SecuredQueryParamsEmailRequired]]
         [apps.routes.schemas.app
          :only [AdminAppSearchParams
-                AppPublicationRequestSearchParams]]
+                AppPublicationRequestSearchParams
+                BlessAppSummary
+                BlessAppDescription
+                RemoveAppBlessingSummary
+                RemoveAppBlessingDescription]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [common-swagger-api.schema]
@@ -69,6 +73,20 @@
       :description-file "docs/apps/admin/app-label-update.md"
       (ok (coerce! schema/AdminAppDetails
                    (apps/admin-update-app current-user system-id (assoc body :id app-id)))))
+
+    (POST "/blessing" []
+      :query [params SecuredQueryParams]
+      :summary BlessAppSummary
+      :description BlessAppDescription
+      (apps/admin-bless-app current-user system-id app-id)
+      (ok))
+
+    (DELETE "/blessing" []
+      :query [params SecuredQueryParams]
+      :summary RemoveAppBlessingSummary
+      :description RemoveAppBlessingDescription
+      (apps/admin-remove-app-blessing current-user system-id app-id)
+      (ok))
 
     (GET "/details" []
       :query [params SecuredQueryParams]

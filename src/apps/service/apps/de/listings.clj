@@ -308,9 +308,7 @@
 (defn- app-ids->certified-ids-set
   "Filters the given list of app-ids into a set containing the ids of apps marked as `certified`"
   [username app-ids]
-  (let [certified-avu {:attr  (workspace-metadata-certified-apps-attr)
-                       :value (workspace-metadata-certified-apps-value)}]
-    (set (metadata-client/filter-by-avus username app-ids [certified-avu]))))
+  (set (metadata-client/filter-by-avus username app-ids [(dissoc c/certified-avu :unit)])))
 
 (defn- get-app-listing-formatter
   "Returns a function that can be used to format the listing for a single app. Using a higher order function for this
