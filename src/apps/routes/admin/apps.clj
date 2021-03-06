@@ -2,11 +2,7 @@
   (:use [apps.routes.params :only [SecuredQueryParams SecuredQueryParamsEmailRequired]]
         [apps.routes.schemas.app
          :only [AdminAppSearchParams
-                AppPublicationRequestSearchParams
-                BlessAppSummary
-                BlessAppDescription
-                RemoveAppBlessingSummary
-                RemoveAppBlessingDescription]]
+                AppPublicationRequestSearchParams]]
         [apps.user :only [current-user]]
         [apps.util.coercions :only [coerce!]]
         [common-swagger-api.schema]
@@ -76,15 +72,15 @@
 
     (POST "/blessing" []
       :query [params SecuredQueryParams]
-      :summary BlessAppSummary
-      :description BlessAppDescription
+      :summary schema/BlessAppSummary
+      :description schema/BlessAppDescription
       (apps/admin-bless-app current-user system-id app-id)
       (ok))
 
     (DELETE "/blessing" []
       :query [params SecuredQueryParams]
-      :summary RemoveAppBlessingSummary
-      :description RemoveAppBlessingDescription
+      :summary schema/RemoveAppBlessingSummary
+      :description schema/RemoveAppBlessingDescription
       (apps/admin-remove-app-blessing current-user system-id app-id)
       (ok))
 

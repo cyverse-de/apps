@@ -17,14 +17,6 @@
   (merge SecuredQueryParams
          app-schema/AppSearchParams))
 
-(def BlessAppSummary "Mark App Certified")
-(def BlessAppDescription
-  "Mark an app as having been reviewed and certified by Discovery Environment administrators.")
-
-(def RemoveAppBlessingSummary "Mark App Not Certified")
-(def RemoveAppBlessingDescription
-  "Mark an app as not having been reviewed and certified by Discovery Environment administrators.")
-
 (defschema AdminAppSearchParams
   (merge SecuredQueryParams
          admin-schema/AdminAppSearchParams))
