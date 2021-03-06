@@ -12,15 +12,17 @@
     (metadata-client/list-avus username app-id)))
 
 (defn set-avus
-  [{username :shortUsername :as user} app-id request admin?]
+  [{username :shortUsername :as user} app-id {:keys [avus] :as request} admin?]
   (let [{app-name :name :as app} (app-db/get-app app-id)]
     (validation/verify-app-permission user app "write" admin?)
-    (categorization/validate-app-name-in-hierarchy-avus username app-id app-name (:avus request))
+    (validation/validate-attrs-not-protected admin? avus)
+    (categorization/validate-app-name-in-hierarchy-avus username app-id app-name avus)
     (metadata-client/set-avus username app-id (json/encode request))))
 
 (defn update-avus
-  [{username :shortUsername :as user} app-id request admin?]
+  [{username :shortUsername :as user} app-id {:keys [avus] :as request} admin?]
   (let [{app-name :name :as app} (app-db/get-app app-id)]
     (validation/verify-app-permission user app "write" admin?)
-    (categorization/validate-app-name-in-hierarchy-avus username app-id app-name (:avus request))
+    (validation/validate-attrs-not-protected admin? avus)
+    (categorization/validate-app-name-in-hierarchy-avus username app-id app-name avus)
     (metadata-client/update-avus username app-id (json/encode request))))
