@@ -144,7 +144,7 @@
     (when-not (empty? duplicate-apps)
       (exists duplicate-app-existing-categories-msg :app_name app-name :apps duplicate-apps))))
 
-(def ^:private protected-attrs
+(def protected-attrs
   #{(config/workspace-metadata-beta-attr-iri)
     (config/workspace-metadata-communities-attr)
     (config/workspace-metadata-certified-apps-attr)})
