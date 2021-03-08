@@ -20,7 +20,8 @@
   [{username :shortUsername :as user} app-id admin?]
   (let [app (app-db/get-app app-id)]
     (validation/verify-app-permission user app "read" admin?)
-    (update (metadata-client/list-avus username app-id) :avus remove-protected-avus admin?)))
+    (as-> (metadata-client/list-avus username app-id) r
+      (update r :avus remove-protected-avus admin?))))
 
 (defn set-avus
   "Sets AVUs on an app. If `admin?` is `true` then any attribute may be updated and all attributes on the app
@@ -32,16 +33,18 @@
     (validation/validate-attrs-not-protected admin? avus)
     (categorization/validate-app-name-in-hierarchy-avus username app-id app-name avus)
     (let [new-avus (if admin? avus (concat avus (load-protected-avus username app-id)))]
-      (update (metadata-client/set-avus username app-id (json/encode {:avus new-avus}))
-              :avus remove-protected-avus admin?))))
+      (as-> (json/encode {:avus new-avus}) r
+        (metadata-client/set-avus username app-id r)
+        (update r :avus remove-protected-avus admin?)))))
 
 (defn update-avus
-  "Adds AVUs to an app. If `admin?` is `true` then any attribute may be added. If `admin?` is `false` then
-   protected attributes may not be included in the request body."
+  "Adds AVUs to an app or updates existing AVUs on an app. If `admin?` is `true` then any attribute may be added.
+   If `admin?` is `false` then protected attributes may not be included in the request body."
   [{username :shortUsername :as user} app-id {:keys [avus] :as request} admin?]
   (let [{app-name :name :as app} (app-db/get-app app-id)]
     (validation/verify-app-permission user app "write" admin?)
     (validation/validate-attrs-not-protected admin? avus)
     (categorization/validate-app-name-in-hierarchy-avus username app-id app-name avus)
-    (update (metadata-client/update-avus username app-id (json/encode request))
-            :avus remove-protected-avus admin?)))
+    (as-> (json/encode request) r
+      (metadata-client/update-avus username app-id r)
+      (update r :avus remove-protected-avus admin?))))
