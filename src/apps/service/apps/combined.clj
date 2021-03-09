@@ -234,6 +234,12 @@
   (adminUpdateApp [_ system-id body]
     (.adminUpdateApp (util/get-apps-client clients system-id) system-id body))
 
+  (adminBlessApp [_ system-id app-id]
+    (.adminBlessApp (util/get-apps-client clients system-id) system-id app-id))
+
+  (adminRemoveAppBlessing [_ system-id app-id]
+    (.adminRemoveAppBlessing (util/get-apps-client clients system-id) system-id app-id))
+
   (getAdminAppCategories [_ params]
     (mapcat #(.getAdminAppCategories % params) clients))
 

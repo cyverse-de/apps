@@ -65,6 +65,8 @@
   (permanentlyDeleteApps [_ body])
   (adminDeleteApp [_ system-id app-id])
   (adminUpdateApp [_ system-id body])
+  (adminBlessApp [_ system-id app-id])
+  (adminRemoveAppBlessing [_ system-id app-id])
   (getAdminAppCategories [_ params])
   (searchAdminAppCategories [_ params])
   (adminAddCategory [_ system-id body])

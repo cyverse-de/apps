@@ -4,13 +4,15 @@
         [apps.util.config :only [workspace-public-id]]
         [apps.util.db :only [transaction]]
         [slingshot.slingshot :only [throw+]])
-  (:require [clojure.tools.logging :as log]
+  (:require [cheshire.core :as json]
+            [clojure.tools.logging :as log]
             [apps.clients.email :as email]
             [apps.clients.metadata :as metadata-client]
             [apps.persistence.app-groups :as app-groups]
             [apps.persistence.app-metadata :as persistence]
             [apps.persistence.categories :as db-categories]
             [apps.service.apps.de.categorization :as categorization]
+            [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.validation :as av]
             [clojure-commons.exception-util :as ex-util]))
 
@@ -111,6 +113,22 @@
    (if (empty? (select-keys app [:name :description :wiki_url :references :groups :extra]))
      (update-app-deleted-disabled app)
      (update-app-details app))))
+
+(defn bless-app
+  "This service marks an app as having been reviewed and certified by Discovery Environment
+   administrators."
+  [{username :shortUsername} app-id]
+  (transaction
+   (av/validate-app-existence app-id)
+   (metadata-client/update-avus username app-id (json/encode {:avus [c/certified-avu]}))))
+
+(defn remove-app-blessing
+  "This service marks an app as _not_ having been reviewed and certified by Discovery Environment
+   administrators."
+  [{username :shortUsername} app-id]
+  (transaction
+   (av/validate-app-existence app-id)
+   (metadata-client/delete-avus username [app-id] [c/certified-avu])))
 
 (defn add-category
   "Adds an App Category to a parent Category, as long as that parent does not contain any Apps."

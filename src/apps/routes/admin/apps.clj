@@ -70,6 +70,20 @@
       (ok (coerce! schema/AdminAppDetails
                    (apps/admin-update-app current-user system-id (assoc body :id app-id)))))
 
+    (POST "/blessing" []
+      :query [params SecuredQueryParams]
+      :summary schema/BlessAppSummary
+      :description schema/BlessAppDescription
+      (apps/admin-bless-app current-user system-id app-id)
+      (ok))
+
+    (DELETE "/blessing" []
+      :query [params SecuredQueryParams]
+      :summary schema/RemoveAppBlessingSummary
+      :description schema/RemoveAppBlessingDescription
+      (apps/admin-remove-app-blessing current-user system-id app-id)
+      (ok))
+
     (GET "/details" []
       :query [params SecuredQueryParams]
       :return schema/AdminAppDetails

@@ -143,3 +143,19 @@
   (let [duplicate-apps (list-duplicate-apps-by-id app-name app-ids)]
     (when-not (empty? duplicate-apps)
       (exists duplicate-app-existing-categories-msg :app_name app-name :apps duplicate-apps))))
+
+(def protected-attrs
+  #{(config/workspace-metadata-beta-attr-iri)
+    (config/workspace-metadata-communities-attr)
+    (config/workspace-metadata-certified-apps-attr)})
+
+(def ^:private protected-attr-msg
+  "Some of the selected attributes may only be modified by Discovery Environment administrators.")
+
+(defn validate-attrs-not-protected
+  [admin? avus]
+  (when-not admin?
+    (let [requested-attrs (set (map :attr avus))
+          forbidden-attrs (set (remove nil? (map protected-attrs requested-attrs)))]
+      (when-not (empty? forbidden-attrs)
+        (forbidden protected-attr-msg :attrs (vec forbidden-attrs))))))

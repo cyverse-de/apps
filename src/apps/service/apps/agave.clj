@@ -288,6 +288,14 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (adminBlessApp [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+  (adminRemoveAppBlessing [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (getAdminAppCategories [_ _]
     [])
 

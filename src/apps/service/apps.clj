@@ -366,6 +366,14 @@
     (.adminUpdateApp apps-client system-id body)
     (.getAppDetails apps-client system-id (:id body) true)))
 
+(defn admin-bless-app
+  [user system-id app-id]
+  (.adminBlessApp (get-apps-client user) system-id app-id))
+
+(defn admin-remove-app-blessing
+  [user system-id app-id]
+  (.adminRemoveAppBlessing (get-apps-client user) system-id app-id))
+
 (defn get-admin-app-categories
   [user params]
   (walk/prewalk (fn [x] (if (or (future? x) (delay? x)) (deref x) x))
