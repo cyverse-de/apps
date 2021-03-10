@@ -53,3 +53,12 @@
   "Loads information for the user with the given username."
   [username]
   (load-user-as-user username (:shortUsername current-user)))
+
+(def ^:private anonymous-username "anonymous")
+
+(defn anonymous?
+  "Returns true if the user is anonymous (that is, if no user is authenticated)."
+  ([]
+   (anonymous? current-user))
+  ([{username :shortUsername :or {username anonymous-username}}]
+   (= anonymous-username username)))

@@ -5,6 +5,7 @@
         [apps.persistence.app-listing]
         [apps.persistence.entities]
         [apps.persistence.tools :only [get-tools-by-id]]
+        [apps.user :only [anonymous?]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.config]
         [apps.util.conversions :only [to-long remove-nil-vals]]
@@ -316,7 +317,7 @@
   [{username :shortUsername :as user} admin? perms app-ids public-app-ids]
   (let [beta-ids-set        (app-ids->beta-ids-set username app-ids)
         certified-ids-set   (app-ids->certified-ids-set username app-ids)
-        limit-check-results (limits/load-limit-check-results user)]
+        limit-check-results (when-not (anonymous? user) (limits/load-limit-check-results user))]
     (fn [{:keys [id] :as app}]
       (-> (assoc app :can_run (app-can-run? app))
           (dissoc :tool_count :task_count :external_app_count :lower_case_name :job_types)
@@ -328,7 +329,8 @@
           (assoc :beta (contains? beta-ids-set id))
           (assoc :isBlessed (contains? certified-ids-set id))
           (assoc :is_public (contains? public-app-ids id))
-          (assoc :limitChecks (limits/format-app-limit-check-results limit-check-results app))
+          (assoc :limitChecks (when-not (anonymous? user)
+                                (limits/format-app-limit-check-results limit-check-results app)))
           (remove-nil-vals)))))
 
 (defn- filter-app-ids-by-community
