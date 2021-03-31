@@ -14,7 +14,7 @@
             :url "http://iplantcollaborative.org/sites/default/files/iPLANT-LICENSE.txt"}
   :manifest {"Git-Ref" ~(git-ref)}
   :uberjar-name "apps-standalone.jar"
-  :dependencies [[org.clojure/clojure "1.10.2"]
+  :dependencies [[org.clojure/clojure "1.10.3"]
                  [clj-http "3.11.0"]
                  [com.cemerick/url "0.1.1" :exclusions [com.cemerick/clojurescript.test]]
                  [com.google.guava/guava "23.0"]
@@ -30,7 +30,7 @@
                  [org.cyverse/metadata-client "3.1.1"]
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/common-cfg "2.8.1"]
-                 [org.cyverse/common-swagger-api "3.0.10"]
+                 [org.cyverse/common-swagger-api "3.1.0"]
                  [org.cyverse/cyverse-groups-client "0.1.8"]
                  [org.cyverse/permissions-client "2.8.1"]
                  [org.cyverse/service-logging "2.8.2"]
