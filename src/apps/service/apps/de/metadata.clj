@@ -15,8 +15,9 @@
         [apps.workspace :only [get-workspace]]
         [kameleon.uuids :only [uuidify]]
         [slingshot.slingshot :only [throw+ try+]])
-  (:require [apps.clients.notifications :as notifications]
+  (:require [apps.clients.email :as email-client]
             [apps.clients.metadata :as metadata-client]
+            [apps.clients.notifications :as notifications]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
             [apps.service.apps.communities :as communities]
