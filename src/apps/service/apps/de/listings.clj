@@ -688,3 +688,13 @@
   [user {app-id :app_id include-completed :include_completed :keys [requestor]}]
   (mapv (partial format-app-publication-request user)
         (amp/list-app-publication-requests app-id requestor include-completed)))
+
+(defn list-tools-in-untrusted-registries
+  "Lists tools in untrusted registries that are in use by an app."
+  [app-id]
+  (let [trusted-registries     (set (trusted-registries))
+        public-tool-ids        (set (perms-client/get-public-tool-ids))
+        private-tool?          #(not (contains? public-tool-ids (:id %)))
+        get-registry           (comp first #(string/split % #"/" 2) :image_name)
+        in-untrusted-registry? #(not (contains? trusted-registries (get-registry %)))]
+    (filter (every-pred in-untrusted-registry? private-tool?) (get-app-tools app-id))))

@@ -1,6 +1,7 @@
 (ns apps.clients.email
   (:require [apps.util.config :as config]
             [cemerick.url :as curl]
+            [cheshire.core :as json]
             [clojure.string :as string]
             [clj-http.client :as client]))
 
@@ -33,7 +34,7 @@
 
 (defn send-app-publication-request-email
   "Sends an app publication request email message to DE administrators."
-  [user app-name publication-request-id private-tool-ids]
+  [user app-name publication-request-id untrusted-tools]
   (send-email
    :to        (config/app-publication-request-email-dest-addr)
    :from-addr (config/app-publication-request-email-src-addr)
@@ -43,4 +44,4 @@
                :appname                 app-name
                :environment             (config/env-name)
                :apppublicationrequestid publication-request-id
-               :privatetoollist         (string/join "\n" private-tool-ids)}))
+               :privatetoollist         (json/encode untrusted-tools {:pretty true})}))

@@ -181,11 +181,15 @@
     (validate-system-id system-id)
     [false app-publishable-error])
 
+  (listToolsInUntrustedRegistries [_ system-id app-id]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (usesToolsInUntrustedRegistries [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (createPublicationRequest [_ system-id app-id]
+  (createPublicationRequest [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
