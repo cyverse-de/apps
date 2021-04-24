@@ -358,6 +358,21 @@
   [props config-valid configs]
   "apps.email.app-deletion.subject" "Your \"%s\" app has been administratively deprecated.")
 
+(cc/defprop-str app-publication-request-email-src-addr
+  "The source email address of the app publication request notification messages."
+  [props config-valid configs]
+  "apps.email.app-request.from")
+
+(cc/defprop-str app-publication-request-email-dest-addr
+  "The destination email address of the app publication request notification messages."
+  [props config-valid configs]
+  "apps.email.app-request.to")
+
+(cc/defprop-optstr app-publication-request-email-subject
+  "The subject to use for app publication request messages."
+  [props config-valid configs]
+  "apps.email.app-request.subject" "New Publication Request")
+
 (cc/defprop-optvec trusted-registries
   "The list of registries that we trust for public tools."
   [props config-valid configs]

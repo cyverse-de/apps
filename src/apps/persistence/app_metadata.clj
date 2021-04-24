@@ -419,7 +419,9 @@
     (insert :app_publication_request_statuses
             (values {:app_publication_request_id             request-id
                      :app_publication_request_status_code_id status-code-id
-                     :updater_id                             user-id}))))
+                     :updater_id                             user-id}))
+
+    request-id))
 
 (defn add-app-reference
   "Adds an App's reference to the database."

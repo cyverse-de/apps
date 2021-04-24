@@ -135,13 +135,17 @@
     (validate-system-id system-id)
     (app-validation/app-publishable? user (uuidify app-id) admin?))
 
+  (listToolsInUntrustedRegistries [_ system-id app-id]
+    (validate-system-id system-id)
+    (listings/list-tools-in-untrusted-registries (uuidify app-id)))
+
   (usesToolsInUntrustedRegistries [_ system-id app-id]
     (validate-system-id system-id)
     (app-validation/uses-tools-in-untrusted-registries? (uuidify app-id)))
 
-  (createPublicationRequest [_ system-id app]
+  (createPublicationRequest [_ system-id app untrusted-tools]
     (validate-system-id system-id)
-    (app-metadata/create-publication-request user (update app :id uuidify)))
+    (app-metadata/create-publication-request user (update app :id uuidify) untrusted-tools))
 
   (makeAppPublic [_ system-id app]
     (validate-system-id system-id)

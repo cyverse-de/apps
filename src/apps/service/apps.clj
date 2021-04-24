@@ -174,13 +174,17 @@
     (when-not publishable?
       (cxu/bad-request reason))))
 
+(defn list-tools-in-untrusted-registries
+  [user system-id app-id]
+  (.listToolsInUntrustedRegistries (get-apps-client user) system-id app-id))
+
 (defn uses-tools-in-untrusted-registries?
   [user system-id app-id]
   (.usesToolsInUntrustedRegistries (get-apps-client user) system-id app-id))
 
 (defn create-publication-request
-  [user system-id app]
-  (.createPublicationRequest (get-apps-client user) system-id app))
+  [user system-id app untrusted-tools]
+  (.createPublicationRequest (get-apps-client user) system-id app untrusted-tools))
 
 (defn make-app-public
   [user system-id app]

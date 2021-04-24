@@ -201,8 +201,8 @@
         :description schema/PublishAppDocs
         (apps/validate-app-publishable current-user system-id app-id)
         (let [body (assoc body :id app-id)]
-          (if (apps/uses-tools-in-untrusted-registries? current-user system-id app-id)
-            (accepted (apps/create-publication-request current-user system-id body))
+          (if-let [untrusted-tools (seq (apps/list-tools-in-untrusted-registries current-user system-id app-id))]
+            (accepted (apps/create-publication-request current-user system-id body untrusted-tools))
             (ok (apps/make-app-public current-user system-id body)))))
 
       (DELETE "/rating" []

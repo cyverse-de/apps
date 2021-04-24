@@ -15,8 +15,9 @@
         [apps.workspace :only [get-workspace]]
         [kameleon.uuids :only [uuidify]]
         [slingshot.slingshot :only [throw+ try+]])
-  (:require [apps.clients.notifications :as notifications]
+  (:require [apps.clients.email :as email-client]
             [apps.clients.metadata :as metadata-client]
+            [apps.clients.notifications :as notifications]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.app-metadata :as amp]
             [apps.service.apps.communities :as communities]
@@ -232,13 +233,17 @@
   (publish-app user app))
 
 (defn create-publication-request
-  [{username :username short-username :shortUsername :as user} {app-id :id :keys [name references avus] :as app}]
+  [{username :username short-username :shortUsername :as user}
+   {app-id :id app-name :name :keys [references avus] :as app}
+   untrusted-tools]
   (transaction
-   (amp/update-app app)
-   (when (:documentation app) (app-docs/add-app-docs user app-id app))
-   (when references (amp/set-app-references app-id references))
-   (publish-app-metadata short-username app-id (or name (amp/get-app-name app-id)) avus)
-   (amp/create-publication-request username app-id)
+   (let [app-name (or app-name (amp/get-app-name app-id))]
+    (amp/update-app app)
+    (when (:documentation app) (app-docs/add-app-docs user app-id app))
+    (when references (amp/set-app-references app-id references))
+    (publish-app-metadata short-username app-id app-name avus)
+    (let [request-id (amp/create-publication-request username app-id)]
+      (email-client/send-app-publication-request-email username app-name request-id untrusted-tools)))
    nil))
 
 (defn get-app
