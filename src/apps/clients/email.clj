@@ -20,8 +20,8 @@
 
 (defn send-app-deletion-notification
   "Sends an app deletion email message to the app integrator."
-  [integrator-name integrator-email app-name app-id]
-  (let [app-link (str (assoc (curl/url (config/ui-base-url)) :query {:type "apps" :app-id app-id}))
+  [integrator-name integrator-email app-name system-id app-id]
+  (let [app-link (str (curl/url (config/ui-base-url) "apps" system-id app-id "launch"))
         template-values {:name     integrator-name
                          :app_name app-name
                          :app_link app-link}]

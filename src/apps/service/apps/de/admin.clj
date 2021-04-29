@@ -64,7 +64,7 @@
   [{app-id :id app-name :name}]
   (let [{:keys [integrator_name integrator_email]} (persistence/get-integration-data-by-app-id app-id)]
     (when integrator_email
-      (email/send-app-deletion-notification integrator_name integrator_email app-name app-id))))
+      (email/send-app-deletion-notification integrator_name integrator_email app-name c/system-id app-id))))
 
 (defn delete-app
   "This service marks an existing app as deleted in the database."
