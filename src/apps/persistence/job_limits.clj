@@ -2,7 +2,8 @@
   "This namespace contains functions used to check job limits in the DE database. Technically speaking, these functions
    could be placed in `apps.persistence.jobs`, but we're moving from Korma to HoneySQL, and using a new namespace for
    the new method of accessing the database seemed prudent."
-  (:require [apps.persistence.jobs :as jp]
+  (:require [apps.constants :as c]
+            [apps.persistence.jobs :as jp]
             [apps.util.db :as db]
             [clojure.java.jdbc :as jdbc]
             [honeysql.core :as sql]
@@ -17,6 +18,7 @@
               [:job_steps :s] [:= :j.id :s.job_id]
               [:job_types :jt] [:= :s.job_type_id :jt.id])
       (h/where [:not-in :j.status jp/completed-status-codes]
+               [:= :jt.system_id c/interactive-system-id]
                [:= :u.username username])
       sql/format))
 
