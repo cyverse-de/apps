@@ -10,10 +10,15 @@
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.constants :as c]
+            [apps.util.db :as db]
             [cheshire.core :as cheshire]
+            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
+            [honeysql.core :as hsql]
+            [honeysql.helpers :as h]
             [korma.core :as sql]))
 
 (def de-job-type "DE")
@@ -662,6 +667,37 @@
           (fields :j.parent_id)
           (where (or {:job_id [in job-ids]}
                      {:job_id [in (child-job-subselect job-ids)]}))))
+
+(defn- leaf-job-ids
+  [job-ids]
+  (let [job-ids (db/sql-array "uuid" job-ids)]
+    (-> (h/select :id :parent_id)
+        (h/from :jobs)
+        (h/where [:or
+                  [:= :id (hsql/call :any job-ids)]
+                  [:= :parent_id (hsql/call :any job-ids)]]))))
+
+(defn list-representative-job-steps-query
+  [job-ids]
+  (-> {:with [[:leaf_job_ids (leaf-job-ids job-ids)]]}
+      (h/select :s.job_id
+                :l.parent_id
+                :s.step_number
+                :s.external_id
+                :s.start_date
+                :s.end_date
+                :s.status
+                [:t.name :job_type]
+                :s.app_step_number)
+      (h/from [:leaf_job_ids :l])
+      (h/join [:job_steps :s] [:= :l.id :s.job_id]
+              [:job_types :t] [:= :s.job_type_id :t.id])
+      hsql/format))
+
+(defn list-representative-job-steps*
+  [job-ids]
+  (db/with-transaction [tx]
+    (jdbc/query tx (list-representative-job-steps-query job-ids))))
 
 (defn list-jobs-to-delete
   [ids]
