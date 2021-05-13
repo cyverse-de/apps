@@ -32,7 +32,7 @@
                  [org.cyverse/common-cfg "2.8.1"]
                  [org.cyverse/common-swagger-api "3.1.0"]
                  [org.cyverse/cyverse-groups-client "0.1.8"]
-                 [org.cyverse/permissions-client "2.8.1"]
+                 [org.cyverse/permissions-client "2.8.2"]
                  [org.cyverse/service-logging "2.8.2"]
                  [org.cyverse/event-messages "0.0.1"]
                  [org.flatland/ordered "1.5.9"]
