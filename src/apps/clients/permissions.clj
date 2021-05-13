@@ -181,9 +181,10 @@
 (def unshare-tool (partial unshare-resource (rt-tool)))
 
 (defn- get-public-resource-ids [resource-type]
-  (->> (pc/get-subject-permissions-for-resource-type (client) "group" (ipg/grouper-user-group-id) resource-type false)
+  (->> (pc/get-abbreviated-subject-permissions-for-resource-type
+        (client) "group" (ipg/grouper-user-group-id) resource-type false)
        :permissions
-       (map (comp uuidify :name :resource))
+       (map (comp uuidify :resource_name))
        set))
 
 (def get-public-app-ids (partial get-public-resource-ids "app"))
