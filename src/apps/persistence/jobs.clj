@@ -650,7 +650,10 @@
           (where {:job_id job-id})
           (order :step_number)))
 
-(defn- leaf-job-ids
+(defn- related-job-ids-query
+  "Returns a query that can be used to obtain the ID and parent ID of every job in the database whose ID or parent ID is
+  in the given set of job IDs. This helps to force the representative job steps query to narrow its result set down
+  early in the query execution."
   [job-ids]
   (let [job-ids (db/sql-array "uuid" job-ids)]
     (-> (h/select :id :parent_id)
@@ -659,11 +662,42 @@
                   [:= :id (hsql/call :any job-ids)]
                   [:= :parent_id (hsql/call :any job-ids)]]))))
 
+(defn- batch-parent-job-ids-query
+  "Returns a query that extracts the IDs of batch parent jobs from the related_job_ids query, which should be available
+  as a common table expression (CTE). This exists just to make the representative_job_ids query a little cleaner."
+  [related-job-ids-alias]
+  (-> (h/select :id)
+      (h/from [related-job-ids-alias :p])
+      (h/where [:exists (-> (h/select :*)
+                            (h/from [related-job-ids-alias :c])
+                            (h/where [:= :p.id :c.parent_id]))])))
+
+(defn- representative-job-ids-query
+  "Returns a query that obtains the ID, parent ID, and representative job ID of every job in the related_job_ids query,
+  which should be available as a CTE. The representative job ID is the job ID whose steps represent the steps of every
+  job in a batch. For individual jobs, the representative job ID is the job ID itself. For batch jobs, the
+  representative job ID is the ID of any of the child jobs in the batch."
+  [related-job-ids-alias batch-parent-job-ids-alias]
+  {:union-all
+   [(-> (h/select :id :parent_id [:id :representative_id])
+        (h/from related-job-ids-alias)
+        (h/where [:not-in :id (-> (h/select :id) (h/from batch-parent-job-ids-alias))]))
+    (-> (h/select :id :parent_id
+                  [(-> (h/select :c.id)
+                       (h/from [related-job-ids-alias :c])
+                       (h/where [:= :c.parent_id :p.id])
+                       (h/limit 1))
+                   :representative_id])
+        (h/from [:related_job_ids :p])
+        (h/where [:in :id (-> (h/select :id) (h/from :batch_parent_job_ids))]))]})
+
 (defn list-representative-job-steps-query
   [job-ids]
-  (-> {:with [[:leaf_job_ids (leaf-job-ids job-ids)]]}
-      (h/select :s.job_id
-                :l.parent_id
+  (-> {:with [[:related_job_ids (related-job-ids-query job-ids)]
+              [:batch_parent_job_ids (batch-parent-job-ids-query :related_job_ids)]
+              [:representative_job_ids (representative-job-ids-query :related_job_ids :batch_parent_job_ids)]]}
+      (h/select [:r.id :job_id]
+                :r.parent_id
                 :s.step_number
                 :s.external_id
                 :s.start_date
@@ -671,8 +705,8 @@
                 :s.status
                 [:t.name :job_type]
                 :s.app_step_number)
-      (h/from [:leaf_job_ids :l])
-      (h/join [:job_steps :s] [:= :l.id :s.job_id]
+      (h/from [:representative_job_ids :r])
+      (h/join [:job_steps :s] [:= :r.representative_id :s.job_id]
               [:job_types :t] [:= :s.job_type_id :t.id])
       hsql/format))
 
