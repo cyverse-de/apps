@@ -63,7 +63,8 @@
   (->> (slurp (get-file-contents user path))
        (string/split-lines)
        (remove empty?)
-       (drop 1)))
+       (drop 1)
+       (mapv string/trim)))
 
 (defn create-directory
   [user path]
