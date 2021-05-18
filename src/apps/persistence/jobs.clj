@@ -688,8 +688,8 @@
                        (h/where [:= :c.parent_id :p.id])
                        (h/limit 1))
                    :representative_id])
-        (h/from [:related_job_ids :p])
-        (h/where [:in :id (-> (h/select :id) (h/from :batch_parent_job_ids))]))]})
+        (h/from [related-job-ids-alias :p])
+        (h/where [:in :id (-> (h/select :id) (h/from batch-parent-job-ids-alias))]))]})
 
 (defn list-representative-job-steps-query
   [job-ids]
