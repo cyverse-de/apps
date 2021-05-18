@@ -10,10 +10,15 @@
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.constants :as c]
+            [apps.util.db :as db]
             [cheshire.core :as cheshire]
+            [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
+            [honeysql.core :as hsql]
+            [honeysql.helpers :as h]
             [korma.core :as sql]))
 
 (def de-job-type "DE")
@@ -645,23 +650,73 @@
           (where {:job_id job-id})
           (order :step_number)))
 
-(defn- child-job-subselect
+(defn- related-job-ids-query
+  "Returns a query that can be used to obtain the ID and parent ID of every job in the database whose ID or parent ID is
+  in the given set of job IDs. This helps to force the representative job steps query to narrow its result set down
+  early in the query execution."
   [job-ids]
-  (subselect :jobs
-             (fields :id)
-             (where {:parent_id [in job-ids]})
-             (limit 1)))
+  (let [job-ids (db/sql-array "uuid" job-ids)]
+    (-> (h/select :id :parent_id)
+        (h/from :jobs)
+        (h/where [:or
+                  [:= :id (hsql/call :any job-ids)]
+                  [:= :parent_id (hsql/call :any job-ids)]]))))
+
+(defn- batch-parent-job-ids-query
+  "Returns a query that extracts the IDs of batch parent jobs from the related_job_ids query, which should be available
+  as a common table expression (CTE). This exists just to make the representative_job_ids query a little cleaner."
+  [related-job-ids-alias]
+  (-> (h/select :id)
+      (h/from [related-job-ids-alias :p])
+      (h/where [:exists (-> (h/select :*)
+                            (h/from [related-job-ids-alias :c])
+                            (h/where [:= :p.id :c.parent_id]))])))
+
+(defn- representative-job-ids-query
+  "Returns a query that obtains the ID, parent ID, and representative job ID of every job in the related-job-ids-alias query,
+  which should be available as a CTE. The representative job ID is the job ID whose steps represent the steps of every
+  job in a batch. For individual jobs, the representative job ID is the job ID itself. For batch jobs, the
+  representative job ID is the ID of any of the child jobs in the batch."
+  [related-job-ids-alias batch-parent-job-ids-alias]
+  {:union-all
+   [(-> (h/select :id :parent_id [:id :representative_id])
+        (h/from related-job-ids-alias)
+        (h/where [:not-in :id (-> (h/select :id) (h/from batch-parent-job-ids-alias))]))
+    (-> (h/select :id :parent_id
+                  [(-> (h/select :c.id)
+                       (h/from [related-job-ids-alias :c])
+                       (h/where [:= :c.parent_id :p.id])
+                       (h/limit 1))
+                   :representative_id])
+        (h/from [related-job-ids-alias :p])
+        (h/where [:in :id (-> (h/select :id) (h/from batch-parent-job-ids-alias))]))]})
+
+(defn list-representative-job-steps-query
+  [job-ids]
+  (-> {:with [[:related_job_ids (related-job-ids-query job-ids)]
+              [:batch_parent_job_ids (batch-parent-job-ids-query :related_job_ids)]
+              [:representative_job_ids (representative-job-ids-query :related_job_ids :batch_parent_job_ids)]]}
+      (h/select [:r.id :job_id]
+                :r.parent_id
+                :s.step_number
+                :s.external_id
+                :s.start_date
+                :s.end_date
+                :s.status
+                [:t.name :job_type]
+                :s.app_step_number)
+      (h/from [:representative_job_ids :r])
+      (h/join [:job_steps :s] [:= :r.representative_id :s.job_id]
+              [:job_types :t] [:= :s.job_type_id :t.id])
+      hsql/format))
 
 (defn list-representative-job-steps
   "Lists all of the job steps in a standalone job or all of the steps of one of the jobs in an HT batch. The purpose
    of this function is to ensure that steps of every job type that are used in a job are listed. The analysis listing
    code uses this function to determine whether or not a job can be shared."
   [job-ids]
-  (select (job-step-base-query)
-          (join :inner [:jobs :j] {:s.job_id :j.id})
-          (fields :j.parent_id)
-          (where (or {:job_id [in job-ids]}
-                     {:job_id [in (child-job-subselect job-ids)]}))))
+  (db/with-transaction [tx]
+    (jdbc/query tx (list-representative-job-steps-query job-ids))))
 
 (defn list-jobs-to-delete
   [ids]

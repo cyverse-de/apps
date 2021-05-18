@@ -41,8 +41,8 @@
 (defn- job-supports-sharing?
   [apps-client perms rep-steps {:keys [parent_id id]}]
   (and (nil? parent_id)
-       (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))
-       (= (get perms id) "own")))
+       (= (get perms id) "own")
+       (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))))
 
 (defn format-base-job
   [{:keys [parent_id id] :as job}]
@@ -70,7 +70,8 @@
   [{user-id :user_id :as job} rep-steps]
   (let [interactive? (fn [step] (= (:job_type step) jp/interactive-job-type))
         get-url      (fn [step] (str (interapps-url (url (config/interapps-base)) user-id (:external_id step))))]
-    (seq (map get-url (filter interactive? (rep-steps (:id job)))))))
+    (when-not (:is_batch job)
+      (seq (map get-url (filter interactive? (rep-steps (:id job))))))))
 
 (defn format-admin-job
   [rep-steps job]
@@ -108,7 +109,7 @@
         search-params    (util/default-search-params params :startdate default-sort-dir)
         types            (.getJobTypes apps-client)
         jobs             (list-jobs* user search-params types analysis-ids)
-        rep-steps        (group-by (some-fn :parent_id :job_id) (jp/list-representative-job-steps (mapv :id jobs)))
+        rep-steps        (group-by :job_id (jp/list-representative-job-steps (mapv :id jobs)))
         status-count     (future (count-job-statuses user params types analysis-ids))]
     {:analyses     (mapv (partial format-job apps-client perms rep-steps) jobs)
      :timestamp    (str (System/currentTimeMillis))

@@ -31,6 +31,11 @@
   [perms]
   (into {} (map (juxt (comp uuidify :name :resource) :permission_level) perms)))
 
+(defn- group-abbreviated-permissions
+  "Groups abbreviated permissions by resource ID. The resource ID must be a UUID."
+  [perms]
+  (into {} (map (juxt (comp uuidify :resource_name) :permission_level) perms)))
+
 (defn extract-error-message
   [body]
   ((some-fn :reason :message) (service/parse-json body)))
@@ -43,18 +48,18 @@
 (def register-private-analysis (partial register-private-resource (rt-analysis)))
 (def register-private-tool (partial register-private-resource (rt-tool)))
 
-(defn- filter-perms-response
+(defn- filter-abbreviated-perms-response
   [response filter-fn]
-  (group-permissions (filter filter-fn (:permissions response))))
+  (group-abbreviated-permissions (filter filter-fn (:permissions response))))
 
 (defn- load-resource-permissions*
   ([resource-type user filter-fn]
-   (filter-perms-response
-    (pc/get-subject-permissions-for-resource-type (client) "user" user resource-type true)
+   (filter-abbreviated-perms-response
+    (pc/get-abbreviated-subject-permissions-for-resource-type (client) "user" user resource-type true)
     filter-fn))
   ([resource-type user min-level filter-fn]
-   (filter-perms-response
-    (pc/get-subject-permissions-for-resource-type (client) "user" user resource-type true min-level)
+   (filter-abbreviated-perms-response
+    (pc/get-abbreviated-subject-permissions-for-resource-type (client) "user" user resource-type true min-level)
     filter-fn)))
 
 (defn- resource-id-filter
@@ -176,9 +181,10 @@
 (def unshare-tool (partial unshare-resource (rt-tool)))
 
 (defn- get-public-resource-ids [resource-type]
-  (->> (pc/get-subject-permissions-for-resource-type (client) "group" (ipg/grouper-user-group-id) resource-type false)
+  (->> (pc/get-abbreviated-subject-permissions-for-resource-type
+        (client) "group" (ipg/grouper-user-group-id) resource-type false)
        :permissions
-       (map (comp uuidify :name :resource))
+       (map (comp uuidify :resource_name))
        set))
 
 (def get-public-app-ids (partial get-public-resource-ids "app"))
