@@ -673,7 +673,7 @@
                             (h/where [:= :p.id :c.parent_id]))])))
 
 (defn- representative-job-ids-query
-  "Returns a query that obtains the ID, parent ID, and representative job ID of every job in the related_job_ids query,
+  "Returns a query that obtains the ID, parent ID, and representative job ID of every job in the related-job-ids-alias query,
   which should be available as a CTE. The representative job ID is the job ID whose steps represent the steps of every
   job in a batch. For individual jobs, the representative job ID is the job ID itself. For batch jobs, the
   representative job ID is the ID of any of the child jobs in the batch."
