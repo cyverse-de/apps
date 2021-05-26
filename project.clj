@@ -22,6 +22,7 @@
                  [honeysql "1.0.444"]
                  [medley "1.3.0"]
                  [metosin/compojure-api "1.1.13"]
+                 [org.cyverse/async-tasks-client "0.0.3"]
                  [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "3.0.6"]
                  [org.cyverse/debug-utils "2.8.1"]
