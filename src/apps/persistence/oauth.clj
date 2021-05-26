@@ -106,7 +106,16 @@
   "Stores state information for an OAuth authorization request."
   [username state-info]
   (let [id (UUID/randomUUID)]
-    (remove-prior-authorization-requests username)
+
+    ;; Removing existing authorization requests from the database prior to inserting a new one is causing a
+    ;; race condition where the authorization request that the user is actually using is being deleted before
+    ;; the OAuth2 callback comes in. Ultimately, we're going to want to add timestamps to the database table
+    ;; and periodically purge expired authorization requests. In the meantime, however, we can alleviate this
+    ;; problem by simply not removing prior authorization requests from the database. This will cause some
+    ;; cruft to accumulate in the database, but there won't be enough of it to cause any problems.
+    ;;
+    ;; (remove-prior-authorization-requests username)
+
     (insert-authorization-request id username state-info)
     (str id)))
 
