@@ -274,6 +274,10 @@
   [apps-client user job-ids params]
   (job-permissions/list-job-permissions apps-client user job-ids params))
 
+(defn validate-job-sharing-request-body
+  [apps-client user sharing-requests]
+  (job-sharing/validate-job-sharing-request-body apps-client user sharing-requests))
+
 (defn share-jobs
   [apps-client user sharing-requests]
   (job-sharing/share-jobs apps-client user sharing-requests))

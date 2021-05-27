@@ -187,6 +187,37 @@
   [apps-client user sharing-requests]
   (mapv (partial share-jobs-with-user apps-client user) sharing-requests))
 
+(defn- job-sharing-validation-response
+  [job-id job level & [failure-reason]]
+  (remove-nil-values
+   {:analysis_id   job-id
+    :analysis_name (get-job-name job-id job)
+    :permission    level
+    :ok            (nil? failure-reason)
+    :error         failure-reason}))
+
+(defn- validate-job-sharing-request
+  [apps-client sharer sharee {job-id :analysis_id level :permission}]
+  (if-let [job (jp/get-job-by-id job-id)]
+    (try+
+     (verify-not-subjob job)
+     (verify-accessible sharer job-id)
+     (verify-support apps-client job-id)
+     (verify-not-group sharee job-id)
+     (job-sharing-validation-response job-id job level)
+     (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (job-sharing-validation-response job-id job level failure-reason)))
+    (job-sharing-validation-response job-id nil level (job-sharing-msg :not-found job-id))))
+
+(defn- validate-subject-job-sharing-requests
+  [apps-client sharer {sharee :subject :keys [analyses]}]
+  {:subject  sharee
+   :analyses (mapv (partial validate-job-sharing-request apps-client sharer sharee) analyses)})
+
+(defn validate-job-sharing-request-body
+  [apps-client user sharing-requests]
+  (mapv (partial validate-subject-job-sharing-requests apps-client user) sharing-requests))
+
 (defn- unshare-output-folder
   [sharer {sharee :id} {:keys [result_folder_path]}]
   (try+

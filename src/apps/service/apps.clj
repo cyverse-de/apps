@@ -454,6 +454,10 @@
   [user job-ids params]
   (jobs/list-job-permissions (get-apps-client user) user job-ids params))
 
+(defn validate-job-sharing-request-body
+  [user sharing-requests]
+  {:sharing (jobs/validate-job-sharing-request-body (get-apps-client user) user sharing-requests)})
+
 (defn share-jobs
   [user sharing-requests]
   {:sharing (jobs/share-jobs (get-apps-client user) user sharing-requests)})
