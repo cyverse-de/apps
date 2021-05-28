@@ -156,13 +156,8 @@
 
 (defn- share-job
   [apps-client sharer sharee {job-id :analysis_id level :permission}]
-  (if-let [job (jp/get-job-by-id job-id)]
+  (let [job (jp/get-job-by-id job-id)]
     (try+
-     (verify-not-subjob job)
-     (verify-accessible sharer job-id)
-     (verify-support apps-client job-id)
-     (verify-not-group sharee job-id)
-
      (share-analysis job-id sharee level)
 
      (let [child-input-share-errs (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)
@@ -176,10 +171,7 @@
                             output-share-err-msg
                             app-share-err-msg))
      (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
-       (job-sharing-failure job-id job level failure-reason))
-     (catch [:type ::permission-load-failure] {:keys [reason]}
-       (job-sharing-failure job-id job level (job-sharing-msg :load-failure job-id reason))))
-    (job-sharing-failure job-id nil level (job-sharing-msg :not-found job-id))))
+       (job-sharing-failure job-id job level failure-reason)))))
 
 (defn- share-jobs-with-user
   [apps-client sharer {sharee :subject :keys [analyses]}]
@@ -222,6 +214,8 @@
    :analyses (mapv (partial validate-job-sharing-request apps-client sharer sharee) analyses)})
 
 (defn validate-job-sharing-request-body
+  "Performs cursory validations on a job sharing request body, returning a flag indicating whether or not the
+  validation passed along with validation responses for each sharing request."
   [apps-client user sharing-requests]
   ((juxt validation-passed? identity)
    (mapv (partial validate-subject-job-sharing-requests apps-client user) sharing-requests)))
@@ -254,13 +248,8 @@
 
 (defn- unshare-job
   [apps-client sharer sharee job-id]
-  (if-let [job (jp/get-job-by-id job-id)]
+  (let [job (jp/get-job-by-id job-id)]
     (try+
-     (verify-not-subjob job)
-     (verify-accessible sharer job-id)
-     (verify-support apps-client job-id)
-     (verify-not-group sharee job-id)
-
      (unshare-analysis job-id sharee)
 
      (let [child-input-unshare-errs (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)
@@ -271,9 +260,7 @@
                               (concat input-unshare-errs child-input-unshare-errs)
                               output-unshare-err-msg))
      (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
-       (job-unsharing-failure job-id job failure-reason))
-     (catch [:type ::permission-load-failure] {:keys [reason]}
-       (job-unsharing-failure job-id job (job-sharing-msg :load-failure job-id reason))))
+       (job-unsharing-failure job-id job failure-reason)))
     (job-unsharing-failure job-id nil (job-sharing-msg :not-found job-id))))
 
 (defn- unshare-jobs-with-subject
@@ -316,6 +303,8 @@
    :analyses (mapv (partial validate-job-unsharing-request apps-client sharer sharee) analyses)})
 
 (defn validate-job-unsharing-request-body
+  "Performs cursory validations on a job unsharing request body, returning a flag indicating whether or not the
+  validation passed along with validation responses for each sharing request."
   [apps-client user unsharing-requests]
   ((juxt validation-passed? identity)
    (mapv (partial validate-subject-job-unsharing-requests apps-client user) unsharing-requests)))
