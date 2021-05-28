@@ -282,6 +282,10 @@
   [apps-client user sharing-requests]
   (job-sharing/share-jobs apps-client user sharing-requests))
 
+(defn validate-job-unsharing-request-body
+  [apps-client user unsharing-requests]
+  (job-sharing/validate-job-unsharing-request-body apps-client user unsharing-requests))
+
 (defn unshare-jobs
   [apps-client user unsharing-requests]
   (job-sharing/unshare-jobs apps-client user unsharing-requests))

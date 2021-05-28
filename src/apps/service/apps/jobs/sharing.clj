@@ -13,6 +13,11 @@
             [clojure.string :as string]
             [clojure-commons.error-codes :as ce]))
 
+(defn- validation-passed?
+  "Takes a list of validation responses and returns a Boolean flag indicating whether or not the validation passed."
+  [validation-responses]
+  (every? :ok (mapcat :analyses validation-responses)))
+
 (defn- get-job-name
   [job-id {job-name :job_name}]
   (or job-name (str "analysis ID " job-id)))
@@ -194,7 +199,9 @@
     :analysis_name (get-job-name job-id job)
     :permission    level
     :ok            (nil? failure-reason)
-    :error         failure-reason}))
+    :error         (when failure-reason
+                     {:error_code ce/ERR_BAD_REQUEST
+                      :reason     failure-reason})}))
 
 (defn- validate-job-sharing-request
   [apps-client sharer sharee {job-id :analysis_id level :permission}]
@@ -216,7 +223,8 @@
 
 (defn validate-job-sharing-request-body
   [apps-client user sharing-requests]
-  (mapv (partial validate-subject-job-sharing-requests apps-client user) sharing-requests))
+  ((juxt validation-passed? identity)
+   (mapv (partial validate-subject-job-sharing-requests apps-client user) sharing-requests)))
 
 (defn- unshare-output-folder
   [sharer {sharee :id} {:keys [result_folder_path]}]
@@ -278,3 +286,36 @@
 (defn unshare-jobs
   [apps-client user unsharing-requests]
   (mapv (partial unshare-jobs-with-subject apps-client user) unsharing-requests))
+
+(defn- job-unsharing-validation-response
+  [job-id job & [failure-reason]]
+  (remove-nil-values
+   {:analysis_id   job-id
+    :analysis_name (get-job-name job-id job)
+    :ok            (nil? failure-reason)
+    :error         (when failure-reason
+                     {:error_code ce/ERR_BAD_REQUEST
+                      :reason     failure-reason})}))
+
+(defn- validate-job-unsharing-request
+  [apps-client sharer sharee job-id]
+  (if-let [job (jp/get-job-by-id job-id)]
+    (try+
+     (verify-not-subjob job)
+     (verify-accessible sharer job-id)
+     (verify-support apps-client job-id)
+     (verify-not-group sharee job-id)
+     (job-unsharing-validation-response job-id job)
+     (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (job-unsharing-validation-response job-id job failure-reason)))
+    (job-unsharing-validation-response job-id nil (job-sharing-msg :not-found job-id))))
+
+(defn- validate-subject-job-unsharing-requests
+  [apps-client sharer {sharee :subject :keys [analyses]}]
+  {:subject sharee
+   :analyses (mapv (partial validate-job-unsharing-request apps-client sharer sharee) analyses)})
+
+(defn validate-job-unsharing-request-body
+  [apps-client user unsharing-requests]
+  ((juxt validation-passed? identity)
+   (mapv (partial validate-subject-job-unsharing-requests apps-client user) unsharing-requests)))

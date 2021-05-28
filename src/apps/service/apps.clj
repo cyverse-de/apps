@@ -456,11 +456,17 @@
 
 (defn validate-job-sharing-request-body
   [user sharing-requests]
-  {:sharing (jobs/validate-job-sharing-request-body (get-apps-client user) user sharing-requests)})
+  (let [[passed? responses] (jobs/validate-job-sharing-request-body (get-apps-client user) user sharing-requests)]
+    [passed? {:sharing responses}]))
 
 (defn share-jobs
   [user sharing-requests]
   {:sharing (jobs/share-jobs (get-apps-client user) user sharing-requests)})
+
+(defn validate-job-unsharing-request-body
+  [user unsharing-requests]
+  (let [[passed? responses] (jobs/validate-job-unsharing-request-body (get-apps-client user) user unsharing-requests)]
+    [passed? {:unsharing responses}]))
 
 (defn unshare-jobs
   [user unsharing-requests]
