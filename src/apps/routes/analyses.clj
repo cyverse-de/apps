@@ -12,7 +12,7 @@
         [common-swagger-api.routes]                         ;; for :description-file
         [common-swagger-api.schema]
         [common-swagger-api.schema.apps :only [AppJobView]]
-        [ring.util.http-response :only [ok]])
+        [ring.util.http-response :only [ok bad-request]])
   (:require [apps.json :as json]
             [apps.routes.schemas.permission :as perms]
             [apps.service.apps :as apps]
@@ -78,7 +78,10 @@
     :return perms-schema/AnalysisSharingResponse
     :summary perms-schema/AnalysisSharingSummary
     :description perms-schema/AnalysisSharingDocs
-    (ok (apps/share-jobs current-user (:sharing body))))
+    (let [[passed? response-body] (apps/validate-job-sharing-request-body current-user body)]
+      (if passed?
+        (ok (assoc response-body :asyncTaskID (apps/share-jobs current-user body)))
+        (bad-request response-body))))
 
   (POST "/unsharing" []
     :query [params SecuredQueryParams]
@@ -86,7 +89,10 @@
     :return perms-schema/AnalysisUnsharingResponse
     :summary perms-schema/AnalysisUnsharingSummary
     :description perms-schema/AnalysisUnsharingDocs
-    (ok (apps/unshare-jobs current-user (:unsharing body))))
+    (let [[passed? response-body] (apps/validate-job-unsharing-request-body current-user body)]
+      (if passed?
+        (ok (assoc response-body :asyncTaskID (apps/unshare-jobs current-user body)))
+        (bad-request response-body))))
 
   (POST "/shredder" []
     :query [params SecuredQueryParams]

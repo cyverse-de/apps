@@ -50,6 +50,16 @@
   [sharer sharee responses]
   (notifications-for-sharee format-sharing-notifications* sharer sharee responses))
 
+(defn format-general-sharing-failure-notification
+  "Formats a notification indicating that a sharing request failed unexpectedly. This notification means that
+  there's a bug in the analysis sharing code."
+  [sharer async-task-id]
+  {:type    notification-type
+   :user    sharer
+   :subject "Analysis sharing request failed unexpectedly."
+   :message "Analysis sharing request failed unexpectedly. Please contact support."
+   :payload {:action share-action :asyncTaskID async-task-id}})
+
 (defn- format-unsharing-notifications*
   "Formats unsharing notifications for analyses."
   [sharer sharee responses]
@@ -62,3 +72,13 @@
   "Formats unsharing notifications for analyses."
   [sharer sharee responses]
   (notifications-for-sharee format-unsharing-notifications* sharer sharee responses))
+
+(defn format-general-unsharing-failure-notification
+  "Formats a notification indicating that an unsharing request failed unexpectedly. This notification means that
+  there's a bug in the analysis unsharing code."
+  [sharer async-task-id]
+  {:type    notification-type
+   :user    sharer
+   :subject "Analysis unsharing request failed unexpectedly."
+   :message "Analysis unsharing request failed unexpectedly. Please contact support."
+   :payload {:action unshare-action :asyncTaskID async-task-id}})
