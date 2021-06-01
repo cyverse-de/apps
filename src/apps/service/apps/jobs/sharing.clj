@@ -209,7 +209,7 @@
 
 (defn share-jobs
   [apps-client {username :shortUsername} sharing-requests]
-  (-> (log/spy :warn (async-tasks/new-task "analysis-sharing" username sharing-requests))
+  (-> (async-tasks/new-task "analysis-sharing" username sharing-requests)
       (async-tasks/run-async-thread share-jobs-thread "analysis-sharing")
       (string/replace #".*/tasks/" "")
       uuidify))
