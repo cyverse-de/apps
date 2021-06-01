@@ -179,11 +179,19 @@
        (map guarded-send-notification)
        dorun))
 
+(defn send-general-analysis-sharing-failure-notification
+  [sharer async-task-id]
+  (guarded-send-notification (jsn/format-general-sharing-failure-notification sharer async-task-id)))
+
 (defn send-analysis-unsharing-notifications
   [sharer sharee responses]
   (->> (jsn/format-unsharing-notifications sharer sharee responses)
        (map guarded-send-notification)
        dorun))
+
+(defn send-general-analysis-unsharing-failure-notification
+  [sharer async-task-id]
+  (guarded-send-notification (jsn/format-general-unsharing-failure-notification sharer async-task-id)))
 
 (defn send-tool-sharing-notifications
   [sharer sharee responses]

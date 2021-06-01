@@ -1,7 +1,8 @@
 (ns apps.util.config
   (:use [kameleon.uuids :only [uuidify]]
         [slingshot.slingshot :only [throw+]])
-  (:require [cemerick.url :as curl]
+  (:require [async-tasks-client.core :as async-tasks-client]
+            [cemerick.url :as curl]
             [cheshire.core :as cheshire]
             [clojure-commons.config :as cc]
             [clojure.tools.logging :as log]
@@ -291,6 +292,11 @@
   [props config-valid configs]
   "apps.analyses.base-url" "http://analyses")
 
+(cc/defprop-optstr async-tasks-base
+  "The base URL to use when connecting to the async-tasks services."
+  [props config-valid configs]
+  "apps.async-tasks.base-url" "http://async-tasks")
+
 (def data-info-base
   (memoize
    (fn []
@@ -444,6 +450,9 @@
 
 (def metadata-client
   (memoize #(metadata-client/new-metadata-client (metadata-base))))
+
+(def async-tasks-client
+  (memoize #(async-tasks-client/new-async-tasks-client (async-tasks-base))))
 
 (defn app-resource-type
   "The app resource type name. This value is hard-coded for now, but placed in this namespace so that we can easily

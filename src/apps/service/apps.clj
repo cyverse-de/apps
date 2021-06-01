@@ -1,78 +1,20 @@
 (ns apps.service.apps
   (:use [apps.constants :only [de-system-id]]
-        [apps.service.oauth :only [authorization-uri has-access-token]]
+        [apps.service.apps-client :only [get-apps-client get-apps-client-for-username]]
         [apps.util.conversions :only [remove-nil-vals]]
         [apps.util.db :only [transaction]]
-        [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [try+ throw+]]
+        [slingshot.slingshot :only [try+]]
         [service-logging.thread-context :only [with-logging-context]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
             [clojure.walk :as walk]
-            [mescal.de :as agave]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
-            [apps.persistence.oauth :as op]
-            [apps.protocols]
-            [apps.service.apps.agave]
-            [apps.service.apps.combined]
-            [apps.service.apps.de]
             [apps.service.apps.jobs :as jobs]
             [apps.user :as user]
             [apps.util.config :as config]
             [apps.util.json :as json-util]
             [service-logging.thread-context :as tc]))
-
-(defn- authorization-redirect
-  [server-info username state-info]
-  (throw+ {:type     :clojure-commons.exception/temporary-redirect
-           :location (authorization-uri server-info username state-info)}))
-
-(defn- get-access-token
-  [{:keys [api-name] :as server-info} state-info username]
-  (if-let [token-info (op/get-access-token api-name username)]
-    (assoc (merge server-info token-info)
-           :token-callback  (partial op/store-access-token api-name username)
-           :reauth-callback (partial authorization-redirect server-info username state-info))
-    (authorization-redirect server-info username state-info)))
-
-(defn- get-agave-client
-  [state-info username]
-  (let [server-info (config/agave-oauth-settings)]
-    (agave/de-agave-client-v2
-     (config/agave-base-url)
-     (config/agave-storage-system)
-     (partial get-access-token (config/agave-oauth-settings) state-info username)
-     (config/agave-jobs-enabled)
-     :timeout  (config/agave-read-timeout)
-     :page-len (config/agave-page-length))))
-
-(defn- get-agave-apps-client
-  [state-info {:keys [username] :as user}]
-  (apps.service.apps.agave.AgaveApps.
-   (get-agave-client state-info username)
-   (partial has-access-token (config/agave-oauth-settings) username)
-   user))
-
-(defn- get-apps-client-list
-  [user state-info]
-  (vector (apps.service.apps.de.DeApps. user)
-          (when (and user (config/agave-enabled))
-            (get-agave-apps-client state-info user))))
-
-(defn- get-apps-client
-  ([user]
-   (get-apps-client user ""))
-  ([user state-info]
-   (apps.service.apps.combined.CombinedApps.
-    (remove nil? (get-apps-client-list user state-info))
-    user)))
-
-(defn- get-apps-client-for-username
-  ([username]
-   (get-apps-client-for-username username ""))
-  ([username state-info]
-   (get-apps-client (user/load-user-as-user username username) state-info)))
 
 (defn get-app-categories
   [user params]
@@ -454,13 +396,21 @@
   [user job-ids params]
   (jobs/list-job-permissions (get-apps-client user) user job-ids params))
 
+(defn validate-job-sharing-request-body
+  [user sharing-requests]
+  (jobs/validate-job-sharing-request-body (get-apps-client user) user sharing-requests))
+
 (defn share-jobs
   [user sharing-requests]
-  {:sharing (jobs/share-jobs (get-apps-client user) user sharing-requests)})
+  (jobs/share-jobs (get-apps-client user) user sharing-requests))
+
+(defn validate-job-unsharing-request-body
+  [user unsharing-requests]
+  (jobs/validate-job-unsharing-request-body (get-apps-client user) user unsharing-requests))
 
 (defn unshare-jobs
   [user unsharing-requests]
-  {:unsharing (jobs/unshare-jobs (get-apps-client user) user unsharing-requests)})
+  (jobs/unshare-jobs (get-apps-client user) user unsharing-requests))
 
 (defn list-system-ids
   [user]

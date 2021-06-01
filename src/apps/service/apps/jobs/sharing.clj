@@ -1,8 +1,11 @@
 (ns apps.service.apps.jobs.sharing
-  (:use [clojure-commons.core :only [remove-nil-values]]
+  (:use [apps.service.apps-client :only [get-apps-client-for-username]]
+        [clojure-commons.core :only [remove-nil-values]]
         [clostache.parser :only [render]]
+        [kameleon.uuids :only [uuidify]]
         [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.data-info :as data-info]
+  (:require [apps.clients.async-tasks :as async-tasks]
+            [apps.clients.data-info :as data-info]
             [apps.clients.iplant-groups :as ipg]
             [apps.clients.permissions :as perms-client]
             [apps.clients.notifications :as cn]
@@ -11,7 +14,15 @@
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.util.service :as service]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clojure-commons.error-codes :as ce]))
+
+(def default-failure-reason "unexpected error")
+
+(defn- validation-passed?
+  "Takes a list of validation responses and returns a Boolean flag indicating whether or not the validation passed."
+  [validation-responses]
+  (every? :ok (mapcat :analyses validation-responses)))
 
 (defn- get-job-name
   [job-id {job-name :job_name}]
@@ -37,13 +48,13 @@
     :success       true}))
 
 (defn- job-sharing-failure
-  [job-id job level reason]
+  [job-id job level & [reason]]
   {:analysis_id   job-id
    :analysis_name (get-job-name job-id job)
    :permission    level
    :success       false
    :error         {:error_code ce/ERR_BAD_REQUEST
-                   :reason     reason}})
+                   :reason     (or reason default-failure-reason)}})
 
 (defn- job-unsharing-success
   [job-id job input-unshare-errs output-unshare-err-msg]
@@ -55,12 +66,12 @@
     :success       true}))
 
 (defn- job-unsharing-failure
-  [job-id job reason]
+  [job-id job & [reason]]
   {:analysis_id   job-id
    :analysis_name (get-job-name job-id job)
    :success       false
    :error         {:error_code ce/ERR_BAD_REQUEST
-                   :reason     reason}})
+                   :reason     (or reason default-failure-reason)}})
 
 (defn- job-sharing-msg
   ([reason-code job-id]
@@ -68,7 +79,7 @@
   ([reason-code job-id detail]
    (render (job-sharing-formats reason-code)
            {:analysis-id job-id
-            :detail (or detail "unexpected error")})))
+            :detail (or detail default-failure-reason)})))
 
 (defn- job-sharing-error
   [failure-reason]
@@ -150,20 +161,17 @@
   (process-job-inputs (partial share-input-file sharer sharee) apps-client job))
 
 (defn- share-job
-  [apps-client sharer sharee {job-id :analysis_id level :permission}]
-  (if-let [job (jp/get-job-by-id job-id)]
+  [update-fn apps-client sharer sharee {job-id :analysis_id level :permission}]
+  (let [job-id (uuidify job-id)
+        job    (jp/get-job-by-id job-id)]
     (try+
-     (verify-not-subjob job)
-     (verify-accessible sharer job-id)
-     (verify-support apps-client job-id)
-     (verify-not-group sharee job-id)
-
      (share-analysis job-id sharee level)
 
      (let [child-input-share-errs (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)
            input-share-errs       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
            output-share-err-msg   (share-output-folder sharer sharee job)
            app-share-err-msg      (share-app-for-job apps-client sharer sharee job-id job)]
+       (update-fn (format "shared job ID %s with %s" job-id sharee))
        (job-sharing-success job-id
                             job
                             level
@@ -171,21 +179,76 @@
                             output-share-err-msg
                             app-share-err-msg))
      (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (update-fn (format "failed to share job ID %s with %s: %s" job-id sharee failure-reason))
        (job-sharing-failure job-id job level failure-reason))
-     (catch [:type ::permission-load-failure] {:keys [reason]}
-       (job-sharing-failure job-id job level (job-sharing-msg :load-failure job-id reason))))
-    (job-sharing-failure job-id nil level (job-sharing-msg :not-found job-id))))
+     (catch Object _
+       (update-fn (format "failed to share job ID %s with %s: %s" job-id sharee (str (:throwable &throw-context))))
+       (job-sharing-failure job-id job level)))))
 
 (defn- share-jobs-with-user
-  [apps-client sharer {sharee :subject :keys [analyses]}]
-  (let [responses (mapv (partial share-job apps-client sharer sharee) analyses)]
+  [update-fn apps-client sharer {sharee :subject :keys [analyses]}]
+  (let [responses (mapv (partial share-job update-fn apps-client sharer sharee) analyses)]
     (cn/send-analysis-sharing-notifications (:shortUsername sharer) sharee responses)
     {:subject  sharee
      :analyses responses}))
 
+(defn- share-jobs-thread
+  [async-task-id]
+  (let [{:keys [username data]} (async-tasks/get-by-id async-task-id)]
+    (try+
+     (async-tasks/add-status async-task-id {:status "running"})
+     (let [apps-client (get-apps-client-for-username username)
+           user        (.getUser apps-client)]
+       (mapv (partial share-jobs-with-user (async-tasks/update-fn async-task-id "running") apps-client user)
+             (:sharing data))
+       (async-tasks/add-completed-status async-task-id {:status "completed"}))
+     (catch Object _
+       (log/error (:throwable &throw-context) "failed processing async task" async-task-id)
+       (async-tasks/add-completed-status async-task-id {:status "failed"})
+       (cn/send-general-analysis-sharing-failure-notification username async-task-id)))))
+
 (defn share-jobs
-  [apps-client user sharing-requests]
-  (mapv (partial share-jobs-with-user apps-client user) sharing-requests))
+  [apps-client {username :shortUsername} sharing-requests]
+  (-> (async-tasks/new-task "analysis-sharing" username sharing-requests)
+      (async-tasks/run-async-thread share-jobs-thread "analysis-sharing")
+      (string/replace #".*/tasks/" "")
+      uuidify))
+
+(defn- job-sharing-validation-response
+  [job-id job level & [failure-reason]]
+  (remove-nil-values
+   {:analysis_id   job-id
+    :analysis_name (get-job-name job-id job)
+    :permission    level
+    :ok            (nil? failure-reason)
+    :error         (when failure-reason
+                     {:error_code ce/ERR_BAD_REQUEST
+                      :reason     failure-reason})}))
+
+(defn- validate-job-sharing-request
+  [apps-client sharer sharee {job-id :analysis_id level :permission}]
+  (if-let [job (jp/get-job-by-id job-id)]
+    (try+
+     (verify-not-subjob job)
+     (verify-accessible sharer job-id)
+     (verify-support apps-client job-id)
+     (verify-not-group sharee job-id)
+     (job-sharing-validation-response job-id job level)
+     (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (job-sharing-validation-response job-id job level failure-reason)))
+    (job-sharing-validation-response job-id nil level (job-sharing-msg :not-found job-id))))
+
+(defn- validate-subject-job-sharing-requests
+  [apps-client sharer {sharee :subject :keys [analyses]}]
+  {:subject  sharee
+   :analyses (mapv (partial validate-job-sharing-request apps-client sharer sharee) analyses)})
+
+(defn validate-job-sharing-request-body
+  "Performs cursory validations on a job sharing request body, returning a flag indicating whether or not the
+  validation passed along with validation responses for each sharing request."
+  [apps-client user request-body]
+  ((juxt (comp validation-passed? :sharing) identity)
+   (update request-body :sharing (partial mapv (partial validate-subject-job-sharing-requests apps-client user)))))
 
 (defn- unshare-output-folder
   [sharer {sharee :id} {:keys [result_folder_path]}]
@@ -214,6 +277,67 @@
   (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job))
 
 (defn- unshare-job
+  [update-fn apps-client sharer sharee job-id]
+  (let [job-id (uuidify job-id)
+        job    (jp/get-job-by-id job-id)]
+    (try+
+     (unshare-analysis job-id sharee)
+
+     (let [child-input-unshare-errs (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)
+           input-unshare-errs       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
+           output-unshare-err-msg   (unshare-output-folder sharer sharee job)]
+       (update-fn (format "unshared job ID %s with %s" job-id sharee))
+       (job-unsharing-success job-id
+                              job
+                              (concat input-unshare-errs child-input-unshare-errs)
+                              output-unshare-err-msg))
+     (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (update-fn (format "failed to unshare job ID %s with %s: %s" job-id sharee failure-reason))
+       (job-unsharing-failure job-id job failure-reason))
+     (catch Object _
+       (update-fn (format "failed to unshare job ID %s with %s: %s" job-id sharee (str (:throwable &throw-context))))
+       (job-unsharing-failure job-id job)))))
+
+(defn- unshare-jobs-with-user
+  [update-fn apps-client sharer {sharee :subject :keys [analyses]}]
+  (let [responses (mapv (partial unshare-job update-fn apps-client sharer sharee) analyses)]
+    (cn/send-analysis-unsharing-notifications (:shortUsername sharer) sharee responses)
+    {:subject  sharee
+     :analyses responses}))
+
+(defn- unshare-jobs-thread
+  [async-task-id]
+  (let [{:keys [username data]} (async-tasks/get-by-id async-task-id)]
+    (try+
+     (async-tasks/add-status async-task-id {:status "running"})
+     (let [apps-client (get-apps-client-for-username username)
+           user        (.getUser apps-client)]
+       (mapv (partial unshare-jobs-with-user (async-tasks/update-fn async-task-id "running") apps-client user)
+             (:unsharing data))
+       (async-tasks/add-completed-status async-task-id {:status "completed"}))
+     (catch Object _
+       (log/error (:throwable &throw-context) "failed processing async task" async-task-id)
+       (async-tasks/add-completed-status async-task-id {:status "failed"})
+       (cn/send-general-analysis-unsharing-failure-notification username async-task-id)))))
+
+(defn unshare-jobs
+  [apps-client {username :shortUsername} sharing-requests]
+  (-> (async-tasks/new-task "analysis-unsharing" username sharing-requests)
+      (async-tasks/run-async-thread unshare-jobs-thread "analysis-unsharing")
+      (string/replace #".*/tasks/" "")
+      uuidify))
+
+(defn- job-unsharing-validation-response
+  [job-id job & [failure-reason]]
+  (remove-nil-values
+   {:analysis_id   job-id
+    :analysis_name (get-job-name job-id job)
+    :ok            (nil? failure-reason)
+    :error         (when failure-reason
+                     {:error_code ce/ERR_BAD_REQUEST
+                      :reason     failure-reason})}))
+
+(defn- validate-job-unsharing-request
   [apps-client sharer sharee job-id]
   (if-let [job (jp/get-job-by-id job-id)]
     (try+
@@ -221,29 +345,19 @@
      (verify-accessible sharer job-id)
      (verify-support apps-client job-id)
      (verify-not-group sharee job-id)
-
-     (unshare-analysis job-id sharee)
-
-     (let [child-input-unshare-errs (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)
-           input-unshare-errs       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
-           output-unshare-err-msg   (unshare-output-folder sharer sharee job)]
-       (job-unsharing-success job-id
-                              job
-                              (concat input-unshare-errs child-input-unshare-errs)
-                              output-unshare-err-msg))
+     (job-unsharing-validation-response job-id job)
      (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
-       (job-unsharing-failure job-id job failure-reason))
-     (catch [:type ::permission-load-failure] {:keys [reason]}
-       (job-unsharing-failure job-id job (job-sharing-msg :load-failure job-id reason))))
-    (job-unsharing-failure job-id nil (job-sharing-msg :not-found job-id))))
+       (job-unsharing-validation-response job-id job failure-reason)))
+    (job-unsharing-validation-response job-id nil (job-sharing-msg :not-found job-id))))
 
-(defn- unshare-jobs-with-subject
+(defn- validate-subject-job-unsharing-requests
   [apps-client sharer {sharee :subject :keys [analyses]}]
-  (let [responses (mapv (partial unshare-job apps-client sharer sharee) analyses)]
-    (cn/send-analysis-unsharing-notifications (:shortUsername sharer) sharee responses)
-    {:subject  sharee
-     :analyses responses}))
+  {:subject sharee
+   :analyses (mapv (partial validate-job-unsharing-request apps-client sharer sharee) analyses)})
 
-(defn unshare-jobs
-  [apps-client user unsharing-requests]
-  (mapv (partial unshare-jobs-with-subject apps-client user) unsharing-requests))
+(defn validate-job-unsharing-request-body
+  "Performs cursory validations on a job unsharing request body, returning a flag indicating whether or not the
+  validation passed along with validation responses for each unsharing request."
+  [apps-client user request-body]
+  ((juxt (comp validation-passed? :unsharing) identity)
+   (update request-body :unsharing (partial mapv (partial validate-subject-job-unsharing-requests apps-client user)))))
