@@ -40,7 +40,7 @@
   (swagger-routes
    {:ui config/docs-uri
     :options {:ui {:validatorUrl nil}}
-    :data {:info {:title "Welcome to Zombo.com!!!!!"
+    :data {:info {:title "Discovery Environment Apps API"
                   :description "Documentation for the Discovery Environment Apps REST API"
                   :version "2.8.1"}
            :tags [{:name "service-info", :description "Service Status Information"}
