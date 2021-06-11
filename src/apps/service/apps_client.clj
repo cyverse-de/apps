@@ -7,14 +7,13 @@
             [apps.service.oauth :refer [authorization-uri has-access-token]]
             [apps.user :as user]
             [apps.util.config :as config]
-            [clojure-commons.exception :as cx]
             [clojure-commons.exception-util :as cxu]
             [mescal.de :as agave]
             [slingshot.slingshot :refer [throw+]]))
 
 (defn- authorization-redirect
   [server-info username state-info]
-  (throw+ {:type     :cx/temporary-redirect
+  (throw+ {:type     :clojure-commons.exception/temporary-redirect
            :location (authorization-uri server-info username state-info)}))
 
 (defn- get-access-token
