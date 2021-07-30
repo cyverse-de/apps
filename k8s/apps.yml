@@ -45,7 +45,7 @@ spec:
                 path: apps.properties
       containers:
       - name: apps
-        image: discoenv/apps
+        image: harbor.cyverse.org/de/apps
         resources:
           requests:
             cpu: "100m"
