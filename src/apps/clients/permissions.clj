@@ -64,7 +64,7 @@
 
 (defn- resource-id-filter
   [resource-ids]
-  (comp (set resource-ids) uuidify :name :resource))
+  (comp (set resource-ids) uuidify :resource_name))
 
 (defn- load-resource-permissions
   ([resource-type user]
