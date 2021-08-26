@@ -5,6 +5,7 @@
         [kameleon.uuids :only [uuid]])
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [clojure-commons.file-utils :as ft]
             [kameleon.db :as db]
             [apps.clients.data-info :as data-info]
             [apps.clients.permissions :as perms-client]
@@ -201,7 +202,9 @@
 
 (defn- pre-process-submission
   [{:keys [config] :as submission} user input-params-by-id input-paths-by-id path-stats]
-  (assoc submission :job_config (process-job-config config user input-params-by-id input-paths-by-id path-stats)))
+  (assoc submission
+         :job_config (process-job-config config user input-params-by-id input-paths-by-id path-stats)
+         :user_home  (ft/path-join (config/irods-home) (:shortUsername user))))
 
 (defn build-input-path-map
   [property-values input-params-by-id]
