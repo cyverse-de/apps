@@ -18,9 +18,10 @@
   [image-name]
   (let [parts (string/split image-name #"/")]
     (loop [n (count parts)]
-      (if-let [reg (get-registry (string/join "/" (take n parts)))]
-        reg
-        (recur (- n 1))))))
+      (when-not (= n 0)
+        (if-let [reg (get-registry (string/join "/" (take n parts)))]
+          reg
+          (recur (- n 1)))))))
 
 (defn add-registry
   [name username password]
