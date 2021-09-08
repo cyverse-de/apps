@@ -2,7 +2,8 @@
   (:use [apps.persistence.entities :only [docker-registries]]
         [apps.util.db :only [transaction]]
         [korma.core :exclude [update]])
-  (:require [korma.core :as sql]))
+  (:require [korma.core :as sql]
+            [clojure.string :as string]))
 
 (defn get-registries
   []
@@ -12,6 +13,14 @@
   [name]
   (first (select docker-registries
                  (where {:name name}))))
+
+(defn get-registry-from-image
+  [image-name]
+  (let [parts (string/split image-name #"/")]
+    (loop [n (count parts)]
+      (if-let [reg (get-registry (string/join "/" (take n parts)))]
+        reg
+        (recur (- n 1))))))
 
 (defn add-registry
   [name username password]
