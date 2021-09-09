@@ -9,7 +9,7 @@
                                           ports
                                           data-containers
                                           interapps-proxy-settings]]
-        [apps.persistence.docker-registries :only [get-registry]]
+        [apps.persistence.docker-registries :only [get-registry-from-image]]
         [apps.persistence.tools :only [update-tool]]
         [apps.util.assertions :only [assert-not-nil]]
         [apps.util.conversions :only [remove-nil-vals remove-empty-vals]]
@@ -32,8 +32,7 @@
                     (json/encode (select-keys registry [:username :password])))))
 
 (defn- auth-info [image-name]
-  (let [registry-name (string/replace image-name #"/?(?!.*/).*$" "")
-        registry (get-registry registry-name)]
+  (let [registry (get-registry-from-image image-name)]
     (when registry
       (encode-auth registry))))
 
