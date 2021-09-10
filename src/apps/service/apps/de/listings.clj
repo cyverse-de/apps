@@ -28,9 +28,10 @@
             [clojure.set :as set]
             [clojure.string :as string]))
 
-(def my-public-apps-id (uuidify "00000000-0000-0000-0000-000000000000"))
-(def shared-with-me-id (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))
-(def trash-category-id (uuidify "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"))
+(def my-public-apps-id  (uuidify "00000000-0000-0000-0000-000000000000"))
+(def shared-with-me-id  (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))
+(def trash-category-id  (uuidify "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"))
+(def cyverse-blessed-id (uuidify "CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC"))
 
 (def default-sort-params
   {:sort-field :lower_case_name
@@ -89,6 +90,11 @@
         (assoc :total app_count)
         (dissoc :app_count :parent_id :workspace_id :description))))
 
+(defn- app-ids->certified-ids-set
+  "Filters the given list of app-ids into a set containing the ids of apps marked as `certified`"
+  [username app-ids]
+  (set (metadata-client/filter-by-avus username app-ids [(dissoc c/certified-avu :unit)])))
+
 (defn format-trash-category
   "Formats the virtual group for the admin's deleted and orphaned apps category."
   [_ _ params]
@@ -134,13 +140,32 @@
   [_ workspace params]
   (list-shared-apps workspace (workspace-favorites-app-category-index) params))
 
+(defn format-cyverse-blessed-category
+  "Formats the virtual group for apps that are certified as blessed"
+  [user _ params]
+   {:system_id de-system-id
+    :id        cyverse-blessed-id
+    :name      "CyVerse Blessed"
+    :is_public false
+    :total     (future (count-apps-for-user nil nil {:app-ids (app-ids->certified-ids-set (:username user) (:app-ids params))}))})
+
+(defn list-cyverse-blessed-apps
+  [user workspace params]
+   (let [blessed-ids (app-ids->certified-ids-set (:username user) (:app-ids params))]
+     (list-apps-by-id workspace
+                      (workspace-favorites-app-category-index)
+                      blessed-ids
+                      params)))
+
 (def ^:private virtual-group-fns
-  {my-public-apps-id {:format-group   format-my-public-apps-group
-                      :format-listing list-my-public-apps}
-   trash-category-id {:format-group   format-trash-category
-                      :format-listing list-trashed-apps}
-   shared-with-me-id {:format-group   format-shared-with-me-category
-                      :format-listing list-apps-shared-with-me}})
+  {my-public-apps-id  {:format-group   format-my-public-apps-group
+                       :format-listing list-my-public-apps}
+   trash-category-id  {:format-group   format-trash-category
+                       :format-listing list-trashed-apps}
+   shared-with-me-id  {:format-group   format-shared-with-me-category
+                       :format-listing list-apps-shared-with-me}
+   cyverse-blessed-id {:format-group   format-cyverse-blessed-category
+                       :format-listing list-cyverse-blessed-apps}})
 
 (def ^:private virtual-group-ids (set (keys virtual-group-fns)))
 
@@ -305,11 +330,6 @@
   (let [beta-avu {:attr (workspace-metadata-beta-attr-iri)
                   :value (workspace-metadata-beta-value)}]
     (set (metadata-client/filter-by-avus username app-ids [beta-avu]))))
-
-(defn- app-ids->certified-ids-set
-  "Filters the given list of app-ids into a set containing the ids of apps marked as `certified`"
-  [username app-ids]
-  (set (metadata-client/filter-by-avus username app-ids [(dissoc c/certified-avu :unit)])))
 
 (defn- get-app-listing-formatter
   "Returns a function that can be used to format the listing for a single app. Using a higher order function for this
