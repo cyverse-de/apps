@@ -31,7 +31,7 @@
 (def my-public-apps-id  (uuidify "00000000-0000-0000-0000-000000000000"))
 (def shared-with-me-id  (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))
 (def trash-category-id  (uuidify "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"))
-(def cyverse-blessed-id (uuidify "CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC"))
+(def featured-apps-id   (uuidify "CCCCCCCC-CCCC-CCCC-CCCC-CCCCCCCCCCCC"))
 
 (def default-sort-params
   {:sort-field :lower_case_name
@@ -140,16 +140,16 @@
   [_ workspace params]
   (list-shared-apps workspace (workspace-favorites-app-category-index) params))
 
-(defn format-cyverse-blessed-category
+(defn format-featured-apps-category
   "Formats the virtual group for apps that are certified as blessed"
   [user _ params]
    {:system_id de-system-id
-    :id        cyverse-blessed-id
-    :name      "CyVerse Blessed"
+    :id        featured-apps-id
+    :name      "Featured Apps"
     :is_public false
     :total     (future (count-apps-for-user nil nil {:app-ids (app-ids->certified-ids-set (:username user) (:app-ids params))}))})
 
-(defn list-cyverse-blessed-apps
+(defn list-featured-apps
   [user workspace params]
    (let [blessed-ids (app-ids->certified-ids-set (:username user) (:app-ids params))]
      (list-apps-by-id workspace
@@ -164,8 +164,8 @@
                        :format-listing list-trashed-apps}
    shared-with-me-id  {:format-group   format-shared-with-me-category
                        :format-listing list-apps-shared-with-me}
-   cyverse-blessed-id {:format-group   format-cyverse-blessed-category
-                       :format-listing list-cyverse-blessed-apps}})
+   featured-apps-id   {:format-group   format-featured-apps-category
+                       :format-listing list-featured-apps}})
 
 (def ^:private virtual-group-ids (set (keys virtual-group-fns)))
 
