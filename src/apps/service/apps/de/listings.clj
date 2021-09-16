@@ -142,20 +142,19 @@
 
 (defn format-featured-apps-category
   "Formats the virtual group for apps that are certified as blessed"
-  [user _ params]
+  [_ _ params]
    {:system_id de-system-id
     :id        featured-apps-id
     :name      "Featured Apps"
     :is_public false
-    :total     (future (count-apps-for-user nil nil {:app-ids (app-ids->certified-ids-set (:username user) (:app-ids params))}))})
+    :total     (future (count-apps-for-user nil nil params))})
 
 (defn list-featured-apps
-  [user workspace params]
-   (let [blessed-ids (app-ids->certified-ids-set (:username user) (:app-ids params))]
-     (list-apps-by-id workspace
-                      (workspace-favorites-app-category-index)
-                      blessed-ids
-                      params)))
+  [_ workspace params]
+   (list-apps-by-id workspace
+                    (workspace-favorites-app-category-index)
+                    (:app-ids params)
+                    params))
 
 (def ^:private virtual-group-fns
   {my-public-apps-id  {:format-group   format-my-public-apps-group
@@ -415,13 +414,21 @@
   (let [metadata-filter (partial filter-app-ids-by-community username community-id)]
     (apps-listing-with-metadata-filter user params metadata-filter admin?)))
 
+(defn- augment-virtual-group-listing-params
+  [user group-id params]
+  (if (= group-id featured-apps-id)
+    (let [blessed-ids (app-ids->certified-ids-set (:username user) (:app-ids params))]
+      (assoc params :app-ids blessed-ids))
+    params))
+
 (defn- list-apps-in-virtual-group
   "Formats a listing for a virtual group."
   [user workspace group-id perms {:keys [public-app-ids] :as params}]
   (when-let [format-fns (virtual-group-fns group-id)]
-    (let [app-listing ((:format-listing format-fns) user workspace params)
+    (let [augmented-params (augment-virtual-group-listing-params user group-id params)
+          app-listing ((:format-listing format-fns) user workspace augmented-params)
           format-app  (get-app-listing-formatter user false perms (map :id app-listing) public-app-ids)]
-      (-> ((:format-group format-fns) user workspace params)
+      (-> ((:format-group format-fns) user workspace augmented-params)
           (assoc :apps (map format-app app-listing))
           (realize-group)))))
 
