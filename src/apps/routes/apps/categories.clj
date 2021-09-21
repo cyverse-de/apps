@@ -9,6 +9,7 @@
          :only [OntologyClassIRIParam
                 OntologyHierarchy
                 OntologyHierarchyList]]
+        [apps.constants :only [de-system-id]]
         [apps.routes.params :only [SecuredQueryParams]]
         [apps.routes.schemas.app :only [AppListingPagingParams]]
         [apps.routes.schemas.app.category
@@ -31,6 +32,14 @@
     :summary schema/AppCategoryListingSummary
     :description schema/AppCategoryListingDocs
     (ok (apps/get-app-categories current-user params)))
+
+  (GET "/featured" []
+    :query [params AppListingPagingParams]
+    :return schema/AppCategoryAppListing
+    :summary schema/FeaturedAppListingSummary
+    :description schema/FeaturedAppListingDocs
+    (ok (coerce! schema/AppCategoryAppListing
+                 (apps/list-apps-in-category current-user de-system-id listings/featured-apps-id params))))
 
   (GET "/:system-id/:category-id" []
     :path-params [system-id :- SystemId
