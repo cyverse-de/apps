@@ -4,7 +4,7 @@
 
 (defn log-json
   [description m]
-  (->> (json/encode m {:pretty true})
+  (->> (json/encode m)
        (str description ": ")
        (log/info))
   m)
