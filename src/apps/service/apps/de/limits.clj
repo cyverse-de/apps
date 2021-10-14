@@ -1,5 +1,6 @@
 (ns apps.service.apps.de.limits
   (:require [apps.clients.analyses :as analyses]
+            [apps.clients.requests :as requests]
             [apps.persistence.job-limits :as job-limits]
             [clojure-commons.core :refer [remove-nil-values]]))
 
@@ -21,9 +22,11 @@
   [user]
   (let [limit-info      (future (analyses/get-concurrent-job-limit (:shortUsername user)))
         job-count       (job-limits/count-concurrent-vice-jobs (:username user))
+        requests-list   (requests/list-vice-requests (:shortUsername user))
+        pending-request (not (empty? (:requests requests-list)))
         max-jobs        (:concurrent_jobs @limit-info)
         using-default?  (:is_default @limit-info)
-        additional-info {:runningJobs job-count :maxJobs max-jobs :usingDefaultSetting using-default?}
+        additional-info {:runningJobs job-count :maxJobs max-jobs :usingDefaultSetting using-default? :pendingRequest pending-request}
         format-result   (get-limit-check-result-formatter "CONCURRENT_VICE_ANALYSES" additional-info)]
     (cond
       (and (<= max-jobs 0) using-default?)
