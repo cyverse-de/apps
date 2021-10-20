@@ -74,7 +74,7 @@
   (if (seq app-ids)
     (if (and orphans (seq public-app-ids))
       (where query (or {:id [in app-ids]}
-                       (and {:id [not-in (seq public-app-ids)]}
+                       (and {:id [not-in (sequence public-app-ids)]}
                             (get-app-listing-orphaned-condition))))
       (where query {:id [in app-ids]}))
     query))
@@ -115,7 +115,7 @@
       (where (or {:app_category_app.app_category_id
                   [in (get-all-group-ids-subselect app-group-id)]}
                  {:integrator_username username
-                  :id                  [in (seq public-app-ids)]}))))
+                  :id                  [in (sequence public-app-ids)]}))))
 
 (defn- add-public-apps-by-user-where-clause
   "Adds a where clause to an analysis listing query to restrict app results to
@@ -416,9 +416,9 @@
   [query public-app-ids]
   (where query
          (or {:deleted true
-              :id      [in (seq public-app-ids)]}
+              :id      [in (sequence public-app-ids)]}
              (and (get-app-listing-orphaned-condition)
-                  {:id [not-in (seq public-app-ids)]}))))
+                  {:id [not-in (sequence public-app-ids)]}))))
 
 (defn count-deleted-and-orphaned-apps
   "Counts the number of deleted, public apps, plus apps that are not listed under any category."
