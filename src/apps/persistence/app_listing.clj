@@ -350,17 +350,6 @@
                  {:id [in pre-matched-app-ids]}
                  (get-deployed-component-search-subselect search_term))))))
 
-(defn- add-app-category-where-clause
-  "Adds a where clause to a base App listing query to restrict results to apps
-   in all public groups and groups under the given workspace_id, only if `app-ids` is empty."
-  [base-listing-query workspace_id {:keys [app-ids]}]
-  (if (empty? app-ids)
-    (-> base-listing-query
-        (join :app_category_app {:app_category_app.app_id :app_listing.id})
-        (where {:app_category_app.app_category_id
-                [in (get-public-group-ids-subselect workspace_id)]}))
-    base-listing-query))
-
 (defn count-apps-for-user
   "Counts Apps in all public groups and groups under the given workspace_id.
    If search_term is not empty, results are limited to apps that contain search_term in their name,
