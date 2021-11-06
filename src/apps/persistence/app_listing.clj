@@ -179,6 +179,7 @@
   (fields listing-query
           :id
           :name
+          :version
           :lower_case_name
           :description
           :integrator_name
