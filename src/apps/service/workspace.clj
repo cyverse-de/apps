@@ -1,5 +1,6 @@
 (ns apps.service.workspace
-  (:use [apps.util.db :only [transaction]])
+  (:use [apps.user :only [append-username-suffix]]
+        [apps.util.db :only [transaction]])
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.persistence.workspace :as wp]))
 
@@ -19,9 +20,9 @@
 (defn list-workspaces
   "Lists workspaces matching the provided parameters."
   [{usernames :username}]
-  {:workspaces (map format-workspace (wp/list-workspaces usernames))})
+  {:workspaces (map format-workspace (wp/list-workspaces (map append-username-suffix usernames)))})
 
 (defn delete-workspaces
   "Deletes workspaces matching the provided parameters."
   [{usernames :username}]
-  (wp/delete-workspaces usernames))
+  (wp/delete-workspaces (map append-username-suffix usernames)))

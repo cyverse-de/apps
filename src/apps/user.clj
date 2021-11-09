@@ -10,6 +10,12 @@
     :dynamic true}
   current-user nil)
 
+(defn append-username-suffix [username]
+  (let [suffix (str "@" (uid-domain))]
+    (if (string/ends-with? username suffix)
+      username
+      (str username suffix))))
+
 (defn user-from-attributes
   [user-attributes]
   (log/debug user-attributes)
@@ -19,7 +25,7 @@
                :error "Invalid user credentials provided."
                :user (select-keys user-attributes [:username :shortUsername :first-name :last-name :email])}))
     (-> (select-keys user-attributes [:password :email :first-name :last-name])
-        (assoc :username (str uid "@" (uid-domain))
+        (assoc :username (append-username-suffix uid)
                :shortUsername uid))))
 
 (defmacro with-user
@@ -42,7 +48,7 @@
   (let [short-username        (string/replace username #"@.*" "")
         short-act-as-username (string/replace act-as-username #"@.*" "")
         user-info             (ipg/lookup-subject short-act-as-username short-username)]
-    {:username      (str short-username "@" (uid-domain))
+    {:username      (append-username-suffix short-username)
      :password      nil
      :email         (:email user-info)
      :shortUsername short-username
