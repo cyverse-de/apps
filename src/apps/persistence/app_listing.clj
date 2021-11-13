@@ -131,7 +131,7 @@
   (subselect [:app_steps :s]
              (join [:tasks :t] {:s.task_id :t.id})
              (join [:job_types :jt] {:t.job_type_id :jt.id})
-             (where {:s.app_id :app_listing.id
+             (where {:s.app_version_id :app_listing.version_id
                      :jt.name  app-type})))
 
 (defn- add-app-type-where-clause
