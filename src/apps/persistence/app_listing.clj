@@ -189,7 +189,6 @@
           :wiki_url
           :average_rating
           :total_ratings
-          :is_public
           :step_count
           :tool_count
           :external_app_count
