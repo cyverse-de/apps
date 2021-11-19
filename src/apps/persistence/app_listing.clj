@@ -1,6 +1,5 @@
 (ns apps.persistence.app-listing
-  (:use [apps.persistence.app-groups :only [get-visible-root-app-group-ids]]
-        [apps.persistence.app-search :only [count-matching-app-ids find-matching-app-ids]]
+  (:use [apps.persistence.app-search :only [count-matching-app-ids find-matching-app-ids]]
         [apps.persistence.entities]
         [apps.util.conversions :only [date->timestamp]]
         [apps.util.db :only [add-date-limits-where-clause]]
@@ -309,45 +308,6 @@
                       (add-date-limits-where-clause query-opts)
                       (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id)")))
            :job_count_failed]))
-
-(defn- get-public-group-ids-subselect
-  "Gets a subselect that fetches the workspace app_categories ID, public root
-   group IDs, and their subgroup IDs with the stored procedure
-   app_category_hierarchy_ids."
-  [workspace_id]
-  (let [root_app_ids (get-visible-root-app-group-ids workspace_id)
-        select-ids-fn #(str "SELECT * FROM app_category_hierarchy_ids('" % "')")
-        union_select_ids (str/join
-                          " UNION "
-                          (map select-ids-fn root_app_ids))]
-    (raw (str "(" union_select_ids ")"))))
-
-(defn- get-deployed-component-search-subselect
-  "Gets a subselect that fetches deployed components with names matching the
-   given search_term, inside an exists check, for each app in the main select."
-  [search_term]
-  (sqlfn* :exists
-          (subselect
-           :tool_listing
-           (where {:app_listing.id
-                   :tool_listing.app_id})
-           (where {(sqlfn lower :tool_listing.name)
-                   [like (sqlfn lower search_term)]}))))
-
-(defn- add-search-term-where-clauses
-  "Adds where clauses to a base App search query to restrict results to apps that
-   contain search_term in the app name, app description, app integrator name, or
-   the tool name."
-  [base-listing-query search_term pre-matched-app-ids]
-  (if (empty? search_term)
-    base-listing-query
-    (let [search_term (str "%" (format-query-wildcards search_term) "%")]
-      (where base-listing-query
-             (or {(sqlfn lower :name)            [like (sqlfn lower search_term)]}
-                 {(sqlfn lower :description)     [like (sqlfn lower search_term)]}
-                 {(sqlfn lower :integrator_name) [like (sqlfn lower search_term)]}
-                 {:id [in pre-matched-app-ids]}
-                 (get-deployed-component-search-subselect search_term))))))
 
 (defn count-apps-for-user
   "Counts Apps in all public groups and groups under the given workspace_id.

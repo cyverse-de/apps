@@ -19,12 +19,6 @@
   [workspace-id]
   (select workspace (where (or {:is_public true} {:id workspace-id}))))
 
-(defn get-visible-root-app-group-ids
-  "Gets the list of internal root app group identifiers that are visible to the
-   user with the given workspace identifier."
-  [workspace-id]
-  (map :root_category_id (get-visible-workspaces workspace-id)))
-
 (defn get-app-category
   "Retrieves an App category by its ID."
   [app_group_id]
