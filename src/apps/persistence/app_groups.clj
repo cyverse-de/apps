@@ -3,8 +3,7 @@
         [apps.util.db :only [sql-array transaction]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
-  (:require [kameleon.uuids :refer [uuid]]
-            [korma.core :as sql]))
+  (:require [korma.core :as sql]))
 
 (defn get-app-group-hierarchy
   "Gets the app group hierarchy rooted at the node with the given identifier."
@@ -18,12 +17,6 @@
    identifier."
   [workspace-id]
   (select workspace (where (or {:is_public true} {:id workspace-id}))))
-
-(defn get-visible-root-app-group-ids
-  "Gets the list of internal root app group identifiers that are visible to the
-   user with the given workspace identifier."
-  [workspace-id]
-  (map :root_category_id (get-visible-workspaces workspace-id)))
 
 (defn get-app-category
   "Retrieves an App category by its ID."
