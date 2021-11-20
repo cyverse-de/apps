@@ -105,6 +105,13 @@
   [app-id]
   (assert-not-nil [:app-id app-id] (app-listing/get-app-listing (uuidify app-id))))
 
+(defn get-app-latest-version
+  "Retrieves the latest version field from the app listing view in the database."
+  [app-id]
+  (-> app-id
+      get-app
+      :version_id))
+
 (defn- user-id-subselect [username]
   (subselect :users
              (fields :id)
@@ -780,8 +787,8 @@
 
 (defn load-app-steps
   [app-id]
-  (select [:apps :a]
-          (join [:app_steps :s] {:a.id :s.app_id})
+  (select [:app_versions :v]
+          (join [:app_steps :s] {:s.app_version_id :v.id})
           (join [:tasks :t] {:s.task_id :t.id})
           (join [:job_types :jt] {:t.job_type_id :jt.id})
           (fields [:s.id              :step_id]
@@ -790,7 +797,7 @@
                   [:jt.name           :job_type]
                   [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
-          (where {:a.id (uuidify app-id)})
+          (where {:v.id (-> app-id uuidify get-app-latest-version)})
           (order :step :ASC)))
 
 (defn- mapping-base-query

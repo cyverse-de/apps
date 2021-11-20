@@ -126,10 +126,10 @@
        (mapv add-default-value)))
 
 (defn load-hidden-params
-  [app-id]
+  [app-version-id]
   (mapv add-default-value
         (-> (params-base-query)
             (join :inner [:app_steps :s] {:p.task_id :s.task_id})
-            (where {:s.app_id     app-id
-                    :p.is_visible false})
+            (where {:s.app_version_id app-version-id
+                    :p.is_visible     false})
             select)))
