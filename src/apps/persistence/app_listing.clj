@@ -179,6 +179,7 @@
           :id
           :name
           :version
+          :version_id
           :lower_case_name
           :description
           :integrator_name
