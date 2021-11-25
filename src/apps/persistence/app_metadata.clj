@@ -267,14 +267,17 @@
 
 (defn get-app-tools
   "Loads information about the tools associated with an app."
-  [app-id]
+  ([app-id]
+   (get-app-tools app-id (get-app-latest-version app-id)))
+  ([app-id version-id]
   (select (get-tool-listing-base-query)
           (join :container_images {:tool_listing.container_images_id :container_images.id})
           (fields [:container_images.name       :image_name]
                   [:container_images.tag        :image_tag]
                   [:container_images.url        :image_url]
                   [:container_images.deprecated :deprecated])
-          (where {:app_id app-id})))
+          (where {:app_id         app-id
+                  :app_version_id version-id}))))
 
 (defn get-app-notification-types
   "Loads information about the notification types to use for an app."
