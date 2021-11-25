@@ -105,6 +105,13 @@
   [app-id]
   (assert-not-nil [:app-id app-id] (app-listing/get-app-listing (uuidify app-id))))
 
+(defn get-app-latest-version
+  "Retrieves the latest version field from the app listing view in the database."
+  [app-id]
+  (-> app-id
+      get-app
+      :version_id))
+
 (defn- user-id-subselect [username]
   (subselect :users
              (fields :id)
@@ -260,14 +267,17 @@
 
 (defn get-app-tools
   "Loads information about the tools associated with an app."
-  [app-id]
+  ([app-id]
+   (get-app-tools app-id (get-app-latest-version app-id)))
+  ([app-id version-id]
   (select (get-tool-listing-base-query)
           (join :container_images {:tool_listing.container_images_id :container_images.id})
           (fields [:container_images.name       :image_name]
                   [:container_images.tag        :image_tag]
                   [:container_images.url        :image_url]
                   [:container_images.deprecated :deprecated])
-          (where {:app_id app-id})))
+          (where {:app_id         app-id
+                  :app_version_id version-id}))))
 
 (defn get-app-notification-types
   "Loads information about the notification types to use for an app."

@@ -8,17 +8,19 @@
 
 (defn- get-references
   "Returns a list of references from the database for the given app ID."
-  [app-id]
-  (map :reference_text (dp/get-app-references app-id)))
+  [app-version-id]
+  (map :reference_text (dp/get-app-references app-version-id)))
 
 (defn- get-app-docs*
   "Retrieves app documentation."
   [app-id]
-  (if-let [docs (dp/get-documentation app-id)]
-    (assoc docs :references (get-references app-id))
-    (throw+ {:type   :clojure-commons.exception/not-found
-             :error  "App documentation not found"
-             :app_id app-id})))
+  (let [app-version-id (ap/get-app-latest-version app-id)
+        docs           (dp/get-documentation app-version-id)]
+    (when-not docs
+      (throw+ {:type   :clojure-commons.exception/not-found
+               :error  "App documentation not found"
+               :app_id app-id}))
+    (assoc docs :references (get-references app-version-id))))
 
 (defn get-app-docs
   "Retrieves documentation details for the given app ID."
@@ -43,10 +45,16 @@
       (de-validation/verify-app-permission user app "write")))
   (edit-app-docs user app-id docs))
 
+(defn has-docs?
+  "Determines whether or not an app has docs already."
+  [app-id]
+  (when (dp/get-documentation (ap/get-app-latest-version app-id))
+    true))
+
 (defn add-app-docs
   "Adds an App's documentation to the database."
   [{:keys [username]} app-id {docs :documentation}]
-  (when-let [current-docs (dp/get-documentation app-id)]
+  (when (has-docs? app-id)
     (throw+ {:type   :clojure-commons.exception/exists
              :error  "App already has documentation"
              :app_id app-id}))
@@ -60,16 +68,3 @@
     (when-not (cv/user-owns-app? user app)
       (de-validation/verify-app-permission user (ap/get-app app-id) "write")))
   (add-app-docs user app-id docs))
-
-(defn upsert-app-docs
-  "Either updates or adds app documentation."
-  [{:keys [username]} app-id {docs :documentation}]
-  (if-let [current-docs (dp/get-documentation app-id)]
-    (dp/edit-documentation (v/get-valid-user-id username) docs app-id)
-    (dp/add-documentation (v/get-valid-user-id username) docs app-id)))
-
-(defn has-docs?
-  "Determines whether or not an app has docs already."
-  [app-id]
-  (when (dp/get-documentation app-id)
-    true))

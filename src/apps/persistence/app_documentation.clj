@@ -5,12 +5,12 @@
 
 (defn get-app-references
   "Retrieves references for the given app ID."
-  [app-id]
-  (select app_references (where {:app_id app-id})))
+  [app-version-id]
+  (select app_references (where {:app_version_id app-version-id})))
 
 (defn get-documentation
   "Retrieves documentation details for the given app ID."
-  [app-id]
+  [app-version-id]
   (first
    (select :app_documentation
            (join [:users :creators]
@@ -23,7 +23,7 @@
                    :modified_on
                    [:creators.username :created_by]
                    [:editors.username :modified_by])
-           (where {:app_id app-id}))))
+           (where {:app_version_id app-version-id}))))
 
 (defn add-documentation
   "Inserts an App's documentation into the database."

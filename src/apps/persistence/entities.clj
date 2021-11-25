@@ -1,7 +1,7 @@
 (ns apps.persistence.entities
   (:use [korma.core :exclude [update]]))
 
-(declare users collaborator requestor workspace app_categories apps app_references integration_data
+(declare users collaborator requestor workspace app_categories apps app_versions app_steps app_references integration_data
          tools tool_test_data_files output_mapping input_mapping tasks job_types inputs outputs
          task_parameters info_type data_formats multiplicity parameter_groups parameters
          parameter_values parameter_types value_type validation_rules validation_rule_arguments
@@ -37,15 +37,19 @@
 
 ;; An app.
 (defentity apps
-  (belongs-to integration_data)
+  (has-many app_versions {:fk :app_id})
   (many-to-many app_categories :app_category_app
                 {:lfk :app_id
                  :rfk :app_category_id})
-  (many-to-many tasks :app_steps
-                {:lfk :app_id
-                 :rfk :task_id})
-  (has-many app_references {:fk :app_id})
   (has-many ratings {:fk :app_id}))
+
+;; Versions of an app.
+(defentity app_versions
+  (belongs-to integration_data)
+  (has-many app_references {:fk :app_version_id})
+  (many-to-many tasks :app_steps
+                {:lfk :app_version_id
+                 :rfk :task_id}))
 
 ;; References associated with an app.
 (defentity app_references)
@@ -55,7 +59,7 @@
 
 ;; Information about who integrated an app or a deployed component.
 (defentity integration_data
-  (has-many apps)
+  (has-many app_versions)
   (has-many tools))
 
 (defentity data-containers
@@ -236,11 +240,6 @@
 (defentity ratings
   (belongs-to users {:fk :user_id})
   (belongs-to apps {:fk :app_id}))
-
-;; A view for listing rating information.
-(defentity rating_listing
-  (belongs-to apps {:fk :app_id})
-  (belongs-to users {:fk :user_id}))
 
 ;; Database version entries.
 (defentity version
