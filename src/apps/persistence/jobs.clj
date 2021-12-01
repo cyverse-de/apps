@@ -295,24 +295,26 @@
       (add-internal-app-clause include-hidden)))
 
 (defn- count-jobs-of-types-query
-  [username filter include-hidden types accessible-ids]
-  (-> (select* (add-job-query-filter-clause (count-jobs-base include-hidden) username filter))
-      (where {:j.deleted false})
-      (where {:j.id (sqlfn-any-array "uuid" accessible-ids)})
-      (where (not (exists (job-type-subselect types))))))
+  [username filter include-hidden include-deleted types accessible-ids]
+  (as-> (select* (add-job-query-filter-clause (count-jobs-base include-hidden) username filter)) q
+    (if-not include-deleted
+      (where q {:j.deleted false})
+      q)
+    (where q {:j.id (sqlfn-any-array "uuid" accessible-ids)})
+    (where q (not (exists (job-type-subselect types))))))
 
 (defn count-jobs-of-types
   "Counts the number of undeleted jobs of the given types in the database for a user."
-  [username filter include-hidden types accessible-ids]
-  (-> (count-jobs-of-types-query username filter include-hidden types accessible-ids)
+  [username filter include-hidden include-deleted types accessible-ids]
+  (-> (count-jobs-of-types-query username filter include-hidden include-deleted types accessible-ids)
       (select)
       (first)
       (:count)))
 
 (defn count-jobs-of-statuses
   "Counts the number of undeleted jobs of the given types grouped by statuses in the database for a user."
-  [username filter include-hidden types accessible-ids]
-  (-> (count-jobs-of-types-query username filter include-hidden types accessible-ids)
+  [username filter include-hidden include-deleted types accessible-ids]
+  (-> (count-jobs-of-types-query username filter include-hidden include-deleted types accessible-ids)
       (fields :j.status)
       (group :j.status)
       (select)))
@@ -393,16 +395,18 @@
 
 (defn list-jobs-of-types
   "Gets a list of jobs that contain only steps of the given types."
-  [username search-params types accessible-ids]
-  (-> (select* (add-job-query-filter-clause (job-base-query) username (:filter search-params)))
-      (where {:j.deleted false})
-      (where {:j.id (sqlfn-any-array "uuid" accessible-ids)})
-      (where (not (exists (job-type-subselect types))))
-      (add-internal-app-clause (:include-hidden search-params))
-      (add-order search-params)
-      (offset (nil-if-zero (:offset search-params)))
-      (limit (nil-if-zero (:limit search-params)))
-      (select)))
+  [username {:keys [include-deleted] :as search-params} types accessible-ids]
+  (as-> (select* (add-job-query-filter-clause (job-base-query) username (:filter search-params))) q
+    (if-not include-deleted
+      (where q {:j.deleted false})
+      q)
+    (where q {:j.id (sqlfn-any-array "uuid" accessible-ids)})
+    (where q (not (exists (job-type-subselect types))))
+    (add-internal-app-clause q (:include-hidden search-params))
+    (add-order q search-params)
+    (offset q (nil-if-zero (:offset search-params)))
+    (limit q (nil-if-zero (:limit search-params)))
+    (select q)))
 
 (defn list-jobs-by-id
   "Gets a listing of jobs with the given identifiers."
