@@ -48,7 +48,7 @@
   [{:keys [parent_id id] :as job}]
   (remove-nil-vals
    {:app_description (:app_description job)
-    :app_id          (:app_id job)
+    :app_id          (or (:app_id job) "unknown")
     :app_name        (:app_name job)
     :description     (:description job)
     :enddate         (job-timestamp (:end_date job))
@@ -94,12 +94,12 @@
   (jp/list-jobs-of-types username search-params types analysis-ids))
 
 (defn- count-jobs
-  [{:keys [username]} {:keys [filter include-hidden]} types analysis-ids]
-  (jp/count-jobs-of-types username filter include-hidden types analysis-ids))
+  [{:keys [username]} {:keys [filter include-hidden include-deleted]} types analysis-ids]
+  (jp/count-jobs-of-types username filter include-hidden include-deleted types analysis-ids))
 
 (defn- count-job-statuses
-  [{:keys [username]} {:keys [filter include-hidden]} types analysis-ids]
-  (jp/count-jobs-of-statuses username filter include-hidden types analysis-ids))
+  [{:keys [username]} {:keys [filter include-hidden include-deleted]} types analysis-ids]
+  (jp/count-jobs-of-statuses username filter include-hidden include-deleted types analysis-ids))
 
 (defn list-jobs
   [apps-client user {:keys [sort-field] :as params}]

@@ -72,12 +72,13 @@
 (defn default-search-params
   [params default-sort-field default-sort-dir]
   (remove-nil-vals
-   {:limit          (:limit params 0)
-    :offset         (:offset params 0)
-    :sort-field     (keyword (:sort-field params default-sort-field))
-    :sort-dir       (keyword (:sort-dir params default-sort-dir))
-    :filter         (:filter params)
-    :include-hidden (:include-hidden params false)}))
+   {:limit           (:limit params 0)
+    :offset          (:offset params 0)
+    :sort-field      (keyword (:sort-field params default-sort-field))
+    :sort-dir        (keyword (:sort-dir params default-sort-dir))
+    :filter          (:filter params)
+    :include-hidden  (:include-hidden params false)
+    :include-deleted (:include-deleted params false)}))
 
 (defn format-job-stats [app admin?]
   (let [job-stats-keys [:job_count
