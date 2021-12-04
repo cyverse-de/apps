@@ -18,6 +18,7 @@
            (join [:users :editors]
                  {:editors.id :modified_by})
            (fields :app_id
+                   [:app_version_id :version_id]
                    [:value :documentation]
                    :created_on
                    :modified_on
