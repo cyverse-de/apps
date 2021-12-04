@@ -28,20 +28,20 @@
 
 (defn add-documentation
   "Inserts an App's documentation into the database."
-  [creator-id docs app-id]
+  [creator-id docs app-version-id]
   (insert :app_documentation
-          (values {:app_id      app-id
-                   :created_by  creator-id
-                   :modified_by creator-id
-                   :created_on  (sqlfn now)
-                   :modified_on (sqlfn now)
-                   :value       docs})))
+          (values {:app_version_id app-version-id
+                   :created_by     creator-id
+                   :modified_by    creator-id
+                   :created_on     (sqlfn now)
+                   :modified_on    (sqlfn now)
+                   :value          docs})))
 
 (defn edit-documentation
   "Updates the given App's documentation, modified_on timestamp, and modified_by ID in the database."
-  [editor-id docs app-id]
+  [editor-id docs app-version-id]
   (sql/update :app_documentation
               (set-fields {:value       docs
                            :modified_by editor-id
                            :modified_on (sqlfn now)})
-              (where {:app_id app-id})))
+              (where {:app_version_id app-version-id})))
