@@ -20,6 +20,7 @@
            (join [:app_versions :v]
                  {:v.id :app_version_id})
            (fields :v.app_id
+                   [:app_version_id :version_id]
                    [:value :documentation]
                    :created_on
                    :modified_on
