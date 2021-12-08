@@ -28,65 +28,71 @@
 (defn- get-app-details
   "Retrieves the details for a single-step app."
   [app-id]
-  (first (select apps
-                 (fields :id
-                         :name
-                         :description
-                         :integration_date
-                         :edited_date)
-                 (with app_references)
-                 (with tasks
-                       (fields :id)
-                       (with parameter_groups
-                             (order :display_order)
-                             (fields :id
-                                     :name
-                                     :description
-                                     :label
-                                     [:is_visible :isVisible])
-                             (with parameters
-                                   (order :display_order)
-                                   (with file_parameters
-                                         (with info_type)
-                                         (with data_formats)
-                                         (with data_source))
-                                   (with parameter_types
-                                         (with value_type))
-                                   (with validation_rules
-                                         (with rule_type)
-                                         (with validation_rule_arguments
-                                               (order :ordering)
-                                               (fields :argument_value))
-                                         (fields :id
-                                                 [:rule_type.name :type]
-                                                 [:rule_type.id :type_id])
-                                         (where {:rule_type.deprecated false}))
-                                   (with parameter_values
-                                         (fields :id
-                                                 :parent_id
-                                                 :name
-                                                 :value
-                                                 [:label :display]
-                                                 :description
-                                                 [:is_default :isDefault])
-                                         (order [:parent_id :display_order] :ASC))
-                                   (fields :id
-                                           :name
-                                           :label
-                                           :description
-                                           [:ordering :order]
-                                           :required
-                                           [:is_visible :isVisible]
-                                           :omit_if_blank
-                                           [:parameter_types.name :type]
-                                           [:value_type.name :value_type]
-                                           [:info_type.name :file_info_type]
-                                           :file_parameters.is_implicit
-                                           :file_parameters.repeat_option_flag
-                                           :file_parameters.retain
-                                           [:data_source.name :data_source]
-                                           [:data_formats.name :format]))))
-                 (where {:id app-id}))))
+  (-> (select* apps)
+      (fields :id
+              :name
+              :description)
+      (where {:id app-id})
+      (with app_versions
+            (fields :id
+                    :version
+                    :integration_date
+                    :edited_date)
+            (where {:app_versions.id (persistence/get-app-latest-version app-id)})
+            (with app_references)
+            (with tasks
+                  (fields :id)
+                  (with parameter_groups
+                        (order :display_order)
+                        (fields :id
+                                :name
+                                :description
+                                :label
+                                [:is_visible :isVisible])
+                        (with parameters
+                              (order :display_order)
+                              (with file_parameters
+                                    (with info_type)
+                                    (with data_formats)
+                                    (with data_source))
+                              (with parameter_types
+                                    (with value_type))
+                              (with validation_rules
+                                    (with rule_type)
+                                    (with validation_rule_arguments
+                                          (order :ordering)
+                                          (fields :argument_value))
+                                    (fields :id
+                                            [:rule_type.name :type]
+                                            [:rule_type.id :type_id])
+                                    (where {:rule_type.deprecated false}))
+                              (with parameter_values
+                                    (fields :id
+                                            :parent_id
+                                            :name
+                                            :value
+                                            [:label :display]
+                                            :description
+                                            [:is_default :isDefault])
+                                    (order [:parent_id :display_order] :ASC))
+                              (fields :id
+                                      :name
+                                      :label
+                                      :description
+                                      [:ordering :order]
+                                      :required
+                                      [:is_visible :isVisible]
+                                      :omit_if_blank
+                                      [:parameter_types.name :type]
+                                      [:value_type.name :value_type]
+                                      [:info_type.name :file_info_type]
+                                      :file_parameters.is_implicit
+                                      :file_parameters.repeat_option_flag
+                                      :file_parameters.retain
+                                      [:data_source.name :data_source]
+                                      [:data_formats.name :format])))))
+      (select)
+      first))
 
 (defn- format-validator
   [validator]
@@ -206,19 +212,24 @@
 
 (defn- format-app-for-editing
   [app]
-  (let [app (get-app-details (:id app))
-        task (first (:tasks app))]
+  (let [{:keys [app_versions] :as app} (get-app-details (:id app))
+        {:keys [app_references tasks]
+         :as   version-details}        (first app_versions)
+        task                           (first tasks)]
     (when (empty? task)
       (throw+ {:type  :clojure-commons.exception/not-writeable
                :error "App contains no steps and cannot be copied or modified."}))
     (remove-nil-vals
      (-> app
-         (assoc :references (map :reference_text (:app_references app))
+         (merge (select-keys version-details [:version
+                                              :edited_date
+                                              :integration_date]))
+         (assoc :version_id (:id version-details)
+                :references (map :reference_text app_references)
                 :tools      (map format-app-tool (persistence/get-app-tools (:id app)))
                 :groups     (map format-group (:parameter_groups task))
                 :system_id  c/system-id)
-         (dissoc :app_references
-                 :tasks)))))
+         (dissoc :app_versions)))))
 
 (defn get-app-ui
   "This service prepares a JSON response for editing an App in the client."
