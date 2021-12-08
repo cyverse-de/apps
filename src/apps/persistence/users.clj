@@ -44,7 +44,7 @@
       (get-new-user-id username)))
 
 (defn- insert-login-record
-  "Recrds when a user logs into the DE."
+  "Records when a user logs into the DE."
   [user-id ip-address user-agent]
   (insert :logins
           (values (remove-nil-values
