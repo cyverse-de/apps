@@ -15,7 +15,6 @@
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-listing :as app-listing]
             [apps.persistence.app-metadata.delete :as delete]
-            [apps.persistence.app-metadata.relabel :as relabel]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
@@ -531,11 +530,6 @@
    (delete :input_output_mapping (where (or {:input parameter-id}
                                             {:output parameter-id})))
    (remove-workflow-map-orphans)))
-
-(defn update-app-labels
-  "Updates the labels in an app."
-  [req]
-  (relabel/update-app-labels req))
 
 (defn get-app-group
   "Fetches an App group."
