@@ -7,24 +7,28 @@
         [korma.core :exclude [update]]
         [medley.core :only [remove-vals]]
         [slingshot.slingshot :only [throw+]])
-  (:require [korma.core :as sql]))
+  (:require [apps.persistence.app-metadata :as app-meta]
+            [korma.core :as sql]))
 
 (defn- get-tasks-for-app
   "Retrieves the list of tasks associated with an app."
-  [app-id]
+  [app-id app-version-id]
   (select [:apps :a]
           (fields :t.id :t.external_app_id :t.name :t.description :t.label :t.tool_id)
+          (join [:app_versions :v]
+                {:a.id :v.app_id})
           (join [:app_steps :step]
-                {:a.id :step.app_id})
+                {:v.id :step.app_version_id})
           (join [:tasks :t]
                 {:step.task_id :t.id})
-          (where {:a.id app-id})))
+          (where {:a.id app-id
+                  :v.id app-version-id})))
 
 (defn- get-single-task-for-app
   "Retrieves the task from a single-step app. An exception will be thrown if the app doesn't have
    exactly one step."
-  [app-id]
-  (let [tasks (get-tasks-for-app app-id)]
+  [app-id app-version-id]
+  (let [tasks (get-tasks-for-app app-id app-version-id)]
     (when (not= 1 (count tasks))
       (throw+ {:type       :clojure-commons.exception/illegal-argument
                :error      :NOT_SINGLE_STEP_APP
@@ -135,7 +139,10 @@
 (defn update-app-labels
   "Updates the labels in an app."
   [{id :id :as req}]
-  (let [update-values (remove-nil-vals (select-keys req [:name :description]))]
+  (let [update-values (remove-nil-vals (select-keys req [:name :description]))
+        version-id    (app-meta/get-app-latest-version id)
+        task          (get-single-task-for-app id version-id)]
     (when-not (empty? update-values)
-      (sql/update apps (set-fields (assoc update-values :edited_date (sqlfn now))) (where {:id id}))))
-  (update-task-labels req (:id (get-single-task-for-app id))))
+      (sql/update apps (set-fields update-values) (where {:id id})))
+    (sql/update app_versions (set-fields {:edited_date (sqlfn now)}) (where {:id version-id}))
+    (update-task-labels req (:id task))))

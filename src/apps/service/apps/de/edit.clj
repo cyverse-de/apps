@@ -15,6 +15,7 @@
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
+            [apps.persistence.app-metadata.relabel :as relabel]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
@@ -558,5 +559,5 @@
   (transaction
    (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
    (validate-app-name app-name app-id)
-   (persistence/update-app-labels body))
+   (relabel/update-app-labels body))
   (get-app-ui user app-id))

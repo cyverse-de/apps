@@ -15,7 +15,6 @@
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-listing :as app-listing]
             [apps.persistence.app-metadata.delete :as delete]
-            [apps.persistence.app-metadata.relabel :as relabel]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
@@ -532,11 +531,6 @@
                                             {:output parameter-id})))
    (remove-workflow-map-orphans)))
 
-(defn update-app-labels
-  "Updates the labels in an app."
-  [req]
-  (relabel/update-app-labels req))
-
 (defn get-app-group
   "Fetches an App group."
   ([group-id]
@@ -920,7 +914,8 @@
 
 (defn- list-duplicate-apps*
   [app-name app-id category-id-set]
-  (select [:apps :a]
+  ; Uses app_listing view so we can check whether all versions are deleted.
+  (select [:app_listing :a]
           (fields :a.id :a.name :a.description)
           (join [:app_category_app :aca] {:a.id :aca.app_id})
           (where {(normalize-string :a.name) (normalize-string app-name)
