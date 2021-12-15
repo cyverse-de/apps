@@ -398,11 +398,22 @@
   ([app publish?]
    (let [app-id (:id app)
          app (-> app
-                 (select-keys [:name :description :wiki_url :deleted :disabled])
-                 (assoc :edited_date (sqlfn now)
-                        :integration_date (when publish? (sqlfn now)))
+                 (select-keys [:name :description :wiki_url])
                  (remove-nil-vals))]
      (sql/update apps (set-fields app) (where {:id app-id})))))
+
+(defn update-app-version
+  "Updates top-level app version info in the database."
+  ([version-info]
+   (update-app-version version-info false))
+  ([version-info publish?]
+   (let [version-id   (:version_id version-info)
+         version-info (-> version-info
+                          (select-keys [:version :deleted :disabled])
+                          (assoc :edited_date (sqlfn now)
+                                 :integration_date (when publish? (sqlfn now)))
+                          (remove-nil-vals))]
+     (sql/update app_versions (set-fields version-info) (where {:id version-id})))))
 
 (defn- get-app-publication-status-code-id
   [status-code]
@@ -432,17 +443,17 @@
 
     request-id))
 
-(defn add-app-reference
+(defn- add-app-reference
   "Adds an App's reference to the database."
-  [app-id reference]
-  (insert app_references (values {:app_id app-id, :reference_text reference})))
+  [version-id reference]
+  (insert app_references (values {:app_version_id version-id, :reference_text reference})))
 
 (defn set-app-references
   "Resets the given App's references with the given list."
-  [app-id references]
+  [version-id references]
   (transaction
-   (delete app_references (where {:app_id app-id}))
-   (dorun (map (partial add-app-reference app-id) references))))
+   (delete app_references (where {:app_version_id version-id}))
+   (dorun (map (partial add-app-reference version-id) references))))
 
 (defn set-htcondor-extra
   [app-id extra-requirements]
