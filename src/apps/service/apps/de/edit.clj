@@ -443,9 +443,11 @@
    (validate-app-name app-name app-id)
    (persistence/update-app app)
    (let [tool-id (->> app :tools first :id)
-         app-task (->> (get-app-details app-id) :tasks first)
+         {version-id :id :keys [tasks]} (->> (get-app-details app-id) :app_versions first)
+         app-task (first tasks)
          task-id (:id app-task)
          current-param-ids (map :id (mapcat :parameters (:parameter_groups app-task)))]
+     (persistence/update-app-version (assoc app :version_id version-id))
       ;; Copy the App's current name, description, and tool ID to its task
      (persistence/update-task jp/de-client-name (assoc app :id task-id :tool_id tool-id))
       ;; CORE-6266 prevent duplicate key errors from reused param value IDs
