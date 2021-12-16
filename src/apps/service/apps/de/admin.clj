@@ -84,22 +84,25 @@
 
 (defn- update-app-extra-info
   "Updates any extra information specific to execution platforms or similar."
-  [{app-id :id :keys [extra]}]
+  [{:keys [version_id extra]}]
   (when-let [htcondor (:htcondor extra)]
     (when-let [extra-requirements (:extra_requirements htcondor)]
-      (persistence/set-htcondor-extra app-id extra-requirements))))
+      (persistence/set-htcondor-extra version_id extra-requirements))))
 
 (defn- update-app-details
   "Updates high-level details and labels in an App, including deleted and disabled flags in the
    database."
   [{app-id :id :keys [references groups extra] :as app}]
   (persistence/update-app app)
-  (when-not (empty? references)
-    (persistence/set-app-references app-id references))
-  (when-not (empty? groups)
-    (update-app-labels (select-keys app [:id :groups])))
-  (when-not (empty? extra)
-    (update-app-extra-info app)))
+  (let [version-id (persistence/get-app-latest-version app-id)
+        app (assoc app :version_id version-id)]
+    (persistence/update-app-version app)
+    (when-not (empty? references)
+      (persistence/set-app-references version-id references))
+    (when-not (empty? groups)
+      (update-app-labels (select-keys app [:id :groups])))
+    (when-not (empty? extra)
+      (update-app-extra-info app))))
 
 (defn update-app
   "This service updates high-level details and labels in an App, extra information for particular
