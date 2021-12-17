@@ -564,9 +564,9 @@
        (jobs-db/get-public-job-stats app-id params))))
 
 (defn- format-app-extra-info
-  [app-id admin?]
+  [version-id admin?]
   (if admin?
-    (get-app-extra-info app-id)
+    (get-app-extra-info version-id)
     nil))
 
 (defn- format-app-documentation
@@ -611,7 +611,7 @@
                :references           (map :reference_text app_references)
                :tools                (map format-app-tool tools)
                :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
-               :extra                (format-app-extra-info app-id admin?)
+               :extra                (format-app-extra-info version-id admin?)
                :documentation        (format-app-documentation app-id username admin?)
                :categories           (get-groups-for-app app-id)
                :suggested_categories (get-suggested-groups-for-app app-id)

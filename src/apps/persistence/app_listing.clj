@@ -26,11 +26,11 @@
   (first (select app_listing (where {:id app-id}))))
 
 (defn get-app-extra-info
-  [app-id]
+  [version-id]
   (when-let [htcondor (first
                        (select apps_htcondor_extra
                                (fields [:extra_requirements])
-                               (where {:apps_id app-id})))]
+                               (where {:app_version_id version-id})))]
     {:htcondor htcondor}))
 
 (defn- get-all-group-ids-subselect
