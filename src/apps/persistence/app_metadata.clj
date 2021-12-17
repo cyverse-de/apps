@@ -337,27 +337,30 @@
                   :parameter_types.id})
            (where {:tool_type_parameter_type.tool_type_id tool-type-id}))))
 
-(defn- prep-app
-  "Prepares an app for insertion into the database."
-  [app integration-data-id]
-  (-> (select-keys app [:id :name :description])
-      (assoc :integration_data_id integration-data-id
-             :edited_date         (sqlfn now))))
-
 (defn add-app
   "Adds top-level app info to the database and returns the new app info, including its new ID."
-  ([app]
-   (add-app app current-user))
-  ([app user]
-   (insert apps (values (prep-app app (:id (get-integration-data user)))))))
+  [app]
+  (as-> (select-keys app [:id :name :description]) app-info
+        (insert apps (values app-info))))
+
+(defn add-app-version
+  "Adds top-level app version info to the database and returns the new info, including its new ID."
+  ([app-version]
+   (add-app-version app-version current-user))
+  ([{:keys [version] :as app-version :or {version "v0.0.1"}} user]
+   (as-> (select-keys app-version [:id :app_id :version_order]) version-info
+         (assoc version-info :version version
+                             :integration_data_id (:id (get-integration-data user))
+                             :edited_date         (sqlfn now))
+         (insert app_versions (values version-info)))))
 
 (defn add-step
   "Adds an app step to the database for the given app ID."
-  [app-id step-number step]
+  [version-id step-number step]
   (let [step (-> step
                  (select-keys [:task_id])
                  (update-in [:task_id] uuidify)
-                 (assoc :app_id app-id
+                 (assoc :app_version_id version-id
                         :step step-number))]
     (insert app_steps (values step))))
 
