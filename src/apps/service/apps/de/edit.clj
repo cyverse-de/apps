@@ -471,25 +471,27 @@
 
 (defn- add-single-step-task
   "Adds a task as a single step to the given app, using the app's name, description, and label."
-  [{app-id :id :as app}]
+  [{version-id :version_id :as app}]
   (let [task (persistence/add-task jp/de-client-name app)]
-    (persistence/add-step app-id 0 {:task_id (:id task)})
+    (persistence/add-step version-id 0 {:task_id (:id task)})
     task))
 
 (defn add-app
   "This service will add a single-step App, including the information at its top level."
   [{:keys [username] :as user} {app-name :name :keys [references groups] :as app}]
   (transaction
-   (let [cat-id  (get-user-subcategory username (workspace-dev-app-category-index))
-         _       (validate-app-name app-name nil [cat-id])
-         app-id  (:id (persistence/add-app app user))
-         tool-id (->> app :tools first :id)
-         task-id (-> (assoc app :id app-id :tool_id tool-id)
-                     (add-single-step-task)
-                     (:id))]
+    (->> (get-user-subcategory username (workspace-dev-app-category-index))
+         vector
+         (validate-app-name app-name nil))
+   (let [app-id     (:id (persistence/add-app app))
+         version-id (:id (persistence/add-app-version (assoc app :app_id app-id) user))
+         tool-id    (->> app :tools first :id)
+         task-id    (-> (assoc app :version_id version-id :tool_id tool-id)
+                        (add-single-step-task)
+                        :id)]
      (add-app-to-user-dev-category user app-id)
      (when-not (empty? references)
-       (persistence/set-app-references app-id references))
+       (persistence/set-app-references version-id references))
      (dorun (map-indexed (partial update-app-group task-id) groups))
      (permissions/register-private-app (:shortUsername user) app-id)
      (get-app-ui user app-id))))
