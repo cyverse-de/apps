@@ -25,9 +25,9 @@
   (assoc step :app_type (if (:external_app_id step) "External" "DE")))
 
 (defn- get-steps
-  "Fetches the steps for the given app ID, including their task ID and
-   source/target mapping IDs and step names."
-  [app-id]
+  "Fetches the steps for the given app version ID,
+   including their task ID and source/target mapping IDs and step names."
+  [app-version-id]
   (select app_steps
           (with input_mapping
                 (fields :source_step
@@ -38,8 +38,8 @@
                 {:task_id :t.id})
           (join [:job_types :jt]
                 {:t.job_type_id :jt.id})
-          (join [:apps :app]
-                {:app_id :app.id})
+          (join [:app_versions :versions]
+                {:app_version_id :versions.id})
           (fields :app_steps.id
                   :step
                   :t.name
@@ -47,7 +47,7 @@
                   :jt.system_id
                   :task_id
                   :t.external_app_id)
-          (where {:app.id app-id})
+          (where {:versions.id app-version-id})
           (order :step :ASC)))
 
 (defn- format-step
@@ -103,13 +103,13 @@
 (defn- format-workflow
   "Prepares a JSON response for editing a Workflow in the client."
   [user app]
-  (let [steps (get-steps (:id app))
+  (let [steps (get-steps (:version_id app))
         mappings (get-mappings steps)
         task-ids (set (map :task_id steps))
         tasks (listings/get-tasks-with-file-params user task-ids)
         steps (map format-step steps)]
     (-> app
-        (select-keys [:id :name :description])
+        (select-keys [:id :name :description :version :version_id])
         (assoc :tasks tasks
                :steps steps
                :mappings mappings
