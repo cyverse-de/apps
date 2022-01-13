@@ -1,5 +1,6 @@
 (ns apps.service.apps.de.pipeline-edit
   (:use [apps.persistence.app-metadata :only [add-app
+                                              add-app-version
                                               add-mapping
                                               add-step
                                               add-task
@@ -184,9 +185,10 @@
   [user app]
   (validate-pipeline app)
   (transaction
-   (let [app-id (:id (add-app app user))]
+   (let [app-id         (:id (add-app app))
+         app-version-id (-> app (assoc :app_id app-id) (add-app-version user) :id)]
      (add-app-to-user-dev-category user app-id)
-     (add-app-steps-mappings (assoc app :id app-id))
+     (add-app-steps-mappings (assoc app :id app-id :version_id app-version-id))
      (permissions/register-private-app (:shortUsername user) app-id)
      app-id)))
 
