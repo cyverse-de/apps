@@ -4,8 +4,10 @@
                                               add-step
                                               add-task
                                               get-app
+                                              get-app-latest-version
                                               remove-app-steps
-                                              update-app]]
+                                              update-app
+                                              update-app-version]]
         [apps.persistence.entities :only [app_steps input_mapping]]
         [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]]
         [apps.service.apps.de.validation :only [verify-app-editable]]
@@ -136,11 +138,11 @@
     (format-workflow user app)))
 
 (defn- add-app-mapping
-  [app-id steps {:keys [source_step target_step map] :as mapping}]
-  (add-mapping {:app_id app-id
-                :source_step (nth steps source_step)
-                :target_step (nth steps target_step)
-                :map map}))
+  [app-version-id steps {:keys [source_step target_step map]}]
+  (add-mapping {:app_version_id app-version-id
+                :source_step    (nth steps source_step)
+                :target_step    (nth steps target_step)
+                :map            map}))
 
 (defn- generate-external-app-task
   [step]
@@ -156,27 +158,27 @@
   (-> step generate-external-app-task add-task))
 
 (defn- add-pipeline-step
-  [app-id step-number step]
+  [app-version-id step-number step]
   (if (nil? (:task_id step))
     (let [task-id (:id (add-external-app-task step-number step))]
-      (add-step app-id step-number (assoc step :task_id task-id)))
-    (add-step app-id step-number step)))
+      (add-step app-version-id step-number (assoc step :task_id task-id)))
+    (add-step app-version-id step-number step)))
 
 (defn- add-pipeline-steps
   "Adds steps to a pipeline. The app type isn't stored in the database, but needs to be kept in
    the list of steps so that external steps can be distinguished from DE steps. The two types of
    steps normally can't be distinguished without examining the associated task."
-  [app-id steps]
+  [app-version-id steps]
   (doall
    (map-indexed (fn [step-number step]
-                  (assoc (add-pipeline-step app-id step-number step)
+                  (assoc (add-pipeline-step app-version-id step-number step)
                          :app_type (:app_type step)))
                 steps)))
 
 (defn- add-app-steps-mappings
-  [{app-id :id steps :steps mappings :mappings}]
-  (let [steps (add-pipeline-steps app-id steps)]
-    (dorun (map (partial add-app-mapping app-id steps) mappings))))
+  [{app-version-id :version_id steps :steps mappings :mappings}]
+  (let [steps (add-pipeline-steps app-version-id steps)]
+    (dorun (map (partial add-app-mapping app-version-id steps) mappings))))
 
 (defn- add-pipeline-app
   [user app]
@@ -189,15 +191,15 @@
      app-id)))
 
 (defn- update-pipeline-app
-  [user app]
+  [user {app-id :id app-version-id :version_id :as app}]
   (validate-pipeline app)
   (transaction
-   (let [app-id (:id app)]
-     (verify-app-editable user (get-app app-id))
-     (update-app app)
-     (remove-app-steps app-id)
-     (add-app-steps-mappings app)
-     app-id)))
+    (verify-app-editable user (get-app app-id))
+    (update-app app)
+    (update-app-version app)
+    (remove-app-steps app-version-id)
+    (add-app-steps-mappings app)
+    app-id))
 
 (defn- prepare-pipeline-step
   "Prepares a single step in a pipeline for submission to apps. DE steps can be left as-is.
@@ -218,8 +220,11 @@
        (edit-pipeline user)))
 
 (defn update-pipeline
-  [user workflow]
-  (let [app-id (update-pipeline-app user (preprocess-pipeline workflow))]
+  [user {app-id :id app-version-id :version_id :as workflow}]
+  (let [workflow (if (empty? app-version-id)
+                   (assoc workflow :version_id (get-app-latest-version app-id))
+                   workflow)]
+    (update-pipeline-app user (preprocess-pipeline workflow))
     (edit-pipeline user app-id)))
 
 (defn copy-pipeline

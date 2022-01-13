@@ -367,9 +367,9 @@
 (defn- add-workflow-io-map
   [mapping]
   (insert :workflow_io_maps
-          (values {:app_id      (:app_id mapping)
-                   :source_step (get-in mapping [:source_step :id])
-                   :target_step (get-in mapping [:target_step :id])})))
+          (values {:app_version_id (:app_version_id mapping)
+                   :source_step    (get-in mapping [:source_step :id])
+                   :target_step    (get-in mapping [:target_step :id])})))
 
 (defn- build-io-key
   [step de-app-key external-app-key value]
@@ -526,8 +526,8 @@
 (defn remove-app-steps
   "Removes all steps from an App. This delete will cascade to workflow_io_maps and
   input_output_mapping entries."
-  [app-id]
-  (delete app_steps (where {:app_id app-id})))
+  [app-version-id]
+  (delete app_steps (where {:app_version_id app-version-id})))
 
 (defn remove-workflow-map-orphans
   "Removes any orphaned workflow_io_maps table entries."
