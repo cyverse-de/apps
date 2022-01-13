@@ -122,7 +122,7 @@
   "Adds copies of the steps and mappings fields to the app, and formats
    appropriate app fields to prepare it for saving as a copy."
   [app]
-  (let [steps (get-steps (:id app))
+  (let [steps (get-steps (:version_id app))
         mappings (get-mappings steps)
         steps (map format-step steps)]
     (-> app
