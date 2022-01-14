@@ -692,8 +692,8 @@
   (map (partial format-task user) (get-tasks task-ids)))
 
 (defn- format-app-task-listing
-  [user {app-id :id :as app}]
-  (let [task-ids (map :task_id (select :app_steps (fields :task_id) (where {:app_id app-id})))
+  [user {app-version-id :version_id :as app}]
+  (let [task-ids (map :task_id (select :app_steps (fields :task_id) (where {:app_version_id app-version-id})))
         tasks    (get-tasks-with-file-params user task-ids)]
     (-> app
         (select-keys [:id :name :description])
