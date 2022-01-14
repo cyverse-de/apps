@@ -541,7 +541,7 @@
   [app]
   (let [app (format-app-for-editing app)]
     (-> app
-        (dissoc :id)
+        (dissoc :id :version :version_id)
         (assoc :name   (app-copy-name (:name app))
                :groups (map convert-app-group-to-copy (:groups app)))
         (remove-nil-vals))))
