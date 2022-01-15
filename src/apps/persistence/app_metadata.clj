@@ -198,12 +198,17 @@
       select
       first))
 
-(defn get-integration-data-by-app-id [app-id]
+(defn get-integration-data-by-app-version-id [app-version-id]
   (-> (integration-data-base-query)
-      (join [:apps :a] {:a.integration_data_id :d.id})
-      (where {:a.id app-id})
+      (join [:app_versions :a] {:a.integration_data_id :d.id})
+      (where {:a.id app-version-id})
       select
       first))
+
+(defn get-integration-data-by-app-id [app-id]
+  (-> app-id
+      get-app-latest-version
+      get-integration-data-by-app-version-id))
 
 (defn update-app-integration-data [app-id integration-data-id]
   (-> (update* :apps)
