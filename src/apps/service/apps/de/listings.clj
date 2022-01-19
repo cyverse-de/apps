@@ -710,10 +710,10 @@
   "A service to list the tools used by an app."
   [{username :shortUsername} app-id]
   (perms/check-app-permissions username "read" [app-id])
-  (let [app (get-app app-id)
-        tasks (:tasks (first (select apps
+  (let [{:keys [version_id]} (get-app app-id)
+        tasks (:tasks (first (select app_versions
                                      (with tasks (fields :tool_id))
-                                     (where {:apps.id app-id}))))
+                                     (where {:app_versions.id version_id}))))
         tool-ids (map :tool_id tasks)]
     {:tools (get-tools-by-id tool-ids)}))
 
