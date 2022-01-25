@@ -401,14 +401,12 @@
 
 (defn update-app
   "Updates top-level app info in the database."
-  ([app]
-   (update-app app false))
-  ([app publish?]
-   (let [app-id (:id app)
-         app (-> app
-                 (select-keys [:name :description :wiki_url])
-                 (remove-nil-vals))]
-     (sql/update apps (set-fields app) (where {:id app-id})))))
+  [app]
+  (let [app-id (:id app)
+        app (-> app
+                (select-keys [:name :description :wiki_url])
+                (remove-nil-vals))]
+    (sql/update apps (set-fields app) (where {:id app-id}))))
 
 (defn update-app-version
   "Updates top-level app version info in the database."
