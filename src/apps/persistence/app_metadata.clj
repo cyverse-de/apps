@@ -739,12 +739,12 @@
 
 (defn count-external-steps
   "Counts how many steps have an external ID in the given app."
-  [app-id]
+  [app-version-id]
   ((comp :count first)
    (select [:app_steps :s]
            (aggregate (count :external_app_id) :count)
            (join [:tasks :t] {:s.task_id :t.id})
-           (where {:s.app_id (uuidify app-id)})
+           (where {:s.app_version_id app-version-id})
            (where (raw "t.external_app_id IS NOT NULL")))))
 
 (defn permanently-delete-app

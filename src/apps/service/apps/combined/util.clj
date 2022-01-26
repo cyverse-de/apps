@@ -33,8 +33,11 @@
        (cxu/bad-request (str "unrecognized system ID " system-id)))))
 
 (defn apps-client-for-job
-  [{app-id :app_id system-id :system_id} clients]
-  (when (or (not= system-id jp/de-client-name) (zero? (ap/count-external-steps app-id)))
+  [{app-id :app_id app-version-id :app_version_id system-id :system_id} clients]
+  (when (or (not= system-id jp/de-client-name)
+            (zero? (ap/count-external-steps (or app-version-id
+                                                ; Use the latest version ID if not submitted by client.
+                                                (ap/get-app-latest-version app-id)))))
     (get-apps-client clients system-id)))
 
 (defn is-de-job-step?

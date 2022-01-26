@@ -118,11 +118,12 @@
   (assoc param :default_value (get-default-value type (get-param-values id))))
 
 (defn load-app-params
-  [app-id]
+  [app-version-id]
   (->> (select (params-base-query)
                (join :inner [:app_steps :s] {:p.task_id :s.task_id})
+               (join :inner [:app_versions :v] {:s.app_version_id :v.id})
                (fields [:s.id :step_id])
-               (where {:s.app_id app-id}))
+               (where {:v.id app-version-id}))
        (mapv add-default-value)))
 
 (defn load-hidden-params

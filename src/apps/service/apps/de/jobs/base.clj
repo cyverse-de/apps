@@ -8,13 +8,14 @@
 
 (defn- build-job-request-formatter
   [user submission]
-  (let [email    (:email user)
-        app-id   (:app_id submission)
-        app      (ap/get-app app-id)
-        io-maps  (ca/load-io-maps app-id)
-        params   (mp/load-app-params app-id)
-        defaults (ca/build-default-values-map params)
-        params   (group-by :step_id params)]
+  (let [email      (:email user)
+        app-id     (:app_id submission)
+        app        (ap/get-app app-id)
+        version-id (:version_id app)
+        io-maps    (ca/load-io-maps version-id)
+        params     (mp/load-app-params version-id)
+        defaults   (ca/build-default-values-map params)
+        params     (group-by :step_id params)]
     (apps.service.apps.de.jobs.condor.JobRequestFormatter.
      user email submission app io-maps defaults params)))
 
