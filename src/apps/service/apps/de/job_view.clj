@@ -108,7 +108,7 @@
   [user {:keys [name version_id] :as app} include-hidden-params?]
   (let [app-steps           (get-steps version_id)
         limit-check-results (limits/load-limit-check-results user)]
-    (-> (select-keys app [:id :name :description :disabled :deleted])
+    (-> (select-keys app [:id :name :description :disabled :deleted :version :version_id])
         (assoc :label name
                :requirements (map get-step-resource-requirements app-steps)
                :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
