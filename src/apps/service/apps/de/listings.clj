@@ -693,10 +693,12 @@
 
 (defn- format-app-task-listing
   [user {app-version-id :version_id :as app}]
-  (let [task-ids (map :task_id (select :app_steps (fields :task_id) (where {:app_version_id app-version-id})))
+  (let [task-ids (map :task_id (select :app_steps
+                                       (fields :task_id)
+                                       (where {:app_version_id app-version-id})))
         tasks    (get-tasks-with-file-params user task-ids)]
     (-> app
-        (select-keys [:id :name :description])
+        (select-keys [:id :name :description :version :version_id])
         (assoc :tasks tasks :system_id c/system-id))))
 
 (defn get-app-task-listing
