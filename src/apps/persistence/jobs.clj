@@ -274,7 +274,8 @@
 (defn- internal-app-subselect
   []
   (subselect :apps
-             (join :app_steps {:apps.id :app_steps.app_id})
+             (join :app_versions {:apps.id :app_versions.app_id})
+             (join :app_steps {:app_versions.id :app_steps.app_version_id})
              (join :tasks {:app_steps.task_id :tasks.id})
              (join :tools {:tasks.tool_id :tools.id})
              (join :tool_types {:tools.tool_type_id :tool_types.id})
