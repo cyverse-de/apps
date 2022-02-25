@@ -284,14 +284,14 @@
                   :app_version_id version-id}))))
 
 (defn get-app-notification-types
-  "Loads information about the notification types to use for an app."
-  [app-id]
+  "Loads information about the notification types to use for an app version."
+  [app-version-id]
   (->> (select [:app_steps :step]
                (join [:tasks :task] {:step.task_id :task.id})
                (join [:tools :tool] {:task.tool_id :tool.id})
                (join [:tool_types :tt] {:tool.tool_type_id :tt.id})
                (fields :tt.notification_type)
-               (where {:step.app_id (uuidify app-id)}))
+               (where {:step.app_version_id app-version-id}))
        (map :notification_type)))
 
 (defn subselect-tool-ids-using-data-container

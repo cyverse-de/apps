@@ -86,6 +86,7 @@
    {:app_description (:app_description jex-submission)
     :app_disabled    false
     :app_id          (:app_id jex-submission)
+    :app_version_id  (:app_version_id jex-submission)
     :app_name        (:app_name jex-submission)
     :batch           batch?
     :description     (:description jex-submission)
