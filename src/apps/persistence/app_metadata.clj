@@ -831,9 +831,9 @@
           (where {:wim.target_step step-id})))
 
 (defn load-app-mappings
-  [app-id]
+  [app-version-id]
   (select (mapping-base-query)
-          (where {:wim.app_id (uuidify app-id)})))
+          (where {:wim.app_version_id app-version-id})))
 
 (defn load-app-details
   [app-ids]
@@ -883,9 +883,9 @@
                 {:s.task_id :p.task_id})
           (join [:tasks :t]
                 {:p.task_id :t.id})
-          (join [:apps :app]
-                {:app.id :s.app_id})
-          (where {:app.id (uuidify app-id)})))
+          (join [:app_versions :v]
+                {:v.id :s.app_version_id})
+          (where {:v.app_id (uuidify app-id)})))
 
 (defn get-app-names
   [app-ids]

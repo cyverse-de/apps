@@ -15,6 +15,7 @@
             [apps.service.apps.jobs.resubmit :as resubmit]
             [apps.service.apps.jobs.submissions :as submissions]
             [apps.service.apps.jobs.util :as ju]
+            [apps.util.conversions :refer [remove-nil-vals]]
             [apps.util.service :as service]))
 
 (defn validate-job-status-update-step-count
@@ -113,9 +114,11 @@
   [apps-client user job-id]
   (validate-jobs-for-user user [job-id] "read")
   (let [job (jp/get-job-by-id job-id)]
-    {:app_id     (:app_id job)
-     :system_id  (:system_id job)
-     :parameters (job-params/get-parameter-values apps-client job)}))
+    (remove-nil-vals
+      {:app_id         (:app_id job)
+       :app_version_id (:app_version_id job)
+       :system_id      (:system_id job)
+       :parameters     (job-params/get-parameter-values apps-client job)})))
 
 (defn get-job-relaunch-info
   [apps-client user job-id]

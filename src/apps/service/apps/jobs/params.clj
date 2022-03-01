@@ -8,8 +8,7 @@
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
             [apps.persistence.app-metadata :as ap]
-            [apps.service.apps.jobs.util :as ju]
-            [apps.service.util :as util]))
+            [apps.service.apps.jobs.util :as ju]))
 
 (defn- get-job-submission
   [job]
@@ -20,13 +19,13 @@
     (cheshire/decode (.getValue submission) true)))
 
 (defn- load-mapped-params
-  [app-id]
-  (if (util/uuid? app-id)
+  [app-version-id]
+  (if app-version-id
     (let [format-id     (partial string/join "_")
           get-source-id (comp format-id (juxt :source_id (some-fn :output_id :external_output_id)))
           get-target-id (comp format-id (juxt :target_id (some-fn :input_id :external_input_id)))
           get-ids       (juxt get-source-id get-target-id)]
-      (set (mapcat get-ids (ap/load-app-mappings app-id))))
+      (set (mapcat get-ids (ap/load-app-mappings app-version-id))))
     #{}))
 
 (defn- get-full-param-id
@@ -36,8 +35,8 @@
     (str param-id)))
 
 (defn- remove-mapped-params
-  [app-id params]
-  (let [mapped-params (load-mapped-params app-id)]
+  [app-version-id params]
+  (let [mapped-params (load-mapped-params app-version-id)]
     (remove (comp mapped-params get-full-param-id) params)))
 
 (def property-types-to-omit #{"Info"})
@@ -102,10 +101,10 @@
     (map (partial format-job-param-for-value full-param-id default-value param) values)))
 
 (defn get-parameter-values
-  [apps-client {system-id :system_id app-id :app_id :as job}]
+  [apps-client {system-id :system_id app-id :app_id app-version-id :app_version_id :as job}]
   (let [config (:config (get-job-submission job))]
     (->> (.getParamDefinitions apps-client system-id app-id)
-         (remove-mapped-params app-id)
+         (remove-mapped-params app-version-id)
          (remove omit-param?)
          (mapcat (partial format-job-param config)))))
 
