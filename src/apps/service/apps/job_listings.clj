@@ -6,11 +6,8 @@
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.permissions :as job-permissions]
-            [apps.service.apps.util :as apps-util]
             [apps.service.util :as util]
             [apps.util.config :as config]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
             [kameleon.db :as db]))
 
 (defn- job-timestamp
@@ -44,11 +41,12 @@
        (= (get perms id) "own")
        (job-permissions/job-steps-support-job-sharing? apps-client (rep-steps id))))
 
-(defn format-base-job
+(defn- format-base-job
   [{:keys [parent_id id] :as job}]
   (remove-nil-vals
    {:app_description (:app_description job)
     :app_id          (or (:app_id job) "unknown")
+    :app_version_id  (:app_version_id job)
     :app_name        (:app_name job)
     :description     (:description job)
     :enddate         (job-timestamp (:end_date job))
@@ -73,7 +71,7 @@
     (when-not (:is_batch job)
       (seq (map get-url (filter interactive? (rep-steps (:id job))))))))
 
-(defn format-admin-job
+(defn- format-admin-job
   [rep-steps job]
   (remove-nil-vals
    (assoc (format-base-job job)

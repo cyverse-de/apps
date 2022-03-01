@@ -3,8 +3,7 @@
             [apps.persistence.app-metadata :as ap]
             [apps.service.apps.de.jobs.common :as ca]
             [apps.service.apps.de.jobs.condor]
-            [apps.service.apps.de.jobs.protocol]
-            [apps.service.apps.jobs.util :as util]))
+            [apps.service.apps.de.jobs.protocol]))
 
 (defn- build-job-request-formatter
   [user submission]
