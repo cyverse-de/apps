@@ -59,4 +59,4 @@
          :init apps.core/load-config-from-file
          :port 31323}
   :uberjar-exclusions [#"(?i)META-INF/[^/]*[.](SF|DSA|RSA)"]
-  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml"])
+  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml"  "-javaagent:./opentelemetry-javaagent.jar" "-Dotel.resource.attributes=service.name=apps"])

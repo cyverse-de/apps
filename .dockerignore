@@ -4,6 +4,7 @@
 pom.xml
 pom.xml.asc
 *.jar
+!opentelemetry-javaagent.jar
 *.class
 /.lein-*
 /.nrepl-port
