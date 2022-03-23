@@ -14,11 +14,14 @@ RUN mkdir -p /etc/iplant/de/crypto && \
     touch /etc/iplant/de/crypto/secring.gpg && \
     touch /etc/iplant/de/crypto/trustdb.gpg
 
-COPY conf/main/logback.xml /usr/src/app/
-
 RUN ln -s "/opt/openjdk-17/bin/java" "/bin/apps"
 
 ENV OTEL_TRACES_EXPORTER none
+
+COPY conf/main/logback.xml /usr/src/app/
+
+COPY project.clj /usr/src/app
+RUN lein deps
 
 COPY . /usr/src/app
 RUN lein do clean, uberjar && \
