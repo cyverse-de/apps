@@ -343,23 +343,24 @@
    makes it easier to consolidate repetitive tasks without degrating performance."
   [{username :shortUsername :as user} admin? perms app-ids public-app-ids]
   (otel/with-span [s ["get-app-listing-formatter"]]
-    (let [beta-ids-set        (app-ids->beta-ids-set username app-ids)
-          certified-ids-set   (app-ids->certified-ids-set username app-ids)
-          limit-check-results (when-not (anonymous? user) (limits/load-limit-check-results user))]
+    (let [beta-ids-set        (future (app-ids->beta-ids-set username app-ids))
+          certified-ids-set   (future (app-ids->certified-ids-set username app-ids))
+          limit-check-results (future (when-not (anonymous? user) (limits/load-limit-check-results user)))]
       (fn [{:keys [id] :as app}]
-        (-> (assoc app :can_run (app-can-run? app))
-            (dissoc :tool_count :task_count :external_app_count :lower_case_name :job_types)
-            (format-app-listing-job-stats admin?)
-            (format-app-ratings)
-            (format-app-pipeline-eligibility)
-            (format-app-permissions perms)
-            (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
-            (assoc :beta (contains? beta-ids-set id))
-            (assoc :isBlessed (contains? certified-ids-set id))
-            (assoc :is_public (contains? public-app-ids id))
-            (assoc :limitChecks (when-not (anonymous? user)
-                                  (limits/format-app-limit-check-results limit-check-results app)))
-            (remove-nil-vals))))))
+        (otel/with-span [s ["app listing formatter"]]
+          (-> (assoc app :can_run (app-can-run? app))
+              (dissoc :tool_count :task_count :external_app_count :lower_case_name :job_types)
+              (format-app-listing-job-stats admin?)
+              (format-app-ratings)
+              (format-app-pipeline-eligibility)
+              (format-app-permissions perms)
+              (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
+              (assoc :beta (contains? @beta-ids-set id))
+              (assoc :isBlessed (contains? @certified-ids-set id))
+              (assoc :is_public (contains? public-app-ids id))
+              (assoc :limitChecks (when-not (anonymous? user)
+                                    (limits/format-app-limit-check-results @limit-check-results app)))
+              (remove-nil-vals)))))))
 
 (defn- filter-app-ids-by-community
   "Filters the given list of app-ids into a set containing the ids of apps tagged with the given community-id"
