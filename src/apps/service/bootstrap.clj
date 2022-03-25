@@ -4,6 +4,9 @@
         [apps.webhooks :only [get-webhooks]]))
 
 (defn bootstrap [current-user]
-  {:system_ids (list-system-ids current-user)
-   :workspace  (get-workspace current-user)
-   :webhooks (get-webhooks (:shortUsername current-user))})
+  (let [si (future (list-system-ids current-user))
+        w  (future (get-workspace current-user))
+        wh (future (get-webhooks (:shortUsername current-user)))]
+    {:system_ids @si
+     :workspace  @w
+     :webhooks @wh}))
