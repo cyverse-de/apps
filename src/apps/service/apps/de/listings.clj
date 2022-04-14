@@ -41,12 +41,13 @@
 (defn- augment-listing-params
   ([params short-username perms]
    (otel/with-span [s ["augment-listing-params [inner]"]]
-     (assoc params
-            :app-ids        (set (keys perms))
-            :public-app-ids (perms-client/get-public-app-ids))))
+     (let [public (perms-client/get-public-app-ids)]
+       (assoc params
+              :app-ids        (set (keys @perms))
+              :public-app-ids public))))
   ([params short-username]
    (otel/with-span [s ["augment-listing-params"]]
-     (augment-listing-params params short-username (perms-client/load-app-permissions short-username)))))
+     (augment-listing-params params short-username (future (perms-client/load-app-permissions short-username))))))
 
 (defn- app-search-candidates
   [admin? public-app-ids accessible-app-ids app-subset]
@@ -481,10 +482,10 @@
   [user app-group-id params]
   (otel/with-span [s ["list-apps-in-group"]]
     (let [workspace (get-optional-workspace (:username user))
-          perms     (perms-client/load-app-permissions (:shortUsername user))
+          perms     (future (perms-client/load-app-permissions (:shortUsername user)))
           params    (fix-sort-params (augment-listing-params params (:shortUsername user) perms))]
-      (or (list-apps-in-virtual-group user workspace app-group-id perms params)
-          (list-apps-in-real-group user workspace app-group-id perms params)))))
+      (or (list-apps-in-virtual-group user workspace app-group-id @perms params)
+          (list-apps-in-real-group user workspace app-group-id @perms params)))))
 
 (defn has-category
   "Determines whether or not a category with the given ID exists."
@@ -498,7 +499,7 @@
   [{:keys [username shortUsername] :as user} params admin?]
   (let [search_term    (curl/url-decode (:search params))
         workspace      (get-workspace username)
-        perms          (perms-client/load-app-permissions shortUsername)
+        perms          (future (perms-client/load-app-permissions shortUsername))
         params         (-> params
                            (augment-listing-params shortUsername perms)
                            (assoc :orphans admin?)
@@ -512,7 +513,7 @@
                                        (workspace-favorites-app-category-index)
                                        params)
         public-app-ids (:public-app-ids params)
-        format-app     (get-app-listing-formatter user admin? perms (map :id apps) public-app-ids)]
+        format-app     (get-app-listing-formatter user admin? @perms (map :id apps) public-app-ids)]
     {:total total
      :apps  (map format-app apps)}))
 
