@@ -439,9 +439,9 @@
   (otel/with-span [s ["list-apps-in-virtual-group"]]
     (when-let [format-fns (virtual-group-fns group-id)]
       (let [augmented-params (augment-virtual-group-listing-params user group-id params)
-            app-listing ((:format-listing format-fns) user workspace augmented-params)
-            format-app  (get-app-listing-formatter user false perms (map :id app-listing) public-app-ids)]
-        (-> ((:format-group format-fns) user workspace augmented-params)
+            app-listing ((:format-listing format-fns) user @workspace augmented-params)
+            format-app  (get-app-listing-formatter user false @perms (map :id app-listing) public-app-ids)]
+        (-> ((:format-group format-fns) user @workspace augmented-params)
             (assoc :apps (map format-app app-listing))
             (realize-group))))))
 
@@ -467,9 +467,9 @@
     (let [app_group     (->> (get-app-category category-id)
                               (assert-not-nil ["category_id" category-id])
                               remove-nil-vals)
-          total         (count-apps-in-group user workspace app_group params)
-          apps_in_group (get-apps-in-group user workspace app_group params)
-          format-app    (get-app-listing-formatter user false perms (map :id apps_in_group) public-app-ids)
+          total         (count-apps-in-group user @workspace app_group params)
+          apps_in_group (get-apps-in-group user @workspace app_group params)
+          format-app    (get-app-listing-formatter user false @perms (map :id apps_in_group) public-app-ids)
           apps_in_group (map format-app apps_in_group)]
       (assoc app_group
              :system_id de-system-id
@@ -481,11 +481,11 @@
    descendents."
   [user app-group-id params]
   (otel/with-span [s ["list-apps-in-group"]]
-    (let [workspace (get-optional-workspace (:username user))
-          perms     (future (perms-client/load-app-permissions (:shortUsername user)))
+    (let [perms     (future (perms-client/load-app-permissions (:shortUsername user)))
+          workspace (future (get-optional-workspace (:username user)))
           params    (fix-sort-params (augment-listing-params params (:shortUsername user) perms))]
-      (or (list-apps-in-virtual-group user workspace app-group-id @perms params)
-          (list-apps-in-real-group user workspace app-group-id @perms params)))))
+      (or (list-apps-in-virtual-group user workspace app-group-id perms params)
+          (list-apps-in-real-group user workspace app-group-id perms params)))))
 
 (defn has-category
   "Determines whether or not a category with the given ID exists."
