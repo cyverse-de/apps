@@ -9,7 +9,8 @@
         [kameleon.util.search]
         [korma.core :exclude [update]])
   (:require [apps.constants :as c]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [otel.otel :as otel]))
 
 ;; The `app_listing` view has an array aggregate column that we need to be able to extract. This tells
 ;; `clojure.java.jdbc` how to convert the array to a (possibly nested) vector.
@@ -386,11 +387,12 @@
   If search_term is not empty, results are limited to apps that contain search_term in their name,
    description, integrator_name, or tool name(s)."
   [search_term workspace favorites_group_index query_opts]
-  (let [app-ids (find-matching-app-ids search_term query_opts)]
-    (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
-        (where {:id [in app-ids]})
-        ((partial query-spy "get-apps-for-user::search_query:"))
-        select)))
+  (otel/with-span [s ["get-apps-for-user" {:attributes {"apps.search-term" search_term}}]]
+    (let [app-ids (find-matching-app-ids search_term query_opts)]
+      (-> (get-base-app-listing-base-query workspace favorites_group_index query_opts)
+          (where {:id [in app-ids]})
+          ((partial query-spy "get-apps-for-user::search_query:"))
+          select))))
 
 (defn get-apps-for-admin
   "Returns the same results as get-apps-for-user, but also includes deleted apps and job_count,
@@ -490,7 +492,8 @@
 (defn list-apps-by-id
   "Lists all apps with an ID in the the given app-ids list."
   [workspace favorites-group-index app-ids params]
-  (get-apps-for-user nil workspace favorites-group-index (assoc params :app-ids app-ids)))
+  (otel/with-span [s ["list-apps-by-id"]]
+    (get-apps-for-user nil workspace favorites-group-index (assoc params :app-ids app-ids))))
 
 (defn admin-list-apps-by-id
   "Lists all apps with an ID in the the given app-ids list,
