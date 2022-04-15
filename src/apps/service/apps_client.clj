@@ -19,7 +19,7 @@
 
 (defn- get-access-token
   [{:keys [api-name] :as server-info} state-info username]
-  (otel/otel [s ["get-access-token"]]
+  (otel/with-span [s ["get-access-token"]]
     (if-let [token-info (op/get-access-token api-name username)]
       (assoc (merge server-info token-info)
              :token-callback  (partial op/store-access-token api-name username)
@@ -28,7 +28,7 @@
 
 (defn- get-agave-client
   [state-info username]
-  (otel/otel [s ["get-agave-client"]]
+  (otel/with-span [s ["get-agave-client"]]
     (let [server-info (config/agave-oauth-settings)]
       (agave/de-agave-client-v2
        (config/agave-base-url)
@@ -55,7 +55,7 @@
   ([user]
    (get-apps-client user ""))
   ([user state-info]
-   (otel/otel [s ["get-apps-client"]]
+   (otel/with-span [s ["get-apps-client"]]
      (apps.service.apps.combined.CombinedApps.
        (remove nil? (get-apps-client-list user state-info))
        user))))
