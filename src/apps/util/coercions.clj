@@ -3,7 +3,8 @@
             [ring.swagger.common :refer [value-of]]
             [schema.coerce :as sc]
             [schema.utils :as su]
-            [slingshot.slingshot :refer [throw+]])
+            [slingshot.slingshot :refer [throw+]]
+            [otel.otel :as otel])
   (:import [java.util UUID]))
 
 (defn- stringify-uuids
@@ -21,7 +22,8 @@
 
 (defn coerce
   [schema value]
-  ((sc/coercer (value-of schema) custom-coercion-matcher) value))
+  (otel/with-span [s ["coerce"]]
+    ((sc/coercer (value-of schema) custom-coercion-matcher) value)))
 
 (defn coerce!
   [schema value]
