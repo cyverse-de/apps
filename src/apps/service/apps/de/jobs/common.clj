@@ -9,7 +9,8 @@
             [apps.containers :as c]
             [apps.service.apps.de.jobs.params :as params]
             [apps.service.apps.jobs.util :as util]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [otel.otel :as otel]))
 
 (defn- format-io-map
   [mapping]
@@ -167,28 +168,31 @@
 
 (defn build-submission
   [request-builder user email submission app]
-  (let [groups (:groups (ipg/lookup-subject-groups (:shortUsername user)))]
-    (-> {:app_description      (:description app)
-         :app_id               (:id app)
-         :app_name             (:name app)
-         :archive_logs         (:archive_logs submission)
-         :callback             (:callback submission)
-         :create_output_subdir (:create_output_subdir submission true)
-         :description          (:description submission "")
-         :email                email
-         :group                (:group submission "")
-         :name                 (:name submission)
-         :notify               (:notify submission)
-         :output_dir           (:output_dir submission)
-         :request_type         "submit"
-         :steps                (.buildSteps request-builder)
-         :extra                (.buildExtra request-builder)
-         :username             (:shortUsername user)
-         :user_id              (get-user-id (:username user))
-         :user_groups          (map (comp ipg/remove-environment-from-group :name) groups)
-         :user_home            (:user_home submission)
-         :uuid                 (or (:uuid submission) (uuid))
-         :wiki_url             (:wiki_url app)
-         :skip-parent-meta     (:skip-parent-meta submission)
-         :file-metadata        (:file-metadata submission)}
-        execution-target)))
+  (otel/with-span [s ["build-submission"]]
+    (let [groups (future (:groups (ipg/lookup-subject-groups (:shortUsername user))))
+          steps  (future (.buildSteps request-builder))
+          extra  (future (.buildExtra request-builder))]
+      (-> {:app_description      (:description app)
+           :app_id               (:id app)
+           :app_name             (:name app)
+           :archive_logs         (:archive_logs submission)
+           :callback             (:callback submission)
+           :create_output_subdir (:create_output_subdir submission true)
+           :description          (:description submission "")
+           :email                email
+           :group                (:group submission "")
+           :name                 (:name submission)
+           :notify               (:notify submission)
+           :output_dir           (:output_dir submission)
+           :request_type         "submit"
+           :steps                @steps
+           :extra                @extra
+           :username             (:shortUsername user)
+           :user_id              (get-user-id (:username user))
+           :user_groups          (map (comp ipg/remove-environment-from-group :name) @groups)
+           :user_home            (:user_home submission)
+           :uuid                 (or (:uuid submission) (uuid))
+           :wiki_url             (:wiki_url app)
+           :skip-parent-meta     (:skip-parent-meta submission)
+           :file-metadata        (:file-metadata submission)}
+          execution-target))))
