@@ -301,7 +301,7 @@
   container-related parts of the DE database schema, you'll likely need to make
   changes here."
   [tool-uuid & {:keys [auth?] :or {auth? false}}]
-  (otel/with-span [s ["tool-container-info" {:attributes {"tools.id" tool-uuid}}]]
+  (otel/with-span [s ["tool-container-info" {:attributes {"tools.id" (str tool-uuid)}}]]
     (let [id (uuidify tool-uuid)]
       (when (tool-has-settings? id)
         (->  (select container-settings
