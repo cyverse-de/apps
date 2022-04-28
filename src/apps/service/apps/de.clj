@@ -82,6 +82,11 @@
     (validate-system-id system-id)
     (edit/add-app user app))
 
+  ;; FIXME: remove the admin flag when we have a better way to do this.
+  (addAppVersion [_ system-id app admin?]
+    (validate-system-id system-id)
+    (edit/add-app-version user (update app :id uuidify) admin?))
+
   (previewCommandLine [_ system-id app]
     (validate-system-id system-id)
     (app-metadata/preview-command-line app))

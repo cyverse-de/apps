@@ -19,6 +19,7 @@
             [apps.routes.apps.elements :as app-element-routes]
             [apps.routes.apps.pipelines :as pipeline-routes]
             [apps.routes.apps.metadata :as metadata-routes]
+            [apps.routes.apps.versions :as versions-routes]
             [apps.routes.bootstrap :as bootstrap-routes]
             [apps.routes.callbacks :as callback-routes]
             [apps.routes.groups :as group-routes]
@@ -50,6 +51,7 @@
                   {:name "app-hierarchies", :description "App Hierarchy endpoints."}
                   {:name "app-element-types", :description "App Element endpoints."}
                   {:name "apps", :description "App endpoints."}
+                  {:name "app-versions", :description "App Version endpoints."}
                   {:name "app-community-tags", :description "App Community tag endpoints."}
                   {:name "app-metadata", :description "App Metadata endpoints."}
                   {:name "pipelines", :description "Pipeline endpoints."}
@@ -121,6 +123,9 @@
    (context "/apps" []
      :tags ["apps"]
      app-routes/apps)
+   (context "/apps" []
+     :tags ["app-versions"]
+     versions-routes/app-versions)
    (context "/analyses" []
      :tags ["analyses"]
      analysis-routes/analyses)

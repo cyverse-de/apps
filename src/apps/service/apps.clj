@@ -57,6 +57,10 @@
   [user system-id app]
   (.addApp (get-apps-client user) system-id app))
 
+(defn add-app-version
+  [user system-id app admin?]
+  (.addAppVersion (get-apps-client user) system-id app admin?))
+
 (defn preview-command-line
   [user system-id app]
   (.previewCommandLine (get-apps-client user) system-id app))

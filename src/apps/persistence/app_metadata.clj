@@ -111,6 +111,15 @@
       get-app
       :version_id))
 
+(defn get-app-max-version-order
+  "Retrieves the largest version order field from the app_versions table in the database."
+  [app-id]
+  (-> (select app_versions
+              (aggregate (max :version_order) :max_order)
+              (where {:app_id app-id}))
+      first
+      :max_order))
+
 (defn- user-id-subselect [username]
   (subselect :users
              (fields :id)
