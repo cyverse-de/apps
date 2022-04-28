@@ -10,7 +10,6 @@
             [apps.service.apps.job-listings :as job-listings]
             [apps.service.apps.permissions :as app-permissions]
             [apps.service.apps.util :as apps-util]
-            [apps.service.util :as util]
             [apps.util.service :as service]))
 
 (defn- reject-app-documentation-edit-request
@@ -127,6 +126,10 @@
     false)
 
   (addApp [_ system-id _]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
+  (addAppVersion [_ system-id _ _]
     (validate-system-id system-id)
     (reject-app-integration-request))
 

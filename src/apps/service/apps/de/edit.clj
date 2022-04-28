@@ -433,14 +433,18 @@
     (delete-app-orphans task-id updated-groups)
     updated-groups))
 
+(defn- validate-updated-app-name
+  [username app-id app-name]
+  (categorization/validate-app-name-in-current-hierarchy username app-id app-name)
+  (validate-app-name app-name app-id))
+
 (defn update-app
   "This service will update a single-step App, including the information at its top level and the
    tool used by its single task, as long as the App has not been submitted for public use."
   [user {app-id :id app-name :name :keys [references groups] :as app}]
   (verify-app-editable user (persistence/get-app app-id))
   (transaction
-   (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
-   (validate-app-name app-name app-id)
+   (validate-updated-app-name (:shortUsername user) app-id app-name)
    (persistence/update-app app)
    (let [tool-id (->> app :tools first :id)
          {version-id :id :keys [tasks]} (->> (get-app-details app-id) :app_versions first)
@@ -476,25 +480,47 @@
     (persistence/add-step version-id 0 {:task_id (:id task)})
     task))
 
-(defn add-app
-  "This service will add a single-step App, including the information at its top level."
-  [{:keys [username] :as user} {app-name :name :keys [references groups] :as app}]
+(defn- add-app-version*
+  "Adds a single-step app version to an existing app."
+  [user {app-id :id :keys [references groups] :as app}]
   (transaction
-    (->> (get-user-subcategory username (workspace-dev-app-category-index))
-         vector
-         (validate-app-name app-name nil))
-   (let [app-id     (:id (persistence/add-app app))
-         version-id (:id (persistence/add-app-version (assoc app :app_id app-id) user))
+   (let [version-id (:id (persistence/add-app-version (-> app (dissoc :id) (assoc :app_id app-id)) user))
          tool-id    (->> app :tools first :id)
          task-id    (-> (assoc app :version_id version-id :tool_id tool-id)
                         (add-single-step-task)
                         :id)]
-     (add-app-to-user-dev-category user app-id)
      (when-not (empty? references)
        (persistence/set-app-references version-id references))
      (dorun (map-indexed (partial update-app-group task-id) groups))
+     version-id)))
+
+(defn add-app
+  "This service will add a single-step App, including the information at its top level."
+  [{:keys [username] :as user} {app-name :name :as app}]
+  (transaction
+    (->> (get-user-subcategory username (workspace-dev-app-category-index))
+         vector
+         (validate-app-name app-name nil))
+   (let [app-id (:id (persistence/add-app app))]
+     (add-app-version* user (assoc app :id app-id))
+     (add-app-to-user-dev-category user app-id)
      (permissions/register-private-app (:shortUsername user) app-id)
      (get-app-ui user app-id))))
+
+(defn add-app-version
+  "Adds a single-step app version to an existing app, if the user has write permission on that app."
+  [user {app-id :id app-name :name :as app} admin?]
+  (let [existing-app (persistence/get-app app-id)]
+    (verify-app-permission user existing-app "write" admin?)
+    (transaction
+      (validate-updated-app-name (:shortUsername user) app-id app-name)
+      (persistence/update-app app)
+      (->> app-id
+           persistence/get-app-max-version-order
+           inc
+           (assoc app :id app-id :version_order)
+           (add-app-version* user))
+      (get-app-ui user app-id))))
 
 (defn- name-too-long?
   "Determines if a name is too long to be extended for a copy name."
@@ -561,7 +587,6 @@
     (when-not (user-owns-app? user app)
       (verify-app-permission user app "write")))
   (transaction
-   (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
-   (validate-app-name app-name app-id)
+   (validate-updated-app-name (:shortUsername user) app-id app-name)
    (relabel/update-app-labels body))
   (get-app-ui user app-id))

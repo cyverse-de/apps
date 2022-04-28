@@ -77,6 +77,9 @@
   (addApp [_ system-id app]
     (.addApp (util/get-apps-client clients system-id) system-id app))
 
+  (addAppVersion [_ system-id app admin?]
+    (.addAppVersion (util/get-apps-client clients system-id) system-id app admin?))
+
   (previewCommandLine [_ system-id app]
     (.previewCommandLine (util/get-apps-client clients system-id) system-id app))
 
