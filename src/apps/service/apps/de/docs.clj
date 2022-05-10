@@ -7,36 +7,38 @@
             [clojure-commons.validators :as cv]))
 
 (defn- get-references
-  "Returns a list of references from the database for the given app ID."
-  [app-id]
-  (map :reference_text (dp/get-app-references app-id)))
+  "Returns a list of references from the database for the given app version ID."
+  [app-version-id]
+  (map :reference_text (dp/get-app-references app-version-id)))
 
 (defn- get-app-docs*
   "Retrieves app documentation."
-  [app-id]
-  (if-let [docs (dp/get-documentation app-id)]
-    (assoc docs :references (get-references app-id))
-    (throw+ {:type   :clojure-commons.exception/not-found
-             :error  "App documentation not found"
-             :app_id app-id})))
+  [app-version-id]
+  (if-let [docs (dp/get-documentation app-version-id)]
+    (assoc docs :references (get-references app-version-id))
+    (throw+ {:type           :clojure-commons.exception/not-found
+             :error          "App documentation not found"
+             :app_version_id app-version-id})))
 
 (defn get-app-docs
-  "Retrieves documentation details for the given app ID."
+  "Retrieves documentation details for the latest version of an App."
   ([user app-id]
    (get-app-docs user app-id false))
   ([user app-id admin?]
    (de-validation/verify-app-permission user (ap/get-app app-id) "read" admin?)
-   (get-app-docs* app-id)))
+   (get-app-docs* (ap/get-app-latest-version app-id))))
 
 (defn edit-app-docs
-  "Updates an App's documentation and modified details in the database."
+  "Updates the latest version of an App's documentation and modified details in the database."
   [{:keys [username]} app-id {docs :documentation}]
-  (when (get-app-docs* app-id)
-    (dp/edit-documentation (v/get-valid-user-id username) docs app-id))
-  (get-app-docs* app-id))
+  (let [app-version-id (ap/get-app-latest-version app-id)]
+    (when (get-app-docs* app-version-id)
+      (dp/edit-documentation (v/get-valid-user-id username) docs app-version-id))
+    (get-app-docs* app-version-id)))
 
 (defn owner-edit-app-docs
-  "Updates an app's documentation in the database if the user has permission to edit the app."
+  "Updates the latest version of an app's documentation in the database
+   if the user has permission to edit the app."
   [user app-id docs]
   (let [app (ap/get-app app-id)]
     (when-not (cv/user-owns-app? user app)
@@ -44,32 +46,26 @@
   (edit-app-docs user app-id docs))
 
 (defn add-app-docs
-  "Adds an App's documentation to the database."
+  "Adds documentation to the latest version of an App."
   [{:keys [username]} app-id {docs :documentation}]
-  (when-let [current-docs (dp/get-documentation app-id)]
-    (throw+ {:type   :clojure-commons.exception/exists
-             :error  "App already has documentation"
-             :app_id app-id}))
-  (dp/add-documentation (v/get-valid-user-id username) docs app-id)
-  (get-app-docs* app-id))
+  (let [app-version-id (ap/get-app-latest-version app-id)]
+    (when (dp/get-documentation app-version-id)
+      (throw+ {:type           :clojure-commons.exception/exists
+               :error          "App already has documentation"
+               :app_version_id app-version-id}))
+    (dp/add-documentation (v/get-valid-user-id username) docs app-version-id)
+    (get-app-docs* app-version-id)))
 
 (defn owner-add-app-docs
-  "Adds an app's documentation to the database if the user has permission to edit the app."
+  "Adds documentation to the latest version of an App if the user has permission to edit the app."
   [user app-id docs]
   (let [app (ap/get-app app-id)]
     (when-not (cv/user-owns-app? user app)
       (de-validation/verify-app-permission user (ap/get-app app-id) "write")))
   (add-app-docs user app-id docs))
 
-(defn upsert-app-docs
-  "Either updates or adds app documentation."
-  [{:keys [username]} app-id {docs :documentation}]
-  (if-let [current-docs (dp/get-documentation app-id)]
-    (dp/edit-documentation (v/get-valid-user-id username) docs app-id)
-    (dp/add-documentation (v/get-valid-user-id username) docs app-id)))
-
 (defn has-docs?
-  "Determines whether or not an app has docs already."
+  "Determines whether the latest version of an App has docs already."
   [app-id]
-  (when (dp/get-documentation app-id)
+  (when (dp/get-documentation (ap/get-app-latest-version app-id))
     true))

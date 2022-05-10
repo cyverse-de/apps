@@ -1,6 +1,5 @@
 (ns apps.service.apps.de.listings
   (:use [apps.constants :only [de-system-id executable-tool-type]]
-        [apps.persistence.app-documentation :only [get-documentation]]
         [apps.persistence.app-groups]
         [apps.persistence.app-listing]
         [apps.persistence.entities]
@@ -533,17 +532,19 @@
 
 (defn- load-app-details
   "Retrieves the details for a single app."
-  [app-id]
+  [app-id app-version-id]
   (assert-not-nil [:app-id app-id]
                   (first (select apps
-                                 (with app_references)
-                                 (with integration_data)
+                                 (with app_versions
+                                       (with app_references)
+                                       (with integration_data)
+                                       (where {:app_versions.id app-version-id}))
                                  (where {:id app-id})))))
 
 (defn- format-wiki-url
   "CORE-6510: Remove the wiki_url from app details responses if the App has documentation saved."
   [{:keys [id wiki_url] :as app}]
-  (assoc app :wiki_url (if (get-documentation id) nil wiki_url)))
+  (assoc app :wiki_url (if (docs/has-docs? id) nil wiki_url)))
 
 (defn- format-app-hierarchies
   [{app-id :id :as app} username]
@@ -563,9 +564,9 @@
        (jobs-db/get-public-job-stats app-id params))))
 
 (defn- format-app-extra-info
-  [app-id admin?]
+  [version-id admin?]
   (if admin?
-    (get-app-extra-info app-id)
+    (get-app-extra-info version-id)
     nil))
 
 (defn- format-app-documentation
@@ -589,16 +590,28 @@
 (defn- format-app-details
   "Formats information for the get-app-details service."
   [username details tools admin?]
-  (let [app-id (:id details)]
+  (let [app-id                       (:id details)
+        {version-id :id
+         :keys      [app_references]
+         :as        version-details} (-> details :app_versions first)]
     (-> details
-        (select-keys [:id :integration_date :edited_date :deleted :disabled :wiki_url
-                      :integrator_name :integrator_email])
+        (select-keys [:id :wiki_url])
+        (merge (select-keys
+                 version-details
+                 [:version
+                  :deleted
+                  :disabled
+                  :edited_date
+                  :integration_date
+                  :integrator_name
+                  :integrator_email]))
         (assoc :name                 (:name details "")
                :description          (:description details "")
-               :references           (map :reference_text (:app_references details))
+               :version_id           version-id
+               :references           (map :reference_text app_references)
                :tools                (map format-app-tool tools)
                :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
-               :extra                (format-app-extra-info app-id admin?)
+               :extra                (format-app-extra-info version-id admin?)
                :documentation        (format-app-documentation app-id username admin?)
                :categories           (get-groups-for-app app-id)
                :suggested_categories (get-suggested-groups-for-app app-id)
@@ -609,11 +622,13 @@
 ;; This function was split from `get-app-details` to provide a way for administrative endopints to skip permission
 ;; checks without including the app stat information.
 (defn- get-app-details*
-  [username app-id admin?]
-  (let [details (load-app-details app-id)
-        tools   (get-app-tools app-id)]
-    (->> (format-app-details username details tools admin?)
-         (remove-nil-vals))))
+  ([username app-id admin?]
+   (get-app-details* username app-id (amp/get-app-latest-version app-id) admin?))
+  ([username app-id app-version-id admin?]
+   (let [details (load-app-details app-id app-version-id)
+         tools   (get-app-tools app-id app-version-id)]
+     (->> (format-app-details username details tools admin?)
+          (remove-nil-vals)))))
 
 ;; FIXME: remove the code to bypass the permission checks for admin users when we have a better
 ;; way to implement this.
@@ -677,11 +692,13 @@
   (map (partial format-task user) (get-tasks task-ids)))
 
 (defn- format-app-task-listing
-  [user {app-id :id :as app}]
-  (let [task-ids (map :task_id (select :app_steps (fields :task_id) (where {:app_id app-id})))
+  [user {app-version-id :version_id :as app}]
+  (let [task-ids (map :task_id (select :app_steps
+                                       (fields :task_id)
+                                       (where {:app_version_id app-version-id})))
         tasks    (get-tasks-with-file-params user task-ids)]
     (-> app
-        (select-keys [:id :name :description])
+        (select-keys [:id :name :description :version :version_id])
         (assoc :tasks tasks :system_id c/system-id))))
 
 (defn get-app-task-listing
@@ -695,10 +712,10 @@
   "A service to list the tools used by an app."
   [{username :shortUsername} app-id]
   (perms/check-app-permissions username "read" [app-id])
-  (let [app (get-app app-id)
-        tasks (:tasks (first (select apps
+  (let [{:keys [version_id]} (get-app app-id)
+        tasks (:tasks (first (select app_versions
                                      (with tasks (fields :tool_id))
-                                     (where {:apps.id app-id}))))
+                                     (where {:app_versions.id version_id}))))
         tool-ids (map :tool_id tasks)]
     {:tools (get-tools-by-id tool-ids)}))
 

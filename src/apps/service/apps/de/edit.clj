@@ -15,6 +15,7 @@
         [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
+            [apps.persistence.app-metadata.relabel :as relabel]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
@@ -28,65 +29,71 @@
 (defn- get-app-details
   "Retrieves the details for a single-step app."
   [app-id]
-  (first (select apps
-                 (fields :id
-                         :name
-                         :description
-                         :integration_date
-                         :edited_date)
-                 (with app_references)
-                 (with tasks
-                       (fields :id)
-                       (with parameter_groups
-                             (order :display_order)
-                             (fields :id
-                                     :name
-                                     :description
-                                     :label
-                                     [:is_visible :isVisible])
-                             (with parameters
-                                   (order :display_order)
-                                   (with file_parameters
-                                         (with info_type)
-                                         (with data_formats)
-                                         (with data_source))
-                                   (with parameter_types
-                                         (with value_type))
-                                   (with validation_rules
-                                         (with rule_type)
-                                         (with validation_rule_arguments
-                                               (order :ordering)
-                                               (fields :argument_value))
-                                         (fields :id
-                                                 [:rule_type.name :type]
-                                                 [:rule_type.id :type_id])
-                                         (where {:rule_type.deprecated false}))
-                                   (with parameter_values
-                                         (fields :id
-                                                 :parent_id
-                                                 :name
-                                                 :value
-                                                 [:label :display]
-                                                 :description
-                                                 [:is_default :isDefault])
-                                         (order [:parent_id :display_order] :ASC))
-                                   (fields :id
-                                           :name
-                                           :label
-                                           :description
-                                           [:ordering :order]
-                                           :required
-                                           [:is_visible :isVisible]
-                                           :omit_if_blank
-                                           [:parameter_types.name :type]
-                                           [:value_type.name :value_type]
-                                           [:info_type.name :file_info_type]
-                                           :file_parameters.is_implicit
-                                           :file_parameters.repeat_option_flag
-                                           :file_parameters.retain
-                                           [:data_source.name :data_source]
-                                           [:data_formats.name :format]))))
-                 (where {:id app-id}))))
+  (-> (select* apps)
+      (fields :id
+              :name
+              :description)
+      (where {:id app-id})
+      (with app_versions
+            (fields :id
+                    :version
+                    :integration_date
+                    :edited_date)
+            (where {:app_versions.id (persistence/get-app-latest-version app-id)})
+            (with app_references)
+            (with tasks
+                  (fields :id)
+                  (with parameter_groups
+                        (order :display_order)
+                        (fields :id
+                                :name
+                                :description
+                                :label
+                                [:is_visible :isVisible])
+                        (with parameters
+                              (order :display_order)
+                              (with file_parameters
+                                    (with info_type)
+                                    (with data_formats)
+                                    (with data_source))
+                              (with parameter_types
+                                    (with value_type))
+                              (with validation_rules
+                                    (with rule_type)
+                                    (with validation_rule_arguments
+                                          (order :ordering)
+                                          (fields :argument_value))
+                                    (fields :id
+                                            [:rule_type.name :type]
+                                            [:rule_type.id :type_id])
+                                    (where {:rule_type.deprecated false}))
+                              (with parameter_values
+                                    (fields :id
+                                            :parent_id
+                                            :name
+                                            :value
+                                            [:label :display]
+                                            :description
+                                            [:is_default :isDefault])
+                                    (order [:parent_id :display_order] :ASC))
+                              (fields :id
+                                      :name
+                                      :label
+                                      :description
+                                      [:ordering :order]
+                                      :required
+                                      [:is_visible :isVisible]
+                                      :omit_if_blank
+                                      [:parameter_types.name :type]
+                                      [:value_type.name :value_type]
+                                      [:info_type.name :file_info_type]
+                                      :file_parameters.is_implicit
+                                      :file_parameters.repeat_option_flag
+                                      :file_parameters.retain
+                                      [:data_source.name :data_source]
+                                      [:data_formats.name :format])))))
+      (select)
+      first))
 
 (defn- format-validator
   [validator]
@@ -206,19 +213,24 @@
 
 (defn- format-app-for-editing
   [app]
-  (let [app (get-app-details (:id app))
-        task (first (:tasks app))]
+  (let [{:keys [app_versions] :as app} (get-app-details (:id app))
+        {:keys [app_references tasks]
+         :as   version-details}        (first app_versions)
+        task                           (first tasks)]
     (when (empty? task)
       (throw+ {:type  :clojure-commons.exception/not-writeable
                :error "App contains no steps and cannot be copied or modified."}))
     (remove-nil-vals
      (-> app
-         (assoc :references (map :reference_text (:app_references app))
+         (merge (select-keys version-details [:version
+                                              :edited_date
+                                              :integration_date]))
+         (assoc :version_id (:id version-details)
+                :references (map :reference_text app_references)
                 :tools      (map format-app-tool (persistence/get-app-tools (:id app)))
                 :groups     (map format-group (:parameter_groups task))
                 :system_id  c/system-id)
-         (dissoc :app_references
-                 :tasks)))))
+         (dissoc :app_versions)))))
 
 (defn get-app-ui
   "This service prepares a JSON response for editing an App in the client."
@@ -431,9 +443,11 @@
    (validate-app-name app-name app-id)
    (persistence/update-app app)
    (let [tool-id (->> app :tools first :id)
-         app-task (->> (get-app-details app-id) :tasks first)
+         {version-id :id :keys [tasks]} (->> (get-app-details app-id) :app_versions first)
+         app-task (first tasks)
          task-id (:id app-task)
          current-param-ids (map :id (mapcat :parameters (:parameter_groups app-task)))]
+     (persistence/update-app-version (assoc app :version_id version-id))
       ;; Copy the App's current name, description, and tool ID to its task
      (persistence/update-task jp/de-client-name (assoc app :id task-id :tool_id tool-id))
       ;; CORE-6266 prevent duplicate key errors from reused param value IDs
@@ -457,25 +471,27 @@
 
 (defn- add-single-step-task
   "Adds a task as a single step to the given app, using the app's name, description, and label."
-  [{app-id :id :as app}]
+  [{version-id :version_id :as app}]
   (let [task (persistence/add-task jp/de-client-name app)]
-    (persistence/add-step app-id 0 {:task_id (:id task)})
+    (persistence/add-step version-id 0 {:task_id (:id task)})
     task))
 
 (defn add-app
   "This service will add a single-step App, including the information at its top level."
   [{:keys [username] :as user} {app-name :name :keys [references groups] :as app}]
   (transaction
-   (let [cat-id  (get-user-subcategory username (workspace-dev-app-category-index))
-         _       (validate-app-name app-name nil [cat-id])
-         app-id  (:id (persistence/add-app app user))
-         tool-id (->> app :tools first :id)
-         task-id (-> (assoc app :id app-id :tool_id tool-id)
-                     (add-single-step-task)
-                     (:id))]
+    (->> (get-user-subcategory username (workspace-dev-app-category-index))
+         vector
+         (validate-app-name app-name nil))
+   (let [app-id     (:id (persistence/add-app app))
+         version-id (:id (persistence/add-app-version (assoc app :app_id app-id) user))
+         tool-id    (->> app :tools first :id)
+         task-id    (-> (assoc app :version_id version-id :tool_id tool-id)
+                        (add-single-step-task)
+                        :id)]
      (add-app-to-user-dev-category user app-id)
      (when-not (empty? references)
-       (persistence/set-app-references app-id references))
+       (persistence/set-app-references version-id references))
      (dorun (map-indexed (partial update-app-group task-id) groups))
      (permissions/register-private-app (:shortUsername user) app-id)
      (get-app-ui user app-id))))
@@ -525,7 +541,7 @@
   [app]
   (let [app (format-app-for-editing app)]
     (-> app
-        (dissoc :id)
+        (dissoc :id :version :version_id)
         (assoc :name   (app-copy-name (:name app))
                :groups (map convert-app-group-to-copy (:groups app)))
         (remove-nil-vals))))
@@ -547,5 +563,5 @@
   (transaction
    (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
    (validate-app-name app-name app-id)
-   (persistence/update-app-labels body))
+   (relabel/update-app-labels body))
   (get-app-ui user app-id))

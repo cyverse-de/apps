@@ -18,11 +18,11 @@
    (util/qual-id (:source_step mapping) (:output mapping))])
 
 (defn load-io-maps
-  [app-id]
+  [app-version-id]
   (->> (select [:workflow_io_maps :wim]
                (join [:input_output_mapping :iom] {:wim.id :iom.mapping_id})
                (fields :wim.source_step :iom.output :wim.target_step :iom.input)
-               (where {:wim.app_id          app-id
+               (where {:wim.app_version_id  app-version-id
                        :iom.external_input  nil
                        :iom.external_output nil}))
        (map format-io-map)
@@ -125,34 +125,34 @@
             :stderr      stderr
             :type        "condor"}))))
 
-(defn load-steps
-  [app-id]
+(defn- load-steps
+  [app-version-id]
   (select [:app_steps :s]
           (join [:tasks :t] {:s.task_id :t.id})
           (fields [:s.id              :id]
                   [:s.step            :step_number]
                   [:s.task_id         :task_id]
                   [:t.external_app_id :external_app_id])
-          (where {:s.app_id app-id})
+          (where {:s.app_version_id app-version-id})
           (order :s.step)))
 
 (defn build-steps
   [request-builder app submission]
-  (->> (load-steps (:id app))
+  (->> (load-steps (:version_id app))
        (drop (dec (:starting_step submission 1)))
        (take-while (comp nil? :external_app_id))
        (reduce #(.buildStep request-builder (:requirements submission) %1 %2) [])))
 
 (defn- load-htcondor-extra-requirements
-  [app-id]
+  [app-version-id]
   (first
    (select :apps_htcondor_extra
            (fields [:extra_requirements])
-           (where {:apps_id app-id}))))
+           (where {:app_version_id app-version-id}))))
 
 (defn build-extra
   [request-builder app]
-  {:htcondor (load-htcondor-extra-requirements (:id app))})
+  {:htcondor (load-htcondor-extra-requirements (:version_id app))})
 
 (defn- interactive?
   "Returns true if the given submission is for an interactive job."
@@ -174,6 +174,7 @@
           extra  (future (.buildExtra request-builder))]
       (-> {:app_description      (:description app)
            :app_id               (:id app)
+           :app_version_id       (:version_id app)
            :app_name             (:name app)
            :archive_logs         (:archive_logs submission)
            :callback             (:callback submission)

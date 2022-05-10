@@ -18,21 +18,31 @@
   [app-id]
   (get-app app-id))
 
-(defn- task-ids-for-app
-  "Get the list of task IDs associated with an app."
+(defn- app-version-ids
+  "Get the list of version IDs associated with an app."
   [app-id]
+  (map :id
+       (select :app_versions
+               (fields :id)
+               (where {:app_id app-id}))))
+
+(defn- task-ids-for-app-version
+  "Get the list of task IDs associated with an app version."
+  [app-version-id]
   (map :task_id
        (select [:app_steps :step]
                (fields :step.task_id)
-               (where {:step.app_id app-id}))))
+               (where {:step.app_version_id app-version-id}))))
 
 (defn- private-apps-for
   "Finds private single-step apps for a list of task IDs."
   [task-ids public-app-ids]
   (select [:app_listing :a]
           (fields :a.id :a.name)
+          (join [:app_versions :v]
+                {:a.id :v.app_id})
           (join [:app_steps :step]
-                {:a.id :step.app_id})
+                {:v.id :step.app_version_id})
           (where {:step.task_id [in task-ids]
                   :a.step_count 1
                   :a.id         [not-in public-app-ids]})))
@@ -60,30 +70,48 @@
     (->> (remove (comp public-tool-ids :id) tools)
          (remove-publishable-tools username))))
 
-(defn app-publishable?
-  "Determines whether or not an app can be published. An app is publishable if none of the
-   templates in the app are associated with any single-step apps that are not public. Returns
-   a flag indicating whether or not the app is publishable along with the reason the app isn't
-   publishable if it's not."
-  [{username :shortUsername} app-id admin?]
-  (validate-app-existence app-id)
-  (when-not admin? (perms/check-app-permissions username "own" [app-id]))
-  (let [task-ids            (task-ids-for-app app-id)
+(defn- app-version-publishable?
+  "Determines whether or not an app version can be published.
+   Returns a flag indicating whether the app version is publishable
+   along with the reason the app version isn't publishable if it's not."
+  [username admin? public-app-ids app-id app-version-id]
+  (let [task-ids            (task-ids-for-app-version app-version-id)
         unrunnable-tasks    (list-unrunnable-tasks task-ids)
-        tools               (get-app-tools app-id)
-        public-app-ids      (perms-client/get-public-app-ids)
-        is-public?          (contains? public-app-ids app-id)
+        tools               (get-app-tools app-id app-version-id)
         unpublishable-tools (when-not admin? (get-unpublishable-tools username tools))
         deprecated-tools    (filter :deprecated tools)
         private-apps        (private-apps-for task-ids public-app-ids)]
-    (cond is-public?                [false "app is already public"]
-          (empty? task-ids)         [false "no app ID provided"]
+    (cond (empty? task-ids)         [false "no app version ID provided"]
           (seq unrunnable-tasks)    [false "contains unrunnable tasks" unrunnable-tasks]
           (seq unpublishable-tools) [false "contains unpublishable tools" unpublishable-tools]
           (seq deprecated-tools)    [false "contains deprecated tools" deprecated-tools]
           (= 1 (count task-ids))    [true]
           (seq private-apps)        [false "contains private apps" private-apps]
           :else                     [true])))
+
+(defn app-publishable?
+  "Determines whether or not an app can be published.
+   An app is publishable if all versions of the app can be published.
+   Returns a flag indicating whether or not the app is publishable
+   along with the reason the app isn't publishable if it's not."
+  [{username :shortUsername} app-id admin?]
+  (validate-app-existence app-id)
+  (when-not admin? (perms/check-app-permissions username "own" [app-id]))
+  (let [version-ids           (app-version-ids app-id)
+        public-app-ids        (perms-client/get-public-app-ids)
+        is-public?            (contains? public-app-ids app-id)
+        unpublishable-version (->> version-ids
+                                   (map (partial app-version-publishable?
+                                                 username
+                                                 admin?
+                                                 public-app-ids
+                                                 app-id))
+                                   (filter (comp not first))
+                                   first)]
+    (cond is-public?                  [false "app is already public"]
+          (empty? version-ids)        [false "no app ID provided"]
+          (seq unpublishable-version) unpublishable-version
+          :else                       [true])))
 
 (defn uses-tools-in-untrusted-registries?
   "Determines whether or not any of the tools used by an app are in an untrusted Docker repository."

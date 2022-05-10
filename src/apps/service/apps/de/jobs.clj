@@ -33,7 +33,7 @@
 (defn- store-submitted-job
   "Saves information about a job in the database."
   [user job submission status]
-  (-> (select-keys job [:app_id :app_name :app_description :notify])
+  (-> (select-keys job [:app_id :app_version_id :app_name :app_description :notify])
       (assoc :job_name           (:name job)
              :job_description    (:description job)
              :system_id          (:system_id submission)
@@ -86,6 +86,7 @@
    {:app_description (:app_description jex-submission)
     :app_disabled    false
     :app_id          (:app_id jex-submission)
+    :app_version_id  (:app_version_id jex-submission)
     :app_name        (:app_name jex-submission)
     :batch           batch?
     :description     (:description jex-submission)

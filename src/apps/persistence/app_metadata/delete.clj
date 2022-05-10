@@ -12,7 +12,9 @@
   (select tasks
           (join [:app_steps :step]
                 {:step.task_id :tasks.id})
-          (where {:step.app_id app-id})))
+          (join [:app_versions :versions]
+                {:step.app_version_id :versions.id})
+          (where {:versions.app_id app-id})))
 
 (defn- task-orphaned?
   "Determines whether or not a task is orphaned."

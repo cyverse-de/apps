@@ -91,11 +91,11 @@
   (mapv (partial format-group user name-prefix include-hidden-params? step) (get-groups (:id step))))
 
 (defn- get-steps
-  [app-id]
+  [app-version-id]
   (select [:app_steps :s]
           (join :inner [:tasks :t] {:s.task_id :t.id})
           (fields :s.id [:s.step :step_number] :s.task_id [:t.name :task_name])
-          (where {:app_id app-id})
+          (where {:app_version_id app-version-id})
           (order :step)))
 
 (defn- format-steps
@@ -105,10 +105,10 @@
     (doall (mapcat (fn [step] (format-groups user (group-name-prefix step) include-hidden-params? step)) app-steps))))
 
 (defn- format-app
-  [user {app-id :id name :name :as app} include-hidden-params?]
-  (let [app-steps           (get-steps app-id)
+  [user {:keys [name version_id] :as app} include-hidden-params?]
+  (let [app-steps           (get-steps version_id)
         limit-check-results (limits/load-limit-check-results user)]
-    (-> (select-keys app [:id :name :description :disabled :deleted])
+    (-> (select-keys app [:id :name :description :disabled :deleted :version :version_id])
         (assoc :label name
                :requirements (map get-step-resource-requirements app-steps)
                :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
@@ -116,8 +116,9 @@
                :system_id c/system-id
                :limitChecks (limits/format-app-limit-check-results limit-check-results app)))))
 
-(defn- validate-hidden-inputs [user app-id]
-  (when-let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-id)))]
+(defn- validate-hidden-inputs
+  [user app-version-id]
+  (when-let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-version-id)))]
     (try+
      (data-info/get-path-info user :paths paths :validation-behavior "read" :filter-include "path")
      (catch [:status 500] e
@@ -139,5 +140,5 @@
   [user app-id include-hidden-params?]
   (let [app (amp/get-app app-id)]
     (verify-app-permission user app "read")
-    (validate-hidden-inputs user app-id)
+    (validate-hidden-inputs user (:version_id app))
     (format-app user app include-hidden-params?)))

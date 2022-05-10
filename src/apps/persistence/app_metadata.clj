@@ -15,7 +15,6 @@
   (:require [apps.clients.permissions :as perms-client]
             [apps.persistence.app-listing :as app-listing]
             [apps.persistence.app-metadata.delete :as delete]
-            [apps.persistence.app-metadata.relabel :as relabel]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
@@ -105,6 +104,13 @@
   [app-id]
   (assert-not-nil [:app-id app-id] (app-listing/get-app-listing (uuidify app-id))))
 
+(defn get-app-latest-version
+  "Retrieves the latest version field from the app listing view in the database."
+  [app-id]
+  (-> app-id
+      get-app
+      :version_id))
+
 (defn- user-id-subselect [username]
   (subselect :users
              (fields :id)
@@ -192,12 +198,17 @@
       select
       first))
 
-(defn get-integration-data-by-app-id [app-id]
+(defn get-integration-data-by-app-version-id [app-version-id]
   (-> (integration-data-base-query)
-      (join [:apps :a] {:a.integration_data_id :d.id})
-      (where {:a.id app-id})
+      (join [:app_versions :a] {:a.integration_data_id :d.id})
+      (where {:a.id app-version-id})
       select
       first))
+
+(defn get-integration-data-by-app-id [app-id]
+  (-> app-id
+      get-app-latest-version
+      get-integration-data-by-app-version-id))
 
 (defn update-app-integration-data [app-id integration-data-id]
   (-> (update* :apps)
@@ -260,24 +271,27 @@
 
 (defn get-app-tools
   "Loads information about the tools associated with an app."
-  [app-id]
+  ([app-id]
+   (get-app-tools app-id (get-app-latest-version app-id)))
+  ([app-id version-id]
   (select (get-tool-listing-base-query)
           (join :container_images {:tool_listing.container_images_id :container_images.id})
           (fields [:container_images.name       :image_name]
                   [:container_images.tag        :image_tag]
                   [:container_images.url        :image_url]
                   [:container_images.deprecated :deprecated])
-          (where {:app_id app-id})))
+          (where {:app_id         app-id
+                  :app_version_id version-id}))))
 
 (defn get-app-notification-types
-  "Loads information about the notification types to use for an app."
-  [app-id]
+  "Loads information about the notification types to use for an app version."
+  [app-version-id]
   (->> (select [:app_steps :step]
                (join [:tasks :task] {:step.task_id :task.id})
                (join [:tools :tool] {:task.tool_id :tool.id})
                (join [:tool_types :tt] {:tool.tool_type_id :tt.id})
                (fields :tt.notification_type)
-               (where {:step.app_id (uuidify app-id)}))
+               (where {:step.app_version_id app-version-id}))
        (map :notification_type)))
 
 (defn subselect-tool-ids-using-data-container
@@ -328,36 +342,39 @@
                   :parameter_types.id})
            (where {:tool_type_parameter_type.tool_type_id tool-type-id}))))
 
-(defn- prep-app
-  "Prepares an app for insertion into the database."
-  [app integration-data-id]
-  (-> (select-keys app [:id :name :description])
-      (assoc :integration_data_id integration-data-id
-             :edited_date         (sqlfn now))))
-
 (defn add-app
   "Adds top-level app info to the database and returns the new app info, including its new ID."
-  ([app]
-   (add-app app current-user))
-  ([app user]
-   (insert apps (values (prep-app app (:id (get-integration-data user)))))))
+  [app]
+  (as-> (select-keys app [:id :name :description]) app-info
+        (insert apps (values app-info))))
+
+(defn add-app-version
+  "Adds top-level app version info to the database and returns the new info, including its new ID."
+  ([app-version]
+   (add-app-version app-version current-user))
+  ([{:keys [version] :as app-version :or {version "Unversioned"}} user]
+   (as-> (select-keys app-version [:id :app_id :version_order]) version-info
+         (assoc version-info :version version
+                             :integration_data_id (:id (get-integration-data user))
+                             :edited_date         (sqlfn now))
+         (insert app_versions (values version-info)))))
 
 (defn add-step
   "Adds an app step to the database for the given app ID."
-  [app-id step-number step]
+  [version-id step-number step]
   (let [step (-> step
                  (select-keys [:task_id])
                  (update-in [:task_id] uuidify)
-                 (assoc :app_id app-id
+                 (assoc :app_version_id version-id
                         :step step-number))]
     (insert app_steps (values step))))
 
 (defn- add-workflow-io-map
   [mapping]
   (insert :workflow_io_maps
-          (values {:app_id      (:app_id mapping)
-                   :source_step (get-in mapping [:source_step :id])
-                   :target_step (get-in mapping [:target_step :id])})))
+          (values {:app_version_id (:app_version_id mapping)
+                   :source_step    (get-in mapping [:source_step :id])
+                   :target_step    (get-in mapping [:target_step :id])})))
 
 (defn- build-io-key
   [step de-app-key external-app-key value]
@@ -384,16 +401,25 @@
 
 (defn update-app
   "Updates top-level app info in the database."
-  ([app]
-   (update-app app false))
-  ([app publish?]
-   (let [app-id (:id app)
-         app (-> app
-                 (select-keys [:name :description :wiki_url :deleted :disabled])
-                 (assoc :edited_date (sqlfn now)
-                        :integration_date (when publish? (sqlfn now)))
-                 (remove-nil-vals))]
-     (sql/update apps (set-fields app) (where {:id app-id})))))
+  [app]
+  (let [app-id (:id app)
+        app (-> app
+                (select-keys [:name :description :wiki_url])
+                (remove-nil-vals))]
+    (sql/update apps (set-fields app) (where {:id app-id}))))
+
+(defn update-app-version
+  "Updates top-level app version info in the database."
+  ([version-info]
+   (update-app-version version-info false))
+  ([version-info publish?]
+   (let [version-id   (:version_id version-info)
+         version-info (-> version-info
+                          (select-keys [:version :deleted :disabled])
+                          (assoc :edited_date (sqlfn now)
+                                 :integration_date (when publish? (sqlfn now)))
+                          (remove-nil-vals))]
+     (sql/update app_versions (set-fields version-info) (where {:id version-id})))))
 
 (defn- get-app-publication-status-code-id
   [status-code]
@@ -423,24 +449,24 @@
 
     request-id))
 
-(defn add-app-reference
+(defn- add-app-reference
   "Adds an App's reference to the database."
-  [app-id reference]
-  (insert app_references (values {:app_id app-id, :reference_text reference})))
+  [version-id reference]
+  (insert app_references (values {:app_version_id version-id, :reference_text reference})))
 
 (defn set-app-references
   "Resets the given App's references with the given list."
-  [app-id references]
+  [version-id references]
   (transaction
-   (delete app_references (where {:app_id app-id}))
-   (dorun (map (partial add-app-reference app-id) references))))
+   (delete app_references (where {:app_version_id version-id}))
+   (dorun (map (partial add-app-reference version-id) references))))
 
 (defn set-htcondor-extra
-  [app-id extra-requirements]
+  [version-id extra-requirements]
   (transaction
-   (delete apps_htcondor_extra (where {:apps_id app-id}))
+   (delete apps_htcondor_extra (where {:app_version_id version-id}))
    (if-not (or (nil? extra-requirements) (empty? (string/trim extra-requirements)))
-     (insert apps_htcondor_extra (values {:apps_id app-id, :extra_requirements extra-requirements})))))
+     (insert apps_htcondor_extra (values {:app_version_id version-id, :extra_requirements extra-requirements})))))
 
 (defn- get-job-type-id-for-system* [system-id]
   (:id (first (select :job_types (fields :id) (where {:system_id system-id})))))
@@ -503,8 +529,8 @@
 (defn remove-app-steps
   "Removes all steps from an App. This delete will cascade to workflow_io_maps and
   input_output_mapping entries."
-  [app-id]
-  (delete app_steps (where {:app_id app-id})))
+  [app-version-id]
+  (delete app_steps (where {:app_version_id app-version-id})))
 
 (defn remove-workflow-map-orphans
   "Removes any orphaned workflow_io_maps table entries."
@@ -521,11 +547,6 @@
    (delete :input_output_mapping (where (or {:input parameter-id}
                                             {:output parameter-id})))
    (remove-workflow-map-orphans)))
-
-(defn update-app-labels
-  "Updates the labels in an app."
-  [req]
-  (relabel/update-app-labels req))
 
 (defn get-app-group
   "Fetches an App group."
@@ -718,12 +739,12 @@
 
 (defn count-external-steps
   "Counts how many steps have an external ID in the given app."
-  [app-id]
+  [app-version-id]
   ((comp :count first)
    (select [:app_steps :s]
            (aggregate (count :external_app_id) :count)
            (join [:tasks :t] {:s.task_id :t.id})
-           (where {:s.app_id (uuidify app-id)})
+           (where {:s.app_version_id app-version-id})
            (where (raw "t.external_app_id IS NOT NULL")))))
 
 (defn permanently-delete-app
@@ -736,14 +757,14 @@
   ([app-id]
    (delete-app true app-id))
   ([deleted? app-id]
-   (sql/update :apps (set-fields {:deleted deleted?}) (where {:id app-id}))))
+   (sql/update :app_versions (set-fields {:deleted deleted?}) (where {:app_id app-id}))))
 
 (defn disable-app
   "Marks or unmarks an app as disabled in the metadata database."
   ([app-id]
    (disable-app true app-id))
   ([disabled? app-id]
-   (sql/update :apps (set-fields {:disabled disabled?}) (where {:id app-id}))))
+   (sql/update :app_versions (set-fields {:disabled disabled?}) (where {:app_id app-id}))))
 
 (defn rate-app
   "Adds or updates a user's rating and comment ID for the given app."
@@ -780,8 +801,8 @@
 
 (defn load-app-steps
   [app-id]
-  (select [:apps :a]
-          (join [:app_steps :s] {:a.id :s.app_id})
+  (select [:app_versions :v]
+          (join [:app_steps :s] {:s.app_version_id :v.id})
           (join [:tasks :t] {:s.task_id :t.id})
           (join [:job_types :jt] {:t.job_type_id :jt.id})
           (fields [:s.id              :step_id]
@@ -790,7 +811,7 @@
                   [:jt.name           :job_type]
                   [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
-          (where {:a.id (uuidify app-id)})
+          (where {:v.id (-> app-id uuidify get-app-latest-version)})
           (order :step :ASC)))
 
 (defn- mapping-base-query
@@ -810,9 +831,9 @@
           (where {:wim.target_step step-id})))
 
 (defn load-app-mappings
-  [app-id]
+  [app-version-id]
   (select (mapping-base-query)
-          (where {:wim.app_id (uuidify app-id)})))
+          (where {:wim.app_version_id app-version-id})))
 
 (defn load-app-details
   [app-ids]
@@ -862,9 +883,9 @@
                 {:s.task_id :p.task_id})
           (join [:tasks :t]
                 {:p.task_id :t.id})
-          (join [:apps :app]
-                {:app.id :s.app_id})
-          (where {:app.id (uuidify app-id)})))
+          (join [:app_versions :v]
+                {:v.id :s.app_version_id})
+          (where {:v.app_id (uuidify app-id)})))
 
 (defn get-app-names
   [app-ids]
@@ -902,7 +923,8 @@
 
 (defn list-duplicate-apps-by-id
   [app-name app-id-set]
-  (select :apps
+  ; Uses app_listing view so we can check whether all versions are deleted.
+  (select :app_listing
           (fields :id :name :description)
           (where {(normalize-string :name) (normalize-string app-name)
                   :deleted                 false
@@ -910,7 +932,8 @@
 
 (defn- list-duplicate-apps*
   [app-name app-id category-id-set]
-  (select [:apps :a]
+  ; Uses app_listing view so we can check whether all versions are deleted.
+  (select [:app_listing :a]
           (fields :a.id :a.name :a.description)
           (join [:app_category_app :aca] {:a.id :aca.app_id})
           (where {(normalize-string :a.name) (normalize-string app-name)

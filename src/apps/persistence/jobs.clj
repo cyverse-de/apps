@@ -15,7 +15,6 @@
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as string]
-            [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
             [honeysql.core :as hsql]
             [honeysql.helpers :as h]
@@ -59,6 +58,7 @@
    :job_description
    :job_type_id
    :app_id
+   :app_version_id
    :app_name
    :app_description
    :app_wiki_url
@@ -274,7 +274,8 @@
 (defn- internal-app-subselect
   []
   (subselect :apps
-             (join :app_steps {:apps.id :app_steps.app_id})
+             (join :app_versions {:apps.id :app_versions.app_id})
+             (join :app_steps {:app_versions.id :app_steps.app_version_id})
              (join :tasks {:app_steps.task_id :tasks.id})
              (join :tools {:tasks.tool_id :tools.id})
              (join :tool_types {:tools.tool_type_id :tool_types.id})
@@ -337,6 +338,7 @@
       (fields :j.app_description
               :j.system_id
               :j.app_id
+              :j.app_version_id
               :j.app_name
               [:j.job_description :description]
               :j.end_date
@@ -464,15 +466,6 @@
       first
       :count))
 
-(defn- add-job-type-clause
-  "Adds a where clause for a set of job types if the set of job types provided is not nil
-   or empty."
-  [query job-types]
-  (assert (or (nil? job-types) (sequential? job-types)))
-  (if-not (empty? job-types)
-    (where query {:jt.name [in job-types]})
-    query))
-
 (defn get-job-by-id
   "Gets a single job by its internal identifier."
   [id]
@@ -486,6 +479,7 @@
   (-> (select* [:jobs :j])
       (fields :j.app_description
               :j.app_id
+              :j.app_version_id
               :j.app_name
               [:j.job_description   :description]
               :j.end_date
@@ -641,13 +635,6 @@
                                                 :end_date end-date}))
                 (where {:job_id job-id}))))
 
-(defn list-incomplete-jobs
-  []
-  (select (job-base-query)
-          (where {:j.is_batch false
-                  :j.deleted  false
-                  :j.status   [not-in completed-status-codes]})))
-
 (defn list-job-steps
   [job-id]
   (select (job-step-base-query)
@@ -737,7 +724,7 @@
               (set-fields {:deleted true})
               (where {:id [in ids]})))
 
-(defn get-jobs
+(defn- get-jobs
   [ids]
   (select (job-base-query)
           (where {:j.id [in ids]})))
@@ -748,12 +735,6 @@
        (map :id)
        (set)
        (set/difference job-id-set)))
-
-(defn list-unowned-jobs
-  [username job-ids]
-  (select (job-base-query)
-          (where {:j.id       [in (map uuidify job-ids)]
-                  :j.username [not= username]})))
 
 (defn- get-job-stats-fields
   "Adds query fields with subselects similar to the app_listing view's job_count, job_count_failed,

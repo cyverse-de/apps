@@ -115,6 +115,9 @@
                      :job_description    (:description submission)
                      :system_id          (:system_id submission)
                      :app_id             (:app_id submission)
+                     ;; If :app_version_id was not submitted by the client,
+                     ;; then use the latest :version_id from the app job view.
+                     :app_version_id     (:app_version_id submission (:version_id app))
                      :app_name           (:name app)
                      :app_description    (:description app)
                      :result_folder_path output-dir

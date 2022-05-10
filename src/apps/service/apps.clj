@@ -5,16 +5,12 @@
         [apps.util.db :only [transaction]]
         [slingshot.slingshot :only [try+]]
         [service-logging.thread-context :only [with-logging-context]])
-  (:require [clojure.tools.logging :as log]
-            [clojure-commons.exception-util :as cxu]
+  (:require [clojure-commons.exception-util :as cxu]
             [clojure.walk :as walk]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs :as jobs]
-            [apps.user :as user]
-            [apps.util.config :as config]
-            [apps.util.json :as json-util]
-            [service-logging.thread-context :as tc]))
+            [apps.util.json :as json-util]))
 
 (defn get-app-categories
   [user params]
@@ -224,27 +220,6 @@
   run in a new thread as a task."
   [cm]
   (dosync (ref-set logging-context-map cm)))
-
-(defn- sync-job-status
-  [{:keys [username id] :as job}]
-  (with-logging-context {}
-    (try+
-     (log/info "synchronizing the job status for" id)
-     (transaction (jobs/sync-job-status (get-apps-client-for-username username) job))
-     (catch Object _
-       (log/error (:throwable &throw-context) "unable to sync the job status for job" id)))))
-
-(defn sync-job-statuses
-  []
-  (tc/with-logging-context @logging-context-map
-    (try+
-     (log/info "synchronizing job statuses")
-     (dorun (map sync-job-status (jp/list-incomplete-jobs)))
-     (catch Object _
-       (log/error (:throwable &throw-context)
-                  "error while obtaining the list of jobs to synchronize."))
-     (finally
-       (log/info "done synchronizing job statuses")))))
 
 (defn update-job
   [user job-id body]

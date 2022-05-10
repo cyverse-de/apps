@@ -33,8 +33,8 @@
 (defn- external-step-subselect
   []
   (subselect [:app_steps :es]
-             (where {:es.app_id  :a.id
-                     :es.task_id nil})))
+             (where {:es.app_version_id :v.id
+                     :es.task_id        nil})))
 
 (defn- add-agave-pipeline-where-clause
   [q {agave-enabled? :agave-enabled :or {agave-enaled? "false"}}]
@@ -72,7 +72,7 @@
    non-administrative app listings."
   [q {admin? :admin}]
   (if-not admin?
-    (where q {:a.deleted         false
+    (where q {:v.deleted         false
               :i.integrator_name [not= c/internal-app-integrator]})
     q))
 
@@ -80,8 +80,9 @@
   "Gets an app search select query. This function returns only a list of matching app IDs."
   [search-term query-opts]
   (as-> (select* [:apps :a]) q
-    (join q [:integration_data :i] {:a.integration_data_id :i.id})
-    (join q [:app_steps :s] {:a.id :s.app_id})
+    (join q [:app_versions :v] {:a.id :v.app_id})
+    (join q [:integration_data :i] {:v.integration_data_id :i.id})
+    (join q [:app_steps :s] {:v.id :s.app_version_id})
     (join q [:tasks :t] {:s.task_id :t.id})
     (join q [:tools :tool] {:t.tool_id :tool.id})
     (join q [:job_types :jt] {:t.job_type_id :jt.id})
