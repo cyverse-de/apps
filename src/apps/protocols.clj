@@ -25,6 +25,7 @@
   (getAppJobView [_ system-id app-id] [_ system-id app-id include-hidden-params?])
   (getAppSubmissionInfo [_ system-id app-id])
   (deleteApp [_ system-id app-id])
+  (deleteAppVersion [_ system-id app-id app-version-id])
   (relabelApp [_ system-id app])
   (updateApp [_ system-id app])
   (copyApp [_ system-id app-id])

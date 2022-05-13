@@ -77,6 +77,10 @@
   [user system-id app-id]
   (.deleteApp (get-apps-client user) system-id app-id))
 
+(defn delete-app-version
+  [user system-id app-id app-version-id]
+  (.deleteAppVersion (get-apps-client user) system-id app-id app-version-id))
+
 (defn relabel-app
   [user system-id app]
   (.relabelApp (get-apps-client user) system-id app))

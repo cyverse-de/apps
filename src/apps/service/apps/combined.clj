@@ -106,6 +106,9 @@
   (deleteApp [_ system-id app-id]
     (.deleteApp (util/get-apps-client clients system-id) system-id app-id))
 
+  (deleteAppVersion [_ system-id app-id app-version-id]
+    (.deleteAppVersion (util/get-apps-client clients system-id) system-id app-id app-version-id))
+
   (relabelApp [_ system-id app]
     (.relabelApp (util/get-apps-client clients system-id) system-id app))
 

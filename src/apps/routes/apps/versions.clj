@@ -1,5 +1,6 @@
 (ns apps.routes.apps.versions
-  (:require [apps.routes.params :refer [SecuredQueryParamsRequired]]
+  (:require [apps.routes.params :refer [SecuredQueryParams
+                                        SecuredQueryParamsRequired]]
             [apps.service.apps :as apps]
             [apps.user :refer [current-user]]
             [common-swagger-api.routes :refer :all]
@@ -21,4 +22,16 @@
                           (ok (apps/add-app-version current-user
                                                     system-id
                                                     (assoc app :id app-id)
-                                                    false)))))
+                                                    false)))
+
+                    (context "/:version-id" []
+                             :path-params [version-id :- schema/StringAppIdParam]
+
+                             (DELETE "/" []
+                                     :query [params SecuredQueryParams]
+                                     :summary schema/AppVersionDeleteSummary
+                                     :description schema/AppVersionDeleteDocs
+                                     (ok (apps/delete-app-version current-user
+                                                                  system-id
+                                                                  app-id
+                                                                  version-id))))))

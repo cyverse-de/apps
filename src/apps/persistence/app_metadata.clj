@@ -770,6 +770,13 @@
   ([deleted? app-id]
    (sql/update :app_versions (set-fields {:deleted deleted?}) (where {:app_id app-id}))))
 
+(defn delete-app-version
+  "Marks or unmarks an app version as deleted in the metadata database."
+  ([app-version-id]
+   (delete-app-version true app-version-id))
+  ([deleted? app-version-id]
+   (sql/update :app_versions (set-fields {:deleted deleted?}) (where {:id app-version-id}))))
+
 (defn disable-app
   "Marks or unmarks an app as disabled in the metadata database."
   ([app-id]

@@ -156,6 +156,10 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (deleteAppVersion [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (relabelApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))

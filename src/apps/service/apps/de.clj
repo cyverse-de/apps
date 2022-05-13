@@ -111,6 +111,10 @@
     (validate-system-id system-id)
     (app-metadata/delete-app user (uuidify app-id)))
 
+  (deleteAppVersion [_ system-id app-id app-version-id]
+    (validate-system-id system-id)
+    (app-metadata/delete-app-version user (uuidify app-id) (uuidify app-version-id)))
+
   (relabelApp [_ system-id app]
     (validate-system-id system-id)
     (edit/relabel-app user (update app :id uuidify)))
