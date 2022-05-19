@@ -58,6 +58,11 @@
                   :min_cpu_cores
                   :min_disk_space]))
 
+(defn- filter-max-requirement-keys
+  [m]
+  (select-keys m [:memory_limit
+                  :max_cpu_cores]))
+
 (defn- limit-container-min-requirement
   [container req-key-min req-key-max]
   (if (and (contains? container req-key-min)
@@ -69,11 +74,13 @@
 (defn- reconcile-container-requirements
   "reconcile submission requirement requests with tool requirements"
   [container requirements]
-  (-> container
-      (merge
-       (merge-with max
-                   (filter-min-requirement-keys container)
-                   (filter-min-requirement-keys requirements)))
+  (-> (merge container
+             (merge-with max
+                         (filter-min-requirement-keys container)
+                         (filter-min-requirement-keys requirements))
+             (merge-with min
+                         (filter-max-requirement-keys container)
+                         (filter-max-requirement-keys requirements)))
       (limit-container-min-requirement :min_memory_limit :memory_limit)
       (limit-container-min-requirement :min_cpu_cores :max_cpu_cores)))
 
