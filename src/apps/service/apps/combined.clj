@@ -100,6 +100,9 @@
   (getAppJobView [_ system-id app-id include-hidden-params?]
     (job-view/get-app system-id app-id include-hidden-params? clients))
 
+  (getAppVersionJobView [_ system-id app-id version-id]
+    (job-view/get-app-version system-id app-id version-id clients))
+
   (getAppSubmissionInfo [_ system-id app-id]
     (job-view/get-app-submission-info system-id app-id clients))
 

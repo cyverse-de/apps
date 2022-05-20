@@ -73,6 +73,10 @@
   [user system-id app-id]
   (.getAppJobView (get-apps-client user) system-id app-id))
 
+(defn get-app-version-job-view
+  [user system-id app-id version-id]
+  (.getAppVersionJobView (get-apps-client user) system-id app-id version-id))
+
 (defn delete-app
   [user system-id app-id]
   (.deleteApp (get-apps-client user) system-id app-id))

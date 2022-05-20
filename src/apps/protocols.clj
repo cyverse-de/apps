@@ -23,6 +23,7 @@
   (validateDeletionRequest [_ deletion-request])
   (deleteApps [_ deletion-request])
   (getAppJobView [_ system-id app-id] [_ system-id app-id include-hidden-params?])
+  (getAppVersionJobView [_ system-id app-id version-id])
   (getAppSubmissionInfo [_ system-id app-id])
   (deleteApp [_ system-id app-id])
   (deleteAppVersion [_ system-id app-id app-version-id])

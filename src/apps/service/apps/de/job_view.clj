@@ -135,10 +135,19 @@
            (throw+)))))))
 
 (defn get-app
-  "This service obtains an app description in a format that is suitable for building the job
-  submission UI."
+  "This service obtains an app description, for the app's latest version,
+   in a format suitable for building the job submission UI."
   [user app-id include-hidden-params?]
   (let [app (amp/get-app app-id)]
     (verify-app-permission user app "read")
     (validate-hidden-inputs user (:version_id app))
     (format-app user app include-hidden-params?)))
+
+(defn get-app-version
+  "This service obtains an app version's description in a format suitable for
+   building the job submission UI."
+  [user app-id version-id]
+  (let [app (amp/get-app-version app-id version-id)]
+    (verify-app-permission user app "read")
+    (validate-hidden-inputs user (:version_id app))
+    (format-app user app false)))

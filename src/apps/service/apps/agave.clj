@@ -12,6 +12,10 @@
             [apps.service.apps.util :as apps-util]
             [apps.util.service :as service]))
 
+(defn- reject-app-versions-request
+  []
+  (service/bad-request "Cannot list or modify HPC app versions with this service"))
+
 (defn- reject-app-documentation-edit-request
   []
   (service/bad-request "Cannot edit documentation for HPC apps with this service"))
@@ -131,7 +135,7 @@
 
   (addAppVersion [_ system-id _ _]
     (validate-system-id system-id)
-    (reject-app-integration-request))
+    (reject-app-versions-request))
 
   (previewCommandLine [_ system-id _]
     (validate-system-id system-id)
@@ -152,13 +156,17 @@
     (validate-system-id system-id)
     (.getApp agave app-id))
 
+  (getAppVersionJobView [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
   (deleteAppVersion [_ system-id _ _]
     (validate-system-id system-id)
-    (reject-app-integration-request))
+    (reject-app-versions-request))
 
   (relabelApp [_ system-id app-id]
     (validate-system-id system-id)

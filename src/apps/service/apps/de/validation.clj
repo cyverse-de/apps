@@ -1,11 +1,12 @@
 (ns apps.service.apps.de.validation
   (:use [apps.persistence.app-metadata :only [get-app
                                               get-app-tools
+                                              get-app-version
                                               list-duplicate-apps
                                               list-duplicate-apps-by-id
                                               parameter-types-for-tool-type]]
         [apps.persistence.entities :only [tools tool_types]]
-        [clojure-commons.exception-util :only [forbidden exists not-found]]
+        [clojure-commons.exception-util :only [forbidden exists]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as perms-client]
@@ -21,15 +22,7 @@
 (defn validate-app-version-existence
   "Verifies that a specific app version exists."
   [app-id app-version-id]
-  (when-not (-> (select :app_versions
-                        (fields :id)
-                        (where {:app_id app-id
-                                :id     app-version-id}))
-                first
-                :id)
-    (not-found "Version ID not found for given App ID."
-               :app_id         app-id
-               :app_version_id app-version-id)))
+  (get-app-version app-id app-version-id))
 
 (defn- app-version-ids
   "Get the list of version IDs associated with an app."

@@ -107,6 +107,10 @@
     (validate-system-id system-id)
     (job-view/get-app user (uuidify app-id) include-hidden-params?))
 
+  (getAppVersionJobView [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (job-view/get-app-version user (uuidify app-id) version-id))
+
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
     (app-metadata/delete-app user (uuidify app-id)))

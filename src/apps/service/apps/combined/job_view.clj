@@ -85,6 +85,17 @@
        (get-app-from-client system-id app-id include-hidden-params? clients)
        second))
 
+(defn- get-app-version-from-client
+  [system-id app-id version-id clients current-client]
+  (-> (.getAppVersionJobView current-client system-id app-id version-id)
+      (format-app-submission-info clients current-client)))
+
+(defn get-app-version
+  [system-id app-id version-id clients]
+  (->> (util/get-apps-client clients system-id)
+       (get-app-version-from-client system-id app-id version-id clients)
+       second))
+
 (defn get-app-submission-info
   [system-id app-id clients]
   (->> (util/get-apps-client clients system-id)

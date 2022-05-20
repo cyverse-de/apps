@@ -3,6 +3,7 @@
                                         SecuredQueryParamsRequired]]
             [apps.service.apps :as apps]
             [apps.user :refer [current-user]]
+            [apps.util.coercions :refer [coerce!]]
             [common-swagger-api.routes :refer :all]
             [common-swagger-api.schema :refer :all]
             [common-swagger-api.schema.apps :as schema]
@@ -25,7 +26,7 @@
                                                     false)))
 
                     (context "/:version-id" []
-                             :path-params [version-id :- schema/StringAppIdParam]
+                             :path-params [version-id :- schema/AppVersionIdParam]
 
                              (DELETE "/" []
                                      :query [params SecuredQueryParams]
@@ -34,4 +35,15 @@
                                      (ok (apps/delete-app-version current-user
                                                                   system-id
                                                                   app-id
-                                                                  version-id))))))
+                                                                  version-id)))
+
+                             (GET "/" []
+                                  :query [params SecuredQueryParams]
+                                  :return schema/AppJobView
+                                  :summary schema/AppJobViewSummary
+                                  :description schema/AppJobViewDocs
+                                  (ok (coerce! schema/AppJobView
+                                               (apps/get-app-version-job-view current-user
+                                                                              system-id
+                                                                              app-id
+                                                                              version-id)))))))
