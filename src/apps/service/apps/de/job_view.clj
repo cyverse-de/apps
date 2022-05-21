@@ -105,11 +105,12 @@
     (doall (mapcat (fn [step] (format-groups user (group-name-prefix step) include-hidden-params? step)) app-steps))))
 
 (defn- format-app
-  [user {:keys [name version_id] :as app} include-hidden-params?]
+  [user {:keys [id name version_id] :as app} include-hidden-params?]
   (let [app-steps           (get-steps version_id)
         limit-check-results (limits/load-limit-check-results user)]
     (-> (select-keys app [:id :name :description :disabled :deleted :version :version_id])
         (assoc :label name
+               :versions (amp/list-app-versions id)
                :requirements (map get-step-resource-requirements app-steps)
                :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
                :app_type "DE"

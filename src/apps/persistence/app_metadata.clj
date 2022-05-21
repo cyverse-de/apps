@@ -120,6 +120,24 @@
       first
       :max_order))
 
+(defn- add-deleted-versions-clause
+  [query include-deleted?]
+  (if-not include-deleted?
+    (where query {:deleted false})
+    query))
+
+(defn list-app-versions
+  "Retrieves the list of available versions from the app_versions table in the database."
+  ([app-id]
+   (list-app-versions app-id false))
+  ([app-id include-deleted?]
+   (-> (select* app_versions)
+       (fields :version [:id :version_id])
+       (where {:app_id app-id})
+       (add-deleted-versions-clause include-deleted?)
+       (order :version_order :DESC)
+       select)))
+
 (defn get-app-version
   "Retrieves top-level app and version fields from the database."
   [app-id version-id]
