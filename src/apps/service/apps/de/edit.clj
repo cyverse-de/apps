@@ -28,7 +28,7 @@
 
 (defn- get-app-details
   "Retrieves the details for a single-step app."
-  [app-id]
+  [app-id version-id]
   (-> (select* apps)
       (fields :id
               :name
@@ -39,7 +39,7 @@
                     :version
                     :integration_date
                     :edited_date)
-            (where {:app_versions.id (persistence/get-app-latest-version app-id)})
+            (where {:app_versions.id version-id})
             (with app_references)
             (with tasks
                   (fields :id)
@@ -212,8 +212,8 @@
   (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution :deprecated])))
 
 (defn- format-app-for-editing
-  [app]
-  (let [{:keys [app_versions] :as app} (get-app-details (:id app))
+  [{app-id :id version-id :version_id}]
+  (let [{:keys [app_versions] :as app} (get-app-details app-id version-id)
         {:keys [app_references tasks]
          :as   version-details}        (first app_versions)
         task                           (first tasks)]
@@ -226,6 +226,7 @@
                                               :edited_date
                                               :integration_date]))
          (assoc :version_id (:id version-details)
+                :versions   (persistence/list-app-versions app-id)
                 :references (map :reference_text app_references)
                 :tools      (map format-app-tool (persistence/get-app-tools (:id app)))
                 :groups     (map format-group (:parameter_groups task))
@@ -234,11 +235,13 @@
 
 (defn get-app-ui
   "This service prepares a JSON response for editing an App in the client."
-  [user app-id]
-  (let [app (persistence/get-app app-id)]
-    (when-not (user-owns-app? user app)
-      (verify-app-permission user app "write"))
-    (format-app-for-editing app)))
+  ([user app-id]
+   (get-app-ui user app-id (persistence/get-app-latest-version app-id)))
+  ([user app-id version-id]
+   (let [app (persistence/get-app-version app-id version-id)]
+     (when-not (user-owns-app? user app)
+       (verify-app-permission user app "write"))
+     (format-app-for-editing app))))
 
 (defn- update-parameter-argument
   "Adds a selection parameter's argument, and any of its child arguments and groups."
@@ -447,7 +450,8 @@
    (validate-updated-app-name (:shortUsername user) app-id app-name)
    (persistence/update-app app)
    (let [tool-id (->> app :tools first :id)
-         {version-id :id :keys [tasks]} (->> (get-app-details app-id) :app_versions first)
+         version-id (persistence/get-app-latest-version app-id)
+         {:keys [tasks]} (->> (get-app-details app-id version-id) :app_versions first)
          app-task (first tasks)
          task-id (:id app-task)
          current-param-ids (map :id (mapcat :parameters (:parameter_groups app-task)))]
@@ -459,8 +463,8 @@
        (persistence/remove-parameter-values current-param-ids))
      (when-not (empty? references)
        (persistence/set-app-references version-id references))
-     (update-app-groups task-id groups))
-   (get-app-ui user app-id)))
+     (update-app-groups task-id groups)
+     (get-app-ui user app-id version-id))))
 
 (defn get-user-subcategory
   [username index]

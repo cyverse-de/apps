@@ -162,6 +162,9 @@
   (getAppUi [_ system-id app-id]
     (.getAppUi (util/get-apps-client clients system-id) system-id app-id))
 
+  (getAppVersionUi [_ system-id app-id version-id]
+    (.getAppVersionUi (util/get-apps-client clients system-id) system-id app-id version-id))
+
   (getAppInputIds [_ system-id app-id]
     (.getAppInputIds (util/get-apps-client clients system-id) system-id app-id))
 

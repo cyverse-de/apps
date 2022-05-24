@@ -1,5 +1,6 @@
 (ns apps.routes.apps.versions
   (:require [apps.routes.params :refer [SecuredQueryParams
+                                        SecuredQueryParamsEmailRequired
                                         SecuredQueryParamsRequired]]
             [apps.service.apps :as apps]
             [apps.user :refer [current-user]]
@@ -46,4 +47,11 @@
                                                (apps/get-app-version-job-view current-user
                                                                               system-id
                                                                               app-id
-                                                                              version-id)))))))
+                                                                              version-id))))
+
+                             (GET "/ui" []
+                                  :query [params SecuredQueryParamsEmailRequired]
+                                  :return schema/App
+                                  :summary schema/AppEditingViewSummary
+                                  :description schema/AppEditingViewDocs
+                                  (ok (apps/get-app-ui current-user system-id app-id version-id))))))

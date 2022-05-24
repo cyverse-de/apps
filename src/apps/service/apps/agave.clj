@@ -232,6 +232,10 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (getAppVersionUi [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppInputIds [_ system-id app-id]
     (validate-system-id system-id)
     (.getAppInputIds agave app-id))
