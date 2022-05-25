@@ -6,11 +6,10 @@
             [apps.service.apps.de.jobs.protocol]))
 
 (defn- build-job-request-formatter
-  [user submission]
+  [user {app-id :app_id version-id :app_version_id :as submission}]
   (let [email      (:email user)
-        app-id     (:app_id submission)
-        app        (ap/get-app app-id)
-        version-id (:version_id app)
+        version-id (or version-id (ap/get-app-latest-version app-id))
+        app        (ap/get-app-version app-id version-id)
         io-maps    (ca/load-io-maps version-id)
         params     (mp/load-app-params version-id)
         defaults   (ca/build-default-values-map params)
