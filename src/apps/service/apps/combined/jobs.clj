@@ -39,12 +39,13 @@
   steps)
 
 (defn- build-job-save-info
-  [user result-folder-path job-id system-id app-info submission]
+  [user result-folder-path job-id system-id version-id app-info submission]
   {:id                 job-id
    :job_name           (:name submission)
    :job_description    (:description submission)
    :system_id          system-id
    :app_id             (:id app-info)
+   :app_version_id     version-id
    :app_name           (:name app-info)
    :app_description    (:description app-info)
    :app_wiki_url       (:wiki_url app-info)
@@ -116,12 +117,13 @@
      (when-not (boolean (:parent_id submission)) (throw+)))))
 
 (defn submit
-  [user clients {system-id :system_id app-id :app_id :as submission}]
+  [user clients {system-id :system_id app-id :app_id version-id :app_version_id :as submission}]
   (let [job-id      (uuids/uuid)
         job-steps   (build-job-step-list job-id app-id)
         app-info    (service/assert-found (ap/load-app-info app-id) "app" app-id)
+        version-id  (or version-id (ap/get-app-latest-version app-id))
         job-info    (build-job-save-info user (ft/build-result-folder-path submission)
-                                         job-id system-id app-info submission)
+                                         job-id system-id version-id app-info submission)
         job-step    (first job-steps)]
     (jp/save-multistep-job job-info job-steps submission)
     (submit-job-step (cu/apps-client-for-job-step clients job-step) job-info job-step submission)
