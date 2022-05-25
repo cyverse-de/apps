@@ -586,11 +586,12 @@
 (defn relabel-app
   "This service allows labels to be updated in any app, whether or not the app has been submitted
    for public use."
-  [user {app-name :name app-id :id :as body}]
-  (let [app (persistence/get-app app-id)]
+  [user {app-name :name app-id :id version-id :version_id :as body}]
+  (let [version-id (or version-id (persistence/get-app-latest-version app-id))
+        app        (persistence/get-app-version app-id version-id)]
     (when-not (user-owns-app? user app)
-      (verify-app-permission user app "write")))
-  (transaction
-   (validate-updated-app-name (:shortUsername user) app-id app-name)
-   (relabel/update-app-labels body))
-  (get-app-ui user app-id))
+      (verify-app-permission user app "write"))
+    (transaction
+      (validate-updated-app-name (:shortUsername user) app-id app-name)
+      (relabel/update-app-labels (assoc body :version_id version-id)))
+    (get-app-ui user app-id version-id)))

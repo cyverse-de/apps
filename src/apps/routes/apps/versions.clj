@@ -49,6 +49,17 @@
                                                                               app-id
                                                                               version-id))))
 
+                             (PATCH "/" []
+                                    :query [params SecuredQueryParamsEmailRequired]
+                                    :body [body schema/AppLabelUpdateRequest]
+                                    :return schema/App
+                                    :summary schema/AppLabelUpdateSummary
+                                    :description-file "docs/apps/app-label-update.md"
+                                    (ok (apps/relabel-app current-user
+                                                          system-id
+                                                          (assoc body :id app-id
+                                                                      :version_id version-id))))
+
                              (GET "/ui" []
                                   :query [params SecuredQueryParamsEmailRequired]
                                   :return schema/App

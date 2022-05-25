@@ -138,11 +138,12 @@
 
 (defn update-app-labels
   "Updates the labels in an app."
-  [{id :id :as req}]
+  [{version-id :version_id :keys [id version] :as req}]
   (let [update-values (remove-nil-vals (select-keys req [:name :description]))
-        version-id    (app-meta/get-app-latest-version id)
+        version-id    (or version-id (app-meta/get-app-latest-version id))
+        version-info  {:version version :version_id version-id}
         task          (get-single-task-for-app id version-id)]
     (when-not (empty? update-values)
       (sql/update apps (set-fields update-values) (where {:id id})))
-    (sql/update app_versions (set-fields {:edited_date (sqlfn now)}) (where {:id version-id}))
+    (app-meta/update-app-version version-info)
     (update-task-labels req (:id task))))

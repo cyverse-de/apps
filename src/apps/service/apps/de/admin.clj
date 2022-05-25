@@ -100,7 +100,7 @@
     (when-not (empty? references)
       (persistence/set-app-references version-id references))
     (when-not (empty? groups)
-      (update-app-labels (select-keys app [:id :groups])))
+      (update-app-labels (select-keys app [:id :version_id :groups])))
     (when-not (empty? extra)
       (update-app-extra-info app))))
 
