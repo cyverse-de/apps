@@ -2,6 +2,7 @@
   (:use [apps.routes.schemas.callback]
         [common-swagger-api.schema]
         [common-swagger-api.schema.analyses :only [AnalysisIdPathParam]]
+        [common-swagger-api.schema.callbacks :only [AgaveJobStatusUpdateParams AgaveJobStatusUpdate]]
         [ring.util.http-response :only [ok]])
   (:require [apps.service.callbacks :as callbacks]))
 
