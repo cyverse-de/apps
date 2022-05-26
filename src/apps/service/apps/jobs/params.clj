@@ -155,11 +155,13 @@
                                       first)]
     (merge step-reqs
            (-> requested-step-reqs
-               (select-keys [:min_memory_limit
+               (select-keys [:max_cpu_cores
                              :min_cpu_cores
+                             :min_memory_limit
                              :min_disk_space])
-               (sets/rename-keys {:min_memory_limit :default_memory
+               (sets/rename-keys {:max_cpu_cores    :default_max_cpu_cores
                                   :min_cpu_cores    :default_cpu_cores
+                                  :min_memory_limit :default_memory
                                   :min_disk_space   :default_disk_space})))))
 
 (defn- update-resources-reqs
