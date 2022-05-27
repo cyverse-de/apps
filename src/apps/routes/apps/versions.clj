@@ -60,6 +60,17 @@
                                                           (assoc body :id app-id
                                                                       :version_id version-id))))
 
+                             (PUT "/" []
+                                  :query [params SecuredQueryParamsEmailRequired]
+                                  :body [body schema/AppUpdateRequest]
+                                  :return schema/App
+                                  :summary schema/AppUpdateSummary
+                                  :description schema/AppUpdateDocs
+                                  (ok (apps/update-app current-user
+                                                       system-id
+                                                       (assoc body :id app-id
+                                                                   :version_id version-id))))
+
                              (GET "/ui" []
                                   :query [params SecuredQueryParamsEmailRequired]
                                   :return schema/App

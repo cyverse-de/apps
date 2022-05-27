@@ -2,7 +2,10 @@
   (:use [apps.metadata.params :only [format-reference-genome-value]]
         [apps.persistence.app-groups :only [add-app-to-category get-app-subcategory-id]]
         [apps.persistence.entities]
-        [apps.service.apps.de.validation :only [verify-app-editable verify-app-permission validate-app-name]]
+        [apps.service.apps.de.validation :only [validate-app-name
+                                                validate-app-version-existence
+                                                verify-app-editable
+                                                verify-app-permission]]
         [apps.util.config :only [workspace-dev-app-category-index]]
         [apps.util.conversions :only [remove-nil-vals convert-rule-argument]]
         [apps.util.db :only [transaction]]
@@ -444,13 +447,15 @@
 (defn update-app
   "This service will update a single-step App, including the information at its top level and the
    tool used by its single task, as long as the App has not been submitted for public use."
-  [user {app-id :id app-name :name :keys [references groups] :as app}]
+  [user {app-id :id version-id :version_id app-name :name :keys [references groups] :as app}]
   (verify-app-editable user (persistence/get-app app-id))
+  (when version-id
+    (validate-app-version-existence app-id version-id))
   (transaction
    (validate-updated-app-name (:shortUsername user) app-id app-name)
    (persistence/update-app app)
    (let [tool-id (->> app :tools first :id)
-         version-id (persistence/get-app-latest-version app-id)
+         version-id (or version-id (persistence/get-app-latest-version app-id))
          {:keys [tasks]} (->> (get-app-details app-id version-id) :app_versions first)
          app-task (first tasks)
          task-id (:id app-task)
