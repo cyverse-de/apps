@@ -173,9 +173,11 @@
        remove-nil-vals))
 
 (defn get-job-relaunch-info
-  [apps-client user {system-id :system_id app-id :app_id :as job}]
+  [apps-client user {system-id :system_id app-id :app_id version-id :app_version_id :as job}]
   (let [{:keys [debug config requirements] :or {debug false}} (get-job-submission job)]
-    (-> (.getAppJobView apps-client system-id app-id)
+    (-> (if version-id
+          (.getAppVersionJobView apps-client system-id app-id version-id)
+          (.getAppJobView apps-client system-id app-id))
         (assoc :debug debug)
         (update :groups (partial update-app-groups user config))
         (update :requirements update-resources-reqs requirements))))
