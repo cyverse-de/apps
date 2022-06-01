@@ -97,6 +97,10 @@
   [user system-id app-id]
   (.copyApp (get-apps-client user) system-id app-id))
 
+(defn copy-app-version
+  [user system-id app-id version-id]
+  (.copyAppVersion (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-details
   [user system-id app-id]
   (.getAppDetails (get-apps-client user) system-id app-id false))

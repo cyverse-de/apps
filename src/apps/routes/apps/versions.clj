@@ -71,6 +71,13 @@
                                                        (assoc body :id app-id
                                                                    :version_id version-id))))
 
+                             (POST "/copy" []
+                                   :query [params SecuredQueryParamsRequired]
+                                   :return schema/App
+                                   :summary schema/AppCopySummary
+                                   :description schema/AppCopyDocs
+                                   (ok (apps/copy-app-version current-user system-id app-id version-id)))
+
                              (GET "/ui" []
                                   :query [params SecuredQueryParamsEmailRequired]
                                   :return schema/App

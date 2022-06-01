@@ -576,15 +576,22 @@
   [app]
   (let [app (format-app-for-editing app)]
     (-> app
-        (dissoc :id :version :version_id)
+        (dissoc :id :versions :version :version_id)
         (assoc :name   (app-copy-name (:name app))
                :groups (map convert-app-group-to-copy (:groups app)))
         (remove-nil-vals))))
 
 (defn copy-app
-  "This service makes a copy of an App available in Tito for editing."
+  "This service makes a copy of an app available for editing."
   [user app-id]
   (let [app (persistence/get-app app-id)]
+    (verify-app-permission user app "read")
+    (add-app user (convert-app-to-copy app))))
+
+(defn copy-app-version
+  "This service makes a copy of a specific app version available for editing."
+  [user app-id version-id]
+  (let [app (persistence/get-app-version app-id version-id)]
     (verify-app-permission user app "read")
     (add-app user (convert-app-to-copy app))))
 

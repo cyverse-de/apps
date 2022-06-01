@@ -121,6 +121,9 @@
   (copyApp [_ system-id app-id]
     (.copyApp (util/get-apps-client clients system-id) system-id app-id))
 
+  (copyAppVersion [_ system-id app-id version-id]
+    (.copyAppVersion (util/get-apps-client clients system-id) system-id app-id version-id))
+
   ;; FIXME: remove the admin flag when we have a better way to deal with administrative
   ;; privileges.
   (getAppDetails [_ system-id app-id admin?]

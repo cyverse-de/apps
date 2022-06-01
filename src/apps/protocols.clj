@@ -30,6 +30,7 @@
   (relabelApp [_ system-id app])
   (updateApp [_ system-id app])
   (copyApp [_ system-id app-id])
+  (copyAppVersion [_ system-id app-id version-id])
   (getAppDetails [_ system-id app-id admin?])
   (removeAppFavorite [_ system-id app-id])
   (addAppFavorite [_ system-id app-id])

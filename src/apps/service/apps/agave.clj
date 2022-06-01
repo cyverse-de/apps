@@ -180,6 +180,10 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (copyAppVersion [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
     (listings/get-app-details agave app-id admin?))

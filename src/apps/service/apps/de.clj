@@ -131,6 +131,10 @@
     (validate-system-id system-id)
     (edit/copy-app user (uuidify app-id)))
 
+  (copyAppVersion [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (edit/copy-app-version user (uuidify app-id) version-id))
+
   ;; FIXME: remove the admin flag when we have a better way to do this.
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
