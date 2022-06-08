@@ -195,14 +195,14 @@
                              community-names)))
 
 (defn- publish-app
-  [{:keys [shortUsername username] :as user} {app-id :id :keys [name references avus] :as app}]
+  [{:keys [shortUsername username] :as user} {app-id :id :keys [name version references avus] :as app}]
   (let [publication-requests (amp/list-app-publication-requests app-id nil false)
         request-ids          (mapv :id publication-requests)
         app-name             (or name (amp/get-app-name app-id))
-        app                  (assoc app :version_id (amp/get-app-latest-version app-id))]
+        version-id           (amp/get-app-latest-version app-id)]
     (transaction
      (amp/update-app app)
-     (amp/update-app-version app true)
+     (amp/update-app-version {:version version :version_id version-id} true)
      (when (:documentation app) (app-docs/add-app-docs user app-id app))
      (when references (amp/set-app-references app-id references))
      (decategorize-app app-id)
