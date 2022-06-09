@@ -204,7 +204,7 @@
      (amp/update-app app)
      (amp/update-app-version {:version version :version_id version-id} true)
      (when (:documentation app) (app-docs/add-app-docs user app-id app))
-     (when references (amp/set-app-references app-id references))
+     (when references (amp/set-app-references version-id references))
      (decategorize-app app-id)
      (publish-app-metadata shortUsername app-id app-name avus)
      (perms-client/make-app-public shortUsername app-id)
@@ -239,10 +239,11 @@
    {app-id :id app-name :name :keys [references avus] :as app}
    untrusted-tools]
   (transaction
-   (let [app-name (or app-name (amp/get-app-name app-id))]
+   (let [app-name   (or app-name (amp/get-app-name app-id))
+         version-id (amp/get-app-latest-version app-id)]
     (amp/update-app app)
     (when (:documentation app) (app-docs/add-app-docs user app-id app))
-    (when references (amp/set-app-references app-id references))
+    (when references (amp/set-app-references version-id references))
     (publish-app-metadata short-username app-id app-name avus)
     (let [request-id (amp/create-publication-request username app-id)]
       (email-client/send-app-publication-request-email username app-name request-id untrusted-tools)))

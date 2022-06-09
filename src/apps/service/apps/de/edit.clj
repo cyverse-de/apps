@@ -454,7 +454,7 @@
      (when-not (empty? current-param-ids)
        (persistence/remove-parameter-values current-param-ids))
      (when-not (empty? references)
-       (persistence/set-app-references app-id references))
+       (persistence/set-app-references version-id references))
      (update-app-groups task-id groups))
    (get-app-ui user app-id)))
 
