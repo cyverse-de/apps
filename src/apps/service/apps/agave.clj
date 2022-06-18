@@ -188,6 +188,10 @@
     (validate-system-id system-id)
     (listings/get-app-details agave app-id admin?))
 
+  (getAppVersionDetails [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (removeAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-favorite-request))

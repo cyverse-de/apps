@@ -32,6 +32,7 @@
   (copyApp [_ system-id app-id])
   (copyAppVersion [_ system-id app-id version-id])
   (getAppDetails [_ system-id app-id admin?])
+  (getAppVersionDetails [_ system-id app-id app-version-id admin?])
   (removeAppFavorite [_ system-id app-id])
   (addAppFavorite [_ system-id app-id])
   (isAppPublishable [_ system-id app-id admin?])

@@ -140,6 +140,10 @@
     (validate-system-id system-id)
     (listings/get-app-details user (uuidify app-id) admin?))
 
+  (getAppVersionDetails [_ system-id app-id app-version-id admin?]
+    (validate-system-id system-id)
+    (listings/get-app-details user (uuidify app-id) app-version-id admin?))
+
   (removeAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
     (app-metadata/remove-app-favorite user (uuidify app-id)))

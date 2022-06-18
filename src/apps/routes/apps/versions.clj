@@ -78,6 +78,17 @@
                                    :description schema/AppCopyDocs
                                    (ok (apps/copy-app-version current-user system-id app-id version-id)))
 
+                             (GET "/details" []
+                                  :query [params SecuredQueryParams]
+                                  :return schema/AppDetails
+                                  :summary schema/AppDetailsSummary
+                                  :description schema/AppDetailsDocs
+                                  (ok (coerce! schema/AppDetails
+                                               (apps/get-app-version-details current-user
+                                                                             system-id
+                                                                             app-id
+                                                                             version-id))))
+
                              (GET "/ui" []
                                   :query [params SecuredQueryParamsEmailRequired]
                                   :return schema/App

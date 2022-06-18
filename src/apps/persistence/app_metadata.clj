@@ -141,23 +141,11 @@
 (defn get-app-version
   "Retrieves top-level app and version fields from the database."
   [app-id version-id]
-  (let [app (first (select apps
-                           (fields :apps.id :name :description)
-                           (with app_versions
-                                 (fields :version :disabled :deleted)
-                                 (where {:app_versions.id version-id}))
-                           (where {:apps.id app-id})))
-        version-details (-> app :app_versions first)]
-
-    (when-not app
-      (cxu/not-found "Version ID not found for given App ID."
-                     :app_id app-id
-                     :app_version_id version-id))
-
-    (-> app
-        (select-keys [:id :name :description])
-        (assoc :version_id version-id)
-        (merge (select-keys version-details [:version :disabled :deleted])))))
+  (assert-app-version
+    [app-id version-id]
+    (first (select :app_versions_listing
+                   (where {:id         app-id
+                           :version_id version-id})))))
 
 (defn- user-id-subselect [username]
   (subselect :users
