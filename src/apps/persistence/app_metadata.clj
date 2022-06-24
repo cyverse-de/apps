@@ -246,6 +246,13 @@
       get-app-latest-version
       get-integration-data-by-app-version-id))
 
+(defn get-integration-data-by-app-id-for-all-versions [app-id]
+  (-> (integration-data-base-query)
+      (where {:d.id [in (subselect :app_versions
+                                   (fields :integration_data_id)
+                                   (where {:app_id app-id}))]})
+      select))
+
 (defn update-app-integration-data [app-id integration-data-id]
   (-> (update* :app_versions)
       (set-fields {:integration_data_id integration-data-id})
