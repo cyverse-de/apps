@@ -211,9 +211,9 @@
       get-integration-data-by-app-version-id))
 
 (defn update-app-integration-data [app-id integration-data-id]
-  (-> (update* :apps)
+  (-> (update* :app_versions)
       (set-fields {:integration_data_id integration-data-id})
-      (where {:id app-id})
+      (where {:id (subselect app_listing (fields :version_id) (where {:id app-id}))})
       (sql/update)))
 
 (defn update-tool-integration-data [tool-id integration-data-id]
