@@ -329,6 +329,10 @@
     (validate-system-id system-id)
     (integration-data/get-integration-data-for-app user (uuidify app-id)))
 
+  (getAppVersionIntegrationData [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (integration-data/get-integration-data-for-app-version user (uuidify app-id) version-id))
+
   (getToolIntegrationData [_ system-id tool-id]
     (validate-system-id system-id)
     (integration-data/get-integration-data-for-tool user tool-id))

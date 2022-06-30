@@ -8,6 +8,7 @@
             [common-swagger-api.routes :refer :all]
             [common-swagger-api.schema :refer :all]
             [common-swagger-api.schema.apps :as schema]
+            [common-swagger-api.schema.integration-data :as integration-schema]
             [ring.util.http-response :refer [ok]]))
 
 (defroutes app-versions
@@ -88,6 +89,16 @@
                                                                              system-id
                                                                              app-id
                                                                              version-id))))
+
+                             (GET "/integration-data" []
+                                  :query [params SecuredQueryParams]
+                                  :return integration-schema/IntegrationData
+                                  :summary schema/AppIntegrationDataSummary
+                                  :description schema/AppIntegrationDataDocs
+                                  (ok (apps/get-app-version-integration-data current-user
+                                                                             system-id
+                                                                             app-id
+                                                                             version-id)))
 
                              (GET "/ui" []
                                   :query [params SecuredQueryParamsEmailRequired]

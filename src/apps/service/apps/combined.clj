@@ -282,6 +282,9 @@
   (getAppIntegrationData [_ system-id app-id]
     (.getAppIntegrationData (util/get-apps-client clients system-id) system-id app-id))
 
+  (getAppVersionIntegrationData [_ system-id app-id version-id]
+    (.getAppVersionIntegrationData (util/get-apps-client clients system-id) system-id app-id version-id))
+
   (getToolIntegrationData [_ system-id tool-id]
     (.getToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id))
 

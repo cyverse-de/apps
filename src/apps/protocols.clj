@@ -81,6 +81,7 @@
   (adminUpdateCategory [_ system-id body])
   (getAppDocs [_ system-id app-id])
   (getAppIntegrationData [_ system-id app-id])
+  (getAppVersionIntegrationData [_ system-id app-id version-id])
   (getToolIntegrationData [_ system-id tool-id])
   (updateAppIntegrationData [_ system-id app-id integration-data-id])
   (updateToolIntegrationData [_ system-id tool-id integration-data-id])

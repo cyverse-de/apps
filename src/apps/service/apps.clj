@@ -353,6 +353,10 @@
   [user system-id app-id]
   (.getAppIntegrationData (get-apps-client user) system-id app-id))
 
+(defn get-app-version-integration-data
+  [user system-id app-id version-id]
+  (.getAppVersionIntegrationData (get-apps-client user) system-id app-id version-id))
+
 (defn get-tool-integration-data
   [user system-id tool-id]
   (.getToolIntegrationData (get-apps-client user) system-id tool-id))

@@ -3,6 +3,7 @@
         [medley.core :only [remove-vals]])
   (:require [apps.persistence.app-metadata :as amp]
             [apps.persistence.tools :as tools-db]
+            [apps.service.apps.de.validation :as app-validation]
             [apps.util.config :as cfg]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]))
@@ -96,6 +97,12 @@
   (if-let [integration-data (amp/get-integration-data-by-app-id app-id)]
     (format-integration-data integration-data)
     (cxu/not-found (str "no integration data found for app: " app-id))))
+
+(defn get-integration-data-for-app-version [_ app-id version-id]
+  (app-validation/validate-app-version-existence app-id version-id)
+  (if-let [integration-data (amp/get-integration-data-by-app-version-id version-id)]
+    (format-integration-data integration-data)
+    (cxu/not-found (str "no integration data found for app version: " version-id))))
 
 (defn get-integration-data-for-tool [_ tool-id]
   (if-let [integration-data (amp/get-integration-data-by-tool-id tool-id)]

@@ -353,6 +353,10 @@
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
+  (getAppVersionIntegrationData [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getToolIntegrationData [_ system-id tool-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
