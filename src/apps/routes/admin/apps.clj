@@ -118,6 +118,15 @@
       :description schema/AppIntegrationDataUpdateDocs
       (ok (apps/update-app-integration-data current-user system-id app-id integration-data-id)))
 
+    (PUT "/versions/:version-id/integration-data/:integration-data-id" []
+      :path-params [version-id          :- apps-schema/AppVersionIdParam
+                    integration-data-id :- IntegrationDataIdPathParam]
+      :query [params SecuredQueryParams]
+      :return IntegrationData
+      :summary schema/AppVersionIntegrationDataUpdateSummary
+      :description schema/AppVersionIntegrationDataUpdateDocs
+      (ok (apps/update-app-version-integration-data current-user system-id app-id version-id integration-data-id)))
+
     (POST "/publish" []
       :query [params SecuredQueryParamsEmailRequired]
       :body [body apps-schema/PublishAppRequest]

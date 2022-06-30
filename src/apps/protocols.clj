@@ -84,6 +84,7 @@
   (getAppVersionIntegrationData [_ system-id app-id version-id])
   (getToolIntegrationData [_ system-id tool-id])
   (updateAppIntegrationData [_ system-id app-id integration-data-id])
+  (updateAppVersionIntegrationData [_ system-id app-id version-id integration-data-id])
   (updateToolIntegrationData [_ system-id tool-id integration-data-id])
   (ownerEditAppDocs [_ system-id app-id body])
   (ownerAddAppDocs [_ system-id app-id body])

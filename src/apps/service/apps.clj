@@ -365,6 +365,10 @@
   [user system-id app-id integration-data-id]
   (.updateAppIntegrationData (get-apps-client user) system-id app-id integration-data-id))
 
+(defn update-app-version-integration-data
+  [user system-id app-id version-id integration-data-id]
+  (.updateAppVersionIntegrationData (get-apps-client user) system-id app-id version-id integration-data-id))
+
 (defn update-tool-integration-data
   [user system-id tool-id integration-data-id]
   (.updateToolIntegrationData (get-apps-client user) system-id tool-id integration-data-id))

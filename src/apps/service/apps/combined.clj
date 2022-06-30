@@ -291,6 +291,9 @@
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
     (.updateAppIntegrationData (util/get-apps-client clients system-id) system-id app-id integration-data-id))
 
+  (updateAppVersionIntegrationData [_ system-id app-id version-id integration-data-id]
+    (.updateAppVersionIntegrationData (util/get-apps-client clients system-id) system-id app-id version-id integration-data-id))
+
   (updateToolIntegrationData [_ system-id tool-id integration-data-id]
     (.updateToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id integration-data-id))
 

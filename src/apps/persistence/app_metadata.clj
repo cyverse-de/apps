@@ -259,6 +259,12 @@
       (where {:id (subselect app_listing (fields :version_id) (where {:id app-id}))})
       (sql/update)))
 
+(defn update-app-version-integration-data [version-id integration-data-id]
+  (-> (update* :app_versions)
+      (set-fields {:integration_data_id integration-data-id})
+      (where {:id version-id})
+      (sql/update)))
+
 (defn update-tool-integration-data [tool-id integration-data-id]
   (-> (update* :tools)
       (set-fields {:integration_data_id integration-data-id})
