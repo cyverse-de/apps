@@ -247,10 +247,12 @@
                 select)))
 
 (defn get-app-ids-by-integration-data-id [integration-data-id]
-  (mapv :id (-> (select* :apps)
-                (fields :id)
-                (where {:integration_data_id integration-data-id})
-                select)))
+  (mapv :app_id
+        (-> (select* :app_versions)
+            (modifier "DISTINCT")
+            (fields :app_id)
+            (where {:integration_data_id integration-data-id})
+            select)))
 
 (defn delete-integration-data [integration-data-id]
   (-> (delete* :integration_data)
