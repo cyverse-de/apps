@@ -349,6 +349,10 @@
     (validate-system-id system-id)
     (empty-doc-map app-id))
 
+  (getAppVersionDocs [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppIntegrationData [_ system-id app-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))

@@ -11,7 +11,7 @@
   [app-version-id]
   (map :reference_text (dp/get-app-references app-version-id)))
 
-(defn- get-app-docs*
+(defn- get-app-version-docs*
   "Retrieves app documentation."
   [app-version-id]
   (if-let [docs (dp/get-documentation app-version-id)]
@@ -20,21 +20,26 @@
              :error          "App documentation not found"
              :app_version_id app-version-id})))
 
+(defn get-app-version-docs
+  "Retrieves documentation details for a specific version of an App."
+  ([user app-id version-id]
+   (get-app-version-docs user app-id version-id false))
+  ([user app-id version-id admin?]
+   (de-validation/verify-app-permission user (ap/get-app-version app-id version-id) "read" admin?)
+   (get-app-version-docs* version-id)))
+
 (defn get-app-docs
   "Retrieves documentation details for the latest version of an App."
-  ([user app-id]
-   (get-app-docs user app-id false))
-  ([user app-id admin?]
-   (de-validation/verify-app-permission user (ap/get-app app-id) "read" admin?)
-   (get-app-docs* (ap/get-app-latest-version app-id))))
+  [user app-id]
+  (get-app-version-docs user app-id (ap/get-app-latest-version app-id) false))
 
 (defn edit-app-docs
   "Updates the latest version of an App's documentation and modified details in the database."
   [{:keys [username]} app-id {docs :documentation}]
   (let [app-version-id (ap/get-app-latest-version app-id)]
-    (when (get-app-docs* app-version-id)
+    (when (get-app-version-docs* app-version-id)
       (dp/edit-documentation (v/get-valid-user-id username) docs app-version-id))
-    (get-app-docs* app-version-id)))
+    (get-app-version-docs* app-version-id)))
 
 (defn owner-edit-app-docs
   "Updates the latest version of an app's documentation in the database
@@ -54,7 +59,7 @@
                :error          "App already has documentation"
                :app_version_id app-version-id}))
     (dp/add-documentation (v/get-valid-user-id username) docs app-version-id)
-    (get-app-docs* app-version-id)))
+    (get-app-version-docs* app-version-id)))
 
 (defn owner-add-app-docs
   "Adds documentation to the latest version of an App if the user has permission to edit the app."

@@ -325,6 +325,10 @@
     (validate-system-id system-id)
     (docs/get-app-docs user (uuidify app-id)))
 
+  (getAppVersionDocs [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (docs/get-app-version-docs user (uuidify app-id) version-id))
+
   (getAppIntegrationData [_ system-id app-id]
     (validate-system-id system-id)
     (integration-data/get-integration-data-for-app user (uuidify app-id)))

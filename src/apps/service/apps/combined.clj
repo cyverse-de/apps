@@ -279,6 +279,9 @@
   (getAppDocs [_ system-id app-id]
     (.getAppDocs (util/get-apps-client clients system-id) system-id app-id))
 
+  (getAppVersionDocs [_ system-id app-id version-id]
+    (.getAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id))
+
   (getAppIntegrationData [_ system-id app-id]
     (.getAppIntegrationData (util/get-apps-client clients system-id) system-id app-id))
 

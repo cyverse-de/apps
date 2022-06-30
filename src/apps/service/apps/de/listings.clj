@@ -560,10 +560,10 @@
     nil))
 
 (defn- format-app-documentation
-  [app-id username admin?]
+  [app-id version-id username admin?]
   (when admin?
     (try+
-     (docs/get-app-docs username app-id admin?)
+     (docs/get-app-version-docs username app-id version-id admin?)
      (catch [:type :clojure-commons.exception/not-found] _ nil))))
 
 (defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
@@ -607,7 +607,7 @@
                :tools                (map format-app-tool tools)
                :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
                :extra                (format-app-extra-info version-id admin?)
-               :documentation        (format-app-documentation app-id user admin?)
+               :documentation        (format-app-documentation app-id version-id user admin?)
                :categories           (get-groups-for-app app-id)
                :suggested_categories (get-suggested-groups-for-app app-id)
                :system_id            c/system-id)

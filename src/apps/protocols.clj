@@ -80,6 +80,7 @@
   (adminDeleteCategory [_ system-id category-id])
   (adminUpdateCategory [_ system-id body])
   (getAppDocs [_ system-id app-id])
+  (getAppVersionDocs [_ system-id app-id version-id])
   (getAppIntegrationData [_ system-id app-id])
   (getAppVersionIntegrationData [_ system-id app-id version-id])
   (getToolIntegrationData [_ system-id tool-id])

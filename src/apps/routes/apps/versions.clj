@@ -90,6 +90,17 @@
                                                                              app-id
                                                                              version-id))))
 
+                             (GET "/documentation" []
+                                  :query [params SecuredQueryParams]
+                                  :return schema/AppDocumentation
+                                  :summary schema/AppDocumentationSummary
+                                  :description schema/AppDocumentationDocs
+                                  (ok (coerce! schema/AppDocumentation
+                                               (apps/get-app-version-docs current-user
+                                                                          system-id
+                                                                          app-id
+                                                                          version-id))))
+
                              (GET "/integration-data" []
                                   :query [params SecuredQueryParams]
                                   :return integration-schema/IntegrationData

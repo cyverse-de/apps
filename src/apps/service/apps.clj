@@ -349,6 +349,10 @@
   [user system-id app-id]
   (.getAppDocs (get-apps-client user) system-id app-id))
 
+(defn get-app-version-docs
+  [user system-id app-id version-id]
+  (.getAppVersionDocs (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-integration-data
   [user system-id app-id]
   (.getAppIntegrationData (get-apps-client user) system-id app-id))
