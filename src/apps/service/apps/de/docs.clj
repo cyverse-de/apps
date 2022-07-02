@@ -33,13 +33,35 @@
   [user app-id]
   (get-app-version-docs user app-id (ap/get-app-latest-version app-id) false))
 
+(defn- edit-app-version-docs*
+  "Updates an app version's documentation and modified details in the database."
+  [username version-id docs]
+  (when (get-app-version-docs* version-id)
+    (dp/edit-documentation (v/get-valid-user-id username) docs version-id))
+  (get-app-version-docs* version-id))
+
+(defn edit-app-version-docs
+  "Updates an app version's documentation in the database if the given app-id has the given version-id."
+  [{:keys [username]} app-id version-id {docs :documentation}]
+  (de-validation/validate-app-version-existence app-id version-id)
+  (edit-app-version-docs* username version-id docs))
+
+(defn owner-edit-app-version-docs
+  "Updates an app version's documentation in the database if the user has permission to edit the app."
+  [{:keys [username] :as user} app-id version-id {docs :documentation}]
+  (let [app (ap/get-app-version app-id version-id)]
+    (when-not (cv/user-owns-app? user app)
+      (de-validation/verify-app-permission user app "write")))
+
+  ; No need to call edit-app-version-docs here,
+  ; since it only calls validate-app-version-existence and edit-app-version-docs*,
+  ; and we've already validated this version with the get-app-version call above.
+  (edit-app-version-docs* username version-id docs))
+
 (defn edit-app-docs
   "Updates the latest version of an App's documentation and modified details in the database."
   [{:keys [username]} app-id {docs :documentation}]
-  (let [app-version-id (ap/get-app-latest-version app-id)]
-    (when (get-app-version-docs* app-version-id)
-      (dp/edit-documentation (v/get-valid-user-id username) docs app-version-id))
-    (get-app-version-docs* app-version-id)))
+  (edit-app-version-docs* username (ap/get-app-latest-version app-id) docs))
 
 (defn owner-edit-app-docs
   "Updates the latest version of an app's documentation in the database

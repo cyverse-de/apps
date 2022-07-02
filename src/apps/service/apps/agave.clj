@@ -381,6 +381,10 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
+  (ownerEditAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (ownerAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
@@ -388,6 +392,10 @@
   (adminEditAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
+
+  (adminEditAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (adminAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)

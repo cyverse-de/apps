@@ -357,6 +357,10 @@
     (validate-system-id system-id)
     (docs/owner-edit-app-docs user (uuidify app-id) body))
 
+  (ownerEditAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/owner-edit-app-version-docs user (uuidify app-id) version-id body))
+
   (ownerAddAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/owner-add-app-docs user (uuidify app-id) body))
@@ -364,6 +368,10 @@
   (adminEditAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/edit-app-docs user (uuidify app-id) body))
+
+  (adminEditAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/edit-app-version-docs user (uuidify app-id) version-id body))
 
   (adminAddAppDocs [_ system-id app-id body]
     (validate-system-id system-id)

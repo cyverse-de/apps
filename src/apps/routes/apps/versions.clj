@@ -101,6 +101,19 @@
                                                                           app-id
                                                                           version-id))))
 
+                             (PATCH "/documentation" []
+                                    :query [params SecuredQueryParamsEmailRequired]
+                                    :body [body schema/AppDocumentationRequest]
+                                    :return schema/AppDocumentation
+                                    :summary schema/AppDocumentationUpdateSummary
+                                    :description schema/AppDocumentationUpdateDocs
+                                    (ok (coerce! schema/AppDocumentation
+                                                 (apps/owner-edit-app-version-docs current-user
+                                                                                   system-id
+                                                                                   app-id
+                                                                                   version-id
+                                                                                   body))))
+
                              (GET "/integration-data" []
                                   :query [params SecuredQueryParams]
                                   :return integration-schema/IntegrationData

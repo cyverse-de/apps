@@ -303,11 +303,17 @@
   (ownerEditAppDocs [_ system-id app-id body]
     (.ownerEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
+  (ownerEditAppVersionDocs [_ system-id app-id version-id body]
+    (.ownerEditAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
+
   (ownerAddAppDocs [_ system-id app-id body]
     (.ownerAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
   (adminEditAppDocs [_ system-id app-id body]
     (.adminEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
+
+  (adminEditAppVersionDocs [_ system-id app-id version-id body]
+    (.adminEditAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
 
   (adminAddAppDocs [_ system-id app-id body]
     (.adminAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))

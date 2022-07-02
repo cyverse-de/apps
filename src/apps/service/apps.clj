@@ -381,6 +381,10 @@
   [user system-id app-id body]
   (.ownerEditAppDocs (get-apps-client user) system-id app-id body))
 
+(defn owner-edit-app-version-docs
+  [user system-id app-id version-id body]
+  (.ownerEditAppVersionDocs (get-apps-client user) system-id app-id version-id body))
+
 (defn owner-add-app-docs
   [user system-id app-id body]
   (.ownerAddAppDocs (get-apps-client user) system-id app-id body))
@@ -388,6 +392,10 @@
 (defn admin-edit-app-docs
   [user system-id app-id body]
   (.adminEditAppDocs (get-apps-client user) system-id app-id body))
+
+(defn admin-edit-app-version-docs
+  [user system-id app-id version-id body]
+  (.adminEditAppVersionDocs (get-apps-client user) system-id app-id version-id body))
 
 (defn admin-add-app-docs
   [user system-id app-id body]
