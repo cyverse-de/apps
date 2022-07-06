@@ -168,6 +168,9 @@
   (getAppToolListing [_ system-id app-id]
     (.getAppToolListing (util/get-apps-client clients system-id) system-id app-id))
 
+  (getAppVersionToolListing [_ system-id app-id version-id]
+    (.getAppVersionToolListing (util/get-apps-client clients system-id) system-id app-id version-id))
+
   (getAppUi [_ system-id app-id]
     (.getAppUi (util/get-apps-client clients system-id) system-id app-id))
 

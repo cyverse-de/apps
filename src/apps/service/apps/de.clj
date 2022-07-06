@@ -192,6 +192,10 @@
     (validate-system-id system-id)
     (listings/get-app-tool-listing user (uuidify app-id)))
 
+  (getAppVersionToolListing [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (listings/get-app-version-tool-listing user (uuidify app-id) version-id))
+
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
     (edit/get-app-ui user (uuidify app-id)))

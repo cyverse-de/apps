@@ -45,6 +45,7 @@
   (getAppTaskListing [_ system-id app-id])
   (getAppVersionTaskListing [_ system-id app-id version-id])
   (getAppToolListing [_ system-id app-id])
+  (getAppVersionToolListing [_ system-id app-id version-id])
   (getAppUi [_ system-id app-id])
   (getAppVersionUi [_ system-id app-id version-id])
   (getAppInputIds [_ system-id app-id])

@@ -240,6 +240,10 @@
     (validate-system-id system-id)
     (.getAppToolListing agave app-id))
 
+  (getAppVersionToolListing [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))

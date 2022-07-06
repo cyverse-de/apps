@@ -148,6 +148,17 @@
                                                                                   app-id
                                                                                   version-id))))
 
+                             (GET "/tools" []
+                                  :query [params SecuredQueryParams]
+                                  :return schema/AppToolListing
+                                  :summary schema/AppToolListingSummary
+                                  :description schema/AppToolListingDocs
+                                  (ok (coerce! schema/AppToolListing
+                                               (apps/get-app-version-tool-listing current-user
+                                                                                  system-id
+                                                                                  app-id
+                                                                                  version-id))))
+
                              (GET "/ui" []
                                   :query [params SecuredQueryParamsEmailRequired]
                                   :return schema/App

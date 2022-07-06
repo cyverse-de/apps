@@ -21,6 +21,7 @@
             [apps.service.apps.de.limits :as limits]
             [apps.service.apps.de.permissions :as perms]
             [apps.service.apps.de.docs :as docs]
+            [apps.service.apps.de.validation :as validation]
             [apps.service.util :as svc-util]
             [apps.tools :as tools]
             [apps.tools.permissions :as tool-perms]
@@ -720,16 +721,27 @@
   (perms/check-app-permissions username "read" [app-id])
   (format-app-task-listing username (amp/get-app-version app-id version-id)))
 
-(defn get-app-tool-listing
-  "A service to list the tools used by an app."
-  [{username :shortUsername} app-id]
-  (perms/check-app-permissions username "read" [app-id])
-  (let [{:keys [version_id]} (get-app app-id)
-        tasks (:tasks (first (select app_versions
+(defn- get-app-version-tool-listing*
+  "Lists tools used by an app version."
+  [version-id]
+  (let [tasks (:tasks (first (select app_versions
                                      (with tasks (fields :tool_id))
-                                     (where {:app_versions.id version_id}))))
+                                     (where {:app_versions.id version-id}))))
         tool-ids (map :tool_id tasks)]
     {:tools (get-tools-by-id tool-ids)}))
+
+(defn get-app-version-tool-listing
+  "A service to list the tools used by an app version."
+  [{username :shortUsername} app-id version-id]
+  (perms/check-app-permissions username "read" [app-id])
+  (validation/validate-app-version-existence app-id version-id)
+  (get-app-version-tool-listing* version-id))
+
+(defn get-app-tool-listing
+  "A service to list the tools used by the latest version of an app."
+  [{username :shortUsername} app-id]
+  (perms/check-app-permissions username "read" [app-id])
+  (get-app-version-tool-listing* (:version_id (get-app app-id))))
 
 (defn get-category-id-for-app
   "Determines the category that an app is in. If the category can't be found for the app then

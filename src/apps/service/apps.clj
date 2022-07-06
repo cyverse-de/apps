@@ -172,6 +172,10 @@
   [user system-id app-id]
   (.getAppToolListing (get-apps-client user) system-id app-id))
 
+(defn get-app-version-tool-listing
+  [user system-id app-id version-id]
+  (.getAppVersionToolListing (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-ui
   ([user system-id app-id]
    (.getAppUi (get-apps-client user) system-id app-id))
