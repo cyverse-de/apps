@@ -309,6 +309,9 @@
   (ownerAddAppDocs [_ system-id app-id body]
     (.ownerAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
+  (ownerAddAppVersionDocs [_ system-id app-id version-id body]
+    (.ownerAddAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
+
   (adminEditAppDocs [_ system-id app-id body]
     (.adminEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
@@ -317,6 +320,9 @@
 
   (adminAddAppDocs [_ system-id app-id body]
     (.adminAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
+
+  (adminAddAppVersionDocs [_ system-id app-id version-id body]
+    (.adminAddAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
 
   (listAppPermissions [_ qualified-app-ids params]
     (->> (group-by :system_id qualified-app-ids)

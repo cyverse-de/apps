@@ -389,6 +389,10 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
+  (ownerAddAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (adminEditAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
@@ -400,6 +404,10 @@
   (adminAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
+
+  (adminAddAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (listAppPermissions [_ qualified-app-ids _]
     (validate-system-ids (set (map :system_id qualified-app-ids)))

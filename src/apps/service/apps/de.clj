@@ -365,6 +365,10 @@
     (validate-system-id system-id)
     (docs/owner-add-app-docs user (uuidify app-id) body))
 
+  (ownerAddAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/owner-add-app-version-docs user (uuidify app-id) version-id body))
+
   (adminEditAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/edit-app-docs user (uuidify app-id) body))
@@ -376,6 +380,10 @@
   (adminAddAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/add-app-docs user (uuidify app-id) body))
+
+  (adminAddAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/add-app-version-docs user (uuidify app-id) version-id body))
 
   (listAppPermissions [_ qualified-app-ids params]
     (validate-system-ids (set (map :system_id qualified-app-ids)))

@@ -389,6 +389,10 @@
   [user system-id app-id body]
   (.ownerAddAppDocs (get-apps-client user) system-id app-id body))
 
+(defn owner-add-app-version-docs
+  [user system-id app-id version-id body]
+  (.ownerAddAppVersionDocs (get-apps-client user) system-id app-id version-id body))
+
 (defn admin-edit-app-docs
   [user system-id app-id body]
   (.adminEditAppDocs (get-apps-client user) system-id app-id body))
@@ -400,6 +404,10 @@
 (defn admin-add-app-docs
   [user system-id app-id body]
   (.adminAddAppDocs (get-apps-client user) system-id app-id body))
+
+(defn admin-add-app-version-docs
+  [user system-id app-id version-id body]
+  (.adminAddAppVersionDocs (get-apps-client user) system-id app-id version-id body))
 
 (defn list-app-permissions
   [user qualified-app-ids params]

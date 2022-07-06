@@ -114,6 +114,19 @@
                                                                                    version-id
                                                                                    body))))
 
+                             (POST "/documentation" []
+                                   :query [params SecuredQueryParamsEmailRequired]
+                                   :body [body schema/AppDocumentationRequest]
+                                   :return schema/AppDocumentation
+                                   :summary schema/AppDocumentationAddSummary
+                                   :description schema/AppDocumentationAddDocs
+                                   (ok (coerce! schema/AppDocumentation
+                                                (apps/owner-add-app-version-docs current-user
+                                                                                 system-id
+                                                                                 app-id
+                                                                                 version-id
+                                                                                 body))))
+
                              (GET "/integration-data" []
                                   :query [params SecuredQueryParams]
                                   :return integration-schema/IntegrationData

@@ -145,6 +145,19 @@
                                                                    version-id
                                                                    body))))
 
+             (POST "/documentation" []
+                   :query [params SecuredQueryParams]
+                   :body [body apps-schema/AppDocumentationRequest]
+                   :return apps-schema/AppDocumentation
+                   :summary schema/AppVersionDocumentationAddSummary
+                   :description schema/AppVersionDocumentationAddDocs
+                   (ok (coerce! apps-schema/AppDocumentation
+                                (apps/admin-add-app-version-docs current-user
+                                                                 system-id
+                                                                 app-id
+                                                                 version-id
+                                                                 body))))
+
              (PUT "/integration-data/:integration-data-id" []
                   :path-params [integration-data-id :- IntegrationDataIdPathParam]
                   :query [params SecuredQueryParams]
