@@ -162,6 +162,9 @@
   (getAppTaskListing [_ system-id app-id]
     (.getAppTaskListing (util/get-apps-client clients system-id) system-id app-id))
 
+  (getAppVersionTaskListing [_ system-id app-id version-id]
+    (.getAppVersionTaskListing (util/get-apps-client clients system-id) system-id app-id version-id))
+
   (getAppToolListing [_ system-id app-id]
     (.getAppToolListing (util/get-apps-client clients system-id) system-id app-id))
 

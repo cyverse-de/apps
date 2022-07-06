@@ -184,6 +184,10 @@
     (validate-system-id system-id)
     (listings/get-app-task-listing user (uuidify app-id)))
 
+  (getAppVersionTaskListing [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (listings/get-app-version-task-listing user (uuidify app-id) version-id))
+
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (listings/get-app-tool-listing user (uuidify app-id)))

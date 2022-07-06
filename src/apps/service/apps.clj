@@ -164,6 +164,10 @@
   [user system-id app-id]
   (.getAppTaskListing (get-apps-client user) system-id app-id))
 
+(defn get-app-version-task-listing
+  [user system-id app-id version-id]
+  (.getAppVersionTaskListing (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-tool-listing
   [user system-id app-id]
   (.getAppToolListing (get-apps-client user) system-id app-id))

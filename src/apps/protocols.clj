@@ -43,6 +43,7 @@
   (deleteAppRating [_ system-id app-id])
   (rateApp [_ system-id app-id rating])
   (getAppTaskListing [_ system-id app-id])
+  (getAppVersionTaskListing [_ system-id app-id version-id])
   (getAppToolListing [_ system-id app-id])
   (getAppUi [_ system-id app-id])
   (getAppVersionUi [_ system-id app-id version-id])

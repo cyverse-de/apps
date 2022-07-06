@@ -232,6 +232,10 @@
     (validate-system-id system-id)
     (.listAppTasks agave app-id))
 
+  (getAppVersionTaskListing [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (.getAppToolListing agave app-id))

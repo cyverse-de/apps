@@ -137,6 +137,17 @@
                                                                              app-id
                                                                              version-id)))
 
+                             (GET "/tasks" []
+                                  :query [params SecuredQueryParams]
+                                  :return schema/AppTaskListing
+                                  :summary schema/AppTaskListingSummary
+                                  :description schema/AppTaskListingDocs
+                                  (ok (coerce! schema/AppTaskListing
+                                               (apps/get-app-version-task-listing current-user
+                                                                                  system-id
+                                                                                  app-id
+                                                                                  version-id))))
+
                              (GET "/ui" []
                                   :query [params SecuredQueryParamsEmailRequired]
                                   :return schema/App

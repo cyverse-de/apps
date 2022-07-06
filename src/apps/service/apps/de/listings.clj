@@ -709,11 +709,16 @@
         (assoc :tasks tasks :system_id c/system-id))))
 
 (defn get-app-task-listing
-  "A service used to list the file parameters in an app."
+  "A service used to list the file parameters in an app's latest version."
   [{username :shortUsername} app-id]
   (perms/check-app-permissions username "read" [app-id])
-  (let [app (get-app app-id)]
-    (format-app-task-listing username app)))
+  (format-app-task-listing username (get-app app-id)))
+
+(defn get-app-version-task-listing
+  "A service used to list the file parameters in an app version."
+  [{username :shortUsername} app-id version-id]
+  (perms/check-app-permissions username "read" [app-id])
+  (format-app-task-listing username (amp/get-app-version app-id version-id)))
 
 (defn get-app-tool-listing
   "A service to list the tools used by an app."
