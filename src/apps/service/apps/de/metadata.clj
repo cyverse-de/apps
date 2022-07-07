@@ -265,5 +265,6 @@
   (amp/get-app app-id))
 
 (defn get-param-definitions
-  [app-id]
-  (filter (comp nil? :external_app_id) (amp/get-app-parameters app-id)))
+  [app-id version-id]
+  (validate-app-version-existence app-id version-id)
+  (filter (comp nil? :external_app_id) (amp/get-app-parameters version-id)))

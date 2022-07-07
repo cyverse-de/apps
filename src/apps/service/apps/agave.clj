@@ -252,7 +252,7 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (getAppInputIds [_ system-id app-id]
+  (getAppInputIds [_ system-id app-id _]
     (validate-system-id system-id)
     (.getAppInputIds agave app-id))
 
@@ -296,12 +296,9 @@
   (getJobStepHistory [_ {:keys [external_id]}]
     (.getJobHistory agave external_id))
 
-  (prepareStepSubmission [_ job-id submission]
-    (agave-jobs/prepare-step-submission agave job-id submission))
-
-  (getParamDefinitions [_ system-id app-id]
+  (getParamDefinitions [_ system-id app-id version-id]
     (validate-system-id system-id)
-    (listings/get-param-definitions agave app-id))
+    (listings/get-param-definitions agave app-id version-id))
 
   (stopJobStep [self {:keys [job_type external_id]}]
     (when (and (apps-util/supports-job-type? self job_type)

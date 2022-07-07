@@ -755,8 +755,8 @@
 
 (defn get-app-input-ids
   "Gets the list of parameter IDs corresponding to input files."
-  [app-id]
-  (->> (amp/get-app-parameters app-id)
+  [app-version-id]
+  (->> (amp/get-app-parameters app-version-id)
        (filter (comp amp/param-ds-input-types :type))
        (mapv #(str (:step_id %) "_" (:id %)))))
 

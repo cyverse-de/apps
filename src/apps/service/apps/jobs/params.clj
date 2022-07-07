@@ -103,7 +103,7 @@
 (defn get-parameter-values
   [apps-client {system-id :system_id app-id :app_id app-version-id :app_version_id :as job}]
   (let [config (:config (get-job-submission job))]
-    (->> (.getParamDefinitions apps-client system-id app-id)
+    (->> (.getParamDefinitions apps-client system-id app-id app-version-id)
          (remove-mapped-params app-version-id)
          (remove omit-param?)
          (mapcat (partial format-job-param config)))))

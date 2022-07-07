@@ -858,7 +858,7 @@
    (select [:apps :a] (where {:id (uuidify app-id)}))))
 
 (defn load-app-steps
-  [app-id]
+  [app-version-id]
   (select [:app_versions :v]
           (join [:app_steps :s] {:s.app_version_id :v.id})
           (join [:tasks :t] {:s.task_id :t.id})
@@ -869,7 +869,7 @@
                   [:jt.name           :job_type]
                   [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
-          (where {:v.id (-> app-id uuidify get-app-latest-version)})
+          (where {:v.id app-version-id})
           (order :step :ASC)))
 
 (defn- mapping-base-query
@@ -920,7 +920,7 @@
                      :pv.is_default   true})))
 
 (defn get-app-parameters
-  [app-id]
+  [app-version-id]
   (select [:task_param_listing :p]
           (fields :p.id
                   :p.name
@@ -943,7 +943,7 @@
                 {:p.task_id :t.id})
           (join [:app_versions :v]
                 {:v.id :s.app_version_id})
-          (where {:v.app_id (uuidify app-id)})))
+          (where {:v.id app-version-id})))
 
 (defn get-app-names
   [app-ids]

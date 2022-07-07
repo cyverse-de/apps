@@ -177,8 +177,8 @@
   (getAppVersionUi [_ system-id app-id version-id]
     (.getAppVersionUi (util/get-apps-client clients system-id) system-id app-id version-id))
 
-  (getAppInputIds [_ system-id app-id]
-    (.getAppInputIds (util/get-apps-client clients system-id) system-id app-id))
+  (getAppInputIds [_ system-id app-id version-id]
+    (.getAppInputIds (util/get-apps-client clients system-id) system-id app-id version-id))
 
   (addPipeline [self pipeline]
     (pipelines/format-pipeline self (.addPipeline (util/get-apps-client clients) pipeline)))
@@ -231,11 +231,8 @@
   (getJobStepHistory [_ job-step]
     (.getJobStepHistory (util/apps-client-for-job-step clients job-step) job-step))
 
-  (buildNextStepSubmission [self job-step job]
-    (combined-jobs/build-next-step-submission self clients job-step job))
-
-  (getParamDefinitions [_ system-id app-id]
-    (.getParamDefinitions (util/get-apps-client clients system-id) system-id app-id))
+  (getParamDefinitions [_ system-id app-id version-id]
+    (.getParamDefinitions (util/get-apps-client clients system-id) system-id app-id version-id))
 
   (stopJobStep [_ job-step]
     (dorun (map #(.stopJobStep % job-step) clients)))

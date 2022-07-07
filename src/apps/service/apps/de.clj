@@ -204,9 +204,9 @@
     (validate-system-id system-id)
     (edit/get-app-ui user (uuidify app-id) version-id))
 
-  (getAppInputIds [_ system-id app-id]
+  (getAppInputIds [_ system-id app-id version-id]
     (validate-system-id system-id)
-    (listings/get-app-input-ids (uuidify app-id)))
+    (listings/get-app-input-ids version-id))
 
   (addPipeline [_ pipeline]
     (pipeline-edit/add-pipeline user pipeline))
@@ -265,12 +265,9 @@
   (getJobStepHistory [_ job-step]
     (de-jobs/get-job-step-history job-step))
 
-  (prepareStepSubmission [_ _ submission]
-    (de-jobs/prepare-step user (update-in submission [:app_id] uuidify)))
-
-  (getParamDefinitions [_ system-id app-id]
+  (getParamDefinitions [_ system-id app-id version-id]
     (validate-system-id system-id)
-    (app-metadata/get-param-definitions app-id))
+    (app-metadata/get-param-definitions (uuidify app-id) version-id))
 
   (stopJobStep [self {:keys [job_type external_id]}]
     (when (and (apps-util/supports-job-type? self job_type)

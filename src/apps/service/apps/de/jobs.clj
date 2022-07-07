@@ -182,7 +182,3 @@
     {:status    (:status update)
      :message   (:message update)
      :timestamp (str (:sent_on update))}))
-
-(defn prepare-step
-  [user submission]
-  (build-submission user submission))
