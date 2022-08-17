@@ -186,6 +186,10 @@
   [user pipeline]
   (.addPipeline (get-apps-client user) pipeline))
 
+(defn add-pipeline-version
+  [user pipeline admin?]
+  (.addPipelineVersion (get-apps-client user) pipeline admin?))
+
 (defn update-pipeline
   [user pipeline]
   (.updatePipeline (get-apps-client user) pipeline))

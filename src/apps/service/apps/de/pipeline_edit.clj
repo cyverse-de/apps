@@ -11,7 +11,9 @@
                                               update-app-version]]
         [apps.persistence.entities :only [app_steps input_mapping]]
         [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]]
-        [apps.service.apps.de.validation :only [verify-app-editable]]
+        [apps.service.apps.de.validation :only [validate-app-name
+                                                verify-app-editable
+                                                verify-app-permission]]
         [apps.util.conversions :only [remove-nil-vals]]
         [apps.util.db :only [transaction]]
         [apps.validation :only [validate-external-app-step
@@ -185,14 +187,19 @@
   (let [steps (add-pipeline-steps app-version-id steps)]
     (dorun (map (partial add-app-mapping app-version-id steps) mappings))))
 
+(defn- add-pipeline-version*
+  [user {app-id :id :as app}]
+  (let [app-version-id (-> app (dissoc :id) (assoc :app_id app-id) (add-app-version user) :id)]
+    (add-app-steps-mappings (assoc app :id app-id :version_id app-version-id))
+    app-version-id))
+
 (defn- add-pipeline-app
   [user app]
   (validate-pipeline app)
   (transaction
-   (let [app-id         (:id (add-app app))
-         app-version-id (-> app (assoc :app_id app-id) (add-app-version user) :id)]
+   (let [app-id (:id (add-app app))]
+     (add-pipeline-version* user (assoc app :id app-id))
      (add-app-to-user-dev-category user app-id)
-     (add-app-steps-mappings (assoc app :id app-id :version_id app-version-id))
      (permissions/register-private-app (:shortUsername user) app-id)
      app-id)))
 
@@ -224,6 +231,21 @@
   (->> (preprocess-pipeline workflow)
        (add-pipeline-app user)
        (edit-pipeline user)))
+
+(defn add-pipeline-version
+  "Adds a single-step app version to an existing app, if the user has write permission on that app."
+  [user {app-id :id app-name :name :as app} admin?]
+  (verify-app-permission user (get-app app-id) "write" admin?)
+  (validate-pipeline app)
+  (transaction
+    (validate-app-name app-name app-id)
+    (update-app app)
+    (->> app-id
+         persistence/get-app-max-version-order
+         inc
+         (assoc app :version_order)
+         (add-pipeline-version* user)
+         (edit-pipeline user app-id))))
 
 (defn update-pipeline
   [user {app-id :id app-version-id :version_id :as workflow}]

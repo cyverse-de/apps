@@ -519,17 +519,16 @@
 (defn add-app-version
   "Adds a single-step app version to an existing app, if the user has write permission on that app."
   [user {app-id :id app-name :name :as app} admin?]
-  (let [existing-app (persistence/get-app app-id)]
-    (verify-app-permission user existing-app "write" admin?)
-    (transaction
-      (validate-updated-app-name (:shortUsername user) app-id app-name)
-      (persistence/update-app app)
-      (->> app-id
-           persistence/get-app-max-version-order
-           inc
-           (assoc app :id app-id :version_order)
-           (add-app-version* user))
-      (get-app-ui user app-id))))
+  (verify-app-permission user (persistence/get-app app-id) "write" admin?)
+  (transaction
+    (validate-updated-app-name (:shortUsername user) app-id app-name)
+    (persistence/update-app app)
+    (->> app-id
+         persistence/get-app-max-version-order
+         inc
+         (assoc app :version_order)
+         (add-app-version* user))
+    (get-app-ui user app-id)))
 
 (defn- name-too-long?
   "Determines if a name is too long to be extended for a copy name."

@@ -50,6 +50,7 @@
   (getAppVersionUi [_ system-id app-id version-id])
   (getAppInputIds [_ system-id app-id version-id])
   (addPipeline [_ pipeline])
+  (addPipelineVersion [_ pipeline admin?])
   (formatPipelineTasks [_ pipeline])
   (updatePipeline [_ pipeline])
   (copyPipeline [_ app-id])

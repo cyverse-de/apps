@@ -183,6 +183,9 @@
   (addPipeline [self pipeline]
     (pipelines/format-pipeline self (.addPipeline (util/get-apps-client clients) pipeline)))
 
+  (addPipelineVersion [self pipeline admin?]
+    (pipelines/format-pipeline self (.addPipelineVersion (util/get-apps-client clients) pipeline admin?)))
+
   (formatPipelineTasks [_ pipeline]
     (reduce (fn [acc client] (.formatPipelineTasks client acc)) pipeline clients))
 

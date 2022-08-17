@@ -211,6 +211,10 @@
   (addPipeline [_ pipeline]
     (pipeline-edit/add-pipeline user pipeline))
 
+  ;; FIXME: remove the admin flag when we have a better way to do this.
+  (addPipelineVersion [_ pipeline admin?]
+    (pipeline-edit/add-pipeline-version user pipeline admin?))
+
   (formatPipelineTasks [_ pipeline]
     pipeline)
 

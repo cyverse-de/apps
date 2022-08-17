@@ -48,6 +48,17 @@
 
     (context "/versions" []
 
+             (POST "/" []
+                   :query [params SecuredQueryParamsRequired]
+                   :body [body PipelineVersionRequest]
+                   :return Pipeline
+                   :summary PipelineVersionCreateSummary
+                   :description PipelineVersionCreateDocs
+                   (ok (coerce! Pipeline
+                                (apps/add-pipeline-version current-user
+                                                           (assoc body :id app-id)
+                                                           false))))
+
              (context "/:version-id" []
                       :path-params [version-id :- AppVersionIdParam]
 
