@@ -223,6 +223,9 @@
   (editPipeline [_ app-id]
     (pipeline-edit/edit-pipeline user app-id))
 
+  (editPipelineVersion [_ app-id version-id]
+    (pipeline-edit/edit-pipeline user app-id version-id))
+
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 

@@ -195,8 +195,10 @@
   (.copyPipeline (get-apps-client user) app-id))
 
 (defn edit-pipeline
-  [user app-id]
-  (.editPipeline (get-apps-client user) app-id))
+  ([user app-id]
+   (.editPipeline (get-apps-client user) app-id))
+  ([user app-id version-id]
+   (.editPipelineVersion (get-apps-client user) app-id version-id)))
 
 (defn list-jobs
   [user params]

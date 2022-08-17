@@ -54,6 +54,7 @@
   (updatePipeline [_ pipeline])
   (copyPipeline [_ app-id])
   (editPipeline [_ app-id])
+  (editPipelineVersion [_ app-id version-id])
   (listJobs [_ params])
   (listJobStats [_ params])
   (adminListJobsWithExternalIds [_ external-ids])

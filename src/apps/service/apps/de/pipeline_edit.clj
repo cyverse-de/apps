@@ -20,6 +20,7 @@
         [korma.core :exclude [update]]
         [medley.core :only [find-first]])
   (:require [apps.clients.permissions :as permissions]
+            [apps.persistence.app-metadata :as persistence]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.listings :as listings]))
 
@@ -116,6 +117,7 @@
         (assoc :tasks tasks
                :steps steps
                :mappings mappings
+               :versions (persistence/list-app-versions (:id app))
                :system_id c/system-id))))
 
 (defn- convert-app-to-copy
@@ -133,10 +135,12 @@
 
 (defn edit-pipeline
   "This service prepares a JSON response for editing a Pipeline in the client."
-  [user app-id]
-  (let [app (get-app app-id)]
-    (verify-app-editable user app)
-    (format-workflow user app)))
+  ([user app-id]
+   (edit-pipeline user app-id (persistence/get-app-latest-version app-id)))
+  ([user app-id version-id]
+   (let [app (persistence/get-app-version app-id version-id)]
+     (verify-app-editable user app)
+     (format-workflow user app))))
 
 (defn- add-app-mapping
   [app-version-id steps {:keys [source_step target_step map]}]

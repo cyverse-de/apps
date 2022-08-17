@@ -195,6 +195,9 @@
   (editPipeline [self app-id]
     (pipelines/format-pipeline self (.editPipeline (util/get-apps-client clients) app-id)))
 
+  (editPipelineVersion [self app-id version-id]
+    (pipelines/format-pipeline self (.editPipelineVersion (util/get-apps-client clients) app-id version-id)))
+
   (listJobs [self params]
     (job-listings/list-jobs self user params))
 
