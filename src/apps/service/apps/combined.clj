@@ -195,6 +195,9 @@
   (copyPipeline [self app-id]
     (pipelines/format-pipeline self (.copyPipeline (util/get-apps-client clients) app-id)))
 
+  (copyPipelineVersion [self app-id version-id]
+    (pipelines/format-pipeline self (.copyPipelineVersion (util/get-apps-client clients) app-id version-id)))
+
   (editPipeline [self app-id]
     (pipelines/format-pipeline self (.editPipeline (util/get-apps-client clients) app-id)))
 

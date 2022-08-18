@@ -255,11 +255,21 @@
          (update-pipeline-app user))
     (edit-pipeline user app-id version-id)))
 
-(defn copy-pipeline
-  "This service makes a copy of a Pipeline for the current user and returns the JSON for editing the
-   copy in the client."
-  [user app-id]
-  (->> (get-app app-id)
+(defn- copy-pipeline*
+  [user app]
+  (->> app
        (convert-app-to-copy)
        (add-pipeline-app user)
        (edit-pipeline user)))
+
+(defn copy-pipeline
+  "This service makes a copy of a pipeline's latest version for the current user
+   and returns the JSON for editing the copy in the client."
+  [user app-id]
+  (copy-pipeline* user (get-app app-id)))
+
+(defn copy-pipeline-version
+  "This service makes a copy of a pipeline version for the current user
+   and returns the JSON for editing the copy in the client."
+  [user app-id version-id]
+  (copy-pipeline* user (persistence/get-app-version app-id version-id)))

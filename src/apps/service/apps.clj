@@ -198,6 +198,10 @@
   [user app-id]
   (.copyPipeline (get-apps-client user) app-id))
 
+(defn copy-pipeline-version
+  [user app-id version-id]
+  (.copyPipelineVersion (get-apps-client user) app-id version-id))
+
 (defn edit-pipeline
   ([user app-id]
    (.editPipeline (get-apps-client user) app-id))

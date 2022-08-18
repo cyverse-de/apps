@@ -73,6 +73,14 @@
                                                                              :id app-id
                                                                              :version_id version-id)))))
 
+                      (POST "/copy" []
+                            :query [params SecuredQueryParamsRequired]
+                            :return Pipeline
+                            :summary PipelineVersionCopySummary
+                            :description PipelineVersionCopyDocs
+                            (ok (coerce! Pipeline
+                                         (apps/copy-pipeline-version current-user app-id version-id))))
+
                       (GET "/ui" []
                            :query [params SecuredQueryParamsEmailRequired]
                            :return Pipeline

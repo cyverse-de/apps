@@ -54,6 +54,7 @@
   (formatPipelineTasks [_ pipeline])
   (updatePipeline [_ pipeline])
   (copyPipeline [_ app-id])
+  (copyPipelineVersion [_ app-id version-id])
   (editPipeline [_ app-id])
   (editPipelineVersion [_ app-id version-id])
   (listJobs [_ params])

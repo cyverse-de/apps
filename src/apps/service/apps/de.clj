@@ -224,6 +224,9 @@
   (copyPipeline [_ app-id]
     (pipeline-edit/copy-pipeline user app-id))
 
+  (copyPipelineVersion [_ app-id version-id]
+    (pipeline-edit/copy-pipeline-version user app-id version-id))
+
   (editPipeline [_ app-id]
     (pipeline-edit/edit-pipeline user app-id))
 

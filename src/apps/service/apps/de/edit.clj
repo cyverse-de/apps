@@ -580,19 +580,20 @@
                :groups (map convert-app-group-to-copy (:groups app)))
         (remove-nil-vals))))
 
+(defn- copy-app*
+  [user app]
+  (verify-app-permission user app "read")
+  (add-app user (convert-app-to-copy app)))
+
 (defn copy-app
-  "This service makes a copy of an app available for editing."
+  "This service makes a copy of the latest version of an app available for editing."
   [user app-id]
-  (let [app (persistence/get-app app-id)]
-    (verify-app-permission user app "read")
-    (add-app user (convert-app-to-copy app))))
+  (copy-app* user (persistence/get-app app-id)))
 
 (defn copy-app-version
   "This service makes a copy of a specific app version available for editing."
   [user app-id version-id]
-  (let [app (persistence/get-app-version app-id version-id)]
-    (verify-app-permission user app "read")
-    (add-app user (convert-app-to-copy app))))
+  (copy-app* user (persistence/get-app-version app-id version-id)))
 
 (defn relabel-app
   "This service allows labels to be updated in any app, whether or not the app has been submitted
