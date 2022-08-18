@@ -62,6 +62,17 @@
              (context "/:version-id" []
                       :path-params [version-id :- AppVersionIdParam]
 
+                      (PUT "/" []
+                           :query [params SecuredQueryParamsEmailRequired]
+                           :body [body PipelineUpdateRequest]
+                           :return Pipeline
+                           :summary PipelineVersionUpdateSummary
+                           :description PipelineVersionUpdateDocs
+                           (ok (coerce! Pipeline
+                                        (apps/update-pipeline current-user (assoc body
+                                                                             :id app-id
+                                                                             :version_id version-id)))))
+
                       (GET "/ui" []
                            :query [params SecuredQueryParamsEmailRequired]
                            :return Pipeline

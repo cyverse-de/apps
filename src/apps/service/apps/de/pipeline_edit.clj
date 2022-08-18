@@ -248,12 +248,12 @@
          (edit-pipeline user app-id))))
 
 (defn update-pipeline
-  [user {app-id :id app-version-id :version_id :as workflow}]
-  (let [workflow (if (empty? app-version-id)
-                   (assoc workflow :version_id (get-app-latest-version app-id))
-                   workflow)]
-    (update-pipeline-app user (preprocess-pipeline workflow))
-    (edit-pipeline user app-id)))
+  [user {app-id :id version-id :version_id :as workflow}]
+  (let [version-id (or version-id (get-app-latest-version app-id))]
+    (->> (assoc workflow :version_id version-id)
+         preprocess-pipeline
+         (update-pipeline-app user))
+    (edit-pipeline user app-id version-id)))
 
 (defn copy-pipeline
   "This service makes a copy of a Pipeline for the current user and returns the JSON for editing the
