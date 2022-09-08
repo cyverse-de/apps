@@ -603,7 +603,7 @@
                       :is_favorite])
         (assoc :name                 (:name details "")
                :description          (:description details "")
-               :versions             (amp/list-app-versions app-id)
+               :versions             (amp/list-app-versions app-id admin?)
                :references           (map :reference_text app-references)
                :tools                (map format-app-tool tools)
                :job_stats            (format-app-details-job-stats (str app-id) nil admin?)

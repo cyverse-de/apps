@@ -132,6 +132,17 @@
     (context "/versions/:version-id" []
              :path-params [version-id :- apps-schema/AppVersionIdParam]
 
+             (GET "/details" []
+                  :query [params SecuredQueryParams]
+                  :return schema/AdminAppDetails
+                  :summary schema/AppVersionDetailsSummary
+                  :description schema/AppVersionDetailsDocs
+                  (ok (coerce! schema/AdminAppDetails
+                               (apps/admin-get-app-version-details current-user
+                                                                   system-id
+                                                                   app-id
+                                                                   version-id))))
+
              (PATCH "/documentation" []
                     :query [params SecuredQueryParams]
                     :body [body apps-schema/AppDocumentationRequest]
