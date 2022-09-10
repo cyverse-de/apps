@@ -92,9 +92,9 @@
 (defn- update-app-details
   "Updates high-level details and labels in an App, including deleted and disabled flags in the
    database."
-  [{app-id :id :keys [references groups extra] :as app}]
+  [{app-id :id :keys [version_id references groups extra] :as app}]
   (persistence/update-app app)
-  (let [version-id (persistence/get-app-latest-version app-id)
+  (let [version-id (or version_id (persistence/get-app-latest-version app-id))
         app (assoc app :version_id version-id)]
     (persistence/update-app-version app)
     (when-not (empty? references)

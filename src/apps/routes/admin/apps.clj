@@ -132,6 +132,18 @@
     (context "/versions/:version-id" []
              :path-params [version-id :- apps-schema/AppVersionIdParam]
 
+             (PATCH "/" []
+                    :query [params SecuredQueryParams]
+                    :body [body schema/AdminAppPatchRequest]
+                    :return schema/AdminAppDetails
+                    :summary schema/AdminAppVersionPatchSummary
+                    :description-file "docs/apps/admin/app-label-update.md"
+                    (ok (coerce! schema/AdminAppDetails
+                                 (apps/admin-update-app current-user
+                                                        system-id
+                                                        (assoc body :id         app-id
+                                                                    :version_id version-id)))))
+
              (GET "/details" []
                   :query [params SecuredQueryParams]
                   :return schema/AdminAppDetails
