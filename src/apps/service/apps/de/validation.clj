@@ -1,6 +1,7 @@
 (ns apps.service.apps.de.validation
   (:use [apps.persistence.app-metadata :only [get-app
                                               get-app-tools
+                                              get-app-version-tools
                                               get-app-version
                                               list-duplicate-apps
                                               list-duplicate-apps-by-id
@@ -30,7 +31,8 @@
   (map :id
        (select :app_versions
                (fields :id)
-               (where {:app_id app-id}))))
+               (where {:app_id  app-id
+                       :deleted false}))))
 
 (defn- task-ids-for-app-version
   "Get the list of task IDs associated with an app version."
@@ -83,7 +85,7 @@
   [username admin? public-app-ids app-id app-version-id]
   (let [task-ids            (task-ids-for-app-version app-version-id)
         unrunnable-tasks    (list-unrunnable-tasks task-ids)
-        tools               (get-app-tools app-id app-version-id)
+        tools               (get-app-version-tools app-id app-version-id)
         unpublishable-tools (when-not admin? (get-unpublishable-tools username tools))
         deprecated-tools    (filter :deprecated tools)
         private-apps        (private-apps-for task-ids public-app-ids)]

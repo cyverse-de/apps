@@ -627,7 +627,7 @@
                                                  (workspace-favorites-app-category-index)
                                                  app-id
                                                  app-version-id)
-         tools          (get-app-tools app-id app-version-id)
+         tools          (amp/get-app-version-tools app-id app-version-id)
          app-references (app-docs-db/get-app-references app-version-id)
          perms          (perms-client/load-app-permissions shortUsername)
          public-app-ids (perms-client/get-public-app-ids)

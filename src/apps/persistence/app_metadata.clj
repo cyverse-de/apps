@@ -320,19 +320,33 @@
               :version
               :attribution)))
 
+(defn- get-app-tools-base-query
+  "Returns a query for information about the tools associated with an app."
+  [app-id]
+  (-> (get-tool-listing-base-query)
+      (join :container_images {:tool_listing.container_images_id :container_images.id})
+      (fields [:container_images.name :image_name]
+              [:container_images.tag :image_tag]
+              [:container_images.url :image_url]
+              [:container_images.deprecated :deprecated])
+      (where {:app_id app-id})))
+
 (defn get-app-tools
-  "Loads information about the tools associated with an app."
-  ([app-id]
-   (get-app-tools app-id (get-app-latest-version app-id)))
-  ([app-id version-id]
-  (select (get-tool-listing-base-query)
-          (join :container_images {:tool_listing.container_images_id :container_images.id})
-          (fields [:container_images.name       :image_name]
-                  [:container_images.tag        :image_tag]
-                  [:container_images.url        :image_url]
-                  [:container_images.deprecated :deprecated])
-          (where {:app_id         app-id
-                  :app_version_id version-id}))))
+  "Loads information about the tools associated with undeleted versions of an app."
+  [app-id]
+  (-> (get-app-tools-base-query app-id)
+      (where {:app_version_id [in (subselect app_versions
+                                             (fields :id)
+                                             (where {:app_id  app-id
+                                                     :deleted false}))]})
+      select))
+
+(defn get-app-version-tools
+  "Loads information about the tools associated with a specific app version."
+  [app-id version-id]
+  (-> (get-app-tools-base-query app-id)
+      (where {:app_version_id version-id})
+      select))
 
 (defn get-app-notification-types
   "Loads information about the notification types to use for an app version."

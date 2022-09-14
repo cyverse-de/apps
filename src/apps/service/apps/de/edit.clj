@@ -231,7 +231,7 @@
          (assoc :version_id version-id
                 :versions   (persistence/list-app-versions app-id)
                 :references (map :reference_text app_references)
-                :tools      (map format-app-tool (persistence/get-app-tools (:id app) version-id))
+                :tools      (map format-app-tool (persistence/get-app-version-tools (:id app) version-id))
                 :groups     (map format-group (:parameter_groups task))
                 :system_id  c/system-id)
          (dissoc :app_versions)))))
