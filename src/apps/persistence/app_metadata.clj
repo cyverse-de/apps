@@ -341,6 +341,15 @@
                                                      :deleted false}))]})
       select))
 
+(defn get-all-app-tools
+  "Loads information about the tools associated with all versions of an app."
+  [app-id]
+  (-> (get-app-tools-base-query app-id)
+      (where {:app_version_id [in (subselect app_versions
+                                             (fields :id)
+                                             (where {:app_id app-id}))]})
+      select))
+
 (defn get-app-version-tools
   "Loads information about the tools associated with a specific app version."
   [app-id version-id]

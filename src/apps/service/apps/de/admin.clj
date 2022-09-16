@@ -8,6 +8,7 @@
             [clojure.tools.logging :as log]
             [apps.clients.email :as email]
             [apps.clients.metadata :as metadata-client]
+            [apps.clients.permissions :as perms-client]
             [apps.persistence.app-groups :as app-groups]
             [apps.persistence.app-metadata :as persistence]
             [apps.persistence.categories :as db-categories]
@@ -107,12 +108,29 @@
 (defn update-app
   "This service updates high-level details and labels in an App, extra information for particular
    job execution systems, and can mark or unmark the app as deleted or disabled in the database."
-  [{username :shortUsername} {app-name :name app-id :id :as app}]
+  [{username :shortUsername} {app-name :name app-id :id version-id :version_id :keys [deleted] :as app}]
   (transaction
    (av/validate-app-existence app-id)
+
    (when-not (nil? app-name)
      (categorization/validate-app-name-in-current-hierarchy username app-id app-name)
      (av/validate-app-name app-name app-id))
+
+   ; Check if app version(s) can be undeleted
+   (when (and (false? deleted) (:deleted (if (nil? version-id)
+                                           (persistence/get-app app-id)
+                                           (persistence/get-app-version app-id version-id))))
+     (let [tools             (if (nil? version-id)
+                               (persistence/get-all-app-tools app-id)
+                               (persistence/get-app-version-tools app-id version-id))
+           public-tool-ids   (perms-client/get-public-tool-ids)
+           private-tools     (remove (comp public-tool-ids :id) tools)
+           public-app-ids    (perms-client/get-public-app-ids)
+           app-public        (contains? public-app-ids app-id)]
+       (when (and app-public (not-empty private-tools))
+         (throw+ (ex-util/bad-request "Cannot restore public app version(s) that use private tool(s)"
+                                      :tools private-tools)))))
+
    (if (empty? (select-keys app [:name :description :wiki_url :references :groups :extra]))
      (update-app-deleted-disabled app)
      (update-app-details app))))
