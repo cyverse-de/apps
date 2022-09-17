@@ -40,10 +40,10 @@
          (doall))))
 
 (defn- get-combined-groups
-  [clients app-id groups]
+  [clients app-version-id groups]
   (loop [acc            []
          groups         groups
-         [step & steps] (ap/load-app-steps app-id)
+         [step & steps] (ap/load-app-steps app-version-id)
          step-number    1]
     (let [before-current-step #(<= (:step_number %) step-number)
           system-id           (:system_id step)
@@ -71,7 +71,7 @@
   [app clients current-client]
   [(.getJobTypes current-client)
    (if (= (.getClientName current-client) jp/de-client-name)
-     (update-in app [:groups] (partial get-combined-groups clients (:id app)))
+     (update-in app [:groups] (partial get-combined-groups clients (:version_id app)))
      app)])
 
 (defn- get-app-from-client
@@ -83,6 +83,17 @@
   [system-id app-id include-hidden-params? clients]
   (->> (util/get-apps-client clients system-id)
        (get-app-from-client system-id app-id include-hidden-params? clients)
+       second))
+
+(defn- get-app-version-from-client
+  [system-id app-id version-id clients current-client]
+  (-> (.getAppVersionJobView current-client system-id app-id version-id)
+      (format-app-submission-info clients current-client)))
+
+(defn get-app-version
+  [system-id app-id version-id clients]
+  (->> (util/get-apps-client clients system-id)
+       (get-app-version-from-client system-id app-id version-id clients)
        second))
 
 (defn get-app-submission-info

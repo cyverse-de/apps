@@ -2,7 +2,10 @@
   (:use [apps.metadata.params :only [format-reference-genome-value]]
         [apps.persistence.app-groups :only [add-app-to-category get-app-subcategory-id]]
         [apps.persistence.entities]
-        [apps.service.apps.de.validation :only [verify-app-editable verify-app-permission validate-app-name]]
+        [apps.service.apps.de.validation :only [validate-app-name
+                                                validate-app-version-existence
+                                                verify-app-editable
+                                                verify-app-permission]]
         [apps.util.config :only [workspace-dev-app-category-index]]
         [apps.util.conversions :only [remove-nil-vals convert-rule-argument]]
         [apps.util.db :only [transaction]]
@@ -28,7 +31,7 @@
 
 (defn- get-app-details
   "Retrieves the details for a single-step app."
-  [app-id]
+  [app-id version-id]
   (-> (select* apps)
       (fields :id
               :name
@@ -39,7 +42,7 @@
                     :version
                     :integration_date
                     :edited_date)
-            (where {:app_versions.id (persistence/get-app-latest-version app-id)})
+            (where {:app_versions.id version-id})
             (with app_references)
             (with tasks
                   (fields :id)
@@ -212,8 +215,8 @@
   (remove-nil-vals (select-keys tool [:id :name :description :location :type :version :attribution :deprecated])))
 
 (defn- format-app-for-editing
-  [app]
-  (let [{:keys [app_versions] :as app} (get-app-details (:id app))
+  [{app-id :id version-id :version_id}]
+  (let [{:keys [app_versions] :as app} (get-app-details app-id version-id)
         {:keys [app_references tasks]
          :as   version-details}        (first app_versions)
         task                           (first tasks)]
@@ -225,20 +228,23 @@
          (merge (select-keys version-details [:version
                                               :edited_date
                                               :integration_date]))
-         (assoc :version_id (:id version-details)
+         (assoc :version_id version-id
+                :versions   (persistence/list-app-versions app-id)
                 :references (map :reference_text app_references)
-                :tools      (map format-app-tool (persistence/get-app-tools (:id app)))
+                :tools      (map format-app-tool (persistence/get-app-tools (:id app) version-id))
                 :groups     (map format-group (:parameter_groups task))
                 :system_id  c/system-id)
          (dissoc :app_versions)))))
 
 (defn get-app-ui
   "This service prepares a JSON response for editing an App in the client."
-  [user app-id]
-  (let [app (persistence/get-app app-id)]
-    (when-not (user-owns-app? user app)
-      (verify-app-permission user app "write"))
-    (format-app-for-editing app)))
+  ([user app-id]
+   (get-app-ui user app-id (persistence/get-app-latest-version app-id)))
+  ([user app-id version-id]
+   (let [app (persistence/get-app-version app-id version-id)]
+     (when-not (user-owns-app? user app)
+       (verify-app-permission user app "write"))
+     (format-app-for-editing app))))
 
 (defn- update-parameter-argument
   "Adds a selection parameter's argument, and any of its child arguments and groups."
@@ -433,17 +439,24 @@
     (delete-app-orphans task-id updated-groups)
     updated-groups))
 
+(defn- validate-updated-app-name
+  [username app-id app-name]
+  (categorization/validate-app-name-in-current-hierarchy username app-id app-name)
+  (validate-app-name app-name app-id))
+
 (defn update-app
   "This service will update a single-step App, including the information at its top level and the
    tool used by its single task, as long as the App has not been submitted for public use."
-  [user {app-id :id app-name :name :keys [references groups] :as app}]
+  [user {app-id :id version-id :version_id app-name :name :keys [references groups] :as app}]
   (verify-app-editable user (persistence/get-app app-id))
+  (when version-id
+    (validate-app-version-existence app-id version-id))
   (transaction
-   (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
-   (validate-app-name app-name app-id)
+   (validate-updated-app-name (:shortUsername user) app-id app-name)
    (persistence/update-app app)
    (let [tool-id (->> app :tools first :id)
-         {version-id :id :keys [tasks]} (->> (get-app-details app-id) :app_versions first)
+         version-id (or version-id (persistence/get-app-latest-version app-id))
+         {:keys [tasks]} (->> (get-app-details app-id version-id) :app_versions first)
          app-task (first tasks)
          task-id (:id app-task)
          current-param-ids (map :id (mapcat :parameters (:parameter_groups app-task)))]
@@ -455,8 +468,8 @@
        (persistence/remove-parameter-values current-param-ids))
      (when-not (empty? references)
        (persistence/set-app-references version-id references))
-     (update-app-groups task-id groups))
-   (get-app-ui user app-id)))
+     (update-app-groups task-id groups)
+     (get-app-ui user app-id version-id))))
 
 (defn get-user-subcategory
   [username index]
@@ -476,25 +489,46 @@
     (persistence/add-step version-id 0 {:task_id (:id task)})
     task))
 
-(defn add-app
-  "This service will add a single-step App, including the information at its top level."
-  [{:keys [username] :as user} {app-name :name :keys [references groups] :as app}]
+(defn- add-app-version*
+  "Adds a single-step app version to an existing app."
+  [user {app-id :id :keys [references groups] :as app}]
   (transaction
-    (->> (get-user-subcategory username (workspace-dev-app-category-index))
-         vector
-         (validate-app-name app-name nil))
-   (let [app-id     (:id (persistence/add-app app))
-         version-id (:id (persistence/add-app-version (assoc app :app_id app-id) user))
+   (let [version-id (:id (persistence/add-app-version (-> app (dissoc :id) (assoc :app_id app-id)) user))
          tool-id    (->> app :tools first :id)
          task-id    (-> (assoc app :version_id version-id :tool_id tool-id)
                         (add-single-step-task)
                         :id)]
-     (add-app-to-user-dev-category user app-id)
      (when-not (empty? references)
        (persistence/set-app-references version-id references))
      (dorun (map-indexed (partial update-app-group task-id) groups))
+     version-id)))
+
+(defn add-app
+  "This service will add a single-step App, including the information at its top level."
+  [{:keys [username] :as user} {app-name :name :as app}]
+  (transaction
+    (->> (get-user-subcategory username (workspace-dev-app-category-index))
+         vector
+         (validate-app-name app-name nil))
+   (let [app-id (:id (persistence/add-app app))]
+     (add-app-version* user (assoc app :id app-id))
+     (add-app-to-user-dev-category user app-id)
      (permissions/register-private-app (:shortUsername user) app-id)
      (get-app-ui user app-id))))
+
+(defn add-app-version
+  "Adds a single-step app version to an existing app, if the user has write permission on that app."
+  [user {app-id :id app-name :name :as app} admin?]
+  (verify-app-permission user (persistence/get-app app-id) "write" admin?)
+  (transaction
+    (validate-updated-app-name (:shortUsername user) app-id app-name)
+    (persistence/update-app app)
+    (->> app-id
+         persistence/get-app-max-version-order
+         inc
+         (assoc app :version_order)
+         (add-app-version* user))
+    (get-app-ui user app-id)))
 
 (defn- name-too-long?
   "Determines if a name is too long to be extended for a copy name."
@@ -541,27 +575,35 @@
   [app]
   (let [app (format-app-for-editing app)]
     (-> app
-        (dissoc :id :version :version_id)
+        (dissoc :id :versions :version :version_id)
         (assoc :name   (app-copy-name (:name app))
                :groups (map convert-app-group-to-copy (:groups app)))
         (remove-nil-vals))))
 
+(defn- copy-app*
+  [user app]
+  (verify-app-permission user app "read")
+  (add-app user (convert-app-to-copy app)))
+
 (defn copy-app
-  "This service makes a copy of an App available in Tito for editing."
+  "This service makes a copy of the latest version of an app available for editing."
   [user app-id]
-  (let [app (persistence/get-app app-id)]
-    (verify-app-permission user app "read")
-    (add-app user (convert-app-to-copy app))))
+  (copy-app* user (persistence/get-app app-id)))
+
+(defn copy-app-version
+  "This service makes a copy of a specific app version available for editing."
+  [user app-id version-id]
+  (copy-app* user (persistence/get-app-version app-id version-id)))
 
 (defn relabel-app
   "This service allows labels to be updated in any app, whether or not the app has been submitted
    for public use."
-  [user {app-name :name app-id :id :as body}]
-  (let [app (persistence/get-app app-id)]
+  [user {app-name :name app-id :id version-id :version_id :as body}]
+  (let [version-id (or version-id (persistence/get-app-latest-version app-id))
+        app        (persistence/get-app-version app-id version-id)]
     (when-not (user-owns-app? user app)
-      (verify-app-permission user app "write")))
-  (transaction
-   (categorization/validate-app-name-in-current-hierarchy (:shortUsername user) app-id app-name)
-   (validate-app-name app-name app-id)
-   (relabel/update-app-labels body))
-  (get-app-ui user app-id))
+      (verify-app-permission user app "write"))
+    (transaction
+      (validate-updated-app-name (:shortUsername user) app-id app-name)
+      (relabel/update-app-labels (assoc body :version_id version-id)))
+    (get-app-ui user app-id version-id)))

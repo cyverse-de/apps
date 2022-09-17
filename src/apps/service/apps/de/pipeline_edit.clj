@@ -11,7 +11,9 @@
                                               update-app-version]]
         [apps.persistence.entities :only [app_steps input_mapping]]
         [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]]
-        [apps.service.apps.de.validation :only [verify-app-editable]]
+        [apps.service.apps.de.validation :only [validate-app-name
+                                                verify-app-editable
+                                                verify-app-permission]]
         [apps.util.conversions :only [remove-nil-vals]]
         [apps.util.db :only [transaction]]
         [apps.validation :only [validate-external-app-step
@@ -20,6 +22,7 @@
         [korma.core :exclude [update]]
         [medley.core :only [find-first]])
   (:require [apps.clients.permissions :as permissions]
+            [apps.persistence.app-metadata :as persistence]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.listings :as listings]))
 
@@ -116,6 +119,7 @@
         (assoc :tasks tasks
                :steps steps
                :mappings mappings
+               :versions (persistence/list-app-versions (:id app))
                :system_id c/system-id))))
 
 (defn- convert-app-to-copy
@@ -133,10 +137,12 @@
 
 (defn edit-pipeline
   "This service prepares a JSON response for editing a Pipeline in the client."
-  [user app-id]
-  (let [app (get-app app-id)]
-    (verify-app-editable user app)
-    (format-workflow user app)))
+  ([user app-id]
+   (edit-pipeline user app-id (persistence/get-app-latest-version app-id)))
+  ([user app-id version-id]
+   (let [app (persistence/get-app-version app-id version-id)]
+     (verify-app-editable user app)
+     (format-workflow user app))))
 
 (defn- add-app-mapping
   [app-version-id steps {:keys [source_step target_step map]}]
@@ -181,14 +187,19 @@
   (let [steps (add-pipeline-steps app-version-id steps)]
     (dorun (map (partial add-app-mapping app-version-id steps) mappings))))
 
+(defn- add-pipeline-version*
+  [user {app-id :id :as app}]
+  (let [app-version-id (-> app (dissoc :id) (assoc :app_id app-id) (add-app-version user) :id)]
+    (add-app-steps-mappings (assoc app :id app-id :version_id app-version-id))
+    app-version-id))
+
 (defn- add-pipeline-app
   [user app]
   (validate-pipeline app)
   (transaction
-   (let [app-id         (:id (add-app app))
-         app-version-id (-> app (assoc :app_id app-id) (add-app-version user) :id)]
+   (let [app-id (:id (add-app app))]
+     (add-pipeline-version* user (assoc app :id app-id))
      (add-app-to-user-dev-category user app-id)
-     (add-app-steps-mappings (assoc app :id app-id :version_id app-version-id))
      (permissions/register-private-app (:shortUsername user) app-id)
      app-id)))
 
@@ -221,19 +232,44 @@
        (add-pipeline-app user)
        (edit-pipeline user)))
 
-(defn update-pipeline
-  [user {app-id :id app-version-id :version_id :as workflow}]
-  (let [workflow (if (empty? app-version-id)
-                   (assoc workflow :version_id (get-app-latest-version app-id))
-                   workflow)]
-    (update-pipeline-app user (preprocess-pipeline workflow))
-    (edit-pipeline user app-id)))
+(defn add-pipeline-version
+  "Adds a single-step app version to an existing app, if the user has write permission on that app."
+  [user {app-id :id app-name :name :as app} admin?]
+  (verify-app-permission user (get-app app-id) "write" admin?)
+  (validate-pipeline app)
+  (transaction
+    (validate-app-name app-name app-id)
+    (update-app app)
+    (->> app-id
+         persistence/get-app-max-version-order
+         inc
+         (assoc app :version_order)
+         (add-pipeline-version* user)
+         (edit-pipeline user app-id))))
 
-(defn copy-pipeline
-  "This service makes a copy of a Pipeline for the current user and returns the JSON for editing the
-   copy in the client."
-  [user app-id]
-  (->> (get-app app-id)
+(defn update-pipeline
+  [user {app-id :id version-id :version_id :as workflow}]
+  (let [version-id (or version-id (get-app-latest-version app-id))]
+    (->> (assoc workflow :version_id version-id)
+         preprocess-pipeline
+         (update-pipeline-app user))
+    (edit-pipeline user app-id version-id)))
+
+(defn- copy-pipeline*
+  [user app]
+  (->> app
        (convert-app-to-copy)
        (add-pipeline-app user)
        (edit-pipeline user)))
+
+(defn copy-pipeline
+  "This service makes a copy of a pipeline's latest version for the current user
+   and returns the JSON for editing the copy in the client."
+  [user app-id]
+  (copy-pipeline* user (get-app app-id)))
+
+(defn copy-pipeline-version
+  "This service makes a copy of a pipeline version for the current user
+   and returns the JSON for editing the copy in the client."
+  [user app-id version-id]
+  (copy-pipeline* user (persistence/get-app-version app-id version-id)))

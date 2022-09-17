@@ -1,6 +1,7 @@
 (ns apps.service.apps.de.validation
   (:use [apps.persistence.app-metadata :only [get-app
                                               get-app-tools
+                                              get-app-version
                                               list-duplicate-apps
                                               list-duplicate-apps-by-id
                                               parameter-types-for-tool-type]]
@@ -17,6 +18,11 @@
   "Verifies that apps exist."
   [app-id]
   (get-app app-id))
+
+(defn validate-app-version-existence
+  "Verifies that a specific app version exists."
+  [app-id app-version-id]
+  (get-app-version app-id app-version-id))
 
 (defn- app-version-ids
   "Get the list of version IDs associated with an app."

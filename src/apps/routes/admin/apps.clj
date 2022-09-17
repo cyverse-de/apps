@@ -127,4 +127,45 @@
       (let [body (assoc body :id app-id)]
         (if (apps/uses-tools-in-untrusted-registries? current-user system-id app-id)
           (cxu/bad-request (str "App " app-id " uses tools in untrusted registries"))
-          (ok (apps/make-app-public current-user system-id body)))))))
+          (ok (apps/make-app-public current-user system-id body)))))
+
+    (context "/versions/:version-id" []
+             :path-params [version-id :- apps-schema/AppVersionIdParam]
+
+             (PATCH "/documentation" []
+                    :query [params SecuredQueryParams]
+                    :body [body apps-schema/AppDocumentationRequest]
+                    :return apps-schema/AppDocumentation
+                    :summary schema/AppVersionDocumentationUpdateSummary
+                    :description schema/AppVersionDocumentationUpdateDocs
+                    (ok (coerce! apps-schema/AppDocumentation
+                                 (apps/admin-edit-app-version-docs current-user
+                                                                   system-id
+                                                                   app-id
+                                                                   version-id
+                                                                   body))))
+
+             (POST "/documentation" []
+                   :query [params SecuredQueryParams]
+                   :body [body apps-schema/AppDocumentationRequest]
+                   :return apps-schema/AppDocumentation
+                   :summary schema/AppVersionDocumentationAddSummary
+                   :description schema/AppVersionDocumentationAddDocs
+                   (ok (coerce! apps-schema/AppDocumentation
+                                (apps/admin-add-app-version-docs current-user
+                                                                 system-id
+                                                                 app-id
+                                                                 version-id
+                                                                 body))))
+
+             (PUT "/integration-data/:integration-data-id" []
+                  :path-params [integration-data-id :- IntegrationDataIdPathParam]
+                  :query [params SecuredQueryParams]
+                  :return IntegrationData
+                  :summary schema/AppVersionIntegrationDataUpdateSummary
+                  :description schema/AppVersionIntegrationDataUpdateDocs
+                  (ok (apps/update-app-version-integration-data current-user
+                                                                system-id
+                                                                app-id
+                                                                version-id
+                                                                integration-data-id))))))

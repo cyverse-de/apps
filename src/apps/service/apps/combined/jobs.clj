@@ -21,10 +21,10 @@
 
 (defn- load-job-steps
   "Loads the app steps from the database, grouping consecutive DE steps into a single step."
-  [app-id]
+  [app-version-id]
   (->> (map (fn [n step] (assoc step :app_step_number n))
             (iterate inc 1)
-            (ap/load-app-steps app-id))
+            (ap/load-app-steps app-version-id))
        (partition-by app-step-partitioner)
        (map first)
        (map (fn [n step] (assoc step :step_number n))
@@ -32,19 +32,20 @@
 
 (defn- validate-job-steps
   "Verifies that at least one step is associated with a job submission."
-  [app-id steps]
+  [app-version-id steps]
   (when (empty? steps)
     (throw+ {:type  :clojure-commons.exception/illegal-argument
-             :error (str "app " app-id " has no steps")}))
+             :error (str "app version " app-version-id " has no steps")}))
   steps)
 
 (defn- build-job-save-info
-  [user result-folder-path job-id system-id app-info submission]
+  [user result-folder-path job-id system-id version-id app-info submission]
   {:id                 job-id
    :job_name           (:name submission)
    :job_description    (:description submission)
    :system_id          system-id
    :app_id             (:id app-info)
+   :app_version_id     version-id
    :app_name           (:name app-info)
    :app_description    (:description app-info)
    :app_wiki_url       (:wiki_url app-info)
@@ -64,9 +65,9 @@
    :app_step_number (:app_step_number job-step)})
 
 (defn build-job-step-list
-  [job-id app-id]
-  (->> (load-job-steps app-id)
-       (validate-job-steps app-id)
+  [job-id app-version-id]
+  (->> (load-job-steps app-version-id)
+       (validate-job-steps app-version-id)
        (map (partial build-job-step-save-info job-id))))
 
 (defn- prepare-common-job-step-submission
@@ -81,8 +82,8 @@
 (def prepare-de-job-step-submission prepare-common-job-step-submission)
 
 (defn- get-current-app-step
-  [{app-id :app_id} {app-step-number :app_step_number}]
-  (nth (ap/load-app-steps app-id) (dec app-step-number)))
+  [{app-version-id :app_version_id} {app-step-number :app_step_number}]
+  (nth (ap/load-app-steps app-version-id) (dec app-step-number)))
 
 (defn- prepare-agave-job-step-submission
   [job-info job-step submission]
@@ -116,12 +117,13 @@
      (when-not (boolean (:parent_id submission)) (throw+)))))
 
 (defn submit
-  [user clients {system-id :system_id app-id :app_id :as submission}]
+  [user clients {system-id :system_id app-id :app_id version-id :app_version_id :as submission}]
   (let [job-id      (uuids/uuid)
-        job-steps   (build-job-step-list job-id app-id)
+        version-id  (or version-id (ap/get-app-latest-version app-id))
+        job-steps   (build-job-step-list job-id version-id)
         app-info    (service/assert-found (ap/load-app-info app-id) "app" app-id)
         job-info    (build-job-save-info user (ft/build-result-folder-path submission)
-                                         job-id system-id app-info submission)
+                                         job-id system-id version-id app-info submission)
         job-step    (first job-steps)]
     (jp/save-multistep-job job-info job-steps submission)
     (submit-job-step (cu/apps-client-for-job-step clients job-step) job-info job-step submission)
@@ -189,7 +191,7 @@
 
 (defn- add-mapped-inputs
   [combined-client job next-step submission]
-  (let [app-steps (ap/load-app-steps (:app_id job))]
+  (let [app-steps (ap/load-app-steps (:app_version_id job))]
     (->> (load-mapped-inputs app-steps next-step)
          (add-mapped-inputs-to-config combined-client job submission app-steps))))
 
@@ -221,12 +223,3 @@
       (.updateJobStatus (cu/apps-client-for-job-step clients job-step) job-step job status end-date)
       (update-pipeline-status combined-client clients max-step-number job-step job status
                               end-date))))
-
-(defn build-next-step-submission
-  [combined-client clients {:keys [job_id step_number]} job]
-  (let [next-step (jp/get-job-step-number job_id (inc step_number))
-        client    (cu/apps-client-for-job-step clients next-step)]
-    (->> (cheshire/decode (.getValue (:submission job)) true)
-         (add-mapped-inputs combined-client job next-step)
-         (prepare-job-step-submission job next-step)
-         (.prepareStepSubmission client job_id))))

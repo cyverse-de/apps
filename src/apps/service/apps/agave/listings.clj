@@ -151,8 +151,8 @@
        (map (partial prep-agave-param step-id agave-app-id))))
 
 (defn- load-agave-pipeline-params
-  [agave-client app-id]
-  (->> (ap/load-app-steps app-id)
+  [agave-client app-version-id]
+  (->> (ap/load-app-steps app-version-id)
        (remove (comp nil? :external_app_id))
        (mapcat (partial load-agave-pipeline-step-params agave-client))))
 
@@ -164,7 +164,7 @@
        (map (partial prep-agave-param nil app-id))))
 
 (defn get-param-definitions
-  [agave app-id]
-  (if (uuid? app-id)
-    (load-agave-pipeline-params agave app-id)
+  [agave app-id version-id]
+  (if (and version-id (uuid? app-id))
+    (load-agave-pipeline-params agave version-id)
     (load-agave-app-params agave app-id)))

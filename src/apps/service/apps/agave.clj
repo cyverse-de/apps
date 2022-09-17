@@ -10,8 +10,11 @@
             [apps.service.apps.job-listings :as job-listings]
             [apps.service.apps.permissions :as app-permissions]
             [apps.service.apps.util :as apps-util]
-            [apps.service.util :as util]
             [apps.util.service :as service]))
+
+(defn- reject-app-versions-request
+  []
+  (service/bad-request "Cannot list or modify HPC app versions with this service"))
 
 (defn- reject-app-documentation-edit-request
   []
@@ -130,6 +133,10 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (addAppVersion [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (previewCommandLine [_ system-id _]
     (validate-system-id system-id)
     (reject-app-integration-request))
@@ -149,9 +156,17 @@
     (validate-system-id system-id)
     (.getApp agave app-id))
 
+  (getAppVersionJobView [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
+
+  (deleteAppVersion [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (relabelApp [_ system-id app-id]
     (validate-system-id system-id)
@@ -165,9 +180,17 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (copyAppVersion [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
     (listings/get-app-details agave app-id admin?))
+
+  (getAppVersionDetails [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (removeAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
@@ -209,15 +232,27 @@
     (validate-system-id system-id)
     (.listAppTasks agave app-id))
 
+  (getAppVersionTaskListing [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (.getAppToolListing agave app-id))
+
+  (getAppVersionToolListing [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (getAppInputIds [_ system-id app-id]
+  (getAppVersionUi [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
+  (getAppInputIds [_ system-id app-id _]
     (validate-system-id system-id)
     (.getAppInputIds agave app-id))
 
@@ -261,12 +296,9 @@
   (getJobStepHistory [_ {:keys [external_id]}]
     (.getJobHistory agave external_id))
 
-  (prepareStepSubmission [_ job-id submission]
-    (agave-jobs/prepare-step-submission agave job-id submission))
-
-  (getParamDefinitions [_ system-id app-id]
+  (getParamDefinitions [_ system-id app-id version-id]
     (validate-system-id system-id)
-    (listings/get-param-definitions agave app-id))
+    (listings/get-param-definitions agave app-id version-id))
 
   (stopJobStep [self {:keys [job_type external_id]}]
     (when (and (apps-util/supports-job-type? self job_type)
@@ -322,9 +354,17 @@
     (validate-system-id system-id)
     (empty-doc-map app-id))
 
+  (getAppVersionDocs [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (getAppIntegrationData [_ system-id app-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
+
+  (getAppVersionIntegrationData [_ system-id _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (getToolIntegrationData [_ system-id tool-id]
     (validate-system-id system-id)
@@ -334,6 +374,10 @@
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
+  (updateAppVersionIntegrationData [_ system-id app-id version-id integration-data-id]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (updateToolIntegrationData [_ system-id tool-id integration-data-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
@@ -342,17 +386,33 @@
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
+  (ownerEditAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (ownerAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
+
+  (ownerAddAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (adminEditAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
+  (adminEditAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
+
   (adminAddAppDocs [_ system-id app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
+
+  (adminAddAppVersionDocs [_ system-id _ _ _]
+    (validate-system-id system-id)
+    (reject-app-versions-request))
 
   (listAppPermissions [_ qualified-app-ids _]
     (validate-system-ids (set (map :system_id qualified-app-ids)))

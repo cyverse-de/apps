@@ -105,11 +105,12 @@
     (doall (mapcat (fn [step] (format-groups user (group-name-prefix step) include-hidden-params? step)) app-steps))))
 
 (defn- format-app
-  [user {:keys [name version_id] :as app} include-hidden-params?]
+  [user {:keys [id name version_id] :as app} include-hidden-params?]
   (let [app-steps           (get-steps version_id)
         limit-check-results (limits/load-limit-check-results user)]
     (-> (select-keys app [:id :name :description :disabled :deleted :version :version_id])
         (assoc :label name
+               :versions (amp/list-app-versions id)
                :requirements (map get-step-resource-requirements app-steps)
                :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
                :app_type "DE"
@@ -135,10 +136,19 @@
            (throw+)))))))
 
 (defn get-app
-  "This service obtains an app description in a format that is suitable for building the job
-  submission UI."
+  "This service obtains an app description, for the app's latest version,
+   in a format suitable for building the job submission UI."
   [user app-id include-hidden-params?]
   (let [app (amp/get-app app-id)]
     (verify-app-permission user app "read")
     (validate-hidden-inputs user (:version_id app))
     (format-app user app include-hidden-params?)))
+
+(defn get-app-version
+  "This service obtains an app version's description in a format suitable for
+   building the job submission UI."
+  [user app-id version-id]
+  (let [app (amp/get-app-version app-id version-id)]
+    (verify-app-permission user app "read")
+    (validate-hidden-inputs user (:version_id app))
+    (format-app user app false)))

@@ -111,6 +111,42 @@
       get-app
       :version_id))
 
+(defn get-app-max-version-order
+  "Retrieves the largest version order field from the app_versions table in the database."
+  [app-id]
+  (-> (select app_versions
+              (aggregate (max :version_order) :max_order)
+              (where {:app_id app-id}))
+      first
+      :max_order))
+
+(defn- add-deleted-versions-clause
+  [query include-deleted?]
+  (if-not include-deleted?
+    (where query {:deleted false})
+    query))
+
+(defn list-app-versions
+  "Retrieves the list of available versions from the app_versions table in the database."
+  ([app-id]
+   (list-app-versions app-id false))
+  ([app-id include-deleted?]
+   (-> (select* app_versions)
+       (fields :version [:id :version_id])
+       (where {:app_id app-id})
+       (add-deleted-versions-clause include-deleted?)
+       (order :version_order :DESC)
+       select)))
+
+(defn get-app-version
+  "Retrieves top-level app and version fields from the database."
+  [app-id version-id]
+  (assert-app-version
+    [app-id version-id]
+    (first (select :app_versions_listing
+                   (where {:id         app-id
+                           :version_id version-id})))))
+
 (defn- user-id-subselect [username]
   (subselect :users
              (fields :id)
@@ -210,10 +246,23 @@
       get-app-latest-version
       get-integration-data-by-app-version-id))
 
+(defn get-integration-data-by-app-id-for-all-versions [app-id]
+  (-> (integration-data-base-query)
+      (where {:d.id [in (subselect :app_versions
+                                   (fields :integration_data_id)
+                                   (where {:app_id app-id}))]})
+      select))
+
 (defn update-app-integration-data [app-id integration-data-id]
   (-> (update* :app_versions)
       (set-fields {:integration_data_id integration-data-id})
       (where {:id (subselect app_listing (fields :version_id) (where {:id app-id}))})
+      (sql/update)))
+
+(defn update-app-version-integration-data [version-id integration-data-id]
+  (-> (update* :app_versions)
+      (set-fields {:integration_data_id integration-data-id})
+      (where {:id version-id})
       (sql/update)))
 
 (defn update-tool-integration-data [tool-id integration-data-id]
@@ -761,6 +810,13 @@
   ([deleted? app-id]
    (sql/update :app_versions (set-fields {:deleted deleted?}) (where {:app_id app-id}))))
 
+(defn delete-app-version
+  "Marks or unmarks an app version as deleted in the metadata database."
+  ([app-version-id]
+   (delete-app-version true app-version-id))
+  ([deleted? app-version-id]
+   (sql/update :app_versions (set-fields {:deleted deleted?}) (where {:id app-version-id}))))
+
 (defn disable-app
   "Marks or unmarks an app as disabled in the metadata database."
   ([app-id]
@@ -802,7 +858,7 @@
    (select [:apps :a] (where {:id (uuidify app-id)}))))
 
 (defn load-app-steps
-  [app-id]
+  [app-version-id]
   (select [:app_versions :v]
           (join [:app_steps :s] {:s.app_version_id :v.id})
           (join [:tasks :t] {:s.task_id :t.id})
@@ -813,7 +869,7 @@
                   [:jt.name           :job_type]
                   [:jt.system_id      :system_id]
                   [:t.external_app_id :external_app_id])
-          (where {:v.id (-> app-id uuidify get-app-latest-version)})
+          (where {:v.id app-version-id})
           (order :step :ASC)))
 
 (defn- mapping-base-query
@@ -864,7 +920,7 @@
                      :pv.is_default   true})))
 
 (defn get-app-parameters
-  [app-id]
+  [app-version-id]
   (select [:task_param_listing :p]
           (fields :p.id
                   :p.name
@@ -887,7 +943,7 @@
                 {:p.task_id :t.id})
           (join [:app_versions :v]
                 {:v.id :s.app_version_id})
-          (where {:v.app_id (uuidify app-id)})))
+          (where {:v.id app-version-id})))
 
 (defn get-app-names
   [app-ids]

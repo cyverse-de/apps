@@ -77,6 +77,9 @@
   (addApp [_ system-id app]
     (.addApp (util/get-apps-client clients system-id) system-id app))
 
+  (addAppVersion [_ system-id app admin?]
+    (.addAppVersion (util/get-apps-client clients system-id) system-id app admin?))
+
   (previewCommandLine [_ system-id app]
     (.previewCommandLine (util/get-apps-client clients system-id) system-id app))
 
@@ -97,11 +100,17 @@
   (getAppJobView [_ system-id app-id include-hidden-params?]
     (job-view/get-app system-id app-id include-hidden-params? clients))
 
+  (getAppVersionJobView [_ system-id app-id version-id]
+    (job-view/get-app-version system-id app-id version-id clients))
+
   (getAppSubmissionInfo [_ system-id app-id]
     (job-view/get-app-submission-info system-id app-id clients))
 
   (deleteApp [_ system-id app-id]
     (.deleteApp (util/get-apps-client clients system-id) system-id app-id))
+
+  (deleteAppVersion [_ system-id app-id app-version-id]
+    (.deleteAppVersion (util/get-apps-client clients system-id) system-id app-id app-version-id))
 
   (relabelApp [_ system-id app]
     (.relabelApp (util/get-apps-client clients system-id) system-id app))
@@ -112,10 +121,16 @@
   (copyApp [_ system-id app-id]
     (.copyApp (util/get-apps-client clients system-id) system-id app-id))
 
+  (copyAppVersion [_ system-id app-id version-id]
+    (.copyAppVersion (util/get-apps-client clients system-id) system-id app-id version-id))
+
   ;; FIXME: remove the admin flag when we have a better way to deal with administrative
   ;; privileges.
   (getAppDetails [_ system-id app-id admin?]
     (.getAppDetails (util/get-apps-client clients system-id) system-id app-id admin?))
+
+  (getAppVersionDetails [_ system-id app-id app-version-id admin?]
+    (.getAppVersionDetails (util/get-apps-client clients system-id) system-id app-id app-version-id admin?))
 
   (removeAppFavorite [_ system-id app-id]
     (.removeAppFavorite (util/get-apps-client clients system-id) system-id app-id))
@@ -147,17 +162,29 @@
   (getAppTaskListing [_ system-id app-id]
     (.getAppTaskListing (util/get-apps-client clients system-id) system-id app-id))
 
+  (getAppVersionTaskListing [_ system-id app-id version-id]
+    (.getAppVersionTaskListing (util/get-apps-client clients system-id) system-id app-id version-id))
+
   (getAppToolListing [_ system-id app-id]
     (.getAppToolListing (util/get-apps-client clients system-id) system-id app-id))
+
+  (getAppVersionToolListing [_ system-id app-id version-id]
+    (.getAppVersionToolListing (util/get-apps-client clients system-id) system-id app-id version-id))
 
   (getAppUi [_ system-id app-id]
     (.getAppUi (util/get-apps-client clients system-id) system-id app-id))
 
-  (getAppInputIds [_ system-id app-id]
-    (.getAppInputIds (util/get-apps-client clients system-id) system-id app-id))
+  (getAppVersionUi [_ system-id app-id version-id]
+    (.getAppVersionUi (util/get-apps-client clients system-id) system-id app-id version-id))
+
+  (getAppInputIds [_ system-id app-id version-id]
+    (.getAppInputIds (util/get-apps-client clients system-id) system-id app-id version-id))
 
   (addPipeline [self pipeline]
     (pipelines/format-pipeline self (.addPipeline (util/get-apps-client clients) pipeline)))
+
+  (addPipelineVersion [self pipeline admin?]
+    (pipelines/format-pipeline self (.addPipelineVersion (util/get-apps-client clients) pipeline admin?)))
 
   (formatPipelineTasks [_ pipeline]
     (reduce (fn [acc client] (.formatPipelineTasks client acc)) pipeline clients))
@@ -168,8 +195,14 @@
   (copyPipeline [self app-id]
     (pipelines/format-pipeline self (.copyPipeline (util/get-apps-client clients) app-id)))
 
+  (copyPipelineVersion [self app-id version-id]
+    (pipelines/format-pipeline self (.copyPipelineVersion (util/get-apps-client clients) app-id version-id)))
+
   (editPipeline [self app-id]
     (pipelines/format-pipeline self (.editPipeline (util/get-apps-client clients) app-id)))
+
+  (editPipelineVersion [self app-id version-id]
+    (pipelines/format-pipeline self (.editPipelineVersion (util/get-apps-client clients) app-id version-id)))
 
   (listJobs [self params]
     (job-listings/list-jobs self user params))
@@ -207,11 +240,8 @@
   (getJobStepHistory [_ job-step]
     (.getJobStepHistory (util/apps-client-for-job-step clients job-step) job-step))
 
-  (buildNextStepSubmission [self job-step job]
-    (combined-jobs/build-next-step-submission self clients job-step job))
-
-  (getParamDefinitions [_ system-id app-id]
-    (.getParamDefinitions (util/get-apps-client clients system-id) system-id app-id))
+  (getParamDefinitions [_ system-id app-id version-id]
+    (.getParamDefinitions (util/get-apps-client clients system-id) system-id app-id version-id))
 
   (stopJobStep [_ job-step]
     (dorun (map #(.stopJobStep % job-step) clients)))
@@ -261,8 +291,14 @@
   (getAppDocs [_ system-id app-id]
     (.getAppDocs (util/get-apps-client clients system-id) system-id app-id))
 
+  (getAppVersionDocs [_ system-id app-id version-id]
+    (.getAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id))
+
   (getAppIntegrationData [_ system-id app-id]
     (.getAppIntegrationData (util/get-apps-client clients system-id) system-id app-id))
+
+  (getAppVersionIntegrationData [_ system-id app-id version-id]
+    (.getAppVersionIntegrationData (util/get-apps-client clients system-id) system-id app-id version-id))
 
   (getToolIntegrationData [_ system-id tool-id]
     (.getToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id))
@@ -270,20 +306,35 @@
   (updateAppIntegrationData [_ system-id app-id integration-data-id]
     (.updateAppIntegrationData (util/get-apps-client clients system-id) system-id app-id integration-data-id))
 
+  (updateAppVersionIntegrationData [_ system-id app-id version-id integration-data-id]
+    (.updateAppVersionIntegrationData (util/get-apps-client clients system-id) system-id app-id version-id integration-data-id))
+
   (updateToolIntegrationData [_ system-id tool-id integration-data-id]
     (.updateToolIntegrationData (util/get-apps-client clients system-id) system-id tool-id integration-data-id))
 
   (ownerEditAppDocs [_ system-id app-id body]
     (.ownerEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
+  (ownerEditAppVersionDocs [_ system-id app-id version-id body]
+    (.ownerEditAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
+
   (ownerAddAppDocs [_ system-id app-id body]
     (.ownerAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
+
+  (ownerAddAppVersionDocs [_ system-id app-id version-id body]
+    (.ownerAddAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
 
   (adminEditAppDocs [_ system-id app-id body]
     (.adminEditAppDocs (util/get-apps-client clients system-id) system-id app-id body))
 
+  (adminEditAppVersionDocs [_ system-id app-id version-id body]
+    (.adminEditAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
+
   (adminAddAppDocs [_ system-id app-id body]
     (.adminAddAppDocs (util/get-apps-client clients system-id) system-id app-id body))
+
+  (adminAddAppVersionDocs [_ system-id app-id version-id body]
+    (.adminAddAppVersionDocs (util/get-apps-client clients system-id) system-id app-id version-id body))
 
   (listAppPermissions [_ qualified-app-ids params]
     (->> (group-by :system_id qualified-app-ids)

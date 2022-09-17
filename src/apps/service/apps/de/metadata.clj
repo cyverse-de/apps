@@ -9,6 +9,7 @@
                                             remove-app-from-category]]
         [apps.service.apps.de.validation :only [app-publishable?
                                                 validate-app-existence
+                                                validate-app-version-existence
                                                 verify-app-permission]]
         [apps.util.db :only [transaction]]
         [apps.validation :only [get-valid-user-id]]
@@ -78,6 +79,14 @@
   (validate-app-existence app-id)
   (perms/check-app-permissions username "own" [app-id])
   (amp/delete-app app-id)
+  {})
+
+(defn delete-app-version
+  "This service marks an existing app as deleted in the database."
+  [{username :shortUsername} app-id app-version-id]
+  (validate-app-version-existence app-id app-version-id)
+  (perms/check-app-permissions username "own" [app-id])
+  (amp/delete-app-version app-version-id)
   {})
 
 (defn preview-command-line
@@ -256,5 +265,6 @@
   (amp/get-app app-id))
 
 (defn get-param-definitions
-  [app-id]
-  (filter (comp nil? :external_app_id) (amp/get-app-parameters app-id)))
+  [app-id version-id]
+  (validate-app-version-existence app-id version-id)
+  (filter (comp nil? :external_app_id) (amp/get-app-parameters version-id)))

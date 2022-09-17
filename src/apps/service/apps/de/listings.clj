@@ -14,12 +14,14 @@
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.metadata :as metadata-client]
             [apps.clients.permissions :as perms-client]
+            [apps.persistence.app-documentation :as app-docs-db]
             [apps.persistence.app-metadata :refer [get-app get-app-tools] :as amp]
             [apps.persistence.jobs :as jobs-db]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.limits :as limits]
             [apps.service.apps.de.permissions :as perms]
             [apps.service.apps.de.docs :as docs]
+            [apps.service.apps.de.validation :as validation]
             [apps.service.util :as svc-util]
             [apps.tools :as tools]
             [apps.tools.permissions :as tool-perms]
@@ -530,17 +532,6 @@
     {:total total
      :apps  apps}))
 
-(defn- load-app-details
-  "Retrieves the details for a single app."
-  [app-id app-version-id]
-  (assert-not-nil [:app-id app-id]
-                  (first (select apps
-                                 (with app_versions
-                                       (with app_references)
-                                       (with integration_data)
-                                       (where {:app_versions.id app-version-id}))
-                                 (where {:id app-id})))))
-
 (defn- format-wiki-url
   "CORE-6510: Remove the wiki_url from app details responses if the App has documentation saved."
   [{:keys [id wiki_url] :as app}]
@@ -570,10 +561,10 @@
     nil))
 
 (defn- format-app-documentation
-  [app-id username admin?]
+  [app-id version-id username admin?]
   (when admin?
     (try+
-     (docs/get-app-docs username app-id admin?)
+     (docs/get-app-version-docs username app-id version-id admin?)
      (catch [:type :clojure-commons.exception/not-found] _ nil))))
 
 (defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
@@ -589,55 +580,72 @@
 
 (defn- format-app-details
   "Formats information for the get-app-details service."
-  [username details tools admin?]
-  (let [app-id                       (:id details)
-        {version-id :id
-         :keys      [app_references]
-         :as        version-details} (-> details :app_versions first)]
+  [{username :shortUsername :as user} details tools app-references admin?]
+  (let [{app-id :id version-id :version_id} details]
     (-> details
-        (select-keys [:id :wiki_url])
-        (merge (select-keys
-                 version-details
-                 [:version
-                  :deleted
-                  :disabled
-                  :edited_date
-                  :integration_date
-                  :integrator_name
-                  :integrator_email]))
+        (select-keys [:id
+                      :wiki_url
+                      :version
+                      :version_id
+                      :deleted
+                      :disabled
+                      :edited_date
+                      :integration_date
+                      :integrator_name
+                      :integrator_email
+                      :step_count
+                      :tool_count
+                      :external_app_count
+                      :task_count
+                      :overall_job_type
+                      :average_rating
+                      :total_ratings
+                      :is_favorite])
         (assoc :name                 (:name details "")
                :description          (:description details "")
-               :version_id           version-id
-               :references           (map :reference_text app_references)
+               :versions             (amp/list-app-versions app-id)
+               :references           (map :reference_text app-references)
                :tools                (map format-app-tool tools)
                :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
                :extra                (format-app-extra-info version-id admin?)
-               :documentation        (format-app-documentation app-id username admin?)
+               :documentation        (format-app-documentation app-id version-id user admin?)
                :categories           (get-groups-for-app app-id)
                :suggested_categories (get-suggested-groups-for-app app-id)
                :system_id            c/system-id)
         (format-app-hierarchies username)
         format-wiki-url)))
 
-;; This function was split from `get-app-details` to provide a way for administrative endopints to skip permission
+;; This function was split from `get-app-details` to provide a way for administrative endpoints to skip permission
 ;; checks without including the app stat information.
 (defn- get-app-details*
-  ([username app-id admin?]
-   (get-app-details* username app-id (amp/get-app-latest-version app-id) admin?))
-  ([username app-id app-version-id admin?]
-   (let [details (load-app-details app-id app-version-id)
-         tools   (get-app-tools app-id app-version-id)]
-     (->> (format-app-details username details tools admin?)
+  ([user app-id admin?]
+   (get-app-details* user app-id (amp/get-app-latest-version app-id) admin?))
+  ([{:keys [username shortUsername] :as user} app-id app-version-id admin?]
+   (let [workspace      (get-workspace username)
+         details        (get-app-version-details (:user_id workspace)
+                                                 (:root_category_id workspace)
+                                                 (workspace-favorites-app-category-index)
+                                                 app-id
+                                                 app-version-id)
+         tools          (get-app-tools app-id app-version-id)
+         app-references (app-docs-db/get-app-references app-version-id)
+         perms          (perms-client/load-app-permissions shortUsername)
+         public-app-ids (perms-client/get-public-app-ids)
+         format-app     (get-app-listing-formatter user false perms [app-id] public-app-ids)]
+     (->> (format-app-details user details tools app-references admin?)
+          format-app
           (remove-nil-vals)))))
 
 ;; FIXME: remove the code to bypass the permission checks for admin users when we have a better
 ;; way to implement this.
 (defn get-app-details
   "This service obtains the high-level details of an app."
-  [{username :shortUsername} app-id admin?]
-  (when-not admin?
-    (perms/check-app-permissions username "read" [app-id]))
-  (get-app-details* username app-id admin?))
+  ([user app-id admin?]
+   (get-app-details user app-id (amp/get-app-latest-version app-id) admin?))
+  ([{username :shortUsername :as user} app-id app-version-id admin?]
+   (when-not admin?
+     (perms/check-app-permissions username "read" [app-id]))
+   (get-app-details* user app-id app-version-id admin?)))
 
 (defn- with-task-params
   "Includes a list of related file parameters in the query's result set,
@@ -702,22 +710,38 @@
         (assoc :tasks tasks :system_id c/system-id))))
 
 (defn get-app-task-listing
-  "A service used to list the file parameters in an app."
+  "A service used to list the file parameters in an app's latest version."
   [{username :shortUsername} app-id]
   (perms/check-app-permissions username "read" [app-id])
-  (let [app (get-app app-id)]
-    (format-app-task-listing username app)))
+  (format-app-task-listing username (get-app app-id)))
 
-(defn get-app-tool-listing
-  "A service to list the tools used by an app."
-  [{username :shortUsername} app-id]
+(defn get-app-version-task-listing
+  "A service used to list the file parameters in an app version."
+  [{username :shortUsername} app-id version-id]
   (perms/check-app-permissions username "read" [app-id])
-  (let [{:keys [version_id]} (get-app app-id)
-        tasks (:tasks (first (select app_versions
+  (format-app-task-listing username (amp/get-app-version app-id version-id)))
+
+(defn- get-app-version-tool-listing*
+  "Lists tools used by an app version."
+  [version-id]
+  (let [tasks (:tasks (first (select app_versions
                                      (with tasks (fields :tool_id))
-                                     (where {:app_versions.id version_id}))))
+                                     (where {:app_versions.id version-id}))))
         tool-ids (map :tool_id tasks)]
     {:tools (get-tools-by-id tool-ids)}))
+
+(defn get-app-version-tool-listing
+  "A service to list the tools used by an app version."
+  [{username :shortUsername} app-id version-id]
+  (perms/check-app-permissions username "read" [app-id])
+  (validation/validate-app-version-existence app-id version-id)
+  (get-app-version-tool-listing* version-id))
+
+(defn get-app-tool-listing
+  "A service to list the tools used by the latest version of an app."
+  [{username :shortUsername} app-id]
+  (perms/check-app-permissions username "read" [app-id])
+  (get-app-version-tool-listing* (:version_id (get-app app-id))))
 
 (defn get-category-id-for-app
   "Determines the category that an app is in. If the category can't be found for the app then
@@ -731,15 +755,15 @@
 
 (defn get-app-input-ids
   "Gets the list of parameter IDs corresponding to input files."
-  [app-id]
-  (->> (amp/get-app-parameters app-id)
+  [app-version-id]
+  (->> (amp/get-app-parameters app-version-id)
        (filter (comp amp/param-ds-input-types :type))
        (mapv #(str (:step_id %) "_" (:id %)))))
 
 (defn- format-app-publication-request
-  [{username :shortUsername} {app-id :app_id :keys [id requestor]}]
+  [user {app-id :app_id :keys [id requestor]}]
   {:id        id
-   :app       (get-app-details* username app-id false)
+   :app       (get-app-details* user app-id false)
    :requestor requestor})
 
 (defn list-app-publication-requests

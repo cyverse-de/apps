@@ -8,6 +8,7 @@
         [kameleon.util.search]
         [korma.core :exclude [update]])
   (:require [apps.constants :as c]
+            [apps.util.assertions :refer [assert-app-version]]
             [clojure.string :as str]
             [otel.otel :as otel]))
 
@@ -51,19 +52,19 @@
            :child_index favorites_group_index})))
 
 (defn- get-is-fav-sqlfn
-  "Gets a sqlfn that retuns true if the App ID in its subselect is found in the
+  "Gets a sqlfn that returns true if the App ID in its subselect is found in the
    Favorites group with the ID returned by get-fav-group-id-subselect."
-  [workspace_root_group_id favorites_group_index]
+  [workspace_root_group_id favorites_group_index app-id-column]
   (let [fav_group_id_subselect (get-fav-group-id-subselect
-                                workspace_root_group_id
-                                favorites_group_index)]
+                                 workspace_root_group_id
+                                 favorites_group_index)]
     (sqlfn* :exists
             (subselect
-             :app_category_app
-             (where {:app_category_app.app_id
-                     :app_listing.id})
-             (where {:app_category_app.app_category_id
-                     fav_group_id_subselect})))))
+              :app_category_app
+              (where {:app_category_app.app_id
+                      app-id-column})
+              (where {:app_category_app.app_category_id
+                      fav_group_id_subselect})))))
 
 (defn- get-app-listing-orphaned-condition
   []
@@ -208,20 +209,40 @@
   [listing-query workspace_root_group_id favorites_group_index]
   (let [is_fav_subselect (get-is-fav-sqlfn
                           workspace_root_group_id
-                          favorites_group_index)]
+                          favorites_group_index
+                          :app_listing.id)]
     (fields listing-query [is_fav_subselect :is_favorite])))
 
-(defn- add-app-listing-ratings-fields
-  "Add ratings columns to apps listing query results"
-  [listing-query user-id]
+(defn- add-app-versions-listing-is-favorite-field
+  "Add user's is_favorite column to app versions listing query results"
+  [listing-query workspace_root_group_id favorites_group_index]
+  (let [is_fav_subselect (get-is-fav-sqlfn
+                          workspace_root_group_id
+                          favorites_group_index
+                          :app_versions_listing.id)]
+    (fields listing-query [is_fav_subselect :is_favorite])))
+
+(defn- add-listing-query-ratings-fields
+  "Add ratings columns to listing query results"
+  [listing-query user-id app-id-column]
   (-> listing-query
       (fields [:ratings.rating :user_rating]
               :ratings.comment_id)
       (join ratings
             (and (= :ratings.app_id
-                    :app_listing.id)
+                    app-id-column)
                  (= :ratings.user_id
                     user-id)))))
+
+(defn- add-app-listing-ratings-fields
+  "Add ratings columns to apps listing query results"
+  [listing-query user-id]
+  (add-listing-query-ratings-fields listing-query user-id :app_listing.id))
+
+(defn- add-app-version-listing-ratings-fields
+  "Add ratings columns to app versions listing query results"
+  [listing-query user-id]
+  (add-listing-query-ratings-fields listing-query user-id :app_versions_listing.id))
 
 (defn- get-base-app-listing-base-query
   "Gets an app_listing select query, setting any query limits and sorting
@@ -363,6 +384,34 @@
   (as-> (get-app-listing-base-query workspace favorites-group-index {:app-ids [app-id]}) q
     (query-spy "get-single-app::search-query:" q)
     (select q)))
+
+(defn get-app-version-details
+  "Retrieves the details for a single app."
+  [user-id workspace-root-group-id favorites-group-index app-id version-id]
+  (let [rating-avg-subselect (subselect
+                               ratings
+                               (fields (raw "CAST(COALESCE(AVG(rating), 0.0) AS DOUBLE PRECISION) AS average_rating"))
+                               (where {:ratings.app_id
+                                       :app_versions_listing.id}))
+        rating-total-subselect (subselect
+                                 ratings
+                                 (aggregate (count :ratings.rating) :total_ratings)
+                                 (where {:ratings.app_id
+                                         :app_versions_listing.id}))]
+    (assert-app-version
+      [app-id version-id]
+      (-> (select* :app_versions_listing)
+          (fields :*
+                  [rating-avg-subselect :average_rating]
+                  [rating-total-subselect :total_ratings])
+          (add-app-versions-listing-is-favorite-field
+            workspace-root-group-id
+            favorites-group-index)
+          (add-app-version-listing-ratings-fields user-id)
+          (where {:id         app-id
+                  :version_id version-id})
+          select
+          first))))
 
 (defn- add-deleted-and-orphaned-where-clause
   [query public-app-ids]

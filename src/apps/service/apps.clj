@@ -57,6 +57,10 @@
   [user system-id app]
   (.addApp (get-apps-client user) system-id app))
 
+(defn add-app-version
+  [user system-id app admin?]
+  (.addAppVersion (get-apps-client user) system-id app admin?))
+
 (defn preview-command-line
   [user system-id app]
   (.previewCommandLine (get-apps-client user) system-id app))
@@ -69,9 +73,17 @@
   [user system-id app-id]
   (.getAppJobView (get-apps-client user) system-id app-id))
 
+(defn get-app-version-job-view
+  [user system-id app-id version-id]
+  (.getAppVersionJobView (get-apps-client user) system-id app-id version-id))
+
 (defn delete-app
   [user system-id app-id]
   (.deleteApp (get-apps-client user) system-id app-id))
+
+(defn delete-app-version
+  [user system-id app-id app-version-id]
+  (.deleteAppVersion (get-apps-client user) system-id app-id app-version-id))
 
 (defn relabel-app
   [user system-id app]
@@ -85,13 +97,25 @@
   [user system-id app-id]
   (.copyApp (get-apps-client user) system-id app-id))
 
+(defn copy-app-version
+  [user system-id app-id version-id]
+  (.copyAppVersion (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-details
   [user system-id app-id]
   (.getAppDetails (get-apps-client user) system-id app-id false))
 
+(defn get-app-version-details
+  [user system-id app-id app-version-id]
+  (.getAppVersionDetails (get-apps-client user) system-id app-id app-version-id false))
+
 (defn admin-get-app-details
   [user system-id app-id]
   (.getAppDetails (get-apps-client user) system-id app-id true))
+
+(defn admin-get-app-version-details
+  [user system-id app-id app-version-id]
+  (.getAppVersionDetails (get-apps-client user) system-id app-id app-version-id true))
 
 (defn remove-app-favorite
   [user system-id app-id]
@@ -140,17 +164,31 @@
   [user system-id app-id]
   (.getAppTaskListing (get-apps-client user) system-id app-id))
 
+(defn get-app-version-task-listing
+  [user system-id app-id version-id]
+  (.getAppVersionTaskListing (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-tool-listing
   [user system-id app-id]
   (.getAppToolListing (get-apps-client user) system-id app-id))
 
+(defn get-app-version-tool-listing
+  [user system-id app-id version-id]
+  (.getAppVersionToolListing (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-ui
-  [user system-id app-id]
-  (.getAppUi (get-apps-client user) system-id app-id))
+  ([user system-id app-id]
+   (.getAppUi (get-apps-client user) system-id app-id))
+  ([user system-id app-id version-id]
+   (.getAppVersionUi (get-apps-client user) system-id app-id version-id)))
 
 (defn add-pipeline
   [user pipeline]
   (.addPipeline (get-apps-client user) pipeline))
+
+(defn add-pipeline-version
+  [user pipeline admin?]
+  (.addPipelineVersion (get-apps-client user) pipeline admin?))
 
 (defn update-pipeline
   [user pipeline]
@@ -160,9 +198,15 @@
   [user app-id]
   (.copyPipeline (get-apps-client user) app-id))
 
+(defn copy-pipeline-version
+  [user app-id version-id]
+  (.copyPipelineVersion (get-apps-client user) app-id version-id))
+
 (defn edit-pipeline
-  [user app-id]
-  (.editPipeline (get-apps-client user) app-id))
+  ([user app-id]
+   (.editPipeline (get-apps-client user) app-id))
+  ([user app-id version-id]
+   (.editPipelineVersion (get-apps-client user) app-id version-id)))
 
 (defn list-jobs
   [user params]
@@ -323,9 +367,17 @@
   [user system-id app-id]
   (.getAppDocs (get-apps-client user) system-id app-id))
 
+(defn get-app-version-docs
+  [user system-id app-id version-id]
+  (.getAppVersionDocs (get-apps-client user) system-id app-id version-id))
+
 (defn get-app-integration-data
   [user system-id app-id]
   (.getAppIntegrationData (get-apps-client user) system-id app-id))
+
+(defn get-app-version-integration-data
+  [user system-id app-id version-id]
+  (.getAppVersionIntegrationData (get-apps-client user) system-id app-id version-id))
 
 (defn get-tool-integration-data
   [user system-id tool-id]
@@ -335,6 +387,10 @@
   [user system-id app-id integration-data-id]
   (.updateAppIntegrationData (get-apps-client user) system-id app-id integration-data-id))
 
+(defn update-app-version-integration-data
+  [user system-id app-id version-id integration-data-id]
+  (.updateAppVersionIntegrationData (get-apps-client user) system-id app-id version-id integration-data-id))
+
 (defn update-tool-integration-data
   [user system-id tool-id integration-data-id]
   (.updateToolIntegrationData (get-apps-client user) system-id tool-id integration-data-id))
@@ -343,17 +399,33 @@
   [user system-id app-id body]
   (.ownerEditAppDocs (get-apps-client user) system-id app-id body))
 
+(defn owner-edit-app-version-docs
+  [user system-id app-id version-id body]
+  (.ownerEditAppVersionDocs (get-apps-client user) system-id app-id version-id body))
+
 (defn owner-add-app-docs
   [user system-id app-id body]
   (.ownerAddAppDocs (get-apps-client user) system-id app-id body))
+
+(defn owner-add-app-version-docs
+  [user system-id app-id version-id body]
+  (.ownerAddAppVersionDocs (get-apps-client user) system-id app-id version-id body))
 
 (defn admin-edit-app-docs
   [user system-id app-id body]
   (.adminEditAppDocs (get-apps-client user) system-id app-id body))
 
+(defn admin-edit-app-version-docs
+  [user system-id app-id version-id body]
+  (.adminEditAppVersionDocs (get-apps-client user) system-id app-id version-id body))
+
 (defn admin-add-app-docs
   [user system-id app-id body]
   (.adminAddAppDocs (get-apps-client user) system-id app-id body))
+
+(defn admin-add-app-version-docs
+  [user system-id app-id version-id body]
+  (.adminAddAppVersionDocs (get-apps-client user) system-id app-id version-id body))
 
 (defn list-app-permissions
   [user qualified-app-ids params]

@@ -82,6 +82,11 @@
     (validate-system-id system-id)
     (edit/add-app user app))
 
+  ;; FIXME: remove the admin flag when we have a better way to do this.
+  (addAppVersion [_ system-id app admin?]
+    (validate-system-id system-id)
+    (edit/add-app-version user (update app :id uuidify) admin?))
+
   (previewCommandLine [_ system-id app]
     (validate-system-id system-id)
     (app-metadata/preview-command-line app))
@@ -102,9 +107,17 @@
     (validate-system-id system-id)
     (job-view/get-app user (uuidify app-id) include-hidden-params?))
 
+  (getAppVersionJobView [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (job-view/get-app-version user (uuidify app-id) version-id))
+
   (deleteApp [_ system-id app-id]
     (validate-system-id system-id)
     (app-metadata/delete-app user (uuidify app-id)))
+
+  (deleteAppVersion [_ system-id app-id app-version-id]
+    (validate-system-id system-id)
+    (app-metadata/delete-app-version user (uuidify app-id) (uuidify app-version-id)))
 
   (relabelApp [_ system-id app]
     (validate-system-id system-id)
@@ -118,10 +131,18 @@
     (validate-system-id system-id)
     (edit/copy-app user (uuidify app-id)))
 
+  (copyAppVersion [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (edit/copy-app-version user (uuidify app-id) version-id))
+
   ;; FIXME: remove the admin flag when we have a better way to do this.
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
     (listings/get-app-details user (uuidify app-id) admin?))
+
+  (getAppVersionDetails [_ system-id app-id app-version-id admin?]
+    (validate-system-id system-id)
+    (listings/get-app-details user (uuidify app-id) app-version-id admin?))
 
   (removeAppFavorite [_ system-id app-id]
     (validate-system-id system-id)
@@ -163,20 +184,36 @@
     (validate-system-id system-id)
     (listings/get-app-task-listing user (uuidify app-id)))
 
+  (getAppVersionTaskListing [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (listings/get-app-version-task-listing user (uuidify app-id) version-id))
+
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
     (listings/get-app-tool-listing user (uuidify app-id)))
+
+  (getAppVersionToolListing [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (listings/get-app-version-tool-listing user (uuidify app-id) version-id))
 
   (getAppUi [_ system-id app-id]
     (validate-system-id system-id)
     (edit/get-app-ui user (uuidify app-id)))
 
-  (getAppInputIds [_ system-id app-id]
+  (getAppVersionUi [_ system-id app-id version-id]
     (validate-system-id system-id)
-    (listings/get-app-input-ids (uuidify app-id)))
+    (edit/get-app-ui user (uuidify app-id) version-id))
+
+  (getAppInputIds [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (listings/get-app-input-ids version-id))
 
   (addPipeline [_ pipeline]
     (pipeline-edit/add-pipeline user pipeline))
+
+  ;; FIXME: remove the admin flag when we have a better way to do this.
+  (addPipelineVersion [_ pipeline admin?]
+    (pipeline-edit/add-pipeline-version user pipeline admin?))
 
   (formatPipelineTasks [_ pipeline]
     pipeline)
@@ -187,8 +224,14 @@
   (copyPipeline [_ app-id]
     (pipeline-edit/copy-pipeline user app-id))
 
+  (copyPipelineVersion [_ app-id version-id]
+    (pipeline-edit/copy-pipeline-version user app-id version-id))
+
   (editPipeline [_ app-id]
     (pipeline-edit/edit-pipeline user app-id))
+
+  (editPipelineVersion [_ app-id version-id]
+    (pipeline-edit/edit-pipeline user app-id version-id))
 
   (listJobs [self params]
     (job-listings/list-jobs self user params))
@@ -232,12 +275,9 @@
   (getJobStepHistory [_ job-step]
     (de-jobs/get-job-step-history job-step))
 
-  (prepareStepSubmission [_ _ submission]
-    (de-jobs/prepare-step user (update-in submission [:app_id] uuidify)))
-
-  (getParamDefinitions [_ system-id app-id]
+  (getParamDefinitions [_ system-id app-id version-id]
     (validate-system-id system-id)
-    (app-metadata/get-param-definitions app-id))
+    (app-metadata/get-param-definitions (uuidify app-id) version-id))
 
   (stopJobStep [self {:keys [job_type external_id]}]
     (when (and (apps-util/supports-job-type? self job_type)
@@ -300,9 +340,17 @@
     (validate-system-id system-id)
     (docs/get-app-docs user (uuidify app-id)))
 
+  (getAppVersionDocs [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (docs/get-app-version-docs user (uuidify app-id) version-id))
+
   (getAppIntegrationData [_ system-id app-id]
     (validate-system-id system-id)
     (integration-data/get-integration-data-for-app user (uuidify app-id)))
+
+  (getAppVersionIntegrationData [_ system-id app-id version-id]
+    (validate-system-id system-id)
+    (integration-data/get-integration-data-for-app-version user (uuidify app-id) version-id))
 
   (getToolIntegrationData [_ system-id tool-id]
     (validate-system-id system-id)
@@ -312,6 +360,10 @@
     (validate-system-id system-id)
     (integration-data/update-integration-data-for-app user (uuidify app-id) integration-data-id))
 
+  (updateAppVersionIntegrationData [_ system-id app-id version-id integration-data-id]
+    (validate-system-id system-id)
+    (integration-data/update-integration-data-for-app-version user (uuidify app-id) version-id integration-data-id))
+
   (updateToolIntegrationData [_ system-id tool-id integration-data-id]
     (validate-system-id system-id)
     (integration-data/update-integration-data-for-tool user tool-id integration-data-id))
@@ -320,17 +372,33 @@
     (validate-system-id system-id)
     (docs/owner-edit-app-docs user (uuidify app-id) body))
 
+  (ownerEditAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/owner-edit-app-version-docs user (uuidify app-id) version-id body))
+
   (ownerAddAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/owner-add-app-docs user (uuidify app-id) body))
+
+  (ownerAddAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/owner-add-app-version-docs user (uuidify app-id) version-id body))
 
   (adminEditAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/edit-app-docs user (uuidify app-id) body))
 
+  (adminEditAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/edit-app-version-docs user (uuidify app-id) version-id body))
+
   (adminAddAppDocs [_ system-id app-id body]
     (validate-system-id system-id)
     (docs/add-app-docs user (uuidify app-id) body))
+
+  (adminAddAppVersionDocs [_ system-id app-id version-id body]
+    (validate-system-id system-id)
+    (docs/add-app-version-docs user (uuidify app-id) version-id body))
 
   (listAppPermissions [_ qualified-app-ids params]
     (validate-system-ids (set (map :system_id qualified-app-ids)))
