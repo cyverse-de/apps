@@ -7,8 +7,7 @@
                                             decategorize-app
                                             get-app-subcategory-id
                                             remove-app-from-category]]
-        [apps.service.apps.de.validation :only [app-publishable?
-                                                validate-app-existence
+        [apps.service.apps.de.validation :only [validate-app-existence
                                                 validate-app-version-existence
                                                 verify-app-permission]]
         [apps.util.db :only [transaction]]

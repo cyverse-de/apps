@@ -5,7 +5,8 @@
         [apps.service.apps.de.validation :only [validate-app-name
                                                 validate-app-version-existence
                                                 verify-app-editable
-                                                verify-app-permission]]
+                                                verify-app-permission
+                                                verify-tools-for-public-app]]
         [apps.util.config :only [workspace-dev-app-category-index]]
         [apps.util.conversions :only [remove-nil-vals convert-rule-argument]]
         [apps.util.db :only [transaction]]
@@ -518,8 +519,12 @@
 
 (defn add-app-version
   "Adds a single-step app version to an existing app, if the user has write permission on that app."
-  [user {app-id :id app-name :name :as app} admin?]
+  [user {app-id :id app-name :name :keys [tools] :as app} admin?]
   (verify-app-permission user (persistence/get-app app-id) "write" admin?)
+  (when (contains? (permissions/get-public-app-ids) app-id)
+    (verify-tools-for-public-app
+      tools
+      "Cannot add public app version that uses private or missing tool(s)"))
   (transaction
     (validate-updated-app-name (:shortUsername user) app-id app-name)
     (persistence/update-app app)

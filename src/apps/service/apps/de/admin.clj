@@ -123,13 +123,16 @@
      (let [tools             (if (nil? version-id)
                                (persistence/get-all-app-tools app-id)
                                (persistence/get-app-version-tools app-id version-id))
-           public-tool-ids   (perms-client/get-public-tool-ids)
-           private-tools     (remove (comp public-tool-ids :id) tools)
+           task-ids          (if (nil? version-id)
+                               (persistence/task-ids-for-app app-id)
+                               (persistence/task-ids-for-app-version version-id))
            public-app-ids    (perms-client/get-public-app-ids)
            app-public        (contains? public-app-ids app-id)]
-       (when (and app-public (not-empty private-tools))
-         (throw+ (ex-util/bad-request "Cannot restore public app version(s) that use private tool(s)"
-                                      :tools private-tools)))))
+       (when app-public
+         (av/verify-tools-for-public-app
+           tools
+           "Cannot restore public app version(s) that use private or missing tool(s)")
+         (av/app-tasks-and-tools-publishable? username true public-app-ids task-ids tools))))
 
    (if (empty? (select-keys app [:name :description :wiki_url :references :groups :extra]))
      (update-app-deleted-disabled app)

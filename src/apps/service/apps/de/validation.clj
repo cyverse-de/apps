@@ -5,7 +5,8 @@
                                               get-app-version
                                               list-duplicate-apps
                                               list-duplicate-apps-by-id
-                                              parameter-types-for-tool-type]]
+                                              parameter-types-for-tool-type
+                                              task-ids-for-app-version]]
         [apps.persistence.entities :only [tools tool_types]]
         [clojure-commons.exception-util :only [forbidden exists]]
         [korma.core :exclude [update]]
@@ -13,6 +14,7 @@
   (:require [apps.clients.permissions :as perms-client]
             [apps.service.apps.de.permissions :as perms]
             [apps.util.config :as config]
+            [clojure-commons.exception-util :as ex-util]
             [clojure.string :as string]))
 
 (defn validate-app-existence
@@ -33,14 +35,6 @@
                (fields :id)
                (where {:app_id  app-id
                        :deleted false}))))
-
-(defn- task-ids-for-app-version
-  "Get the list of task IDs associated with an app version."
-  [app-version-id]
-  (map :task_id
-       (select [:app_steps :step]
-               (fields :step.task_id)
-               (where {:step.app_version_id app-version-id}))))
 
 (defn- private-apps-for
   "Finds private single-step apps for a list of task IDs."
@@ -78,14 +72,12 @@
     (->> (remove (comp public-tool-ids :id) tools)
          (remove-publishable-tools username))))
 
-(defn- app-version-publishable?
-  "Determines whether or not an app version can be published.
+(defn app-tasks-and-tools-publishable?
+  "Determines whether an app's tools and tasks can be published.
    Returns a flag indicating whether the app version is publishable
    along with the reason the app version isn't publishable if it's not."
-  [username admin? public-app-ids app-id app-version-id]
-  (let [task-ids            (task-ids-for-app-version app-version-id)
-        unrunnable-tasks    (list-unrunnable-tasks task-ids)
-        tools               (get-app-version-tools app-id app-version-id)
+  [username admin? public-app-ids task-ids tools]
+  (let [unrunnable-tasks    (list-unrunnable-tasks task-ids)
         unpublishable-tools (when-not admin? (get-unpublishable-tools username tools))
         deprecated-tools    (filter :deprecated tools)
         private-apps        (private-apps-for task-ids public-app-ids)]
@@ -96,6 +88,15 @@
           (= 1 (count task-ids))    [true]
           (seq private-apps)        [false "contains private apps" private-apps]
           :else                     [true])))
+
+(defn- app-version-publishable?
+  "Determines whether an app version can be published.
+   Returns a flag indicating whether the app version is publishable
+   along with the reason the app version isn't publishable if it's not."
+  [username admin? public-app-ids app-id app-version-id]
+  (let [task-ids            (task-ids-for-app-version app-version-id)
+        tools               (get-app-version-tools app-id app-version-id)]
+    (app-tasks-and-tools-publishable? username admin? public-app-ids task-ids tools)))
 
 (defn app-publishable?
   "Determines whether or not an app can be published.
@@ -130,6 +131,14 @@
         get-registry           (comp first #(string/split % #"/" 2) :image_name)
         in-untrusted-registry? #(not (contains? trusted-registries (get-registry %)))]
     (some (every-pred in-untrusted-registry? private-tool?) (get-app-tools app-id))))
+
+(defn verify-tools-for-public-app
+  "Verifies that a public app will not use the given private or missing tools."
+  [tools err-msg]
+  (let [public-tool-ids (perms-client/get-public-tool-ids)
+        private-tools   (remove (comp public-tool-ids :id) tools)]
+    (when (or (empty? tools) (not-empty private-tools))
+      (throw+ (ex-util/bad-request err-msg :tools private-tools)))))
 
 (defn- verify-app-not-public
   "Verifies that an app has not been made public."
