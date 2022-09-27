@@ -114,7 +114,7 @@
 (defn- share-app-for-job
   [apps-client sharer sharee job-id {system-id :system_id app-id :app_id}]
   (when-not (.hasAppPermission apps-client sharee system-id app-id "read")
-    (let [response (.shareAppWithSubject apps-client {} sharee system-id app-id "read")]
+    (let [response (.shareAppWithSubject apps-client false {} sharee system-id app-id "read")]
       (when-not (:success response)
         (get-in response [:error :reason] "unable to share app")))))
 

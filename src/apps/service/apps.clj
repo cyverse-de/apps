@@ -434,12 +434,12 @@
   {:apps (.listAppPermissions (get-apps-client user) qualified-app-ids params)})
 
 (defn share-apps
-  [user sharing-requests]
-  {:sharing (.shareApps (get-apps-client user) sharing-requests)})
+  [user admin? sharing-requests]
+  {:sharing (.shareApps (get-apps-client user) admin? sharing-requests)})
 
 (defn unshare-apps
-  [user unsharing-requests]
-  {:unsharing (.unshareApps (get-apps-client user) unsharing-requests)})
+  [user admin? unsharing-requests]
+  {:unsharing (.unshareApps (get-apps-client user) admin? unsharing-requests)})
 
 (defn list-job-permissions
   [user job-ids params]

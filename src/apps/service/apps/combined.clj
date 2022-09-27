@@ -343,23 +343,23 @@
                      (.listAppPermissions client qualified-app-ids-for-system params))))
          doall))
 
-  (shareApps [self sharing-requests]
-    (app-permissions/process-app-sharing-requests self sharing-requests))
+  (shareApps [self admin? sharing-requests]
+    (app-permissions/process-app-sharing-requests self admin? sharing-requests))
 
-  (shareAppsWithSubject [self app-names sharee user-app-sharing-requests]
-    (app-permissions/process-subject-app-sharing-requests self app-names sharee user-app-sharing-requests))
+  (shareAppsWithSubject [self admin? app-names sharee user-app-sharing-requests]
+    (app-permissions/process-subject-app-sharing-requests self admin? app-names sharee user-app-sharing-requests))
 
-  (shareAppWithSubject [_ app-names sharee system-id app-id level]
-    (.shareAppWithSubject (util/get-apps-client clients system-id) app-names sharee system-id app-id level))
+  (shareAppWithSubject [_ admin? app-names sharee system-id app-id level]
+    (.shareAppWithSubject (util/get-apps-client clients system-id) admin? app-names sharee system-id app-id level))
 
-  (unshareApps [self unsharing-requests]
-    (app-permissions/process-app-unsharing-requests self unsharing-requests))
+  (unshareApps [self admin? unsharing-requests]
+    (app-permissions/process-app-unsharing-requests self admin? unsharing-requests))
 
-  (unshareAppsWithSubject [self app-names sharee app-unsharing-requests]
-    (app-permissions/process-subject-app-unsharing-requests self app-names sharee app-unsharing-requests))
+  (unshareAppsWithSubject [self admin? app-names sharee app-unsharing-requests]
+    (app-permissions/process-subject-app-unsharing-requests self admin? app-names sharee app-unsharing-requests))
 
-  (unshareAppWithSubject [self app-names sharee system-id app-id]
-    (.unshareAppWithSubject (util/get-apps-client clients system-id) app-names sharee system-id app-id))
+  (unshareAppWithSubject [_ admin? app-names sharee system-id app-id]
+    (.unshareAppWithSubject (util/get-apps-client clients system-id) admin? app-names sharee system-id app-id))
 
   (hasAppPermission [_ username system-id app-id required-level]
     (.hasAppPermission (util/get-apps-client clients system-id) username system-id app-id required-level))

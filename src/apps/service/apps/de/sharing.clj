@@ -43,12 +43,12 @@
       (perms-client/share-app app-id sharee level)))
 
 (defn share-app-with-subject
-  [{username :shortUsername :as user} sharee app-id level success-fn failure-fn]
+  [admin? {username :shortUsername :as user} sharee app-id level success-fn failure-fn]
   (try+
    (if-let [app (app-listing/get-app-listing app-id)]
      (let [sharer-category (listings/get-category-id-for-app user app-id)
            sharee-category listings/shared-with-me-id]
-       (if-not (perms/has-app-permission username app-id "own")
+       (if-not (or admin? (perms/has-app-permission username app-id "own"))
          (failure-fn sharer-category sharee-category (app-sharing-msg :not-allowed app-id))
          (if-let [failure-reason (share-app user app sharee level)]
            (failure-fn sharer-category sharee-category failure-reason)
@@ -58,12 +58,12 @@
      (failure-fn nil nil (app-sharing-msg :load-failure app-id reason)))))
 
 (defn unshare-app-with-subject
-  [{username :shortUsername :as user} sharee app-id success-fn failure-fn]
+  [admin? {username :shortUsername :as user} sharee app-id success-fn failure-fn]
   (try+
    (if-not (amp/app-exists? app-id)
      (failure-fn nil (app-sharing-msg :not-found app-id))
      (let [sharer-category (listings/get-category-id-for-app user app-id)]
-       (if-not (perms/has-app-permission username app-id "own")
+       (if-not (or admin? (perms/has-app-permission username app-id "own"))
          (failure-fn sharer-category (app-sharing-msg :not-allowed app-id))
          (if-let [failure-reason (perms-client/unshare-app app-id sharee)]
            (failure-fn sharer-category failure-reason)

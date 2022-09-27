@@ -58,7 +58,7 @@
     :return AppSharingResponse
     :summary AppSharingSummary
     :description AppSharingDocs
-    (ok (apps/share-apps current-user sharing)))
+    (ok (apps/share-apps current-user false sharing)))
 
   (POST "/unsharing" []
     :query [params SecuredQueryParams]
@@ -66,7 +66,7 @@
     :return AppUnsharingResponse
     :summary AppUnsharingSummary
     :description AppUnsharingDocs
-    (ok (apps/unshare-apps current-user unsharing)))
+    (ok (apps/unshare-apps current-user false unsharing)))
 
   (context "/:system-id" []
     :path-params [system-id :- schema/SystemId]
