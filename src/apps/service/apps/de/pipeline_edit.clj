@@ -11,7 +11,8 @@
                                               update-app-version]]
         [apps.persistence.entities :only [app_steps input_mapping]]
         [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]]
-        [apps.service.apps.de.validation :only [validate-app-name
+        [apps.service.apps.de.validation :only [app-tasks-and-tools-publishable?
+                                                validate-app-name
                                                 verify-app-editable
                                                 verify-app-permission]]
         [apps.util.conversions :only [remove-nil-vals]]
@@ -24,7 +25,8 @@
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
             [apps.service.apps.de.constants :as c]
-            [apps.service.apps.de.listings :as listings]))
+            [apps.service.apps.de.listings :as listings]
+            [clojure-commons.exception-util :as ex-util]))
 
 (defn- add-app-type
   [step]
@@ -234,11 +236,21 @@
 
 (defn add-pipeline-version
   "Adds a single-step app version to an existing app, if the user has write permission on that app."
-  [user {app-id :id app-name :name :as app} admin?]
+  [user {app-id :id app-name :name :keys [steps] :as app} admin?]
   (verify-app-permission user (get-app app-id) "write" admin?)
   (validate-pipeline app)
   (transaction
     (validate-app-name app-name app-id)
+    (let [public-app-ids        (permissions/get-public-app-ids)
+          app-public            (contains? public-app-ids app-id)
+          task-ids              (set (map (comp uuidify :task_id) steps))
+          [publishable? reason] (app-tasks-and-tools-publishable? (:shortUsername user)
+                                                                  admin?
+                                                                  public-app-ids
+                                                                  task-ids
+                                                                  (persistence/get-task-tools task-ids))]
+      (when (and app-public (not publishable?))
+        (ex-util/bad-request reason)))
     (update-app app)
     (->> app-id
          persistence/get-app-max-version-order

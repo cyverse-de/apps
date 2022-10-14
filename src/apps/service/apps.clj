@@ -326,10 +326,12 @@
   (.adminDeleteApp (get-apps-client user) system-id app-id))
 
 (defn admin-update-app
-  [user system-id body]
+  [user system-id {app-id :id app-version-id :version_id :as body}]
   (let [apps-client (get-apps-client user)]
     (.adminUpdateApp apps-client system-id body)
-    (.getAppDetails apps-client system-id (:id body) true)))
+    (if app-version-id
+      (.getAppVersionDetails apps-client system-id app-id app-version-id true)
+      (.getAppDetails apps-client system-id app-id true))))
 
 (defn admin-bless-app
   [user system-id app-id]

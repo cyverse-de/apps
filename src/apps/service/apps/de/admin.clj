@@ -8,6 +8,7 @@
             [clojure.tools.logging :as log]
             [apps.clients.email :as email]
             [apps.clients.metadata :as metadata-client]
+            [apps.clients.permissions :as perms-client]
             [apps.persistence.app-groups :as app-groups]
             [apps.persistence.app-metadata :as persistence]
             [apps.persistence.categories :as db-categories]
@@ -92,9 +93,9 @@
 (defn- update-app-details
   "Updates high-level details and labels in an App, including deleted and disabled flags in the
    database."
-  [{app-id :id :keys [references groups extra] :as app}]
+  [{app-id :id :keys [version_id references groups extra] :as app}]
   (persistence/update-app app)
-  (let [version-id (persistence/get-app-latest-version app-id)
+  (let [version-id (or version_id (persistence/get-app-latest-version app-id))
         app (assoc app :version_id version-id)]
     (persistence/update-app-version app)
     (when-not (empty? references)
@@ -107,12 +108,32 @@
 (defn update-app
   "This service updates high-level details and labels in an App, extra information for particular
    job execution systems, and can mark or unmark the app as deleted or disabled in the database."
-  [{username :shortUsername} {app-name :name app-id :id :as app}]
+  [{username :shortUsername} {app-name :name app-id :id version-id :version_id :keys [deleted] :as app}]
   (transaction
    (av/validate-app-existence app-id)
+
    (when-not (nil? app-name)
      (categorization/validate-app-name-in-current-hierarchy username app-id app-name)
      (av/validate-app-name app-name app-id))
+
+   ; Check if app version(s) can be undeleted
+   (when (and (false? deleted) (:deleted (if (nil? version-id)
+                                           (persistence/get-app app-id)
+                                           (persistence/get-app-version app-id version-id))))
+     (let [tools             (if (nil? version-id)
+                               (persistence/get-all-app-tools app-id)
+                               (persistence/get-app-version-tools app-id version-id))
+           task-ids          (if (nil? version-id)
+                               (persistence/task-ids-for-app app-id)
+                               (persistence/task-ids-for-app-version version-id))
+           public-app-ids    (perms-client/get-public-app-ids)
+           app-public        (contains? public-app-ids app-id)]
+       (when app-public
+         (av/verify-tools-for-public-app
+           tools
+           "Cannot restore public app version(s) that use private or missing tool(s)")
+         (av/app-tasks-and-tools-publishable? username true public-app-ids task-ids tools))))
+
    (if (empty? (select-keys app [:name :description :wiki_url :references :groups :extra]))
      (update-app-deleted-disabled app)
      (update-app-details app))))
