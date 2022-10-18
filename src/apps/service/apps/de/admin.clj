@@ -66,20 +66,25 @@
   (when integrator_email
     (email/send-app-deletion-notification integrator_name integrator_email app-name c/system-id app-id)))
 
+(defn- app-deletion-notify-all
+  [{app-id :id :as app}]
+  (doseq [integration-data (persistence/get-integration-data-by-app-id-for-all-versions app-id)]
+    (app-deletion-notify app integration-data)))
+
 (defn delete-app
   "This service marks an existing app as deleted in the database."
   [app-id]
   (let [app (persistence/get-app app-id)]
     (persistence/delete-app true app-id)
-    (doseq [integration-data (persistence/get-integration-data-by-app-id-for-all-versions app-id)]
-      (app-deletion-notify app integration-data)))
-  nil)
+    (app-deletion-notify-all app)))
 
 (defn- update-app-deleted-disabled
   "Updates only an App's deleted or disabled flags in the database."
   [{app-id :id :keys [deleted disabled]}]
   (when-not (nil? deleted)
-    (persistence/delete-app deleted app-id))
+    (persistence/delete-app deleted app-id)
+    (if deleted
+      (app-deletion-notify-all (persistence/get-app app-id))))
   (when-not (nil? disabled)
     (persistence/disable-app disabled app-id)))
 
