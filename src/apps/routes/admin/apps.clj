@@ -18,7 +18,8 @@
             [clojure-commons.exception-util :as cxu]
             [common-swagger-api.routes]                     ;; for :description-file
             [common-swagger-api.schema.apps :as apps-schema]
-            [common-swagger-api.schema.apps.admin.apps :as schema]))
+            [common-swagger-api.schema.apps.admin.apps :as schema]
+            [common-swagger-api.schema.apps.permission :as permission-schema]))
 
 (defroutes admin-apps
   (GET "/" []
@@ -43,6 +44,22 @@
     :return schema/AppPublicationRequestListing
     (ok (coerce! schema/AppPublicationRequestListing
                  (apps/list-app-publication-requests current-user params))))
+
+  (POST "/sharing" []
+        :query [params SecuredQueryParams]
+        :body [{:keys [sharing]} permission-schema/AppSharingRequest]
+        :return permission-schema/AppSharingResponse
+        :summary permission-schema/AppSharingSummary
+        :description permission-schema/AppSharingDocs
+        (ok (apps/share-apps current-user true sharing)))
+
+  (POST "/unsharing" []
+        :query [params SecuredQueryParams]
+        :body [{:keys [unsharing]} permission-schema/AppUnsharingRequest]
+        :return permission-schema/AppUnsharingResponse
+        :summary permission-schema/AppUnsharingSummary
+        :description permission-schema/AppUnsharingDocs
+        (ok (apps/unshare-apps current-user true unsharing)))
 
   (POST "/shredder" []
     :query [params SecuredQueryParams]

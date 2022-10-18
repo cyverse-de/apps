@@ -418,23 +418,23 @@
     (validate-system-ids (set (map :system_id qualified-app-ids)))
     (.listAppPermissions agave (map :app_id qualified-app-ids)))
 
-  (shareApps [self sharing-requests]
-    (app-permissions/process-app-sharing-requests self sharing-requests))
+  (shareApps [self admin? sharing-requests]
+    (app-permissions/process-app-sharing-requests self admin? sharing-requests))
 
-  (shareAppsWithSubject [self app-names sharee user-app-sharing-requests]
-    (app-permissions/process-subject-app-sharing-requests self app-names sharee user-app-sharing-requests))
+  (shareAppsWithSubject [self admin? app-names sharee user-app-sharing-requests]
+    (app-permissions/process-subject-app-sharing-requests self admin? app-names sharee user-app-sharing-requests))
 
-  (shareAppWithSubject [_ app-names sharee system-id app-id level]
+  (shareAppWithSubject [_ _ app-names sharee system-id app-id level]
     (validate-system-id system-id)
     (sharing/share-app-with-subject agave app-names sharee app-id level))
 
-  (unshareApps [self unsharing-requests]
-    (app-permissions/process-app-unsharing-requests self unsharing-requests))
+  (unshareApps [self admin? unsharing-requests]
+    (app-permissions/process-app-unsharing-requests self admin? unsharing-requests))
 
-  (unshareAppsWithSubject [self app-names sharee user-app-unsharing-requests]
-    (app-permissions/process-subject-app-unsharing-requests self app-names sharee user-app-unsharing-requests))
+  (unshareAppsWithSubject [self admin? app-names sharee user-app-unsharing-requests]
+    (app-permissions/process-subject-app-unsharing-requests self admin? app-names sharee user-app-unsharing-requests))
 
-  (unshareAppWithSubject [_ app-names sharee system-id app-id]
+  (unshareAppWithSubject [_ _ app-names sharee system-id app-id]
     (validate-system-id system-id)
     (sharing/unshare-app-with-subject agave app-names sharee app-id))
 
