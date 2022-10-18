@@ -21,9 +21,11 @@
                                 validate-pipeline]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
-        [medley.core :only [find-first]])
+        [medley.core :only [find-first]]
+        [slingshot.slingshot :only [try+]])
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
+            [apps.service.apps.de.docs :as docs]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.listings :as listings]
             [clojure-commons.exception-util :as ex-util]))
@@ -252,12 +254,20 @@
       (when (and app-public (not publishable?))
         (ex-util/bad-request reason)))
     (update-app app)
-    (->> app-id
-         persistence/get-app-max-version-order
-         inc
-         (assoc app :version_order)
-         (add-pipeline-version* user)
-         (edit-pipeline user app-id))))
+    (let [documentation  (try+
+                           (docs/get-app-docs user app-id)
+                           (catch [:type :clojure-commons.exception/not-found] _ nil))
+          new-version-id (->> app-id
+                              persistence/get-app-max-version-order
+                              inc
+                              (assoc app :version_order)
+                              (add-pipeline-version* user))]
+      (when documentation
+        (docs/add-app-version-docs user
+                                   app-id
+                                   new-version-id
+                                   (select-keys documentation [:documentation])))
+      (edit-pipeline user app-id new-version-id))))
 
 (defn update-pipeline
   [user {app-id :id version-id :version_id :as workflow}]

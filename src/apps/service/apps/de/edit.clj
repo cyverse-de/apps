@@ -16,11 +16,12 @@
         [clojure-commons.validators :only [user-owns-app?]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
-        [slingshot.slingshot :only [throw+]])
+        [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.permissions :as permissions]
             [apps.persistence.app-metadata :as persistence]
             [apps.persistence.app-metadata.relabel :as relabel]
             [apps.persistence.jobs :as jp]
+            [apps.service.apps.de.docs :as docs]
             [apps.service.apps.de.categorization :as categorization]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.jobs.util :as job-util]
@@ -528,12 +529,20 @@
   (transaction
     (validate-updated-app-name (:shortUsername user) app-id app-name)
     (persistence/update-app app)
-    (->> app-id
-         persistence/get-app-max-version-order
-         inc
-         (assoc app :version_order)
-         (add-app-version* user))
-    (get-app-ui user app-id)))
+    (let [documentation  (try+
+                           (docs/get-app-docs user app-id)
+                           (catch [:type :clojure-commons.exception/not-found] _ nil))
+          new-version-id (->> app-id
+                              persistence/get-app-max-version-order
+                              inc
+                              (assoc app :version_order)
+                              (add-app-version* user))]
+      (when documentation
+        (docs/add-app-version-docs user
+                                   app-id
+                                   new-version-id
+                                   (select-keys documentation [:documentation])))
+      (get-app-ui user app-id new-version-id))))
 
 (defn- name-too-long?
   "Determines if a name is too long to be extended for a copy name."
