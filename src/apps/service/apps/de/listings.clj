@@ -468,13 +468,13 @@
     (let [app_group     (->> (get-app-category category-id)
                               (assert-not-nil ["category_id" category-id])
                               remove-nil-vals)
-          total         (count-apps-in-group user @workspace app_group params)
+          total         (future (count-apps-in-group user @workspace app_group params))
           apps_in_group (get-apps-in-group user @workspace app_group params)
           format-app    (get-app-listing-formatter user false @perms (map :id apps_in_group) public-app-ids)
           apps_in_group (map format-app apps_in_group)]
       (assoc app_group
              :system_id de-system-id
-             :total     total
+             :total     @total
              :apps      apps_in_group))))
 
 (defn list-apps-in-group
