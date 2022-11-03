@@ -81,7 +81,7 @@
   (get-app-version-docs* version-id))
 
 (defn add-app-version-docs
-  "Updates an app version's documentation in the database if the given app-id has the given version-id."
+  "Adds documentation to an app version in the database, if the given app-id has the given version-id."
   [{:keys [username]} app-id version-id {docs :documentation}]
   (de-validation/validate-app-version-existence app-id version-id)
   (add-app-version-docs* username version-id docs))
