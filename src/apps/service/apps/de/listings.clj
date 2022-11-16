@@ -298,8 +298,7 @@
                                :reason ""}
                               (catch map? {:keys [reason]}
                                 {:is_valid false
-                                 :reason reason}))
-        app (dissoc app :overall_job_type)]
+                                 :reason reason}))]
     (assoc app :pipeline_eligibility pipeline_eligibility)))
 
 (defn- format-app-ratings
