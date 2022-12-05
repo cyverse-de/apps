@@ -27,7 +27,7 @@
                  [org.cyverse/clojure-commons "3.0.6"]
                  [org.cyverse/debug-utils "2.8.1"]
                  [org.cyverse/kameleon "3.0.5"]
-                 [org.cyverse/mescal "3.1.8"]
+                 [org.cyverse/mescal "3.1.11"]
                  [org.cyverse/metadata-client "3.1.1"]
                  [org.cyverse/common-cli "2.8.1"]
                  [org.cyverse/common-cfg "2.8.1"]
