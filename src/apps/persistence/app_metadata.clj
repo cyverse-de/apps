@@ -512,7 +512,8 @@
         app (-> app
                 (select-keys [:name :description :wiki_url])
                 (remove-nil-vals))]
-    (sql/update apps (set-fields app) (where {:id app-id}))))
+    (when-not (empty? app)
+      (sql/update apps (set-fields app) (where {:id app-id})))))
 
 (defn update-app-version
   "Updates top-level app version info in the database."
