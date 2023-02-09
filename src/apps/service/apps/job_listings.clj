@@ -4,10 +4,12 @@
         [apps.clients.notifications :only [interapps-url]]
         [apps.util.conversions :only [remove-nil-vals]])
   (:require [apps.clients.permissions :as perms-client]
+            [apps.clients.iplant-groups :as ipg]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.service.util :as util]
             [apps.util.config :as config]
+            [clojure.tools.logging :as log]
             [kameleon.db :as db]))
 
 (defn- job-timestamp
@@ -93,26 +95,27 @@
 
 (defn- count-jobs
   [{:keys [username]} {:keys [filter include-hidden include-deleted]} types analysis-ids]
-  (jp/count-jobs-of-types username filter include-hidden include-deleted types analysis-ids))
+  (jp/hsql-count-jobs-of-types username filter include-hidden include-deleted types analysis-ids))
 
 (defn- count-job-statuses
-  [{:keys [username]} {:keys [filter include-hidden include-deleted]} types analysis-ids]
-  (jp/count-jobs-of-statuses username filter include-hidden include-deleted types analysis-ids))
+  [{:keys [username]} {:keys [filter include-hidden include-deleted]} types subject-ids]
+  (jp/hsql-count-jobs-of-statuses username filter include-hidden include-deleted types subject-ids))
 
 (defn list-jobs
-  [apps-client user {:keys [sort-field] :as params}]
+  [apps-client {:keys [username] :as user} {:keys [sort-field] :as params}]
   (let [perms            (perms-client/load-analysis-permissions (:shortUsername user))
-        analysis-ids     (set (keys perms))
+        group-ids        (->> (ipg/lookup-subject-groups (:shortUsername user)) :groups (mapv :id))
+        subject-ids      (conj group-ids (:shortUsername user))
         default-sort-dir (if (nil? sort-field) :desc :asc)
         search-params    (util/default-search-params params :startdate default-sort-dir)
-        types            (.getJobTypes apps-client)
-        jobs             (list-jobs* user search-params types analysis-ids)
+        types            (log/spy :warn (.getJobTypes apps-client))
+        jobs             (jp/hsql-list-jobs-of-types username search-params types subject-ids)
         rep-steps        (group-by :job_id (jp/list-representative-job-steps (mapv :id jobs)))
-        status-count     (future (comment (count-job-statuses user params types analysis-ids)))]
+        status-count     (future (comment (count-job-statuses user params types subject-ids)))]
     {:analyses     (mapv (partial format-job apps-client perms rep-steps) jobs)
      :timestamp    (str (System/currentTimeMillis))
      :status-count @status-count
-     :total        (count-jobs user params types analysis-ids)}))
+     :total        (count-jobs user params types subject-ids)}))
 
 (defn list-job-stats
   [apps-client user params]
