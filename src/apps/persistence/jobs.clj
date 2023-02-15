@@ -139,7 +139,7 @@
   (case field
     "app_name"  [:like [:lower :j.app_name] [:lower (str "%" value "%")]]
     "name"      [:like [:lower :j.job_name] [:lower (str "%" value "%")]]
-    "id"        [:= :id (when-not (string/blank? value) (uuidify value))]
+    "id"        [:= :j.id (when-not (string/blank? value) (uuidify value))]
     "parent_id" [:= :parent_id (when-not (string/blank? value) (uuidify value))]
     :else       [:= (keyword (str "j." field)) value]))
 
@@ -157,8 +157,8 @@
   [query standard-filter]
   (condp = (count standard-filter)
     0 query
-    1 (map hsql-filter-map->where-clause standard-filter)
-    (cons :or (map hsql-filter-map->where-clause standard-filter))))
+    1 (h/where query (map hsql-filter-map->where-clause standard-filter))
+    (h/where query (cons :or (map hsql-filter-map->where-clause standard-filter)))))
 
 (defn- apply-ownership-filter
   "Applies an 'ownership' filter to a query. An ownership filter is any filter for which the field is
