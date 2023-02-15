@@ -10,6 +10,7 @@
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.constants :as c]
+            [apps.util.config :as config]
             [apps.util.db :as db]
             [cheshire.core :as cheshire]
             [clojure.java.jdbc :as jdbc]
@@ -19,7 +20,8 @@
             [clojure-commons.exception-util :as cxu]
             [honey.sql :as hsql]
             [honey.sql.helpers :as h]
-            [korma.core :as sql]))
+            [korma.core :as sql]
+            [permissions-client.core :as pc]))
 
 (def de-job-type "DE")
 (def agave-job-type "Agave")
@@ -389,18 +391,15 @@
     (where q (not (exists (job-type-subselect types))))))
 
 (defn- accessible-resource-cte
-  [subject-ids resource-type]
-  (-> (h/select [[:cast :pr.name :uuid] :id])
-      (h/from [:permissions.permissions :pp])
-      (h/join [:permissions.subjects :ps] [:= :pp.subject_id :ps.id])
-      (h/join [:permissions.resources :pr] [:= :pp.resource_id :pr.id])
-      (h/join [:permissions.resource_types :prt] [:= :pr.resource_type_id :prt.id])
-      (h/where [:= :ps.subject_id [:any (sql-array "text" subject-ids)]])
-      (h/where [:= :prt.name resource-type])))
+  [subject-ids resource-type min-level]
+  (pc/accessible-resource-query-dsl
+   (config/permissions-client)
+   (sql-array "text" subject-ids)
+   resource-type min-level))
 
 (defn- hsql-count-jobs-of-types-dsl
   [username filter include-hidden include-deleted types subject-ids]
-  (as-> (h/with [:accessible_job_ids (accessible-resource-cte subject-ids "analysis")]) q
+  (as-> (h/with [:accessible_job_ids (accessible-resource-cte subject-ids "analysis" "read")]) q
     (h/select q [[:count :*] :count])
     (h/from q [:job_listings :j])
     (h/join q [:accessible_job_ids] [:= :j.id :accessible_job_ids.id])
@@ -558,7 +557,7 @@
   "Generates the HoneySQL DSL to get a list of jobs that contain only steps of the given types."
   [username {:keys [include-deleted offset limit] :as search-params} types subject-ids]
   (as-> (hsql-job-base-query) q
-    (h/with q [:accessible_job_ids (accessible-resource-cte subject-ids "analysis")])
+    (h/with q [:accessible_job_ids (accessible-resource-cte subject-ids "analysis" "read")])
     (h/join q :accessible_job_ids [:= :j.id :accessible_job_ids.id])
     (hsql-add-job-query-filter-clause q username (:filter search-params))
     (if-not include-deleted
