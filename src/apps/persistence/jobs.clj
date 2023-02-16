@@ -3,7 +3,7 @@
    submitted to any excecution service."
   (:use [apps.persistence.entities :only [job-status-updates]]
         [apps.persistence.users :only [get-user-id]]
-        [apps.util.db :only [add-date-limits-where-clause sql-array sqlfn-any-array]]
+        [apps.util.db :only [add-date-limits-where-clause sql-array]]
         [clojure-commons.core :only [remove-nil-values]]
         [kameleon.db :only [now-str]]
         [kameleon.uuids :only [uuidify]]
@@ -16,7 +16,6 @@
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as string]
-            [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
             [honey.sql :as hsql]
             [honey.sql.helpers :as h]
@@ -282,7 +281,7 @@
     (h/where query [:not [:exists (hsql-internal-app-subselect)]])
     query))
 
-(defn- accessible-resource-cte
+(defn- hsql-accessible-resource-cte
   [subject-ids resource-type min-level]
   (pc/accessible-resource-query-dsl
    (config/permissions-client)
@@ -291,7 +290,7 @@
 
 (defn- hsql-count-jobs-of-types-dsl
   [username filter include-hidden include-deleted types subject-ids]
-  (as-> (h/with [:accessible_job_ids (accessible-resource-cte subject-ids "analysis" "read")]) q
+  (as-> (h/with [:accessible_job_ids (hsql-accessible-resource-cte subject-ids "analysis" "read")]) q
     (h/select q [[:count :*] :count])
     (h/from q [:job_listings :j])
     (h/join q [:accessible_job_ids] [:= :j.id :accessible_job_ids.id])
@@ -430,7 +429,7 @@
   "Generates the HoneySQL DSL to get a list of jobs that contain only steps of the given types."
   [username {:keys [include-deleted offset limit] :as search-params} types subject-ids]
   (as-> (hsql-job-base-query) q
-    (h/with q [:accessible_job_ids (accessible-resource-cte subject-ids "analysis" "read")])
+    (h/with q [:accessible_job_ids (hsql-accessible-resource-cte subject-ids "analysis" "read")])
     (h/join q :accessible_job_ids [:= :j.id :accessible_job_ids.id])
     (hsql-add-job-query-filter-clause q username (:filter search-params))
     (if-not include-deleted

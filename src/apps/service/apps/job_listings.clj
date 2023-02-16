@@ -9,7 +9,6 @@
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.service.util :as util]
             [apps.util.config :as config]
-            [clojure.tools.logging :as log]
             [kameleon.db :as db]))
 
 (defn- job-timestamp
@@ -104,7 +103,7 @@
         subject-ids      (conj group-ids (:shortUsername user))
         default-sort-dir (if (nil? sort-field) :desc :asc)
         search-params    (util/default-search-params params :startdate default-sort-dir)
-        types            (log/spy :warn (.getJobTypes apps-client))
+        types            (.getJobTypes apps-client)
         jobs             (jp/hsql-list-jobs-of-types username search-params types subject-ids)
         rep-steps        (group-by :job_id (jp/list-representative-job-steps (mapv :id jobs)))
         status-count     (future (comment (count-job-statuses user params types subject-ids)))]
