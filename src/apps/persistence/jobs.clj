@@ -141,7 +141,7 @@
     "name"      [:like [:lower :j.job_name] [:lower (str "%" value "%")]]
     "id"        [:= :j.id (when-not (string/blank? value) (uuidify value))]
     "parent_id" [:= :parent_id (when-not (string/blank? value) (uuidify value))]
-    :else       [:= (keyword (str "j." field)) value]))
+    [:= (keyword (str "j." field)) value]))
 
 (defn- apply-standard-filter
   "Applies 'standard' filters to a query. Standard filters are filters that search for fields that are
@@ -210,7 +210,8 @@
   [query type-filters]
   (if (seq type-filters)
     (let [types (mapv :value type-filters)]
-      (h/where query [:exists (-> (h/select [:job_steps :s])
+      (h/where query [:exists (-> (h/select :*)
+                                  (h/from [:job_steps :s])
                                   (h/join [:job_types :t] [:= :s.job_type_id :t.id])
                                   (h/where [:= :j.id :s.job_id])
                                   (h/where [:in :t.name types]))]))
@@ -421,8 +422,8 @@
 (defn hsql-count-jobs-of-types
   "Counts the number of undeleted jobs of the given types in the database for a user."
   [username filter include-hidden include-deleted types subject-ids]
-  (let [dsl (hsql-count-jobs-of-types-dsl username filter include-hidden include-deleted types subject-ids)]
-    (db/with-transaction [tx]
+  (db/with-transaction [tx]
+    (let [dsl (hsql-count-jobs-of-types-dsl username filter include-hidden include-deleted types subject-ids)]
       (-> (jdbc/query tx (hsql/format dsl))
           first
           :count))))
@@ -446,8 +447,8 @@
 (defn hsql-count-jobs-of-statuses
   "Counts the number of undeleted jobs of the given types grouped by statuses in the database for a user."
   [username filter include-hidden include-deleted types subject-ids]
-  (let [dsl (hsql-count-jobs-of-statuses-dsl username filter include-hidden include-deleted types subject-ids)]
-    (db/with-transaction [tx]
+  (db/with-transaction [tx]
+    (let [dsl (hsql-count-jobs-of-statuses-dsl username filter include-hidden include-deleted types subject-ids)]
       (jdbc/query tx (hsql/format dsl)))))
 
 (defn- translate-sort-field
@@ -459,7 +460,8 @@
     :app_name  :j.app_name
     :startdate :j.start_date
     :enddate   :j.end_date
-    :status    :j.status))
+    :status    :j.status
+    (cxu/bad-request (str "unrecognized sort field: " (name field)))))
 
 (defn- job-base-query
   "The base query used for retrieving job information from the database."
@@ -576,8 +578,8 @@
 (defn hsql-list-jobs-of-types
   "Gets a list of jobs that contain only steps of the given types."
   [username search-params types subject-ids]
-  (let [dsl (hsql-list-jobs-of-types-dsl username search-params types subject-ids)]
-    (db/with-transaction [tx]
+  (db/with-transaction [tx]
+    (let [dsl (hsql-list-jobs-of-types-dsl username search-params types subject-ids)]
       (jdbc/query tx (hsql/format dsl)))))
 
 (defn list-jobs-of-types
