@@ -89,10 +89,6 @@
           :can_share        (job-supports-sharing? apps-client perms rep-steps job)
           :interactive_urls (interactive-urls job rep-steps))))
 
-(defn- list-jobs*
-  [{:keys [username]} search-params types analysis-ids]
-  (jp/list-jobs-of-types username search-params types analysis-ids))
-
 (defn- count-jobs
   [{:keys [username]} {:keys [filter include-hidden include-deleted]} types analysis-ids]
   (jp/hsql-count-jobs-of-types username filter include-hidden include-deleted types analysis-ids))
