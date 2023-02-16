@@ -34,7 +34,7 @@
                  [org.cyverse/common-swagger-api "3.4.3"]
                  [org.cyverse/cyverse-groups-client "0.1.8"]
                  [org.cyverse/otel "0.2.5"]
-                 [org.cyverse/permissions-client "2.8.3-SNAPSHOT"]
+                 [org.cyverse/permissions-client "2.8.3"]
                  [org.cyverse/service-logging "2.8.3"]
                  [org.cyverse/event-messages "0.0.1"]
                  [org.flatland/ordered "1.15.10"]
