@@ -6,13 +6,13 @@
             [apps.persistence.jobs :as jp]
             [apps.util.db :as db]
             [clojure.java.jdbc :as jdbc]
-            [honeysql.core :as sql]
-            [honeysql.helpers :as h]))
+            [honey.sql :as sql]
+            [honey.sql.helpers :as h]))
 
 (defn- count-concurrent-vice-jobs-query
   "Builds a query to list the concurrently running VICE jobs for a user."
   [username]
-  (-> (h/select (sql/call :count (sql/raw "DISTINCT j.id")))
+  (-> (h/select [[:count [:distinct :j.id]]])
       (h/from [:jobs :j])
       (h/join [:users :u] [:= :j.user_id :u.id]
               [:job_steps :s] [:= :j.id :s.job_id]

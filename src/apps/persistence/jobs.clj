@@ -3,22 +3,24 @@
    submitted to any excecution service."
   (:use [apps.persistence.entities :only [job-status-updates]]
         [apps.persistence.users :only [get-user-id]]
-        [apps.util.db :only [add-date-limits-where-clause sqlfn-any-array]]
+        [apps.util.db :only [add-date-limits-where-clause sql-array]]
         [clojure-commons.core :only [remove-nil-values]]
         [kameleon.db :only [now-str]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.constants :as c]
+            [apps.util.config :as config]
             [apps.util.db :as db]
             [cheshire.core :as cheshire]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
-            [honeysql.core :as hsql]
-            [honeysql.helpers :as h]
-            [korma.core :as sql]))
+            [honey.sql :as hsql]
+            [honey.sql.helpers :as h]
+            [korma.core :as sql]
+            [permissions-client.core :as pc]))
 
 (def de-job-type "DE")
 (def agave-job-type "Agave")
@@ -106,39 +108,26 @@
   [v]
   (if (zero? v) nil v))
 
-(defn- filter-value->where-value
-  "Returns a value for use in a job query where-clause map, based on the given filter field and
-   value pair."
-  [field value]
-  (case field
-    "app_name"  ['like (sqlfn :lower (str "%" value "%"))]
-    "name"      ['like (sqlfn :lower (str "%" value "%"))]
-    "id"        (when-not (string/blank? value) (uuidify value))
-    "parent_id" (when-not (string/blank? value) (uuidify value))
-    value))
-
-(defn- filter-field->where-field
-  "Returns a field key for use in a job query where-clause map, based on the given filter field."
-  [field]
-  (case field
-    "app_name" (sqlfn :lower :j.app_name)
-    "name"     (sqlfn :lower :j.job_name)
-    (keyword (str "j." field))))
-
-(defn- filter-map->where-clause
+(defn- hsql-filter-map->where-clause
   "Returns a map for use in a where-clause for filtering job query results."
   [{:keys [field value]}]
-  {(filter-field->where-field field) (filter-value->where-value field value)})
+  (case field
+    "app_name"  [:like [:lower :j.app_name] [:lower (str "%" value "%")]]
+    "name"      [:like [:lower :j.job_name] [:lower (str "%" value "%")]]
+    "id"        [:= :j.id (when-not (string/blank? value) (uuidify value))]
+    "parent_id" [:= :parent_id (when-not (string/blank? value) (uuidify value))]
+    [:= (keyword (str "j." field)) value]))
 
-(defn- apply-standard-filter
+(defn- hsql-apply-standard-filter
   "Applies 'standard' filters to a query. Standard filters are filters that search for fields that are
    included in the job listing response body."
   [query standard-filter]
-  (if (seq standard-filter)
-    (where query (apply or (map filter-map->where-clause standard-filter)))
-    query))
+  (condp = (count standard-filter)
+    0 query
+    1 (h/where query (map hsql-filter-map->where-clause standard-filter))
+    (h/where query (cons :or (map hsql-filter-map->where-clause standard-filter)))))
 
-(defn- apply-ownership-filter
+(defn- hsql-apply-ownership-filter
   "Applies an 'ownership' filter to a query. An ownership filter is any filter for which the field is
    'ownership'. Only one ownership filter is supported in a single job query. If multiple ownership
    filters are included then the first one wins."
@@ -146,12 +135,12 @@
   (if ownership-filter
     (condp = (:value ownership-filter)
       "all"    query
-      "mine"   (where query {:j.username username})
-      "theirs" (where query {:j.username [not= username]})
+      "mine"   (where query [:= :j.username username])
+      "theirs" (where query [:not= :j.username username])
       (cxu/bad-request (str "invalid ownership filter value: " (:value ownership-filter))))
     query))
 
-(defn- apply-type-filter
+(defn- hsql-apply-type-filter
   "Applies a job type filter to a query. The type filter is not based on the overall type of the job,
    but rather on the types of its steps. A job falls under a specific type if at least one of its
    steps is of that type. Also note that jobs are already filtered by type based on the current DE
@@ -160,10 +149,11 @@
   [query type-filters]
   (if (seq type-filters)
     (let [types (mapv :value type-filters)]
-      (where query (exists (subselect [:job_steps :s]
-                                      (join [:job_types :t] {:s.job_type_id :t.id})
-                                      (where {:j.id   :s.job_id
-                                              :t.name [in types]})))))
+      (h/where query [:exists (-> (h/select :*)
+                                  (h/from [:job_steps :s])
+                                  (h/join [:job_types :t] [:= :s.job_type_id :t.id])
+                                  (h/where [:= :j.id :s.job_id])
+                                  (h/where [:in :t.name types]))]))
     query))
 
 (defn- get-filter-type-category
@@ -175,14 +165,14 @@
   (let [custom-filter-fields #{"ownership" "type"}]
     (keyword (or (custom-filter-fields field) "standard"))))
 
-(defn- add-job-query-filter-clause
+(defn- hsql-add-job-query-filter-clause
   "Filters results returned by the given job query by adding a (where (or ...)) clause based on the
    given filter map."
   [query username query-filter]
   (let [categorized-filters (group-by get-filter-type-category query-filter)]
-    (-> (apply-standard-filter query (:standard categorized-filters))
-        (apply-ownership-filter username (:ownership categorized-filters))
-        (apply-type-filter (:type categorized-filters)))))
+    (-> (hsql-apply-standard-filter query (:standard categorized-filters))
+        (hsql-apply-ownership-filter username (:ownership categorized-filters))
+        (hsql-apply-type-filter (:type categorized-filters)))))
 
 (defn- job-type-id-from-system-id [system-id]
   (or ((comp :id first) (select :job_types (where {:system_id system-id})))
@@ -264,61 +254,76 @@
   (save-job job-info submission)
   (dorun (map save-job-step job-steps)))
 
-(defn- job-type-subselect
+(defn- hsql-job-type-subselect
   [types]
-  (subselect [:job_steps :s]
-             (join [:job_types :t] {:s.job_type_id :t.id})
-             (where {:j.id   :s.job_id
-                     :t.name [not-in types]})))
+  (-> (h/select :*)
+      (h/from [:job_steps :s])
+      (h/join [:job_types :t] [:= :s.job_type_id :t.id])
+      (h/where [:= :j.id :s.job_id])
+      (h/where [:not-in :t.name types])))
 
-(defn- internal-app-subselect
+(defn- hsql-internal-app-subselect
   []
-  (subselect :apps
-             (join :app_versions {:apps.id :app_versions.app_id})
-             (join :app_steps {:app_versions.id :app_steps.app_version_id})
-             (join :tasks {:app_steps.task_id :tasks.id})
-             (join :tools {:tasks.tool_id :tools.id})
-             (join :tool_types {:tools.tool_type_id :tool_types.id})
-             (where (and (= :j.app_id (raw "CAST(apps.id AS text)"))
-                         (= :tool_types.name "internal")))))
+  (-> (h/select :*)
+      (h/from :apps)
+      (h/join :app_versions [:= :apps.id :app_versions.app_id]
+              :app_steps [:= :app_versions.id :app_steps.app_version_id]
+              :tasks [:= :app_steps.task_id :tasks.id]
+              :tools [:= :tasks.tool_id :tools.id]
+              :tool_types [:= :tools.tool_type_id :tool_types.id])
+      (h/where [:and
+                [:= :j.app_id [:cast :apps.id :text]]
+                [:= :tool_types.name "internal"]])))
 
-(defn- add-internal-app-clause
-  [query include-hidden]
-  (if-not include-hidden
-    (where query (not (exists (internal-app-subselect))))
+(defn- hsql-add-internal-app-clause
+  [query include-hidden?]
+  (if-not include-hidden?
+    (h/where query [:not [:exists (hsql-internal-app-subselect)]])
     query))
 
-(defn- count-jobs-base
-  "The base query for counting the number of jobs in the database for a user."
-  [include-hidden]
-  (-> (select* [:job_listings :j])
-      (aggregate (count :*) :count)
-      (add-internal-app-clause include-hidden)))
+(defn- hsql-accessible-resource-cte
+  [subject-ids resource-type min-level]
+  (pc/accessible-resource-query-dsl
+   (config/permissions-client)
+   (sql-array "text" subject-ids)
+   resource-type min-level))
 
-(defn- count-jobs-of-types-query
-  [username filter include-hidden include-deleted types accessible-ids]
-  (as-> (select* (add-job-query-filter-clause (count-jobs-base include-hidden) username filter)) q
+(defn- hsql-count-jobs-of-types-dsl
+  [username filter include-hidden include-deleted types subject-ids]
+  (as-> (h/with [:accessible_job_ids (hsql-accessible-resource-cte subject-ids "analysis" "read")]) q
+    (h/select q [[:count :*] :count])
+    (h/from q [:job_listings :j])
+    (h/join q [:accessible_job_ids] [:= :j.id :accessible_job_ids.id])
+    (hsql-add-internal-app-clause q include-hidden)
+    (hsql-add-job-query-filter-clause q username filter)
     (if-not include-deleted
-      (where q {:j.deleted false})
+      (h/where q [:= :j.deleted false])
       q)
-    (where q {:j.id (sqlfn-any-array "uuid" accessible-ids)})
-    (where q (not (exists (job-type-subselect types))))))
+    (h/where q [:not [:exists (hsql-job-type-subselect types)]])))
 
-(defn count-jobs-of-types
+(defn hsql-count-jobs-of-types
   "Counts the number of undeleted jobs of the given types in the database for a user."
-  [username filter include-hidden include-deleted types accessible-ids]
-  (-> (count-jobs-of-types-query username filter include-hidden include-deleted types accessible-ids)
-      (select)
-      (first)
-      (:count)))
+  [username filter include-hidden include-deleted types subject-ids]
+  (db/with-transaction [tx]
+    (let [dsl (hsql-count-jobs-of-types-dsl username filter include-hidden include-deleted types subject-ids)]
+      (-> (jdbc/query tx (hsql/format dsl))
+          first
+          :count))))
 
-(defn count-jobs-of-statuses
+(defn hsql-count-jobs-of-statuses-dsl
+  "Generates the HoneySQL DSL to count the number of undeleted jobs of the given types grouped by statuses in the
+  database for a user."
+  [username filter include-hidden include-deleted types subject-ids]
+  (-> (hsql-count-jobs-of-types-dsl username filter include-hidden include-deleted types subject-ids)
+      (h/select :j.status)
+      (h/group-by :j.status)))
+
+(defn hsql-count-jobs-of-statuses
   "Counts the number of undeleted jobs of the given types grouped by statuses in the database for a user."
-  [username filter include-hidden include-deleted types accessible-ids]
-  (-> (count-jobs-of-types-query username filter include-hidden include-deleted types accessible-ids)
-      (fields :j.status)
-      (group :j.status)
-      (select)))
+  [username filter include-hidden include-deleted types subject-ids]
+  (db/with-transaction [tx]
+    (let [dsl (hsql-count-jobs-of-statuses-dsl username filter include-hidden include-deleted types subject-ids)]
+      (jdbc/query tx (hsql/format dsl)))))
 
 (defn- translate-sort-field
   "Translates the sort field sent to get-jobs to a value that can be used in the query."
@@ -329,7 +334,8 @@
     :app_name  :j.app_name
     :startdate :j.start_date
     :enddate   :j.end_date
-    :status    :j.status))
+    :status    :j.status
+    (cxu/bad-request (str "unrecognized sort field: " (name field)))))
 
 (defn- job-base-query
   "The base query used for retrieving job information from the database."
@@ -354,6 +360,30 @@
               :j.parent_id
               :j.is_batch
               :j.notify)))
+
+(defn- hsql-job-base-query
+  "The HoneySQL version of the base query used for retrieving job information from the database."
+  []
+  (-> (h/select :j.app_description
+                :j.system_id
+                :j.app_id
+                :j.app_version_id
+                :j.app_name
+                [:j.job_description :description]
+                :j.end_date
+                :j.id
+                :j.job_name
+                :j.result_folder_path
+                :j.start_date
+                :j.status
+                :j.username
+                :j.user_id
+                :j.app_wiki_url
+                :j.job_type
+                :j.parent_id
+                :j.is_batch
+                :j.notify)
+      (h/from [:job_listings :j])))
 
 (defn- job-step-base-query
   "The base query used for retrieving job step information from the database."
@@ -391,24 +421,36 @@
            (aggregate (max :step_number) :max-step)
            (where {:job_id job-id}))))
 
-(defn- add-order
+(defn- hsql-add-order
   [query {:keys [sort-field sort-dir]}]
-  (order query (translate-sort-field sort-field) sort-dir))
+  (h/order-by query [(translate-sort-field sort-field) sort-dir]))
 
-(defn list-jobs-of-types
-  "Gets a list of jobs that contain only steps of the given types."
-  [username {:keys [include-deleted] :as search-params} types accessible-ids]
-  (as-> (select* (add-job-query-filter-clause (job-base-query) username (:filter search-params))) q
+(defn hsql-list-jobs-of-types-dsl
+  "Generates the HoneySQL DSL to get a list of jobs that contain only steps of the given types."
+  [username {:keys [include-deleted offset limit] :as search-params} types subject-ids]
+  (as-> (hsql-job-base-query) q
+    (h/with q [:accessible_job_ids (hsql-accessible-resource-cte subject-ids "analysis" "read")])
+    (h/join q :accessible_job_ids [:= :j.id :accessible_job_ids.id])
+    (hsql-add-job-query-filter-clause q username (:filter search-params))
     (if-not include-deleted
-      (where q {:j.deleted false})
+      (h/where q [:= :j.deleted false])
       q)
-    (where q {:j.id (sqlfn-any-array "uuid" accessible-ids)})
-    (where q (not (exists (job-type-subselect types))))
-    (add-internal-app-clause q (:include-hidden search-params))
-    (add-order q search-params)
-    (offset q (nil-if-zero (:offset search-params)))
-    (limit q (nil-if-zero (:limit search-params)))
-    (select q)))
+    (h/where q [:not [:exists (hsql-job-type-subselect types)]])
+    (hsql-add-internal-app-clause q (:include-hdden search-params))
+    (hsql-add-order q search-params)
+    (if (pos? (or offset 0))
+      (h/offset q offset)
+      q)
+    (if (pos? (or limit 0))
+      (h/limit q limit)
+      q)))
+
+(defn hsql-list-jobs-of-types
+  "Gets a list of jobs that contain only steps of the given types."
+  [username search-params types subject-ids]
+  (db/with-transaction [tx]
+    (let [dsl (hsql-list-jobs-of-types-dsl username search-params types subject-ids)]
+      (jdbc/query tx (hsql/format dsl)))))
 
 (defn list-jobs-by-id
   "Gets a listing of jobs with the given identifiers."
@@ -666,8 +708,8 @@
     (-> (h/select :id :parent_id)
         (h/from :jobs)
         (h/where [:or
-                  [:= :id (hsql/call :any job-ids)]
-                  [:= :parent_id (hsql/call :any job-ids)]]))))
+                  [:= :id [:any job-ids]]
+                  [:= :parent_id [:any job-ids]]]))))
 
 (defn- batch-parent-job-ids-query
   "Returns a query that extracts the IDs of batch parent jobs from the related_job_ids query, which should be available
@@ -680,9 +722,9 @@
                             (h/where [:= :p.id :c.parent_id]))])))
 
 (defn- representative-job-ids-query
-  "Returns a query that obtains the ID, parent ID, and representative job ID of every job in the related-job-ids-alias query,
-  which should be available as a CTE. The representative job ID is the job ID whose steps represent the steps of every
-  job in a batch. For individual jobs, the representative job ID is the job ID itself. For batch jobs, the
+  "Returns a query that obtains the ID, parent ID, and representative job ID of every job in the related-job-ids-alias
+  query, which should be available as a CTE. The representative job ID is the job ID whose steps represent the steps of
+  every job in a batch. For individual jobs, the representative job ID is the job ID itself. For batch jobs, the
   representative job ID is the ID of any of the child jobs in the batch."
   [related-job-ids-alias batch-parent-job-ids-alias]
   {:union-all
