@@ -89,8 +89,8 @@
           :interactive_urls (interactive-urls job rep-steps))))
 
 (defn- count-jobs
-  [{:keys [username]} {:keys [filter include-hidden include-deleted]} types analysis-ids]
-  (jp/hsql-count-jobs-of-types username filter include-hidden include-deleted types analysis-ids))
+  [{:keys [username]} {:keys [filter include-hidden include-deleted]} types subject-ids]
+  (jp/hsql-count-jobs-of-types username filter include-hidden include-deleted types subject-ids))
 
 (defn- count-job-statuses
   [{:keys [username]} {:keys [filter include-hidden include-deleted]} types subject-ids]
