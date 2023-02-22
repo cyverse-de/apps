@@ -135,8 +135,8 @@
   (if ownership-filter
     (condp = (:value ownership-filter)
       "all"    query
-      "mine"   (where query [:= :j.username username])
-      "theirs" (where query [:not= :j.username username])
+      "mine"   (h/where query [:= :j.username username])
+      "theirs" (h/where query [:not= :j.username username])
       (cxu/bad-request (str "invalid ownership filter value: " (:value ownership-filter))))
     query))
 
