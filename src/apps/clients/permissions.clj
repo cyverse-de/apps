@@ -6,6 +6,7 @@
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.util.config :as config]
             [apps.util.service :as service]
+            [otel.otel :as otel]
             [clojure.tools.logging :as log]
             [permissions-client.core :as pc]))
 
@@ -54,13 +55,15 @@
 
 (defn- load-resource-permissions*
   ([resource-type user filter-fn]
-   (filter-abbreviated-perms-response
-    (pc/get-abbreviated-subject-permissions-for-resource-type (client) "user" user resource-type true)
-    filter-fn))
+   (otel/with-span [s ["load-resource-permissions*" {:attributes {"permissions.resource-type" resource-type}}]]
+    (filter-abbreviated-perms-response
+     (pc/get-abbreviated-subject-permissions-for-resource-type (client) "user" user resource-type true)
+     filter-fn)))
   ([resource-type user min-level filter-fn]
-   (filter-abbreviated-perms-response
-    (pc/get-abbreviated-subject-permissions-for-resource-type (client) "user" user resource-type true min-level)
-    filter-fn)))
+   (otel/with-span [s ["load-resource-permissions*" {:attributes {"permissions.resource-type" resource-type "permissions.min-level" min-level}}]]
+    (filter-abbreviated-perms-response
+     (pc/get-abbreviated-subject-permissions-for-resource-type (client) "user" user resource-type true min-level)
+     filter-fn))))
 
 (defn- resource-id-filter
   [resource-ids]
@@ -70,15 +73,17 @@
   ([resource-type user]
    (load-resource-permissions* resource-type user (constantly true)))
   ([resource-type user resource-ids]
-   (if (= (count resource-ids) 1)
-     ((comp group-permissions :permissions)
-      (pc/get-subject-permissions-for-resource (client) "user" user resource-type (first resource-ids) true))
-     (load-resource-permissions* resource-type user (resource-id-filter resource-ids))))
+   (otel/with-span [s ["load-resource-permissions" {:attributes {"permissions.resource-type" resource-type}}]]
+    (if (= (count resource-ids) 1)
+      ((comp group-permissions :permissions)
+       (pc/get-subject-permissions-for-resource (client) "user" user resource-type (first resource-ids) true))
+      (load-resource-permissions* resource-type user (resource-id-filter resource-ids)))))
   ([resource-type user resource-ids min-level]
-   (if (= (count resource-ids) 1)
-     ((comp group-permissions :permissions)
-      (pc/get-subject-permissions-for-resource (client) "user" user resource-type (first resource-ids) true min-level))
-     (load-resource-permissions* resource-type user min-level (resource-id-filter resource-ids)))))
+   (otel/with-span [s ["load-resource-permissions" {:attributes {"permissions.resource-type" resource-type}}]]
+    (if (= (count resource-ids) 1)
+      ((comp group-permissions :permissions)
+       (pc/get-subject-permissions-for-resource (client) "user" user resource-type (first resource-ids) true min-level))
+      (load-resource-permissions* resource-type user min-level (resource-id-filter resource-ids))))))
 
 (def load-app-permissions (partial load-resource-permissions (rt-app)))
 (def load-analysis-permissions (partial load-resource-permissions (rt-analysis)))
@@ -181,11 +186,12 @@
 (def unshare-tool (partial unshare-resource (rt-tool)))
 
 (defn- get-public-resource-ids [resource-type]
-  (->> (pc/get-abbreviated-subject-permissions-for-resource-type
-        (client) "group" (ipg/grouper-user-group-id) resource-type false)
-       :permissions
-       (map (comp uuidify :resource_name))
-       set))
+  (otel/with-span [s ["get-public-resource-ids" {:attributes {"permissions.resource-type" resource-type}}]]
+    (->> (pc/get-abbreviated-subject-permissions-for-resource-type
+          (client) "group" (ipg/grouper-user-group-id) resource-type false)
+         :permissions
+         (map (comp uuidify :resource_name))
+         set)))
 
 (def get-public-app-ids (partial get-public-resource-ids "app"))
 (def get-public-tool-ids (partial get-public-resource-ids "tool"))
