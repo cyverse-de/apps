@@ -118,21 +118,30 @@
       (when-not (:success response)
         (get-in response [:error :reason] "unable to share app")))))
 
+(defn- get-user-from-subject
+  [subject]
+  (condp = (:source_id subject)
+    "ldap"  (:id subject)
+    "g:gsa" (str "@grouper-" (:id subject))
+    nil))
+
 (defn- share-output-folder
-  [sharer {sharee :id} {:keys [result_folder_path]}]
-  (try+
-   (data-info/share-path sharer result_folder_path sharee "read")
-   nil
-   (catch ce/clj-http-error? {:keys [body]}
-     (str "unable to share result folder: " (:error_code (service/parse-json body))))))
+  [sharer sharee {:keys [result_folder_path]}]
+  (let [sharee (get-user-from-subject sharee)]
+    (try+
+      (data-info/share-path sharer result_folder_path sharee "read")
+      nil
+      (catch ce/clj-http-error? {:keys [body]}
+        (str "unable to share result folder: " (:error_code (service/parse-json body)))))))
 
 (defn- share-input-file
-  [sharer {sharee :id} path]
-  (try+
-   (data-info/share-path sharer path sharee "read")
-   nil
-   (catch ce/clj-http-error? {:keys [body]}
-     (str "unable to share input file, " path ": " (:error_code (service/parse-json body))))))
+  [sharer sharee path]
+  (let [sharee (get-user-from-subject sharee)]
+    (try+
+      (data-info/share-path sharer path sharee "read")
+      nil
+      (catch ce/clj-http-error? {:keys [body]}
+        (str "unable to share input file, " path ": " (:error_code (service/parse-json body)))))))
 
 (defn- process-child-jobs
   [f job-id]
@@ -251,20 +260,22 @@
    (update request-body :sharing (partial mapv (partial validate-subject-job-sharing-requests apps-client user)))))
 
 (defn- unshare-output-folder
-  [sharer {sharee :id} {:keys [result_folder_path]}]
-  (try+
-   (data-info/unshare-path sharer result_folder_path sharee)
-   nil
-   (catch ce/clj-http-error? {:keys [body]}
-     (str "unable to unshare result folder: " (:error_code (service/parse-json body))))))
+  [sharer sharee {:keys [result_folder_path]}]
+  (let [sharee (get-user-from-subject sharee)]
+    (try+
+      (data-info/unshare-path sharer result_folder_path sharee)
+      nil
+      (catch ce/clj-http-error? {:keys [body]}
+        (str "unable to unshare result folder: " (:error_code (service/parse-json body)))))))
 
 (defn- unshare-input-file
-  [sharer {sharee :id} path]
-  (try+
-   (data-info/unshare-path sharer path sharee)
-   nil
-   (catch ce/clj-http-error? {:keys [body]}
-     (str "unable to unshare input file, " path ": " (:error_code (service/parse-json body))))))
+  [sharer sharee path]
+  (let [sharee (get-user-from-subject sharee)]
+    (try+
+      (data-info/unshare-path sharer path sharee)
+      nil
+      (catch ce/clj-http-error? {:keys [body]}
+        (str "unable to unshare input file, " path ": " (:error_code (service/parse-json body)))))))
 
 (defn- unshare-analysis
   [job-id sharee]
