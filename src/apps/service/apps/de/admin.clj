@@ -125,19 +125,19 @@
    (when (and (false? deleted) (:deleted (if (nil? version-id)
                                            (persistence/get-app app-id)
                                            (persistence/get-app-version app-id version-id))))
-     (let [tools             (if (nil? version-id)
+     (let [public-app-ids    (future (perms-client/get-public-app-ids))
+           tools             (if (nil? version-id)
                                (persistence/get-all-app-tools app-id)
                                (persistence/get-app-version-tools app-id version-id))
            task-ids          (if (nil? version-id)
                                (persistence/task-ids-for-app app-id)
                                (persistence/task-ids-for-app-version version-id))
-           public-app-ids    (perms-client/get-public-app-ids)
-           app-public        (contains? public-app-ids app-id)]
+           app-public        (contains? @public-app-ids app-id)]
        (when app-public
          (av/verify-tools-for-public-app
            tools
            "Cannot restore public app version(s) that use private or missing tool(s)")
-         (av/app-tasks-and-tools-publishable? username true public-app-ids task-ids tools))))
+         (av/app-tasks-and-tools-publishable? username true @public-app-ids task-ids tools))))
 
    (if (empty? (select-keys app [:name :description :wiki_url :references :groups :extra]))
      (update-app-deleted-disabled app)

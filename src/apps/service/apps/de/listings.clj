@@ -372,14 +372,14 @@
 
 (defn- app-listing-by-id
   [{:keys [username] :as user} params perms app-ids admin?]
-  (let [workspace      (get-optional-workspace username)
+  (let [public-app-ids (future (perms-client/get-public-app-ids))
+        workspace      (get-optional-workspace username)
         faves-index    (workspace-favorites-app-category-index)
-        public-app-ids (perms-client/get-public-app-ids)
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
         total          (if (empty? app-ids) 0 (count-apps-fn nil (:id workspace) (assoc params :app-ids app-ids)))
         app-listing-fn (if admin? admin-list-apps-by-id list-apps-by-id)
         app-listing    (app-listing-fn workspace faves-index app-ids (fix-sort-params params))
-        format-app     (get-app-listing-formatter user admin? perms app-ids public-app-ids)]
+        format-app     (get-app-listing-formatter user admin? perms app-ids @public-app-ids)]
     {:total total
      :apps  (map format-app app-listing)}))
 
@@ -521,12 +521,12 @@
   "This service retrieves app listing information for a single app."
   [{:keys [username shortUsername] :as user} app-id]
   (perms/check-app-permissions shortUsername "read" [app-id])
-  (let [workspace      (get-workspace username)
+  (let [public-app-ids (future (perms-client/get-public-app-ids))
+        workspace      (get-workspace username)
         perms          (perms-client/load-app-permissions shortUsername)
         total          (count-apps-for-user nil (:id workspace) {:app-ids [app-id]})
         apps           (get-single-app workspace (workspace-favorites-app-category-index) app-id)
-        public-app-ids (perms-client/get-public-app-ids)
-        format-app     (get-app-listing-formatter user false perms [app-id] public-app-ids)
+        format-app     (get-app-listing-formatter user false perms [app-id] @public-app-ids)
         apps           (map format-app apps)]
     {:total total
      :apps  apps}))
@@ -620,7 +620,8 @@
   ([user app-id admin?]
    (get-app-details* user app-id (amp/get-app-latest-version app-id) admin?))
   ([{:keys [username shortUsername] :as user} app-id app-version-id admin?]
-   (let [workspace      (get-workspace username)
+   (let [public-app-ids (future (perms-client/get-public-app-ids))
+         workspace      (get-workspace username)
          details        (get-app-version-details (:user_id workspace)
                                                  (:root_category_id workspace)
                                                  (workspace-favorites-app-category-index)
@@ -629,8 +630,7 @@
          tools          (amp/get-app-version-tools app-id app-version-id)
          app-references (app-docs-db/get-app-references app-version-id)
          perms          (perms-client/load-app-permissions shortUsername)
-         public-app-ids (perms-client/get-public-app-ids)
-         format-app     (get-app-listing-formatter user false perms [app-id] public-app-ids)]
+         format-app     (get-app-listing-formatter user false perms [app-id] @public-app-ids)]
      (->> (format-app-details user details tools app-references admin?)
           format-app
           (remove-nil-vals)))))
