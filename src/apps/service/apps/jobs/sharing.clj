@@ -334,7 +334,7 @@
 
 (defn unshare-jobs
   [apps-client {username :shortUsername} sharing-requests]
-  (otel/with-span [s ["share-jobs"]]
+  (otel/with-span [s ["unshare-jobs"]]
     (-> (async-tasks/new-task "analysis-unsharing" username sharing-requests)
         (async-tasks/run-async-thread unshare-jobs-thread "analysis-unsharing")
         (string/replace #".*/tasks/" "")
