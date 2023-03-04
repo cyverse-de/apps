@@ -116,10 +116,10 @@
 
 (defn list-job-stats
   [apps-client user params]
-  (let [perms            (perms-client/load-analysis-permissions (:shortUsername user))
-        analysis-ids     (set (keys perms))
-        types            (.getJobTypes apps-client)]
-    {:status-count (count-job-statuses user params types analysis-ids)}))
+  (let [group-ids   (future (->> (ipg/lookup-subject-groups (:shortUsername user)) :groups (mapv :id)))
+        subject-ids (future (conj @group-ids (:shortUsername user)))
+        types       (.getJobTypes apps-client)]
+    {:status-count (count-job-statuses user params types @subject-ids)}))
 
 (defn admin-list-jobs-with-external-ids [external-ids]
   (let [jobs      (jp/list-jobs-by-external-id external-ids)
