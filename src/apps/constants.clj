@@ -1,5 +1,5 @@
 (ns apps.constants
-  (:require [mescal.agave-de-v2.constants :as c]))
+  (:require [mescal.tapis-de-v3.constants :as c]))
 
 (def de-system-id "de")
 (def hpc-system-id c/hpc-system-id)

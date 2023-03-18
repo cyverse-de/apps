@@ -7,8 +7,7 @@
             [apps.service.oauth :refer [authorization-uri has-access-token]]
             [apps.user :as user]
             [apps.util.config :as config]
-            [clojure-commons.exception-util :as cxu]
-            [mescal.de :as agave]
+            [mescal.de :as tapis]
             [slingshot.slingshot :refer [throw+]]))
 
 (defn- authorization-redirect
@@ -27,7 +26,7 @@
 (defn- get-agave-client
   [state-info username]
   (let [server-info (config/agave-oauth-settings)]
-    (agave/de-agave-client-v2
+    (tapis/de-tapis-client-v3
      (config/agave-base-url)
      (config/agave-storage-system)
      (partial get-access-token (config/agave-oauth-settings) state-info username)
