@@ -1,4 +1,4 @@
-(ns apps.service.apps.agave.listings
+(ns apps.service.apps.tapis.listings
   (:use [apps.service.apps.util :only [to-qualified-app-id]]
         [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats valid-uuid?]]
         [apps.util.conversions :only [remove-nil-vals]]
@@ -10,7 +10,7 @@
             [clojure-commons.error-codes :as ce :refer [clj-http-error?]]))
 
 ;; TODO: restore the job stats gathering when we have a more efficient way to do this.
-(defn- add-agave-job-stats
+(defn- add-tapis-job-stats
   [{:keys [id] :as app} params admin?]
   (merge app {:job_count_completed 0
               :job_count           0
@@ -22,7 +22,7 @@
 (defn- add-app-listing-job-stats
   [app-listing params admin?]
   (if admin?
-    (update app-listing :apps (partial map (comp remove-nil-vals #(add-agave-job-stats % params admin?))))
+    (update app-listing :apps (partial map (comp remove-nil-vals #(add-tapis-job-stats % params admin?))))
     app-listing))
 
 (defn- format-app-listing-job-stats
@@ -49,16 +49,16 @@
     (add-app-integrator-info subject-info-for app-details)))
 
 (defn get-app-details
-  [agave app-id admin?]
-  (-> (.getAppDetails agave app-id)
+  [tapis app-id admin?]
+  (-> (.getAppDetails tapis app-id)
       add-app-details-integrator-info
-      (add-agave-job-stats nil admin?)
+      (add-tapis-job-stats nil admin?)
       (format-job-stats admin?)
       remove-nil-vals))
 
 (defn list-apps
-  [agave category-id params]
-  (-> (.listApps agave)
+  [tapis category-id params]
+  (-> (.listApps tapis)
       add-app-integrator-info
       (add-app-listing-job-stats params false)
       (sort-apps params {:default-sort-field "name"})
@@ -67,15 +67,15 @@
       (format-app-listing-job-stats false)))
 
 (defn list-app
-  [agave app-id]
-  (-> (.listApps agave [app-id] {})
+  [tapis app-id]
+  (-> (.listApps tapis [app-id] {})
       add-app-integrator-info
       (select-keys [:total :apps])))
 
 (defn list-apps-with-ontology
-  [agave term params admin?]
+  [tapis term params admin?]
   (try+
-   (-> (select-keys (.listAppsWithOntology agave term) [:total :apps])
+   (-> (select-keys (.listAppsWithOntology tapis term) [:total :apps])
        add-app-integrator-info
        (add-app-listing-job-stats params admin?)
        (sort-apps params {:default-sort-field "name"})
@@ -83,10 +83,10 @@
        (apply-limit params)
        (format-app-listing-job-stats admin?))
    (catch [:error_code ce/ERR_UNAVAILABLE] _
-     (log/error (:throwable &throw-context) "Agave app listing timed out")
+     (log/error (:throwable &throw-context) "Tapis app listing timed out")
      nil)
    (catch clj-http-error? _
-     (log/error (:throwable &throw-context) "HTTP error returned by Agave")
+     (log/error (:throwable &throw-context) "HTTP error returned by Tapis")
      nil)))
 
 (defn- fix-search-params
@@ -94,9 +94,9 @@
   (remove-nil-vals {:app-subset (when admin? (:app-subset params :public))}))
 
 (defn search-apps
-  [agave search-term params admin?]
+  [tapis search-term params admin?]
   (try+
-   (-> (.searchApps agave search-term (fix-search-params params admin?))
+   (-> (.searchApps tapis search-term (fix-search-params params admin?))
        add-app-integrator-info
        (add-app-listing-job-stats params admin?)
        (sort-apps params {:default-sort-field "name"})
@@ -104,29 +104,29 @@
        (apply-limit params)
        (format-app-listing-job-stats admin?))
    (catch [:error_code ce/ERR_UNAVAILABLE] _
-     (log/error (:throwable &throw-context) "Agave app search timed out")
+     (log/error (:throwable &throw-context) "Tapis app search timed out")
      nil)
    (catch clj-http-error? _
-     (log/error (:throwable &throw-context) "HTTP error returned by Agave")
+     (log/error (:throwable &throw-context) "HTTP error returned by Tapis")
      nil)))
 
 (defn load-app-tables
-  [agave app-ids]
+  [tapis app-ids]
   (try+
-   (->> (.listApps agave app-ids {})
+   (->> (.listApps tapis app-ids {})
         (:apps)
         (map (juxt to-qualified-app-id identity))
         (into {})
         (vector))
    (catch [:type :clojure-commons.exception/unavailable] _
-     (log/warn (:throwable &throw-context) "Agave app table retrieval timed out")
+     (log/warn (:throwable &throw-context) "Tapis app table retrieval timed out")
      [])
    (catch clj-http-error? _
-     (log/error (:throwable &throw-context) "HTTP error returned by Agave")
+     (log/error (:throwable &throw-context) "HTTP error returned by Tapis")
      [])))
 
-(defn- prep-agave-param
-  [step-id agave-app-id param]
+(defn- prep-tapis-param
+  [step-id tapis-app-id param]
   (let [is-file-param? (re-find #"^(?:File|Folder)" (:type param))]
     {:data_format     (when is-file-param? "Unspecified")
      :info_type       (when is-file-param? "PlainText")
@@ -134,7 +134,7 @@
      :is_visible      (:isVisible param)
      :name            (:name param)
      :is_implicit     false
-     :external_app_id agave-app-id
+     :external_app_id tapis-app-id
      :ordering        (:order param)
      :type            (:type param)
      :step_id         step-id
@@ -143,28 +143,28 @@
      :description     (:description param)
      :default_value   (:defaultValue param)}))
 
-(defn- load-agave-pipeline-step-params
-  [agave-client {step-id :step_id agave-app-id :external_app_id}]
-  (->> (.getApp agave-client agave-app-id)
+(defn- load-tapis-pipeline-step-params
+  [tapis-client {step-id :step_id tapis-app-id :external_app_id}]
+  (->> (.getApp tapis-client tapis-app-id)
        (:groups)
        (mapcat :parameters)
-       (map (partial prep-agave-param step-id agave-app-id))))
+       (map (partial prep-tapis-param step-id tapis-app-id))))
 
-(defn- load-agave-pipeline-params
-  [agave-client app-version-id]
+(defn- load-tapis-pipeline-params
+  [tapis-client app-version-id]
   (->> (ap/load-app-steps app-version-id)
        (remove (comp nil? :external_app_id))
-       (mapcat (partial load-agave-pipeline-step-params agave-client))))
+       (mapcat (partial load-tapis-pipeline-step-params tapis-client))))
 
-(defn- load-agave-app-params
-  [agave-client app-id]
-  (->> (.getApp agave-client app-id)
+(defn- load-tapis-app-params
+  [tapis-client app-id]
+  (->> (.getApp tapis-client app-id)
        (:groups)
        (mapcat :parameters)
-       (map (partial prep-agave-param nil app-id))))
+       (map (partial prep-tapis-param nil app-id))))
 
 (defn get-param-definitions
-  [agave app-id version-id]
+  [tapis app-id version-id]
   (if (and version-id (valid-uuid? app-id))
-    (load-agave-pipeline-params agave version-id)
-    (load-agave-app-params agave app-id)))
+    (load-tapis-pipeline-params tapis version-id)
+    (load-tapis-app-params tapis app-id)))

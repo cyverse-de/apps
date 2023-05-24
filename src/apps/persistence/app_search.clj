@@ -35,10 +35,10 @@
              (where {:es.app_version_id :v.id
                      :es.task_id        nil})))
 
-(defn- add-agave-pipeline-where-clause
-  [q {agave-enabled? :agave-enabled :or {agave-enaled? "false"}}]
-  (let [agave-enabled? (Boolean/parseBoolean agave-enabled?)]
-    (if-not agave-enabled?
+(defn- add-tapis-pipeline-where-clause
+  [q {tapis-enabled? :tapis-enabled :or {tapis-enabled? "false"}}]
+  (let [tapis-enabled? (Boolean/parseBoolean tapis-enabled?)]
+    (if-not tapis-enabled?
       (where q (not (exists (external-step-subselect))))
       q)))
 
@@ -88,7 +88,7 @@
     (add-app-id-where-clause q query-opts)
     (add-app-type-where-clause q query-opts)
     (add-omitted-app-id-where-clause q query-opts)
-    (add-agave-pipeline-where-clause q query-opts)
+    (add-tapis-pipeline-where-clause q query-opts)
     (add-search-term-where-clauses q search-term (:pre-matched-app-ids query-opts))
     (add-non-admin-where-clauses q query-opts)))
 

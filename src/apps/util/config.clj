@@ -41,15 +41,15 @@
   [props config-valid configs]
   "apps.app.environment-name" "docker-compose")
 
-(cc/defprop-optboolean agave-enabled
-  "Enables or disables all features that require connections to Agave."
+(cc/defprop-optboolean tapis-enabled
+  "Enables or disables all features that require connections to Tapis."
   [props config-valid configs]
-  "apps.features.agave" true)
+  "apps.features.tapis" true)
 
-(cc/defprop-optboolean agave-jobs-enabled
-  "Enables or disables Agave job submission."
+(cc/defprop-optboolean tapis-jobs-enabled
+  "Enables or disables Tapis job submission."
   [props config-valid configs]
-  "apps.features.agave.jobs" false)
+  "apps.features.tapis.jobs" false)
 
 (cc/defprop-optstr db-driver-class
   "The name of the JDBC driver to use."
@@ -236,65 +236,65 @@
   [props config-valid configs]
   "apps.irods.path-max-len" 1067)
 
-(cc/defprop-optstr agave-base-url
-  "The base URL to use when connecting to Agave."
-  [props config-valid configs agave-enabled]
-  "apps.agave.base-url" "https://agave.iplantc.org")
+(cc/defprop-optstr tapis-base-url
+  "The base URL to use when connecting to Tapis."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.base-url" "https://cyverse.tapis.io/v3")
 
-(cc/defprop-str agave-key
-  "The API key to use when authenticating to Agave."
-  [props config-valid configs agave-enabled]
-  "apps.agave.key")
+(cc/defprop-str tapis-key
+  "The API key to use when authenticating to Tapis."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.key")
 
-(cc/defprop-str agave-secret
-  "The API secret to use when authenticating to Agave."
-  [props config-valid configs agave-enabled]
-  "apps.agave.secret")
+(cc/defprop-str tapis-secret
+  "The API secret to use when authenticating to Tapis."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.secret")
 
-(cc/defprop-optstr agave-oauth-base
-  "The base URL for the Agave OAuth 2.0 endpoints."
-  [props config-valid configs agave-enabled]
-  "apps.agave.oauth-base" "https://agave.iplantc.org/oauth2")
+(cc/defprop-optstr tapis-oauth-base
+  "The base URL for the Tapis OAuth 2.0 endpoints."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.oauth-base" "https://cyverse.tapis.io/v3/oauth2")
 
-(cc/defprop-optint agave-oauth-refresh-window
+(cc/defprop-optint tapis-oauth-refresh-window
   "The number of minutes before a token expires to refresh it."
-  [props config-valid configs agave-enabled]
-  "apps.agave.oauth-refresh-window" 5)
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.oauth-refresh-window" 5)
 
-(cc/defprop-str agave-redirect-uri
-  "The redirect URI used after Agave authorization."
-  [props config-valid configs agave-enabled]
-  "apps.agave.redirect-uri")
+(cc/defprop-str tapis-redirect-uri
+  "The redirect URI used after Tapis authorization."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.redirect-uri")
 
-(cc/defprop-str agave-callback-base
-  "The base URL for receiving job status update callbacks from Agave."
-  [props config-valid configs agave-enabled]
-  "apps.agave.callback-base")
+(cc/defprop-str tapis-callback-base
+  "The base URL for receiving job status update callbacks from Tapis."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.callback-base")
 
-(cc/defprop-optstr agave-storage-system
-  "The storage system that Agave should use when interacting with the DE."
-  [props config-valid configs agave-enabled]
-  "apps.agave.storage-system"
-  "data.iplantcollaborative.org")
+(cc/defprop-optstr tapis-storage-system
+  "The storage system that Tapis should use when interacting with the DE."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.storage-system"
+  "data.cyverse.org")
 
-(cc/defprop-optint agave-read-timeout
-  "The maximum amount of time to wait for a response from Agave in milliseconds."
-  [props config-valid configs agave-enabled]
-  "apps.agave.read-timeout" 10000)
+(cc/defprop-optint tapis-read-timeout
+  "The maximum amount of time to wait for a response from Tapis in milliseconds."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.read-timeout" 10000)
 
-(cc/defprop-optint agave-page-length
-  "The maximum number of entities to receive from a single Agave service call."
-  [props config-valid configs agave-enabled]
-  "apps.agave.page-length" 5000)
+(cc/defprop-optint tapis-page-length
+  "The maximum number of entities to receive from a single Tapis service call."
+  [props config-valid configs tapis-enabled]
+  "apps.tapis.page-length" 5000)
 
 (cc/defprop-optstr pgp-keyring-path
   "The path to the PGP keyring file."
-  [props config-valid configs agave-enabled]
+  [props config-valid configs tapis-enabled]
   "apps.pgp.keyring-path" "/etc/iplant/crypto/de-2/secring.gpg")
 
 (cc/defprop-optstr pgp-key-password
   "The password used to unlock the PGP key."
-  [props config-valid configs agave-enabled]
+  [props config-valid configs tapis-enabled]
   "apps.pgp.key-password" "notprod")
 
 (cc/defprop-optstr analyses-base
@@ -414,16 +414,16 @@
    :redirect-uri   redirect-uri
    :refresh-window (* refresh-window 60 1000)})
 
-(def agave-oauth-settings
+(def tapis-oauth-settings
   (memoize
    #(oauth-settings
-     "agave"
-     (agave-key)
-     (agave-secret)
-     (str (curl/url (agave-oauth-base) "authorize"))
-     (str (curl/url (agave-oauth-base) "token"))
-     (agave-redirect-uri)
-     (agave-oauth-refresh-window))))
+     "tapis"
+     (tapis-key)
+     (tapis-secret)
+     (str (curl/url (tapis-oauth-base) "authorize"))
+     (str (curl/url (tapis-oauth-base) "token"))
+     (tapis-redirect-uri)
+     (tapis-oauth-refresh-window))))
 
 (def permissions-client
   (memoize #(pc/new-permissions-client (permissions-base))))
