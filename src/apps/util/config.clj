@@ -456,7 +456,7 @@
      (tapis-key)
      (tapis-secret)
      (str (curl/url (tapis-oauth-base) "authorize"))
-     (str (curl/url (tapis-oauth-base) "token"))
+     (str (curl/url (tapis-oauth-base) "tokens"))
      (tapis-redirect-uri)
      (tapis-oauth-refresh-window))))
 
