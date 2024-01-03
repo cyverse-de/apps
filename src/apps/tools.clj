@@ -54,6 +54,14 @@
               :tool_request_status)
       remove-nil-vals))
 
+(defn- format-container-settings
+  [container-settings include-defaults]
+  (if include-defaults
+      (merge {:max_cpu_cores (config/default-cpu-limit)
+              :memory_limit (config/default-memory-limit)}
+             container-settings)
+    container-settings))
+
 (defn- filter-listing-tool-ids
   [all-tool-ids public-tool-ids {:keys [public] :as params}]
   (if (contains? params :public)
@@ -92,8 +100,7 @@
   (let [tool           (->> (persistence/get-tool tool-id)
                             (format-tool-listing (perms-client/load-tool-permissions user)
                                                  (perms-client/get-public-tool-ids)))
-        ;; XXX: use include-defaults here
-        container      (clojure.set/rename-keys (tool-container-info tool-id) {:ports :container_ports})
+        container      (clojure.set/rename-keys (format-container-settings (tool-container-info tool-id) include-defaults) {:ports :container_ports})
         implementation (persistence/get-tool-implementation-details tool-id)]
     (assoc tool
            :container container
