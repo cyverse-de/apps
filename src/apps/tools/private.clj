@@ -91,7 +91,7 @@
      (persistence/update-tool tool)
      (when container
        (containers/set-tool-container tool-id false (restrict-private-tool-container type container)))))
-  (tools/get-tool user tool-id))
+  (tools/get-tool user tool-id false))
 
 (defn delete-private-tool
   "Deletes a private tool if user has `own` permission for the tool.
