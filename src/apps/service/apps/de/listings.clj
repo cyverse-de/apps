@@ -687,7 +687,7 @@
 (defn- format-task
   [user {:keys [tool_id] :as task}]
   (-> task
-      (assoc :tool (when tool_id (tools/get-tool user tool_id)))
+      (assoc :tool (when tool_id (tools/get-tool user tool_id true)))
       (dissoc :tool_id)
       (update-in [:inputs] (partial map (comp remove-nil-vals format-task-file-param)))
       (update-in [:outputs] (partial map (comp remove-nil-vals format-task-output)))

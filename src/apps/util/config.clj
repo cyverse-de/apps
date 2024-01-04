@@ -123,6 +123,16 @@
   [props config-valid configs]
   "apps.tools.private.memory-limit" (* 16 1024 1024 1024)) ;; 16GB
 
+(cc/defprop-optint default-cpu-limit
+  "The CPU limit, in cores (matching the database's data type), to be used as the default resource limit when one is not set in a tool definition."
+  [props config-valid configs]
+  "apps.tools.default.cpu-limit" 4)
+
+(cc/defprop-optint default-memory-limit
+  "The memory limit, in bytes, to be used as the default resource limit when one is not set in a tool definition."
+  [props config-valid configs]
+  "apps.tools.default.memory-limit" (* 16 1024 1024 1024)) ;; 16GB
+
 (cc/defprop-optstr workspace-root-app-category
   "The name of the root app category in a user's workspace."
   [props config-valid configs]

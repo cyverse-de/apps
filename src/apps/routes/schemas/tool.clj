@@ -9,6 +9,10 @@
   (merge SecuredQueryParams
          schema/PrivateToolDeleteParams))
 
+(defschema ToolDetailsParams
+  (merge SecuredQueryParams
+         schema/ToolDetailsParams))
+
 (defschema ToolUpdateParams
   (merge SecuredQueryParams
          admin-schema/ToolUpdateParams))

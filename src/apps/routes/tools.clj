@@ -165,11 +165,11 @@
 
   (GET "/:tool-id" []
     :path-params [tool-id :- schema/ToolIdParam]
-    :query [{:keys [user]} SecuredQueryParams]
+    :query [{:keys [user include-defaults]} ToolDetailsParams]
     :responses schema/ToolDetailsResponses
     :summary schema/ToolDetailsSummary
     :description schema/ToolDetailsDocs
-    (ok (user-get-tool user tool-id)))
+    (ok (user-get-tool user tool-id include-defaults)))
 
   (PATCH "/:tool-id" []
     :path-params [tool-id :- schema/ToolIdParam]
@@ -249,11 +249,11 @@
 
   (GET "/:tool-id" []
     :path-params [tool-id :- schema/ToolIdParam]
-    :query [{:keys [user]} SecuredQueryParams]
+    :query [{:keys [user include-defaults]} ToolDetailsParams]
     :responses admin-schema/ToolDetailsResponses
     :summary schema/ToolDetailsSummary
     :description admin-schema/ToolDetailsDocs
-    (ok (get-tool user tool-id)))
+    (ok (get-tool user tool-id include-defaults)))
 
   (PATCH "/:tool-id" []
     :path-params [tool-id :- schema/ToolIdParam]

@@ -54,6 +54,14 @@
               :tool_request_status)
       remove-nil-vals))
 
+(defn- format-container-settings
+  [container-settings include-defaults]
+  (if include-defaults
+      (merge {:max_cpu_cores (config/default-cpu-limit)
+              :memory_limit (config/default-memory-limit)}
+             container-settings)
+    container-settings))
+
 (defn- filter-listing-tool-ids
   [all-tool-ids public-tool-ids {:keys [public] :as params}]
   (if (contains? params :public)
@@ -88,11 +96,11 @@
 
 (defn get-tool
   "Obtains a tool by ID."
-  [user tool-id]
+  [user tool-id include-defaults]
   (let [tool           (->> (persistence/get-tool tool-id)
                             (format-tool-listing (perms-client/load-tool-permissions user)
                                                  (perms-client/get-public-tool-ids)))
-        container      (clojure.set/rename-keys (tool-container-info tool-id) {:ports :container_ports})
+        container      (clojure.set/rename-keys (format-container-settings (tool-container-info tool-id) include-defaults) {:ports :container_ports})
         implementation (persistence/get-tool-implementation-details tool-id)]
     (assoc tool
            :container container
@@ -100,9 +108,9 @@
 
 (defn user-get-tool
   "Obtains tool details for a user."
-  [user tool-id]
+  [user tool-id include-defaults]
   (permissions/check-tool-permissions user "read" [tool-id])
-  (get-tool user tool-id))
+  (get-tool user tool-id include-defaults))
 
 (defn- add-new-tool
   [{:keys [container] :as tool}]
@@ -136,7 +144,7 @@
    (persistence/update-tool tool)
    (when container
      (set-tool-container id overwrite-public container))
-   (get-tool user id)))
+   (get-tool user id false)))
 
 (defn delete-tool
   [tool-id]
@@ -150,7 +158,7 @@
 (defn admin-delete-tool
   "Deletes a tool, as long as it is not in use by any apps."
   [user tool-id]
-  (let [{:keys [name location version]} (get-tool user tool-id)]
+  (let [{:keys [name location version]} (get-tool user tool-id false)]
     (validate-tool-not-used tool-id)
     (log/warn user "deleting tool" tool-id name version "@" location))
   (delete-tool tool-id))
@@ -160,13 +168,13 @@
   (admin-update-tool user false tool)
   (perms-client/make-tool-public id)
   (tool-requests/complete-tool-request id (config/uid-domain) current-user)
-  (get-tool user id))
+  (get-tool user id false))
 
 (defn- validate-tool-for-tool-request
   "Ensures the given tool ID exists, the user has 'own' permission for that tool, the tool is not deprecated,
    and a tool request has not already been submitted for the tool."
   [user tool-id]
-  (let [image (-> (get-tool user tool-id) :container :image)]
+  (let [image (-> (get-tool user tool-id false) :container :image)]
     (permissions/check-tool-permissions user "own" [tool-id])
     (when (:deprecated image)
       (throw+ {:type  :clojure-commons.exception/bad-request-field
