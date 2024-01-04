@@ -12,12 +12,20 @@
             [apps.service.apps.de.limits :as limits]
             [apps.service.apps.jobs.util :as util]
             [apps.util.service :as service]
+            [apps.util.config :as config]
             [clojure-commons.exception-util :as cxu]))
+
+(defn- format-step-resource-requirements
+  [requirements step-number]
+  (merge {:max_cpu_cores (config/default-cpu-limit)
+          :memory_limit (config/default-memory-limit)
+          :step_number step-number}
+         requirements))
 
 (defn get-step-resource-requirements
   [{task-id :task_id step-number :step_number}]
   (let [requirements (amp/get-resource-requirements-for-task task-id)]
-    (assoc requirements :step_number step-number)))
+    (format-step-resource-requirements requirements step-number)))
 
 (defn- mapped-input-subselect
   [step-id]
