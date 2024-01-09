@@ -7,6 +7,7 @@
         [medley.core :only [remove-vals]])
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.containers :as c]
+            [apps.tools :as t]
             [apps.service.apps.de.jobs.params :as params]
             [apps.service.apps.jobs.util :as util]
             [clojure.string :as string]
@@ -90,6 +91,7 @@
    (if (c/tool-has-settings? tool-id)
      (assoc component :container (-> tool-id
                                      (c/tool-container-info :auth? true)
+                                     (t/format-container-settings true)
                                      (reconcile-container-requirements requirements)))
      component)
    :id))

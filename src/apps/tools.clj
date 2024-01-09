@@ -54,7 +54,7 @@
               :tool_request_status)
       remove-nil-vals))
 
-(defn- format-container-settings
+(defn format-container-settings
   [container-settings include-defaults]
   (if include-defaults
       (merge {:max_cpu_cores (config/default-cpu-limit)
