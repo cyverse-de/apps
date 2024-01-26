@@ -72,7 +72,7 @@
                      persistence/add-tool)]
      (containers/add-tool-container tool-id (restrict-private-tool-container type container))
      (perms-client/register-private-tool shortUsername tool-id)
-     (tools/get-tool shortUsername tool-id))))
+     (tools/get-tool shortUsername tool-id false))))
 
 (defn update-private-tool
   [user {:keys [type container time_limit_seconds] tool-id :id :as tool}]
