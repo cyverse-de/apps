@@ -51,7 +51,8 @@
             [test2junit "1.4.4"]
             [jonase/eastwood "1.3.0"]]
   :profiles {:dev {:plugins        [[lein-ring "0.12.5"]]
-                   :resource-paths ["conf/test"]}
+                   :resource-paths ["conf/test"]
+                   :jvm-opts       ["-Dotel.javaagent.enabled=false"]}
              :repl {:source-paths ["repl"]}
              :uberjar {:aot :all}}
   :repl-options {:timeout 120000}
