@@ -7,6 +7,7 @@
         [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.data-info :as data-info]
             [apps.metadata.params :as mp]
+            [apps.constants :as ac]
             [apps.persistence.app-metadata :as amp]
             [apps.service.apps.de.constants :as c]
             [apps.service.apps.de.limits :as limits]
@@ -16,16 +17,19 @@
             [clojure-commons.exception-util :as cxu]))
 
 (defn- format-step-resource-requirements
-  [requirements step-number]
-  (merge {:max_cpu_cores (config/default-cpu-limit)
-          :memory_limit (config/default-memory-limit)
-          :step_number step-number}
-         requirements))
+  [requirements step-number add-defaults?]
+  (if add-defaults?
+    (merge {:max_cpu_cores (config/default-cpu-limit)
+            :memory_limit (config/default-memory-limit)
+            :step_number step-number}
+           requirements)
+    (assoc requirements :step_number step-number)))
 
-(defn get-step-resource-requirements
-  [{task-id :task_id step-number :step_number}]
-  (let [requirements (amp/get-resource-requirements-for-task task-id)]
-    (format-step-resource-requirements requirements step-number)))
+(defn- get-step-resource-requirements
+  [app {task-id :task_id step-number :step_number}]
+  (let [requirements (amp/get-resource-requirements-for-task task-id)
+        add-defaults? (= (:overall_job_type app) ac/interactive-tool-type)]
+    (format-step-resource-requirements requirements step-number add-defaults?)))
 
 (defn- mapped-input-subselect
   [step-id]
@@ -119,7 +123,7 @@
     (-> (select-keys app [:id :name :description :disabled :deleted :version :version_id])
         (assoc :label name
                :versions (amp/list-app-versions id)
-               :requirements (map get-step-resource-requirements app-steps)
+               :requirements (map (partial get-step-resource-requirements app) app-steps)
                :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
                :app_type "DE"
                :system_id c/system-id
