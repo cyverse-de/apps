@@ -86,12 +86,12 @@
       (limit-container-min-requirement :min_cpu_cores :max_cpu_cores)))
 
 (defn- add-container-info
-  [{tool-id :id :as component} requirements]
+  [{tool-id :id tool-type :type :as component} requirements]
   (dissoc
    (if (c/tool-has-settings? tool-id)
      (assoc component :container (-> tool-id
                                      (c/tool-container-info :auth? true)
-                                     (t/format-container-settings true)
+                                     (t/format-container-settings (not= tool-type "executable"))
                                      (reconcile-container-requirements requirements)))
      component)
    :id))
