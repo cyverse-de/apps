@@ -11,7 +11,9 @@
   (if-not (ipg/user-source? (:source_id sharee))
     (failure-fn "Sharing HPC apps with a group is not supported")
     (try+
-     (.shareAppWithUser tapis (:id sharee) app-id level)
+     (if level
+       (.shareAppWithUser tapis (:id sharee) app-id level)
+       (.unshareAppWithUser tapis (:id sharee) app-id))
      (success-fn)
      (catch [:error_code ce/ERR_UNAVAILABLE] {:keys [reason]}
        (log/error (:throwable &throw-context) "Tapis app listing timed out")
