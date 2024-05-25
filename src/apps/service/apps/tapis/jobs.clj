@@ -188,7 +188,3 @@
   (try+
    (select-keys (.listJob tapis external_id) [:status :enddate])
    (catch [:status 404] _ nil)))
-
-(defn prepare-step-submission
-  [tapis job-id submission]
-  (prepare-submission tapis job-id submission))
