@@ -16,8 +16,7 @@
 
 (defn- build-callback-url
   [id]
-  (str (assoc (curl/url (config/tapis-callback-base) (str id))
-              :query "status=${JOB_STATUS}&external-id=${JOB_ID}&end-time=${JOB_END_TIME}")))
+  (str (curl/url (config/tapis-callback-base) (str id))))
 
 (defn- format-submission
   [_ job-id result-folder-path {:keys [config] :as submission}]
