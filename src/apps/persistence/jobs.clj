@@ -23,7 +23,7 @@
             [permissions-client.core :as pc]))
 
 (def de-job-type "DE")
-(def tapis-job-type "Agave")
+(def tapis-job-type "Tapis")
 (def interactive-job-type "Interactive")
 (def osg-job-type "OSG")
 
