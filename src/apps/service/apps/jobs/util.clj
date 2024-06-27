@@ -2,6 +2,7 @@
   (:use [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.data-info :as data-info]
             [apps.persistence.jobs :as jp]
+            [apps.persistence.app-metadata :as am]
             [apps.util.service :as service]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
@@ -51,8 +52,7 @@
    "FolderInput"       "collection"
    "MultiFileSelector" "many"})
 
-(def input-types
-  (set (keys input-multiplicities)))
+(def input-types am/param-ds-input-types)
 
 (def output-multiplicities
   {"FileOutput"      "single"
