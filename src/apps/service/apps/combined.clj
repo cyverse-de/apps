@@ -23,7 +23,7 @@
     jp/combined-client-name)
 
   (getJobTypes [_]
-    (mapcat #(.getJobTypes %) clients))
+    (conj (mapcat #(.getJobTypes %) clients) jp/agave-job-type))
 
   (listSystemIds [_]
     (mapcat #(.listSystemIds %) clients))
@@ -368,4 +368,5 @@
     (.hasAppPermission (util/get-apps-client clients system-id) username system-id app-id required-level))
 
   (supportsJobSharing [_ job-step]
-    (.supportsJobSharing (util/apps-client-for-job-step clients job-step) job-step)))
+    (and (not= (:job_type job-step) jp/agave-job-type)
+         (.supportsJobSharing (util/apps-client-for-job-step clients job-step) job-step))))
