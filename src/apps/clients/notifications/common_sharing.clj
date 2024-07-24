@@ -1,6 +1,6 @@
 (ns apps.clients.notifications.common-sharing
-  (:use [clostache.parser :only [render]])
-  (:require [apps.clients.iplant-groups :as ipg]))
+  (:require [apps.clients.iplant-groups :as ipg]
+            [apps.util.string :refer [render]]))
 
 (def grouping-threshold 10)
 

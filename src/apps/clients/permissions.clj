@@ -1,14 +1,14 @@
 (ns apps.clients.permissions
-  (:use [clojure-commons.error-codes :only [clj-http-error?]]
-        [clostache.parser :only [render]]
-        [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [try+]])
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.util.config :as config]
             [apps.util.service :as service]
+            [apps.util.string :refer [render]]
             [otel.otel :as otel]
             [clojure.tools.logging :as log]
-            [permissions-client.core :as pc]))
+            [clojure-commons.error-codes :refer [clj-http-error?]]
+            [kameleon.uuids :refer [uuidify]]
+            [permissions-client.core :as pc]
+            [slingshot.slingshot :refer [try+]]))
 
 (defn- client []
   (config/permissions-client))

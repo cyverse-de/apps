@@ -18,7 +18,6 @@
                  [clj-http "3.13.0"]
                  [com.cemerick/url "0.1.1" :exclusions [com.cemerick/clojurescript.test]]
                  [com.google.guava/guava "23.0"]
-                 [de.ubercode.clostache/clostache "1.4.0"]
                  [com.github.seancorfield/honeysql "2.6.1147"]
                  [medley "1.4.0"]
                  [metosin/compojure-api "1.1.14"]

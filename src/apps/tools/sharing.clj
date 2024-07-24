@@ -1,11 +1,11 @@
 (ns apps.tools.sharing
-  (:use [clostache.parser :only [render]]
-        [slingshot.slingshot :only [try+]])
   (:require [apps.clients.notifications :as cn]
             [apps.clients.permissions :as perms-client]
             [apps.persistence.tools :as tools-db]
             [apps.tools.permissions :as perms]
-            [clojure-commons.error-codes :as error-codes]))
+            [apps.util.string :refer [render]]
+            [clojure-commons.error-codes :as error-codes]
+            [slingshot.slingshot :refer [try+]]))
 
 (defn- get-tool-name
   [tool-id {tool-name :name}]

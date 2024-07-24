@@ -1,22 +1,21 @@
 (ns apps.service.apps.jobs.sharing
-  (:use [apps.service.apps-client :only [get-apps-client-for-username]]
-        [clojure-commons.core :only [remove-nil-values]]
-        [clostache.parser :only [render]]
-        [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.async-tasks :as async-tasks]
             [apps.clients.data-info :as data-info]
-            [apps.clients.iplant-groups :as ipg]
             [apps.clients.permissions :as perms-client]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.params :as job-params]
             [apps.service.apps.jobs.permissions :as job-permissions]
+            [apps.service.apps-client :refer [get-apps-client-for-username]]
             [apps.util.service :as service]
+            [apps.util.string :refer [render]]
             [otel.otel :as otel]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [clojure-commons.error-codes :as ce]))
+            [clojure-commons.core :refer [remove-nil-values]]
+            [clojure-commons.error-codes :as ce]
+            [kameleon.uuids :refer [uuidify]]
+            [slingshot.slingshot :refer [try+ throw+]]))
 
 (def default-failure-reason "unexpected error")
 
