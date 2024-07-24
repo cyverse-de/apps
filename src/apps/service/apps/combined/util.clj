@@ -16,7 +16,7 @@
   "Expects results to be a list of maps in a format like {:total int, :apps []}"
   [params results]
   (let [params      (apply-default-search-params params)
-        maybe-deref (fn [r] (if (future? r) @r r))
+        maybe-deref (fn [r] (cond (nil? r) nil (future? r) @r :else r))
         results     (remove nil? (map maybe-deref results))]
     (-> {:total (apply + (map :total results))
          :apps  (mapcat :apps results)}

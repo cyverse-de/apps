@@ -27,8 +27,7 @@
             [apps.tools.permissions :as tool-perms]
             [cemerick.url :as curl]
             [clojure.set :as set]
-            [clojure.string :as string]
-            [otel.otel :as otel]))
+            [clojure.string :as string]))
 
 (def my-public-apps-id  (uuidify "00000000-0000-0000-0000-000000000000"))
 (def shared-with-me-id  (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))
@@ -41,40 +40,36 @@
 
 (defn- augment-listing-params
   ([params short-username perms]
-   (otel/with-span [s ["augment-listing-params [inner]"]]
-     (let [public (perms-client/get-public-app-ids)]
-       (assoc params
-              :app-ids        (set (keys @perms))
-              :public-app-ids public))))
+   (let [public (perms-client/get-public-app-ids)]
+     (assoc params
+            :app-ids        (set (keys @perms))
+            :public-app-ids public)))
   ([params short-username]
-   (otel/with-span [s ["augment-listing-params"]]
-     (augment-listing-params params short-username (future (perms-client/load-app-permissions short-username))))))
+   (augment-listing-params params short-username (future (perms-client/load-app-permissions short-username)))))
 
 (defn- app-search-candidates
   [admin? public-app-ids accessible-app-ids app-subset]
   (if admin?
-    (otel/with-span [s ["app-search-candidates [admin]"]]
-      (case app-subset
-        :all     (get-all-app-ids)
-        :private (set/difference (get-all-app-ids) public-app-ids)
-        public-app-ids))
+    (case app-subset
+      :all     (get-all-app-ids)
+      :private (set/difference (get-all-app-ids) public-app-ids)
+      public-app-ids)
     accessible-app-ids))
 
 (defn- augment-search-params
   [search_term {:keys [app-ids public-app-ids app-subset] :as params} short-username admin?]
-  (otel/with-span [s ["augment-search-params"]]
-    (let [category-attrs (set (workspace-metadata-category-attrs))
-          app-ids        (app-search-candidates admin? public-app-ids app-ids app-subset)]
-      (-> params
-          (assoc :app-ids             app-ids
-                 :pre-matched-app-ids (when-not (some empty? [search_term app-ids category-attrs])
-                                        (metadata-client/filter-targets-by-ontology-search
-                                         short-username
-                                         category-attrs
-                                         search_term
-                                         app-ids
-                                         :validate false)))
-          remove-nil-vals))))
+  (let [category-attrs (set (workspace-metadata-category-attrs))
+        app-ids        (app-search-candidates admin? public-app-ids app-ids app-subset)]
+    (-> params
+        (assoc :app-ids             app-ids
+               :pre-matched-app-ids (when-not (some empty? [search_term app-ids category-attrs])
+                                      (metadata-client/filter-targets-by-ontology-search
+                                       short-username
+                                       category-attrs
+                                       search_term
+                                       app-ids
+                                       :validate false)))
+        remove-nil-vals)))
 
 (defn list-hierarchies
   [{:keys [username]}]
@@ -100,8 +95,7 @@
 (defn- app-ids->certified-ids-set
   "Filters the given list of app-ids into a set containing the ids of apps marked as `certified`"
   [username app-ids]
-  (otel/with-span [s ["app-ids->certified-ids-set"]]
-    (set (metadata-client/filter-by-avus username app-ids [(dissoc c/certified-avu :unit)]))))
+  (set (metadata-client/filter-by-avus username app-ids [(dissoc c/certified-avu :unit)])))
 
 (defn format-trash-category
   "Formats the virtual group for the admin's deleted and orphaned apps category."
@@ -159,11 +153,10 @@
 
 (defn list-featured-apps
   [_ workspace params]
-  (otel/with-span [s ["list-featured-apps"]]
-    (list-apps-by-id workspace
-                     (workspace-favorites-app-category-index)
-                     (:app-ids params)
-                     params)))
+  (list-apps-by-id workspace
+                   (workspace-favorites-app-category-index)
+                   (:app-ids params)
+                   params))
 
 (def ^:private virtual-group-fns
   {my-public-apps-id  {:format-group   format-my-public-apps-group
@@ -334,41 +327,38 @@
 (defn- app-ids->beta-ids-set
   "Filters the given list of app-ids into a set containing the ids of apps marked as `beta`"
   [username app-ids]
-  (otel/with-span [s ["app-ids->beta-ids-set"]]
-    (let [beta-avu {:attr (workspace-metadata-beta-attr-iri)
-                    :value (workspace-metadata-beta-value)}]
-      (set (metadata-client/filter-by-avus username app-ids [beta-avu])))))
+  (let [beta-avu {:attr (workspace-metadata-beta-attr-iri)
+                  :value (workspace-metadata-beta-value)}]
+    (set (metadata-client/filter-by-avus username app-ids [beta-avu]))))
 
 (defn- get-app-listing-formatter
   "Returns a function that can be used to format the listing for a single app. Using a higher order function for this
    makes it easier to consolidate repetitive tasks without degrating performance."
   [{username :shortUsername :as user} admin? perms app-ids public-app-ids]
-  (otel/with-span [s ["get-app-listing-formatter"]]
-    (let [beta-ids-set        (future (app-ids->beta-ids-set username app-ids))
-          certified-ids-set   (future (app-ids->certified-ids-set username app-ids))
-          limit-check-results (future (when-not (anonymous? user) (limits/load-limit-check-results user)))]
-      (fn [{:keys [id] :as app}]
-        (-> (assoc app :can_run (app-can-run? app))
-            (dissoc :tool_count :task_count :external_app_count :lower_case_name :job_types)
-            (format-app-listing-job-stats admin?)
-            (format-app-ratings)
-            (format-app-pipeline-eligibility)
-            (format-app-permissions perms)
-            (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
-            (assoc :beta (contains? @beta-ids-set id))
-            (assoc :isBlessed (contains? @certified-ids-set id))
-            (assoc :is_public (contains? public-app-ids id))
-            (assoc :limitChecks (when-not (anonymous? user)
-                                  (limits/format-app-limit-check-results @limit-check-results app)))
-            (remove-nil-vals))))))
+  (let [beta-ids-set        (future (app-ids->beta-ids-set username app-ids))
+        certified-ids-set   (future (app-ids->certified-ids-set username app-ids))
+        limit-check-results (future (when-not (anonymous? user) (limits/load-limit-check-results user)))]
+    (fn [{:keys [id] :as app}]
+      (-> (assoc app :can_run (app-can-run? app))
+          (dissoc :tool_count :task_count :external_app_count :lower_case_name :job_types)
+          (format-app-listing-job-stats admin?)
+          (format-app-ratings)
+          (format-app-pipeline-eligibility)
+          (format-app-permissions perms)
+          (assoc :can_favor true :can_rate true :app_type "DE" :system_id c/system-id)
+          (assoc :beta (contains? @beta-ids-set id))
+          (assoc :isBlessed (contains? @certified-ids-set id))
+          (assoc :is_public (contains? public-app-ids id))
+          (assoc :limitChecks (when-not (anonymous? user)
+                                (limits/format-app-limit-check-results @limit-check-results app)))
+          (remove-nil-vals)))))
 
 (defn- filter-app-ids-by-community
   "Filters the given list of app-ids into a set containing the ids of apps tagged with the given community-id"
   [username community-id app-ids]
-  (otel/with-span [s ["filter-app-ids-by-community"]]
-    (let [community-avu {:attr  (workspace-metadata-communities-attr)
-                         :value community-id}]
-      (set (metadata-client/filter-by-avus username app-ids [community-avu])))))
+  (let [community-avu {:attr  (workspace-metadata-communities-attr)
+                       :value community-id}]
+    (set (metadata-client/filter-by-avus username app-ids [community-avu]))))
 
 (defn- app-listing-by-id
   [{:keys [username] :as user} params perms app-ids admin?]
@@ -427,23 +417,21 @@
 
 (defn- augment-virtual-group-listing-params
   [user group-id params]
-  (otel/with-span [s ["augment-virtual-group-listing-params"]]
-    (if (= group-id featured-apps-id)
-      (let [blessed-ids (app-ids->certified-ids-set (:username user) (:app-ids params))]
-        (assoc params :app-ids blessed-ids))
-      params)))
+  (if (= group-id featured-apps-id)
+    (let [blessed-ids (app-ids->certified-ids-set (:username user) (:app-ids params))]
+      (assoc params :app-ids blessed-ids))
+    params))
 
 (defn- list-apps-in-virtual-group
   "Formats a listing for a virtual group."
   [user workspace group-id perms {:keys [public-app-ids] :as params}]
-  (otel/with-span [s ["list-apps-in-virtual-group"]]
-    (when-let [format-fns (virtual-group-fns group-id)]
-      (let [augmented-params (augment-virtual-group-listing-params user group-id params)
-            app-listing ((:format-listing format-fns) user @workspace augmented-params)
-            format-app  (get-app-listing-formatter user false @perms (map :id app-listing) public-app-ids)]
-        (-> ((:format-group format-fns) user @workspace augmented-params)
-            (assoc :apps (map format-app app-listing))
-            (realize-group))))))
+  (when-let [format-fns (virtual-group-fns group-id)]
+    (let [augmented-params (augment-virtual-group-listing-params user group-id params)
+          app-listing ((:format-listing format-fns) user @workspace augmented-params)
+          format-app  (get-app-listing-formatter user false @perms (map :id app-listing) public-app-ids)]
+      (-> ((:format-group format-fns) user @workspace augmented-params)
+          (assoc :apps (map format-app app-listing))
+          (realize-group)))))
 
 (defn- count-apps-in-group
   "Counts the number of apps in an app group, including virtual app groups that may be included."
@@ -463,29 +451,27 @@
 (defn- list-apps-in-real-group
   "This service lists all of the apps in a real app group and all of its descendents."
   [user workspace category-id perms {:keys [public-app-ids] :as params}]
-  (otel/with-span [s ["list-apps-in-real-group"]]
-    (let [app_group     (->> (get-app-category category-id)
-                              (assert-not-nil ["category_id" category-id])
-                              remove-nil-vals)
-          total         (future (count-apps-in-group user @workspace app_group params))
-          apps_in_group (get-apps-in-group user @workspace app_group params)
-          format-app    (get-app-listing-formatter user false @perms (map :id apps_in_group) public-app-ids)
-          apps_in_group (map format-app apps_in_group)]
-      (assoc app_group
-             :system_id de-system-id
-             :total     @total
-             :apps      apps_in_group))))
+  (let [app_group     (->> (get-app-category category-id)
+                           (assert-not-nil ["category_id" category-id])
+                           remove-nil-vals)
+        total         (future (count-apps-in-group user @workspace app_group params))
+        apps_in_group (get-apps-in-group user @workspace app_group params)
+        format-app    (get-app-listing-formatter user false @perms (map :id apps_in_group) public-app-ids)
+        apps_in_group (map format-app apps_in_group)]
+    (assoc app_group
+           :system_id de-system-id
+           :total     @total
+           :apps      apps_in_group)))
 
 (defn list-apps-in-group
   "This service lists all of the apps in an app group and all of its
    descendents."
   [user app-group-id params]
-  (otel/with-span [s ["list-apps-in-group"]]
-    (let [perms     (future (perms-client/load-app-permissions (:shortUsername user)))
-          workspace (future (get-optional-workspace (:username user)))
-          params    (fix-sort-params (augment-listing-params params (:shortUsername user) perms))]
-      (or (list-apps-in-virtual-group user workspace app-group-id perms params)
-          (list-apps-in-real-group user workspace app-group-id perms params)))))
+  (let [perms     (future (perms-client/load-app-permissions (:shortUsername user)))
+        workspace (future (get-optional-workspace (:username user)))
+        params    (fix-sort-params (augment-listing-params params (:shortUsername user) perms))]
+    (or (list-apps-in-virtual-group user workspace app-group-id perms params)
+        (list-apps-in-real-group user workspace app-group-id perms params))))
 
 (defn has-category
   "Determines whether or not a category with the given ID exists."

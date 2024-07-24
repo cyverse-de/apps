@@ -3,8 +3,7 @@
         [kameleon.util :only [query-spy]]
         [kameleon.util.search :only [format-query-wildcards]]
         [korma.core :exclude [update]])
-  (:require [apps.constants :as c]
-            [otel.otel :as otel]))
+  (:require [apps.constants :as c]))
 
 (defn- get-app-category-subselect
   []
@@ -104,10 +103,9 @@
 (defn find-matching-app-ids
   "Finds the identifiers of apps that match a set of search parameters."
   [search-term query-opts]
-  (otel/with-span [s ["find-matching-app-ids" {:attributes {"apps.search-term" search-term}}]]
-    (as-> (get-app-search-base-query search-term query-opts) q
-      (modifier q "DISTINCT")
-      (fields q :a.id)
-      (query-spy "find-matching-app-ids::search_query:" q)
-      (select q)
-      (map :id q))))
+  (as-> (get-app-search-base-query search-term query-opts) q
+    (modifier q "DISTINCT")
+    (fields q :a.id)
+    (query-spy "find-matching-app-ids::search_query:" q)
+    (select q)
+    (map :id q)))

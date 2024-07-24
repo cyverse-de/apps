@@ -32,7 +32,6 @@
                  [org.cyverse/common-cfg "2.8.3"]
                  [org.cyverse/common-swagger-api "3.4.5"]
                  [org.cyverse/cyverse-groups-client "0.1.9-SNAPSHOT"]
-                 [org.cyverse/otel "0.2.6"]
                  [org.cyverse/permissions-client "2.8.4-SNAPSHOT"]
                  [org.cyverse/service-logging "2.8.4"]
                  [org.flatland/ordered "1.15.12"]
@@ -48,8 +47,7 @@
             [test2junit "1.4.4"]
             [jonase/eastwood "1.4.3"]]
   :profiles {:dev {:plugins        [[lein-ring "0.12.6"]]
-                   :resource-paths ["conf/test"]
-                   :jvm-opts       ["-Dotel.javaagent.enabled=false"]}
+                   :resource-paths ["conf/test"]}
              :repl {:source-paths ["repl"]}
              :uberjar {:aot :all}}
   :repl-options {:timeout 120000}
@@ -58,4 +56,4 @@
          :init apps.core/load-config-from-file
          :port 31323}
   :uberjar-exclusions [#"(?i)META-INF/[^/]*[.](SF|DSA|RSA)"]
-  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml"  "-javaagent:./opentelemetry-javaagent.jar" "-Dotel.resource.attributes=service.name=apps"])
+  :jvm-opts ["-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml"])

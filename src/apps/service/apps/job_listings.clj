@@ -9,7 +9,6 @@
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.service.util :as util]
             [apps.util.config :as config]
-            [otel.otel :as otel]
             [kameleon.db :as db]))
 
 (defn- job-timestamp
@@ -99,20 +98,19 @@
 
 (defn list-jobs
   [apps-client {:keys [username] :as user} {:keys [sort-field] :as params}]
-  (otel/with-span [s ["apps.service.apps.job-listings/list-jobs"]]
-    (let [perms            (future (perms-client/load-analysis-permissions (:shortUsername user)))
-          group-ids        (future (->> (ipg/lookup-subject-groups (:shortUsername user)) :groups (mapv :id)))
-          subject-ids      (future (conj @group-ids (:shortUsername user)))
-          default-sort-dir (if (nil? sort-field) :desc :asc)
-          search-params    (util/default-search-params params :startdate default-sort-dir)
-          types            (.getJobTypes apps-client)
-          jobs             (future (jp/hsql-list-jobs-of-types username search-params types @subject-ids))
-          rep-steps        (future (group-by :job_id (jp/list-representative-job-steps (mapv :id @jobs))))
-          status-count     (future (comment (count-job-statuses user params types @subject-ids)))]
-      {:analyses     (mapv (partial format-job apps-client @perms @rep-steps) @jobs)
-       :timestamp    (str (System/currentTimeMillis))
-       :status-count @status-count
-       :total        (count-jobs user params types @subject-ids)})))
+  (let [perms            (future (perms-client/load-analysis-permissions (:shortUsername user)))
+        group-ids        (future (->> (ipg/lookup-subject-groups (:shortUsername user)) :groups (mapv :id)))
+        subject-ids      (future (conj @group-ids (:shortUsername user)))
+        default-sort-dir (if (nil? sort-field) :desc :asc)
+        search-params    (util/default-search-params params :startdate default-sort-dir)
+        types            (.getJobTypes apps-client)
+        jobs             (future (jp/hsql-list-jobs-of-types username search-params types @subject-ids))
+        rep-steps        (future (group-by :job_id (jp/list-representative-job-steps (mapv :id @jobs))))
+        status-count     (future (comment (count-job-statuses user params types @subject-ids)))]
+    {:analyses     (mapv (partial format-job apps-client @perms @rep-steps) @jobs)
+     :timestamp    (str (System/currentTimeMillis))
+     :status-count @status-count
+     :total        (count-jobs user params types @subject-ids)}))
 
 (defn list-job-stats
   [apps-client user params]

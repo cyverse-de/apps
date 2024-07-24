@@ -1,6 +1,5 @@
 pom.xml
 *.jar
-!opentelemetry-javaagent.jar
 /lib/
 /classes/
 /bin

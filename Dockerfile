@@ -29,7 +29,7 @@ RUN lein do clean, uberjar && \
     lein clean && \
     rm -r ~/.m2/repository
 
-ENTRYPOINT ["apps", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-javaagent:/usr/src/app/opentelemetry-javaagent.jar", "-Dotel.resource.attributes=service.name=apps", "-cp", ".:apps-standalone.jar:/", "apps.core"]
+ENTRYPOINT ["apps", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-cp", ".:apps-standalone.jar:/", "apps.core"]
 
 ARG git_commit=unknown
 ARG version=unknown
