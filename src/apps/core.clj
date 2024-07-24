@@ -6,7 +6,6 @@
             [common-cli.core :as ccli]
             [me.raynes.fs :as fs]
             [clj-http.client :as http]
-            [apps.amqp :as amqp]
             [apps.routes :as routes]
             [apps.tasks :as tasks]
             [apps.util.config :as config]

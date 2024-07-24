@@ -35,7 +35,6 @@
                  [org.cyverse/permissions-client "2.8.4-SNAPSHOT"]
                  [org.cyverse/service-logging "2.8.4"]
                  [org.flatland/ordered "1.15.12"]
-                 [com.novemberain/langohr "3.7.0"]
                  [me.raynes/fs "1.4.6"]
                  [mvxcvi/clj-pgp "1.1.1"]
                  [pandect "1.0.2"]
