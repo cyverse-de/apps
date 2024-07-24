@@ -4,8 +4,7 @@
         [common-swagger-api.schema.apps.admin.apps :only [AdminAppListingJobStatsKeys]])
   (:require [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
-            [kameleon.uuids :as uuids])
-  (:import [java.util UUID]))
+            [kameleon.uuids :as uuids]))
 
 (defn- app-sorter-keyfn
   [sort-field]
@@ -54,18 +53,18 @@
       (update-in res [:apps] (partial take limit))
       res)))
 
-(defn uuid?
+(defn valid-uuid?
   [s]
-  (or (instance? UUID s)
+  (or (uuid? s)
       (re-find #"\A\p{XDigit}{8}(?:-\p{XDigit}{4}){3}-\p{XDigit}{12}\z" s)))
 
 (defn extract-uuids
   [ids]
-  (seq (map uuids/uuidify (filter uuid? ids))))
+  (seq (map uuids/uuidify (filter valid-uuid? ids))))
 
 (defn uuidify
   [id]
-  (if-not (uuid? id)
+  (if-not (valid-uuid? id)
     (cxu/bad-request (str "'" id "' is not a UUID"))
     (uuids/uuidify id)))
 

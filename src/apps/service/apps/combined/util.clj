@@ -1,5 +1,5 @@
 (ns apps.service.apps.combined.util
-  (:use [apps.service.util :only [sort-apps apply-offset apply-limit uuid?]]
+  (:use [apps.service.util :only [sort-apps apply-offset apply-limit valid-uuid?]]
         [apps.service.apps.util :only [supports-job-type?]]
         [slingshot.slingshot :only [throw+]])
   (:require [apps.persistence.app-metadata :as ap]
