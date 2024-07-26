@@ -11,10 +11,9 @@
   current-user nil)
 
 (defn append-username-suffix [username]
-  (let [suffix (str "@" (uid-domain))]
-    (if (string/ends-with? username suffix)
-      username
-      (str username suffix))))
+  (let [suffix (str "@" (uid-domain))
+        unsuffixed (string/replace username #"@.*$" "")]
+    (str unsuffixed suffix)))
 
 (defn user-from-attributes
   [user-attributes]

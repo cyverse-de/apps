@@ -4,7 +4,7 @@
         [apps.persistence.users :only [get-user-id]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
-            [apps.util.config :as config]
+            [apps.user :refer [append-username-suffix]]
             [korma.core :as sql]))
 
 (defn- get-webhook-topics [webhook-id]
@@ -54,7 +54,7 @@
       (add-topic-subscription id topic_name))))
 
 (defn add-webhooks [user {:keys [webhooks]}]
-  (let [user_id (get-user-id (str user "@" (config/uid-domain)))]
+  (let [user_id (get-user-id (append-username-suffix user))]
     (transaction
      (delete :webhooks (where {:user_id user_id}))
      (doseq [{:keys [url type topics]} webhooks]
