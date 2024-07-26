@@ -142,7 +142,7 @@
          status      (:status update prev-status)
          status-id   (:id (load-status-code status))
          username    (required-field update :username)
-         username    (if (re-find #"@" username) username (str username "@" uid-domain))
+         username    (str (string/replace username #"@.*$" "") "@" uid-domain)
          user-id     (users/get-user-id username)
          comments    (:comments update)
          comments    (when-not (string/blank? comments) comments)]
