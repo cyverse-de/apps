@@ -58,10 +58,6 @@
   (or (uuid? s)
       (re-find #"\A\p{XDigit}{8}(?:-\p{XDigit}{4}){3}-\p{XDigit}{12}\z" s)))
 
-(defn extract-uuids
-  [ids]
-  (seq (map uuids/uuidify (filter valid-uuid? ids))))
-
 (defn uuidify
   [id]
   (if-not (valid-uuid? id)
