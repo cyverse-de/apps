@@ -4,7 +4,7 @@
   (:require [apps.persistence.app-metadata :as amp]
             [apps.persistence.tools :as tools-db]
             [apps.service.apps.de.validation :as app-validation]
-            [apps.util.config :as cfg]
+            [apps.users :refer [append-username-suffix]]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]))
 
@@ -45,7 +45,7 @@
 (def ^:private used-by-apps (partial integration-data-record-used "apps"))
 
 (defn add-integration-data [_ {:keys [username name email]}]
-  (let [qualified-username (when username (str username "@" (cfg/uid-domain)))]
+  (let [qualified-username (when username (append-username-suffix username))]
     (cond
       (and username (amp/get-integration-data-by-username qualified-username))
       (duplicate-username username)
