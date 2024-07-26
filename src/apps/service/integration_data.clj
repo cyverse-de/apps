@@ -4,7 +4,7 @@
   (:require [apps.persistence.app-metadata :as amp]
             [apps.persistence.tools :as tools-db]
             [apps.service.apps.de.validation :as app-validation]
-            [apps.users :refer [append-username-suffix]]
+            [apps.user :refer [append-username-suffix]]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]))
 

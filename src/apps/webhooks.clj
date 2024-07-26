@@ -4,7 +4,7 @@
         [apps.persistence.users :only [get-user-id]])
   (:require [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
-            [apps.users :refer [append-username-suffix]]
+            [apps.user :refer [append-username-suffix]]
             [korma.core :as sql]))
 
 (defn- get-webhook-topics [webhook-id]
