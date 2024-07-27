@@ -1,7 +1,6 @@
 (ns apps.service.apps.combined.util
-  (:use [apps.service.util :only [sort-apps apply-offset apply-limit uuid?]]
-        [apps.service.apps.util :only [supports-job-type?]]
-        [slingshot.slingshot :only [throw+]])
+  (:use [apps.service.util :only [sort-apps apply-offset apply-limit]]
+        [apps.service.apps.util :only [supports-job-type?]])
   (:require [apps.persistence.app-metadata :as ap]
             [apps.persistence.jobs :as jp]
             [clojure-commons.exception-util :as cxu]))
@@ -16,7 +15,7 @@
   "Expects results to be a list of maps in a format like {:total int, :apps []}"
   [params results]
   (let [params      (apply-default-search-params params)
-        maybe-deref (fn [r] (if (future? r) @r r))
+        maybe-deref (fn [r] (cond (nil? r) nil (future? r) @r :else r))
         results     (remove nil? (map maybe-deref results))]
     (-> {:total (apply + (map :total results))
          :apps  (mapcat :apps results)}

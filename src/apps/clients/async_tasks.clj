@@ -2,7 +2,6 @@
   (:require [apps.util.config :as config]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [otel.otel :as otel]
             [async-tasks-client.core :as async-tasks-client]))
 
 (defn get-by-id
@@ -35,12 +34,8 @@
 
 (defn run-async-thread
   [async-task-id thread-function prefix]
-  (otel/with-span [outer-span ["run-async-thread" {:kind :producer :attributes {"async-task-id" (str async-task-id)}}]]
-    (let [^Runnable task-thread (fn []
-                                  (with-open [_ (otel/span-scope outer-span)]
-                                    (otel/with-span [s ["async thread" {:kind :consumer :attributes {"async-task-id" (str async-task-id)}}]]
-                                      (thread-function async-task-id))))]
-      (.start (Thread. task-thread (str prefix "-" (string/replace async-task-id #".*/tasks/" "")))))
+  (let [^Runnable task-thread (fn [] (thread-function async-task-id))]
+    (.start (Thread. task-thread (str prefix "-" (string/replace async-task-id #".*/tasks/" ""))))
     async-task-id))
 
 (defn new-task

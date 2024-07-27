@@ -1,6 +1,6 @@
 (ns apps.service.apps.agave.listings
   (:use [apps.service.apps.util :only [to-qualified-app-id]]
-        [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats uuid?]]
+        [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats valid-uuid?]]
         [apps.util.conversions :only [remove-nil-vals]]
         [slingshot.slingshot :only [try+]])
   (:require [apps.clients.iplant-groups :as ipg]
@@ -165,6 +165,6 @@
 
 (defn get-param-definitions
   [agave app-id version-id]
-  (if (and version-id (uuid? app-id))
+  (if (and version-id (valid-uuid? app-id))
     (load-agave-pipeline-params agave version-id)
     (load-agave-app-params agave app-id)))

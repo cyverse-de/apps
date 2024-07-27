@@ -6,8 +6,6 @@
             [common-cli.core :as ccli]
             [me.raynes.fs :as fs]
             [clj-http.client :as http]
-            [apps.amqp :as amqp]
-            [apps.events :as events]
             [apps.routes :as routes]
             [apps.tasks :as tasks]
             [apps.util.config :as config]
@@ -57,13 +55,6 @@
    (config/load-config-from-file cfg-path)
    (init-service)))
 
-(defn listen-for-events
-  []
-  (amqp/connect
-   (events/exchange-config)
-   (events/queue-config)
-   {"events.apps.ping" events/ping-handler}))
-
 (defn cli-options
   []
   [["-c" "--config PATH" "Path to the config file"
@@ -87,6 +78,5 @@
         (ccli/exit 1 "The config file is not readable."))
       (load-config-from-file (:config options))
       (tasks/set-logging-context! config/svc-info)
-      (.start (Thread. listen-for-events))
       (http/with-connection-pool {:timeout 5 :threads 10 :insecure? false :default-per-route 10}
         (run-jetty)))))

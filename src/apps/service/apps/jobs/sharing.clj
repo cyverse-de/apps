@@ -1,22 +1,20 @@
 (ns apps.service.apps.jobs.sharing
-  (:use [apps.service.apps-client :only [get-apps-client-for-username]]
-        [clojure-commons.core :only [remove-nil-values]]
-        [clostache.parser :only [render]]
-        [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [try+ throw+]])
   (:require [apps.clients.async-tasks :as async-tasks]
             [apps.clients.data-info :as data-info]
-            [apps.clients.iplant-groups :as ipg]
             [apps.clients.permissions :as perms-client]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs.params :as job-params]
             [apps.service.apps.jobs.permissions :as job-permissions]
+            [apps.service.apps-client :refer [get-apps-client-for-username]]
             [apps.util.service :as service]
-            [otel.otel :as otel]
+            [apps.util.string :refer [render]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [clojure-commons.error-codes :as ce]))
+            [clojure-commons.core :refer [remove-nil-values]]
+            [clojure-commons.error-codes :as ce]
+            [kameleon.uuids :refer [uuidify]]
+            [slingshot.slingshot :refer [try+ throw+]]))
 
 (def default-failure-reason "unexpected error")
 
@@ -109,11 +107,10 @@
 
 (defn- share-app-for-job
   [apps-client sharer sharee job-id {system-id :system_id app-id :app_id}]
-  (otel/with-span [s ["share-app-for-job"]]
-    (when-not (.hasAppPermission apps-client sharee system-id app-id "read")
-      (let [response (.shareAppWithSubject apps-client false {} sharee system-id app-id "read")]
-        (when-not (:success response)
-          (get-in response [:error :reason] "unable to share app"))))))
+  (when-not (.hasAppPermission apps-client sharee system-id app-id "read")
+    (let [response (.shareAppWithSubject apps-client false {} sharee system-id app-id "read")]
+      (when-not (:success response)
+        (get-in response [:error :reason] "unable to share app")))))
 
 (defn- get-user-from-subject
   [subject]
@@ -142,8 +139,7 @@
 
 (defn- process-child-jobs
   [f job-id]
-  (otel/with-span [s ["process-child-jobs"]]
-    (doall (remove nil? (mapcat f (jp/list-child-jobs job-id))))))
+  (doall (remove nil? (mapcat f (jp/list-child-jobs job-id)))))
 
 (defn- list-job-inputs
   [apps-client {system-id :system_id app-id :app_id app-version-id :app_version_id :as job}]
@@ -155,8 +151,7 @@
 
 (defn- process-job-inputs
   [f apps-client job]
-  (otel/with-span [s ["process-job-inputs"]]
-    (doall (remove nil? (map f (list-job-inputs apps-client job))))))
+  (doall (remove nil? (map f (list-job-inputs apps-client job)))))
 
 (defn- share-analysis
   [job-id sharee level]
@@ -170,37 +165,35 @@
 
 (defn- share-job
   [update-fn apps-client sharer sharee {job-id :analysis_id level :permission}]
-  (otel/with-span [s ["share-job"]]
-    (let [job-id (uuidify job-id)
-          job    (jp/get-job-by-id job-id)]
-      (try+
-       (share-analysis job-id sharee level)
+  (let [job-id (uuidify job-id)
+        job    (jp/get-job-by-id job-id)]
+    (try+
+     (share-analysis job-id sharee level)
 
-       (let [child-input-share-errs (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)
-             input-share-errs       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
-             output-share-err-msg   (share-output-folder sharer sharee job)
-             app-share-err-msg      (share-app-for-job apps-client sharer sharee job-id job)]
-         (update-fn (format "shared job ID %s with %s" job-id sharee))
-         (job-sharing-success job-id
-                              job
-                              level
-                              (concat input-share-errs child-input-share-errs)
-                              output-share-err-msg
-                              app-share-err-msg))
-       (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
-         (update-fn (format "failed to share job ID %s with %s: %s" job-id sharee failure-reason))
-         (job-sharing-failure job-id job level failure-reason))
-       (catch Object _
-         (update-fn (format "failed to share job ID %s with %s: %s" job-id sharee (str (:throwable &throw-context))))
-         (job-sharing-failure job-id job level))))))
+     (let [child-input-share-errs (process-child-jobs (partial share-child-job apps-client sharer sharee level) job-id)
+           input-share-errs       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
+           output-share-err-msg   (share-output-folder sharer sharee job)
+           app-share-err-msg      (share-app-for-job apps-client sharer sharee job-id job)]
+       (update-fn (format "shared job ID %s with %s" job-id sharee))
+       (job-sharing-success job-id
+                            job
+                            level
+                            (concat input-share-errs child-input-share-errs)
+                            output-share-err-msg
+                            app-share-err-msg))
+     (catch [:type ::job-sharing-failure] {:keys [failure-reason]}
+       (update-fn (format "failed to share job ID %s with %s: %s" job-id sharee failure-reason))
+       (job-sharing-failure job-id job level failure-reason))
+     (catch Object _
+       (update-fn (format "failed to share job ID %s with %s: %s" job-id sharee (str (:throwable &throw-context))))
+       (job-sharing-failure job-id job level)))))
 
 (defn- share-jobs-with-user
   [update-fn apps-client sharer {sharee :subject :keys [analyses]}]
-  (otel/with-span [s ["share-jobs-with-user"]]
-    (let [responses (mapv (partial share-job update-fn apps-client sharer sharee) analyses)]
-      (cn/send-analysis-sharing-notifications (:shortUsername sharer) sharee responses)
-      {:subject  sharee
-       :analyses responses})))
+  (let [responses (mapv (partial share-job update-fn apps-client sharer sharee) analyses)]
+    (cn/send-analysis-sharing-notifications (:shortUsername sharer) sharee responses)
+    {:subject  sharee
+     :analyses responses}))
 
 (defn- share-jobs-thread
   [async-task-id]
@@ -219,11 +212,10 @@
 
 (defn share-jobs
   [apps-client {username :shortUsername} sharing-requests]
-  (otel/with-span [s ["share-jobs"]]
-    (-> (async-tasks/new-task "analysis-sharing" username sharing-requests)
-        (async-tasks/run-async-thread share-jobs-thread "analysis-sharing")
-        (string/replace #".*/tasks/" "")
-        uuidify)))
+  (-> (async-tasks/new-task "analysis-sharing" username sharing-requests)
+      (async-tasks/run-async-thread share-jobs-thread "analysis-sharing")
+      (string/replace #".*/tasks/" "")
+      uuidify))
 
 (defn- job-sharing-validation-response
   [job-id job level & [failure-reason]]
@@ -334,11 +326,10 @@
 
 (defn unshare-jobs
   [apps-client {username :shortUsername} sharing-requests]
-  (otel/with-span [s ["unshare-jobs"]]
-    (-> (async-tasks/new-task "analysis-unsharing" username sharing-requests)
-        (async-tasks/run-async-thread unshare-jobs-thread "analysis-unsharing")
-        (string/replace #".*/tasks/" "")
-        uuidify)))
+  (-> (async-tasks/new-task "analysis-unsharing" username sharing-requests)
+      (async-tasks/run-async-thread unshare-jobs-thread "analysis-unsharing")
+      (string/replace #".*/tasks/" "")
+      uuidify))
 
 (defn- job-unsharing-validation-response
   [job-id job & [failure-reason]]

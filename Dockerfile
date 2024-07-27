@@ -1,10 +1,10 @@
-FROM clojure:openjdk-17-lein-alpine
+FROM clojure:temurin-22-lein-jammy
 
 WORKDIR /usr/src/app
 
-RUN apk upgrade apk-tools && \
-    apk upgrade && \
-    apk add --no-cache git
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
 CMD ["--help"]
 
@@ -14,7 +14,7 @@ RUN mkdir -p /etc/iplant/de/crypto && \
     touch /etc/iplant/de/crypto/secring.gpg && \
     touch /etc/iplant/de/crypto/trustdb.gpg
 
-RUN ln -s "/opt/openjdk-17/bin/java" "/bin/apps"
+RUN ln -s "/opt/java/openjdk/bin/java" "/bin/apps"
 
 ENV OTEL_TRACES_EXPORTER none
 
@@ -29,7 +29,7 @@ RUN lein do clean, uberjar && \
     lein clean && \
     rm -r ~/.m2/repository
 
-ENTRYPOINT ["apps", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-javaagent:/usr/src/app/opentelemetry-javaagent.jar", "-Dotel.resource.attributes=service.name=apps", "-cp", ".:apps-standalone.jar:/", "apps.core"]
+ENTRYPOINT ["apps", "-Dlogback.configurationFile=/etc/iplant/de/logging/apps-logging.xml", "-cp", ".:apps-standalone.jar:/", "apps.core"]
 
 ARG git_commit=unknown
 ARG version=unknown

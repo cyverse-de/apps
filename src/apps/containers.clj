@@ -23,8 +23,7 @@
             [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clojure-commons.exception-util :as cxu]
-            [korma.core :as sql]
-            [otel.otel :as otel])
+            [korma.core :as sql])
   (:import java.util.Base64))
 
 (defn- encode-auth [registry]
@@ -301,43 +300,42 @@
   container-related parts of the DE database schema, you'll likely need to make
   changes here."
   [tool-uuid & {:keys [auth?] :or {auth? false}}]
-  (otel/with-span [s ["tool-container-info" {:attributes {"tools.id" (str tool-uuid)}}]]
-    (let [id (uuidify tool-uuid)]
-      (when (tool-has-settings? id)
-        (->  (select container-settings
-                     (fields :id
-                             :pids_limit
-                             :cpu_shares
-                             :memory_limit
-                             :min_memory_limit
-                             :min_cpu_cores
-                             :max_cpu_cores
-                             :min_disk_space
-                             :network_mode
-                             :name
-                             :working_directory
-                             :interactive_apps_proxy_settings_id
-                             :skip_tmp_mount
-                             :entrypoint
-                             :uid)
-                     (with container-devices
-                           (fields :host_path :container_path :id))
-                     (with container-volumes
-                           (fields :host_path :container_path :id))
-                     (with container-volumes-from
-                           (fields :id)
-                           (with data-containers
-                                 (fields :name_prefix :read_only)
-                                 (with container-images
-                                       (fields :name :tag :url :deprecated :osg_image_path))))
-                     (with ports
-                           (fields :host_port :container_port :bind_to_host :id))
-                     (where {:tools_id id}))
-             first
-             add-interapps-info
-             (update :container_volumes_from add-data-container-auth :auth? auth?)
-             (merge {:image (tool-image-info tool-uuid :auth? auth?)})
-             filter-returns)))))
+  (let [id (uuidify tool-uuid)]
+    (when (tool-has-settings? id)
+      (->  (select container-settings
+                   (fields :id
+                           :pids_limit
+                           :cpu_shares
+                           :memory_limit
+                           :min_memory_limit
+                           :min_cpu_cores
+                           :max_cpu_cores
+                           :min_disk_space
+                           :network_mode
+                           :name
+                           :working_directory
+                           :interactive_apps_proxy_settings_id
+                           :skip_tmp_mount
+                           :entrypoint
+                           :uid)
+                   (with container-devices
+                         (fields :host_path :container_path :id))
+                   (with container-volumes
+                         (fields :host_path :container_path :id))
+                   (with container-volumes-from
+                         (fields :id)
+                         (with data-containers
+                               (fields :name_prefix :read_only)
+                               (with container-images
+                                     (fields :name :tag :url :deprecated :osg_image_path))))
+                   (with ports
+                         (fields :host_port :container_port :bind_to_host :id))
+                   (where {:tools_id id}))
+           first
+           add-interapps-info
+           (update :container_volumes_from add-data-container-auth :auth? auth?)
+           (merge {:image (tool-image-info tool-uuid :auth? auth?)})
+           filter-returns))))
 
 (defn- add-settings-volumes-from
   [settings-id vf-map]

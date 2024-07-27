@@ -14,7 +14,7 @@
             [apps.persistence.jobs :as jp]
             [apps.persistence.tool-requests :as tp]
             [apps.util.config :as config])
-  (:use [apps.service.util :only [uuid?]]
+  (:use [apps.service.util :only [valid-uuid?]]
         [cemerick.url :only [url]]
         [pandect.algo.sha256 :only [sha256]]))
 
@@ -72,7 +72,7 @@
    same app, so this function arbitrarily takes the first notification type associated with the app for now.
    Also, apps that do not run in the DE will always have a notification type of `analysis`."
   [app-id app-version-id]
-  (or (when (uuid? app-id) (first (amp/get-app-notification-types app-version-id)))
+  (or (when (valid-uuid? app-id) (first (amp/get-app-notification-types app-version-id)))
       "analysis"))
 
 (defn- format-job-status-update
