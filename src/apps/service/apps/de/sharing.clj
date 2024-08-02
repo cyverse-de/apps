@@ -6,8 +6,8 @@
             [apps.service.apps.de.permissions :as perms]
             [apps.tools.permissions :as tool-perms]
             [apps.tools.sharing :as tool-sharing]
-            [apps.util.string :refer [render]]
             [clojure.tools.logging :as log]
+            [clojure-commons.template :refer [render]]
             [slingshot.slingshot :refer [try+]]))
 
 (def app-sharing-formats
