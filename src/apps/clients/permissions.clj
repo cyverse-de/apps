@@ -2,9 +2,9 @@
   (:require [apps.clients.iplant-groups :as ipg]
             [apps.util.config :as config]
             [apps.util.service :as service]
-            [apps.util.string :refer [render]]
             [clojure.tools.logging :as log]
             [clojure-commons.error-codes :refer [clj-http-error?]]
+            [clojure-commons.template :refer [render]]
             [kameleon.uuids :refer [uuidify]]
             [permissions-client.core :as pc]
             [slingshot.slingshot :refer [try+]]))

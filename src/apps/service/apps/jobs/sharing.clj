@@ -8,11 +8,11 @@
             [apps.service.apps.jobs.permissions :as job-permissions]
             [apps.service.apps-client :refer [get-apps-client-for-username]]
             [apps.util.service :as service]
-            [apps.util.string :refer [render]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clojure-commons.core :refer [remove-nil-values]]
             [clojure-commons.error-codes :as ce]
+            [clojure-commons.template :refer [render]]
             [kameleon.uuids :refer [uuidify]]
             [slingshot.slingshot :refer [try+ throw+]]))
 

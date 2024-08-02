@@ -3,8 +3,8 @@
             [apps.clients.permissions :as perms-client]
             [apps.persistence.tools :as tools-db]
             [apps.tools.permissions :as perms]
-            [apps.util.string :refer [render]]
             [clojure-commons.error-codes :as error-codes]
+            [clojure-commons.template :refer [render]]
             [slingshot.slingshot :refer [try+]]))
 
 (defn- get-tool-name
