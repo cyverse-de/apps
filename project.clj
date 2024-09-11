@@ -22,7 +22,7 @@
                  [medley "1.4.0"]
                  [metosin/compojure-api "1.1.14"]
                  [org.cyverse/async-tasks-client "0.0.5"]
-                 [org.cyverse/authy "3.0.1"]
+                 [org.cyverse/authy "2.8.0"]
                  [org.cyverse/clojure-commons "3.0.9"]
                  [org.cyverse/debug-utils "2.9.0"]
                  [org.cyverse/kameleon "3.0.10"]
