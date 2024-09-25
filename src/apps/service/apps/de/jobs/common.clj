@@ -191,6 +191,8 @@
          :group                (:group submission "")
          :name                 (:name submission)
          :notify               (:notify submission)
+         :notify_periodic      (:notify_periodic submission nil)
+         :periodic_period      (:periodic_period submission nil)
          :output_dir           (:output_dir submission)
          :request_type         "submit"
          :steps                @steps
