@@ -64,6 +64,9 @@
                           :max_cpu_cores]))
 
 (defn- filter-request-max-requirements
+  "Ensure max requirement requests from the client are at least 0,
+  so that any max set by a tool is not automatically requested,
+  then the job services can choose a reasonable default instead."
   [requirements]
   {:memory_limit  (get requirements :memory_limit 0)
    :max_cpu_cores (get requirements :max_cpu_cores 0)})
