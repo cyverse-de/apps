@@ -58,10 +58,18 @@
                   :min_cpu_cores
                   :min_disk_space]))
 
-(defn- filter-max-requirement-keys
-  [m]
-  (select-keys m [:memory_limit
-                  :max_cpu_cores]))
+(defn- filter-container-max-requirements
+  [container]
+  (select-keys container [:memory_limit
+                          :max_cpu_cores]))
+
+(defn- filter-request-max-requirements
+  "Ensure max requirement requests from the client are at least 0,
+  so that any max set by a tool is not automatically requested,
+  then the job services can choose a reasonable default instead."
+  [requirements]
+  {:memory_limit  (get requirements :memory_limit 0)
+   :max_cpu_cores (get requirements :max_cpu_cores 0)})
 
 (defn- limit-container-min-requirement
   [container req-key-min req-key-max]
@@ -79,8 +87,8 @@
                          (filter-min-requirement-keys container)
                          (filter-min-requirement-keys requirements))
              (merge-with min
-                         (filter-max-requirement-keys container)
-                         (filter-max-requirement-keys requirements)))
+                         (filter-container-max-requirements container)
+                         (filter-request-max-requirements requirements)))
       (limit-container-min-requirement :min_memory_limit :memory_limit)
       (limit-container-min-requirement :min_cpu_cores :max_cpu_cores)))
 
