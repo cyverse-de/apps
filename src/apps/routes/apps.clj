@@ -119,6 +119,14 @@
         :description schema/AppUpdateDocs
         (ok (apps/update-app current-user system-id (assoc body :id app-id))))
 
+      (POST "/versions" []
+        :query [params SecuredQueryParamsRequired]
+        :body [{:keys [versions]} schema/AppVersionOrderRequest]
+        :return schema/App
+        :summary schema/AppVersionOrderSummary
+        :description schema/AppVersionOrderDocs
+        (ok (apps/set-app-versions-order current-user system-id app-id versions)))
+
       (POST "/copy" []
         :query [params SecuredQueryParamsRequired]
         :return schema/App

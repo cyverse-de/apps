@@ -176,6 +176,10 @@
     (validate-system-id system-id)
     (reject-app-integration-request))
 
+  (setAppVersionsOrder [_ system-id app-id versions]
+    (validate-system-id system-id)
+    (reject-app-integration-request))
+
   (copyApp [_ system-id app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))

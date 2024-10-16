@@ -93,6 +93,10 @@
   [user system-id app]
   (.updateApp (get-apps-client user) system-id app))
 
+(defn set-app-versions-order
+  [user system-id app-id versions]
+  (.setAppVersionsOrder (get-apps-client user) system-id app-id versions))
+
 (defn copy-app
   [user system-id app-id]
   (.copyApp (get-apps-client user) system-id app-id))

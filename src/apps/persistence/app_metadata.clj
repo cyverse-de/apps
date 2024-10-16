@@ -528,6 +528,12 @@
                           (remove-nil-vals))]
      (sql/update app_versions (set-fields version-info) (where {:id version-id})))))
 
+(defn set-app-versions-order
+  [app-id versions]
+  (transaction
+    (doseq [[index id] (map-indexed (fn [i v] [i (:version_id v)]) (rseq versions))]
+      (sql/update app_versions (set-fields {:version_order index}) (where {:app_id app-id :id id})))))
+
 (defn- get-app-publication-status-code-id
   [status-code]
   (-> (select* :app_publication_request_status_codes)

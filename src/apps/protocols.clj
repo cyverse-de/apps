@@ -29,6 +29,7 @@
   (deleteAppVersion [_ system-id app-id app-version-id])
   (relabelApp [_ system-id app])
   (updateApp [_ system-id app])
+  (setAppVersionsOrder [_ system-id app-id versions])
   (copyApp [_ system-id app-id])
   (copyAppVersion [_ system-id app-id version-id])
   (getAppDetails [_ system-id app-id admin?])
