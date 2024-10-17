@@ -27,6 +27,14 @@
                                                     (assoc app :id app-id)
                                                     false)))
 
+                    (PUT "/" []
+                         :query [params SecuredQueryParamsRequired]
+                         :body [{:keys [versions]} schema/AppVersionOrderRequest]
+                         :return schema/App
+                         :summary schema/AppVersionOrderSummary
+                         :description schema/AppVersionOrderDocs
+                         (ok (apps/set-app-versions-order current-user system-id app-id versions)))
+
                     (context "/:version-id" []
                              :path-params [version-id :- schema/AppVersionIdParam]
 
