@@ -127,6 +127,10 @@
     (validate-system-id system-id)
     (edit/update-app user (update app :id uuidify)))
 
+  (setAppVersionsOrder [_ system-id app-id versions]
+    (validate-system-id system-id)
+    (edit/set-app-versions-order user (uuidify app-id) versions))
+
   (copyApp [_ system-id app-id]
     (validate-system-id system-id)
     (edit/copy-app user (uuidify app-id)))

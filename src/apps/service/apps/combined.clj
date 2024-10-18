@@ -118,6 +118,9 @@
   (updateApp [_ system-id app]
     (.updateApp (util/get-apps-client clients system-id) system-id app))
 
+  (setAppVersionsOrder [_ system-id app-id versions]
+    (.setAppVersionsOrder (util/get-apps-client clients system-id) system-id app-id versions))
+
   (copyApp [_ system-id app-id]
     (.copyApp (util/get-apps-client clients system-id) system-id app-id))
 

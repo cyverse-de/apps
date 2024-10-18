@@ -473,6 +473,12 @@
      (update-app-groups task-id groups)
      (get-app-ui user app-id version-id))))
 
+(defn set-app-versions-order
+  [user app-id versions]
+  (verify-app-editable user (persistence/get-app app-id))
+  (persistence/set-app-versions-order app-id versions)
+  (get-app-ui user app-id))
+
 (defn get-user-subcategory
   [username index]
   (-> (get-workspace username)
