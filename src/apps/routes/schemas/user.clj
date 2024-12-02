@@ -17,9 +17,4 @@
 
 (defschema LoginParams
   (merge SecuredQueryParams
-         sessions-schema/IPAddrParam
-         {:user-agent (describe String "The user agent obtained from the original request.")}))
-
-(defschema LogoutParams
-  (merge SecuredQueryParams
-         sessions-schema/LogoutParams))
+         sessions-schema/IPAddrParam))

@@ -45,25 +45,15 @@
 
 (defn- insert-login-record
   "Records when a user logs into the DE."
-  [user-id ip-address user-agent]
+  [user-id ip-address]
   (insert :logins
           (values (remove-nil-values
                    {:user_id    user-id
-                    :ip_address ip-address
-                    :user_agent user-agent}))))
+                    :ip_address ip-address}))))
 
 (defn record-login
   "Records when a user logs into the DE. Returns the recorded login time."
-  [username ip-address user-agent]
-  (-> (insert-login-record (get-user-id username) ip-address user-agent)
+  [username ip-address]
+  (-> (insert-login-record (get-user-id username) ip-address)
       (:login_time)
       (.getTime)))
-
-(defn record-logout
-  "Records when a user logs out of the DE."
-  [username ip-address login-time]
-  (sql/update :logins
-              (set-fields {:logout_time (sqlfn :now)})
-              (where {:user_id                                       (get-user-id username)
-                      :ip_address                                    ip-address})
-              (where {(sqlfn :date_trunc "milliseconds" :login_time) (Timestamp. login-time)})))
