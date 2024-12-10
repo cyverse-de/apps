@@ -12,6 +12,6 @@
   (remove-nil-vals (up/for-username username)))
 
 (defn login
-  [{:keys [username] :as current-user} {:keys [ip-address]}]
-  {:login_time (up/record-login username ip-address)
+  [{:keys [username] :as current-user} {:keys [ip-address login-time session-id]}]
+  {:login_time (up/record-login username ip-address session-id login-time)
    :auth_redirect (oauth/get-redirect-uris current-user)})

@@ -2,7 +2,8 @@
   (:use [clojure-commons.core :only [remove-nil-values]]
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]])
-  (:require [korma.core :as sql])
+  (:require [korma.core :as sql]
+            [apps.util.conversions :refer [long->timestamp]])
   (:import [java.sql Timestamp]))
 
 (defn- user-base-query
@@ -45,15 +46,17 @@
 
 (defn- insert-login-record
   "Records when a user logs into the DE."
-  [user-id ip-address]
+  [user-id ip-address session-id login-time]
   (insert :logins
           (values (remove-nil-values
                    {:user_id    user-id
-                    :ip_address ip-address}))))
+                    :ip_address ip-address
+                    :session_id session-id
+                    :login_time (long->timestamp login-time)}))))
 
 (defn record-login
   "Records when a user logs into the DE. Returns the recorded login time."
-  [username ip-address]
-  (-> (insert-login-record (get-user-id username) ip-address)
+  [username ip-address session-id login-time]
+  (-> (insert-login-record (get-user-id username) ip-address session-id login-time)
       (:login_time)
       (.getTime)))
