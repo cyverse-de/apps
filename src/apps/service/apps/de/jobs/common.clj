@@ -89,7 +89,7 @@
              (merge-with min
                          (filter-container-max-requirements container)
                          (filter-request-max-requirements requirements)))
-      (limit-container-min-requirement :min_memory_limit :min_memory_limit)
+      (limit-container-min-requirement :min_memory_limit :memory_limit)
       (limit-container-min-requirement :min_cpu_cores :max_cpu_cores)))
 
 (defn- add-container-info
