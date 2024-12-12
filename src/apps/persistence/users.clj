@@ -51,7 +51,7 @@
           (values (remove-nil-values
                    {:user_id    user-id
                     :ip_address ip-address
-                    :session_id session-id
+                    :session_id (uuidify session-id)
                     :login_time (long->timestamp login-time)}))))
 
 (defn record-login
