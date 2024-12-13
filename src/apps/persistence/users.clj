@@ -54,9 +54,25 @@
                     :session_id (uuidify session-id)
                     :login_time (long->timestamp login-time)}))))
 
+(defn- get-login-record
+  "Gets an existing login record that matches all fields"
+  [user-id ip-address session-id login-time]
+  (first
+    (select :logins
+            (where {:user_id user-id
+                    :ip_address ip-address
+                    :session_id (uuidify session-id)
+                    :login_time (long->timestamp login-time)}))))
+
+(defn- upsert-login-record
+  "Records a user login, if at least one field differs from an existing entry."
+  [user-id ip-address session-id login-time]
+  (or (get-login-record user-id ip-address session-id login-time)
+      (insert-login-record user-id ip-address session-id login-time)))
+
 (defn record-login
   "Records when a user logs into the DE. Returns the recorded login time."
   [username ip-address session-id login-time]
-  (-> (insert-login-record (get-user-id username) ip-address session-id login-time)
+  (-> (upsert-login-record (get-user-id username) ip-address session-id login-time)
       (:login_time)
       (.getTime)))
