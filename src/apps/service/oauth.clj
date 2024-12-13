@@ -5,7 +5,6 @@
         [slingshot.slingshot :only [throw+]])
   (:require [apps.persistence.oauth :as op]
             [apps.util.config :as config]
-            [apps.util.service :as service]
             [cemerick.url :as curl]
             [clojure-commons.exception-util :as cxu]
             [authy.core :as authy]))
@@ -17,7 +16,7 @@
          :token-callback token-callback))
 
 (def ^:private server-info-fn-for
-  (memoize #(->> {:agave (when (config/agave-enabled) config/agave-oauth-settings)}
+  (memoize #(->> {:tapis (when (config/tapis-enabled) config/tapis-oauth-settings)}
                  (remove-vals nil?))))
 
 (defn- get-server-info

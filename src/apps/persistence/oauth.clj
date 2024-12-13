@@ -7,13 +7,6 @@
   (:import [java.sql Timestamp]
            [java.util UUID]))
 
-(defn- validate-token-type
-  "Verifies that the token type is supported."
-  [token-type]
-  (when-not (= "bearer" token-type)
-    (throw+ {:type  :clojure-commons.exception/illegal-argument
-             :error (str "OAuth 2.0 token type, " token-type ", is not supported.")})))
-
 (defn- user-id-subselect
   "Returns a subselect statement to find a user ID."
   [username]
@@ -73,8 +66,7 @@
 
 (defn store-access-token
   "Stores information about an OAuth access token in the database."
-  [api-name username {:keys [token-type expires-at refresh-token access-token]}]
-  (validate-token-type token-type)
+  [api-name username {:keys [expires-at refresh-token access-token]}]
   (if (has-access-token api-name username)
     (replace-access-token api-name username expires-at refresh-token access-token)
     (insert-access-token api-name username expires-at refresh-token access-token)))

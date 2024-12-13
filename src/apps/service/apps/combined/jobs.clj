@@ -85,7 +85,7 @@
   [{app-version-id :app_version_id} {app-step-number :app_step_number}]
   (nth (ap/load-app-steps app-version-id) (dec app-step-number)))
 
-(defn- prepare-agave-job-step-submission
+(defn- prepare-tapis-job-step-submission
   [job-info job-step submission]
   (let [app-step   (get-current-app-step job-info job-step)
         submission (prepare-common-job-step-submission job-info job-step submission)]
@@ -97,7 +97,7 @@
   [job-info job-step submission]
   (if (cu/is-de-job-step? job-step)
     (prepare-de-job-step-submission job-info job-step submission)
-    (prepare-agave-job-step-submission job-info job-step submission)))
+    (prepare-tapis-job-step-submission job-info job-step submission)))
 
 (defn- record-step-submission
   [job-id step-number external-id]
