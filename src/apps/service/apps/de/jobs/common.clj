@@ -9,6 +9,7 @@
             [apps.containers :as c]
             [apps.tools :as t]
             [apps.service.apps.de.jobs.params :as params]
+            [apps.service.apps.de.jobs.resources :as resources]
             [apps.service.apps.jobs.util :as util]
             [clojure.string :as string]))
 
@@ -52,45 +53,14 @@
        (mapcat (partial build-environment-entries config default-values))
        (into {})))
 
-(defn- filter-min-requirement-keys
-  [m]
-  (select-keys m [:min_memory_limit
-                  :min_cpu_cores
-                  :min_disk_space]))
-
-(defn- filter-container-max-requirements
-  [container]
-  (select-keys container [:memory_limit
-                          :max_cpu_cores]))
-
-(defn- filter-request-max-requirements
-  "Ensure max requirement requests from the client are at least 0,
-  so that any max set by a tool is not automatically requested,
-  then the job services can choose a reasonable default instead."
-  [requirements]
-  {:memory_limit  (get requirements :memory_limit 0)
-   :max_cpu_cores (get requirements :max_cpu_cores 0)})
-
-(defn- limit-container-min-requirement
-  [container req-key-min req-key-max]
-  (if (and (contains? container req-key-min)
-           (contains? container req-key-max))
-    (assoc container req-key-min (min (get container req-key-min)
-                                      (get container req-key-max)))
-    container))
-
 (defn- reconcile-container-requirements
   "reconcile submission requirement requests with tool requirements"
   [container requirements]
-  (-> (merge container
-             (merge-with max
-                         (filter-min-requirement-keys container)
-                         (filter-min-requirement-keys requirements))
-             (merge-with min
-                         (filter-container-max-requirements container)
-                         (filter-request-max-requirements requirements)))
-      (limit-container-min-requirement :min_memory_limit :memory_limit)
-      (limit-container-min-requirement :min_cpu_cores :max_cpu_cores)))
+  (assoc container
+         :min_memory_limit (resources/get-required-memory container requirements)
+         :memory_limit     (resources/get-max-memory container requirements)
+         :min_cpu_cores    (resources/get-required-cpus container requirements)
+         :max_cpu_cores    (resources/get-max-cpus container requirements)))
 
 (defn- add-container-info
   [{tool-id :id tool-type :type :as component} requirements]
@@ -103,8 +73,9 @@
      component)
    :id))
 
-(defn- load-step-component
-  [task-id requirements]
+
+(defn- load-tool-info
+  [task-id]
   (-> (select* :tasks)
       (join :tools {:tasks.tool_id :tools.id})
       (join :tool_types {:tools.tool_type_id :tool_types.id})
@@ -118,7 +89,11 @@
               :tools.time_limit_seconds)
       (where {:tasks.id task-id})
       (select)
-      (first)
+      (first)))
+
+(defn- load-step-component
+  [task-id requirements]
+  (-> (load-tool-info task-id)
       (add-container-info requirements)
       (remove-nil-vals)))
 
