@@ -67,7 +67,11 @@
    {:container    (reqs nil nil nil nil)
     :requirements (reqs 32 32 32 32)
     :expected     (reqs 16 16 4 4)
-    :desc         "no cpu settings specified"}])
+    :desc         "no container settings specified"}
+   {:container    (reqs nil 256 nil 256)
+    :requirements (reqs nil nil nil nil)
+    :expected     (reqs nil nil nil nil)
+    :desc         "no requests specified, and no container minimums specified"}])
 
 (deftest test-resource-requests
   (doseq [{:keys [container requirements expected desc]} test-cases]

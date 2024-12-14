@@ -9,9 +9,9 @@
         r-min (get requirements min-kw)
         r-max (get requirements max-kw)]
     (cond
-      ;; A nonexisent or nonsensical request defaults to the minimum defined for the container or the overall default.
+      ;; A nonexisent or nonsensical request defaults to the minimum defined for the container, which may be nil.
       (or (nil? r-min) (zero? r-min) (neg? r-min))
-      (or c-min default)
+      c-min
 
       ;; If the requested minimum is less than the container minimum, default to the container's minimum setting.
       (and c-min (< r-min c-min))

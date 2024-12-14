@@ -56,11 +56,12 @@
 (defn- reconcile-container-requirements
   "reconcile submission requirement requests with tool requirements"
   [container requirements]
-  (assoc container
-         :min_memory_limit (resources/get-required-memory container requirements)
-         :memory_limit     (resources/get-max-memory container requirements)
-         :min_cpu_cores    (resources/get-required-cpus container requirements)
-         :max_cpu_cores    (resources/get-max-cpus container requirements)))
+  (-> (assoc container
+             :min_memory_limit (resources/get-required-memory container requirements)
+             :memory_limit     (resources/get-max-memory container requirements)
+             :min_cpu_cores    (resources/get-required-cpus container requirements)
+             :max_cpu_cores    (resources/get-max-cpus container requirements))
+      remove-nil-vals))
 
 (defn- add-container-info
   [{tool-id :id tool-type :type :as component} requirements]
