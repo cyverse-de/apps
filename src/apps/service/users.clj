@@ -15,3 +15,7 @@
   [{:keys [username] :as current-user} {:keys [ip-address login-time session-id]}]
   {:login_time (up/record-login username ip-address session-id login-time)
    :auth_redirect (oauth/get-redirect-uris current-user)})
+
+(defn list-logins
+  [{:keys [username] :as current-user} {:keys [limit]}]
+  (up/list-logins username limit))

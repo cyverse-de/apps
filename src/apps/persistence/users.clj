@@ -76,3 +76,8 @@
   (-> (upsert-login-record (get-user-id username) ip-address session-id login-time)
       (:login_time)
       (.getTime)))
+
+(defn list-logins
+  "Lists a number of the most recent logins for a user"
+  [username limit]
+  [])

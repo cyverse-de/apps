@@ -37,4 +37,4 @@
     ;; XXX: :return something
     :summary "Login listing"
     :description "Fetch a listing of recent logins"
-    (ok {:logins []}))
+    (ok (users/list-logins current-user (assoc params :limit 5)))))
