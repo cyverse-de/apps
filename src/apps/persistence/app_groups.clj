@@ -7,10 +7,10 @@
 
 (defn get-app-group-hierarchy
   "Gets the app group hierarchy rooted at the node with the given identifier."
-  [root-id {:keys [agave-enabled app-ids] :or {agave-enabled "false"}}]
+  [root-id {:keys [tapis-enabled app-ids] :or {tapis-enabled "false"}}]
   (if (seq app-ids)
-    (select (sqlfn :app_category_hierarchy root-id (Boolean/parseBoolean agave-enabled) (sql-array "uuid" app-ids)))
-    (select (sqlfn :app_category_hierarchy root-id (Boolean/parseBoolean agave-enabled)))))
+    (select (sqlfn :app_category_hierarchy root-id (Boolean/parseBoolean tapis-enabled) (sql-array "uuid" app-ids)))
+    (select (sqlfn :app_category_hierarchy root-id (Boolean/parseBoolean tapis-enabled)))))
 
 (defn get-visible-workspaces
   "Gets the list of workspaces that are visible to the user with the given workspace

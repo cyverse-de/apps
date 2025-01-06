@@ -85,10 +85,10 @@
     (where query {:id [not-in omitted-app-ids]})
     query))
 
-(defn- add-agave-pipeline-where-clause
-  [query {agave-enabled? :agave-enabled :or {agave-enaled? "false"}}]
-  (let [agave-enabled? (Boolean/parseBoolean agave-enabled?)]
-    (if-not agave-enabled?
+(defn- add-tapis-pipeline-where-clause
+  [query {tapis-enabled? :tapis-enabled :or {tapis-enabled? "false"}}]
+  (let [tapis-enabled? (Boolean/parseBoolean tapis-enabled?)]
+    (if-not tapis-enabled?
       (where query {:step_count :task_count})
       query)))
 
@@ -151,7 +151,7 @@
       (add-app-id-where-clause query-opts)
       (add-app-type-where-clause query-opts)
       (add-omitted-app-id-where-clause query-opts)
-      (add-agave-pipeline-where-clause query-opts)))
+      (add-tapis-pipeline-where-clause query-opts)))
 
 (defn- get-app-count-base-query
   "Adds a where clause to the get-all-apps-count-base-query, filtering out `deleted` apps."
@@ -275,7 +275,7 @@
       (add-app-id-where-clause query_opts)
       (add-app-type-where-clause query_opts)
       (add-omitted-app-id-where-clause query_opts)
-      (add-agave-pipeline-where-clause query_opts)))
+      (add-tapis-pipeline-where-clause query_opts)))
 
 (defn- get-app-listing-base-query
   "Adds a where clause to the get-all-apps-listing-base-query, filtering out `deleted` apps."
@@ -453,7 +453,7 @@
        (add-app-id-where-clause params)
        (add-app-type-where-clause params)
        (add-omitted-app-id-where-clause params)
-       (add-agave-pipeline-where-clause params)
+       (add-tapis-pipeline-where-clause params)
        (select))))
 
 (defn list-public-apps-by-user

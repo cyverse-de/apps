@@ -24,11 +24,12 @@
 
 (def de-job-type "DE")
 (def agave-job-type "Agave")
+(def tapis-job-type "Tapis")
 (def interactive-job-type "Interactive")
 (def osg-job-type "OSG")
 
 (def de-client-name c/de-system-id)
-(def agave-client-name c/hpc-system-id)
+(def tapis-client-name c/hpc-system-id)
 (def interactive-client-name c/interactive-system-id)
 (def osg-client-name c/osg-system-id)
 (def combined-client-name "combined")

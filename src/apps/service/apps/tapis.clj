@@ -1,12 +1,12 @@
-(ns apps.service.apps.agave
+(ns apps.service.apps.tapis
   (:use [kameleon.uuids :only [uuidify]])
   (:require [clojure.string :as string]
             [apps.persistence.jobs :as jp]
             [apps.protocols]
-            [apps.service.apps.agave.listings :as listings]
-            [apps.service.apps.agave.pipelines :as pipelines]
-            [apps.service.apps.agave.jobs :as agave-jobs]
-            [apps.service.apps.agave.sharing :as sharing]
+            [apps.service.apps.tapis.listings :as listings]
+            [apps.service.apps.tapis.pipelines :as pipelines]
+            [apps.service.apps.tapis.jobs :as tapis-jobs]
+            [apps.service.apps.tapis.sharing :as sharing]
             [apps.service.apps.job-listings :as job-listings]
             [apps.service.apps.permissions :as app-permissions]
             [apps.service.apps.util :as apps-util]
@@ -48,7 +48,7 @@
   []
   (service/bad-request app-categorization-rejection))
 
-(def ^:private supported-system-ids #{jp/agave-client-name})
+(def ^:private supported-system-ids #{jp/tapis-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
 (def ^:private validate-system-ids (partial apps-util/validate-system-ids supported-system-ids))
 
@@ -57,17 +57,17 @@
    :documentation ""
    :references    []})
 
-(deftype AgaveApps [agave user-has-access-token? user]
+(deftype TapisApps [tapis user-has-access-token? user]
   apps.protocols.Apps
 
   (getUser [_]
     user)
 
   (getClientName [_]
-    jp/agave-client-name)
+    jp/tapis-client-name)
 
   (getJobTypes [_]
-    [jp/agave-job-type])
+    [jp/tapis-job-type])
 
   (listSystemIds [_]
     (vec supported-system-ids))
@@ -77,54 +77,54 @@
 
   (listAppCategories [_ {:keys [hpc]}]
     (when-not (and hpc (.equalsIgnoreCase hpc "false"))
-      [(.hpcAppGroup agave)]))
+      [(.hpcAppGroup tapis)]))
 
   (listAppsInCategory [self system-id category-id params]
     (validate-system-id system-id)
     (if (apps-util/app-type-qualifies? self params)
-      (listings/list-apps agave category-id params)
-      (.emptyAppListing agave)))
+      (listings/list-apps tapis category-id params)
+      (.emptyAppListing tapis)))
 
   (listAppsUnderHierarchy [self root-iri attr params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
-        (listings/list-apps-with-ontology agave root-iri params false)
-        (.emptyAppListing agave))))
+        (listings/list-apps-with-ontology tapis root-iri params false)
+        (.emptyAppListing tapis))))
 
   (adminListAppsUnderHierarchy [self ontology-version root-iri attr params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
-        (listings/list-apps-with-ontology agave root-iri params true)
-        (.emptyAppListing agave))))
+        (listings/list-apps-with-ontology tapis root-iri params true)
+        (.emptyAppListing tapis))))
 
-  ;; Since Agave doesn't list apps under ontology hierarchies, we'll use the ontology listing with communities for now.
+  ;; Since Tapis doesn't list apps under ontology hierarchies, we'll use the ontology listing with communities for now.
   (listAppsInCommunity [self community-id params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
-        (listings/list-apps-with-ontology agave community-id params false)
-        (.emptyAppListing agave))))
+        (listings/list-apps-with-ontology tapis community-id params false)
+        (.emptyAppListing tapis))))
 
   (adminListAppsInCommunity [self community-id params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
-        (listings/list-apps-with-ontology agave community-id params true)
-        (.emptyAppListing agave))))
+        (listings/list-apps-with-ontology tapis community-id params true)
+        (.emptyAppListing tapis))))
 
   (searchApps [self search-term params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
-        (listings/search-apps agave search-term params false)
-        (.emptyAppListing agave))))
+        (listings/search-apps tapis search-term params false)
+        (.emptyAppListing tapis))))
 
   (listSingleApp [_ system-id app-id]
     (validate-system-id system-id)
-    (listings/list-app agave app-id))
+    (listings/list-app tapis app-id))
 
   (adminSearchApps [self search-term params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
-        (listings/search-apps agave search-term params true)
-        (.emptyAppListing agave))))
+        (listings/search-apps tapis search-term params true)
+        (.emptyAppListing tapis))))
 
   (canEditApps [_]
     false)
@@ -154,7 +154,7 @@
 
   (getAppJobView [_ system-id app-id _]
     (validate-system-id system-id)
-    (.getApp agave app-id))
+    (.getApp tapis app-id))
 
   (getAppVersionJobView [_ system-id _ _]
     (validate-system-id system-id)
@@ -190,7 +190,7 @@
 
   (getAppDetails [_ system-id app-id admin?]
     (validate-system-id system-id)
-    (listings/get-app-details agave app-id admin?))
+    (listings/get-app-details tapis app-id admin?))
 
   (getAppVersionDetails [_ system-id _ _ _]
     (validate-system-id system-id)
@@ -234,7 +234,7 @@
 
   (getAppTaskListing [_ system-id app-id]
     (validate-system-id system-id)
-    (.listAppTasks agave app-id))
+    (.listAppTasks tapis app-id))
 
   (getAppVersionTaskListing [_ system-id _ _]
     (validate-system-id system-id)
@@ -242,7 +242,7 @@
 
   (getAppToolListing [_ system-id app-id]
     (validate-system-id system-id)
-    (.getAppToolListing agave app-id))
+    (.getAppToolListing tapis app-id))
 
   (getAppVersionToolListing [_ system-id _ _]
     (validate-system-id system-id)
@@ -258,10 +258,10 @@
 
   (getAppInputIds [_ system-id app-id _]
     (validate-system-id system-id)
-    (.getAppInputIds agave app-id))
+    (.getAppInputIds tapis app-id))
 
   (formatPipelineTasks [_ pipeline]
-    (pipelines/format-pipeline-tasks agave pipeline))
+    (pipelines/format-pipeline-tasks tapis pipeline))
 
   (listJobs [self params]
     (job-listings/list-jobs self user params))
@@ -274,40 +274,40 @@
 
   (loadAppTables [_ qualified-app-ids]
     (validate-system-ids (set (map :system_id qualified-app-ids)))
-    (listings/load-app-tables agave (set (map :app_id qualified-app-ids))))
+    (listings/load-app-tables tapis (set (map :app_id qualified-app-ids))))
 
   (submitJob [this submission]
     (validate-system-id (:system_id submission))
-    (agave-jobs/submit agave user submission))
+    (tapis-jobs/submit tapis user submission))
 
   (submitJobStep [_ job-id submission]
-    (agave-jobs/submit-step agave job-id submission))
+    (tapis-jobs/submit-step tapis job-id submission))
 
   (translateJobStatus [self job-type status]
     (when (apps-util/supports-job-type? self job-type)
-      (or (.translateJobStatus agave status) status)))
+      (or (.translateJobStatus tapis status) status)))
 
   (updateJobStatus [self job-step job status end-date]
     (when (apps-util/supports-job-type? self (:job_type job-step))
-      (agave-jobs/update-job-status agave job-step job status end-date)))
+      (tapis-jobs/update-job-status tapis job-step job status end-date)))
 
   (getDefaultOutputName [_ io-map source-step]
-    (agave-jobs/get-default-output-name agave io-map source-step))
+    (tapis-jobs/get-default-output-name tapis io-map source-step))
 
   (getJobStepStatus [_ job-step]
-    (agave-jobs/get-job-step-status agave job-step))
+    (tapis-jobs/get-job-step-status tapis job-step))
 
   (getJobStepHistory [_ {:keys [external_id]}]
-    (.getJobHistory agave external_id))
+    (.getJobHistory tapis external_id))
 
   (getParamDefinitions [_ system-id app-id version-id]
     (validate-system-id system-id)
-    (listings/get-param-definitions agave app-id version-id))
+    (listings/get-param-definitions tapis app-id version-id))
 
   (stopJobStep [self {:keys [job_type external_id]}]
     (when (and (apps-util/supports-job-type? self job_type)
                (not (string/blank? external_id)))
-      (.stopJob agave external_id)))
+      (.stopJob tapis external_id)))
 
   (categorizeApps [_ {:keys [categories]}]
     (validate-system-ids (set (map :system_id categories)))
@@ -420,7 +420,7 @@
 
   (listAppPermissions [_ qualified-app-ids _]
     (validate-system-ids (set (map :system_id qualified-app-ids)))
-    (.listAppPermissions agave (map :app_id qualified-app-ids)))
+    (.listAppPermissions tapis (map :app_id qualified-app-ids)))
 
   (shareApps [self admin? sharing-requests]
     (app-permissions/process-app-sharing-requests self admin? sharing-requests))
@@ -430,7 +430,7 @@
 
   (shareAppWithSubject [_ _ app-names sharee system-id app-id level]
     (validate-system-id system-id)
-    (sharing/share-app-with-subject agave app-names sharee app-id level))
+    (sharing/share-app-with-subject tapis app-names sharee app-id level))
 
   (unshareApps [self admin? unsharing-requests]
     (app-permissions/process-app-unsharing-requests self admin? unsharing-requests))
@@ -440,11 +440,11 @@
 
   (unshareAppWithSubject [_ _ app-names sharee system-id app-id]
     (validate-system-id system-id)
-    (sharing/unshare-app-with-subject agave app-names sharee app-id))
+    (sharing/unshare-app-with-subject tapis app-names sharee app-id))
 
   (hasAppPermission [_ username system-id app-id required-level]
     (validate-system-id system-id)
-    (.hasAppPermission agave username app-id required-level))
+    (.hasAppPermission tapis username app-id required-level))
 
   (supportsJobSharing [_ _]
     true))
