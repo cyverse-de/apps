@@ -27,10 +27,11 @@
           (describe (both Long (pred pos? 'positive-integer?))
      "Limits the response to X number of results.")}))
 
+; NOTE that the IP Address key uses an underscore here. Other schemas are inconsistent about this.
 (defschema ListLoginsResponse
   {:logins
-   [{:login_time
-     (describe Long "Login time as milliseconds since the epoch.")
+   [{(optional-key :ip_address)
+     (describe String "The IP address associated with this login session.")
      
-     (optional-key :session_id)
-     (describe String "The session ID provided by the auth provider.")}]})
+     :login_time
+     (describe Long "Login time as milliseconds since the epoch.")}]})
