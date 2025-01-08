@@ -32,9 +32,8 @@
     (ok (users/login current-user params)))
   
   (GET "/logins" []
-    ;; XXX: limit parameter
-    :query [params SecuredQueryParams]
+    :query [params ListLoginsParams]
     ;; XXX: :return something
     :summary "Login listing"
     :description "Fetch a listing of recent logins"
-    (ok (users/list-logins current-user (assoc params :limit 5)))))
+    (ok (users/list-logins current-user params))))

@@ -17,5 +17,5 @@
    :auth_redirect (oauth/get-redirect-uris current-user)})
 
 (defn list-logins
-  [{:keys [username] :as current-user} {:keys [limit]}]
+  [{:keys [username] :as current-user} {:keys [limit] :or {limit 5}}]
   (up/list-logins username limit))
