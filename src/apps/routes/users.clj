@@ -33,7 +33,7 @@
   
   (GET "/logins" []
     :query [params ListLoginsParams]
-    ;; XXX: :return something
+    :return ListLoginsResponse
     :summary "Login listing"
     :description "Fetch a listing of recent logins"
     (ok (users/list-logins current-user params))))
