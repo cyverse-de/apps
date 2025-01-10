@@ -1,7 +1,7 @@
 (ns apps.routes.schemas.user
   (:use [common-swagger-api.schema :only [describe]]
         [apps.routes.params :only [SecuredQueryParams]]
-        [schema.core :only [defschema optional-key]])
+        [schema.core :only [defschema optional-key both pred]])
   (:require [common-swagger-api.schema.sessions :as sessions-schema])
   (:import [java.util UUID]))
 
@@ -20,3 +20,18 @@
          sessions-schema/IPAddrParam
          {(optional-key :session-id) (describe String "The session ID provided by the auth provider.")
           (optional-key :login-time) (describe Long "Login time as milliseconds since the epoch, provided by auth provider.")}))
+
+(defschema ListLoginsParams
+  (merge SecuredQueryParams
+         {(optional-key :limit)
+          (describe (both Long (pred pos? 'positive-integer?))
+     "Limits the response to X number of results.")}))
+
+; NOTE that the IP Address key uses an underscore here. Other schemas are inconsistent about this.
+(defschema ListLoginsResponse
+  {:logins
+   [{(optional-key :ip_address)
+     (describe String "The IP address associated with this login session.")
+     
+     :login_time
+     (describe Long "Login time as milliseconds since the epoch.")}]})

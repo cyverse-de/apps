@@ -29,4 +29,11 @@
     :summary "User Login Service"
     :description "Terrain calls this service to record when a user logs in
           and to fetch user session info."
-    (ok (users/login current-user params))))
+    (ok (users/login current-user params)))
+  
+  (GET "/logins" []
+    :query [params ListLoginsParams]
+    :return ListLoginsResponse
+    :summary "Login listing"
+    :description "Fetch a listing of recent logins"
+    (ok (users/list-logins current-user params))))

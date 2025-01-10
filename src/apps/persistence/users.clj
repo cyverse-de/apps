@@ -76,3 +76,11 @@
   (-> (upsert-login-record (get-user-id username) ip-address session-id login-time)
       (:login_time)
       (.getTime)))
+
+(defn list-logins
+  "Lists a number of the most recent logins for a user"
+  [username query-limit]
+  (->> (select :logins
+               (where {:user_id (get-user-id username)})
+               (limit (or query-limit 5)))
+       (mapv (fn [login] (select-keys login [:ip_address :login_time])))))
