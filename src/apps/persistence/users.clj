@@ -3,7 +3,7 @@
         [kameleon.uuids :only [uuidify]]
         [korma.core :exclude [update]])
   (:require [korma.core :as sql]
-            [apps.util.conversions :refer [long->timestamp]])
+            [apps.util.conversions :refer [long->timestamp date->long]])
   (:import [java.sql Timestamp]))
 
 (defn- user-base-query
@@ -83,4 +83,7 @@
   (->> (select :logins
                (where {:user_id (get-user-id username)})
                (limit (or query-limit 5)))
-       (mapv (fn [login] (select-keys login [:ip_address :login_time])))))
+       (mapv (fn [login]
+               (select-keys
+                 (update login :login_time date->long)
+                 [:ip_address :login_time])))))
