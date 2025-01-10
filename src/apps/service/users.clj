@@ -18,4 +18,4 @@
 
 (defn list-logins
   [{:keys [username] :as current-user} {:keys [limit] :or {limit 5}}]
-  (up/list-logins username limit))
+  {:logins (up/list-logins username limit)})
