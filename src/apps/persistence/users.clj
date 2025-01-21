@@ -82,6 +82,7 @@
   [username query-limit]
   (->> (select :logins
                (where {:user_id (get-user-id username)})
+               (order :login_time :DESC)
                (limit (or query-limit 5)))
        (mapv (fn [login]
                (select-keys
