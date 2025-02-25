@@ -36,7 +36,7 @@
                  [org.cyverse/service-logging "2.8.4"]
                  [org.flatland/ordered "1.15.12"]
                  [me.raynes/fs "1.4.6"]
-                 [mvxcvi/clj-pgp "1.1.1"]
+                 [mvxcvi/clj-pgp "1.1.0"] ; can't use 1.1.1 due to random decryption exceptions
                  [pandect "1.0.2"]
                  [ring/ring-jetty-adapter "1.12.2"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
