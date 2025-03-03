@@ -54,3 +54,8 @@
   "Determines the maximum amount of CPUs that may be used by the app."
   [container requirements]
   (get-max-resource-setting :max_cpu_cores (config/default-cpu-limit) get-required-cpus container requirements))
+
+(defn get-required-disk-space
+  "Determines the minimum amount of disk space required for the container."
+  [container requirements]
+  (get-min-resource-setting :min_disk_space :min_disk_space (config/default-disk-limit) container requirements))
