@@ -1,10 +1,10 @@
 (ns apps.clients.iplant-groups
-  (:use [slingshot.slingshot :only [try+]])
   (:require [apps.util.config :as config]
             [cemerick.url :as curl]
             [clj-http.client :as http]
             [clojure.string :as string]
-            [cyverse-groups-client.core :as c]))
+            [cyverse-groups-client.core :as c]
+            [slingshot.slingshot :refer [try+]]))
 
 (def ^:private grouper-environment-base-fmt "iplant:de:%s")
 

@@ -1,8 +1,8 @@
 (ns apps.clients.metadata
-  (:use [slingshot.slingshot :only [throw+]])
   (:require [apps.persistence.categories :as db-categories]
             [apps.util.config :as config]
-            [metadata-client.core :as metadata-client]))
+            [metadata-client.core :as metadata-client]
+            [slingshot.slingshot :refer [throw+]]))
 
 (def app-target-type "app")
 

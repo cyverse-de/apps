@@ -2,7 +2,6 @@
   (:require [apps.util.config :as config]
             [cemerick.url :as curl]
             [cheshire.core :as json]
-            [clojure.string :as string]
             [clj-http.client :as client]))
 
 (defn send-email

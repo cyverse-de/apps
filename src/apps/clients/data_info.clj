@@ -1,12 +1,10 @@
 (ns apps.clients.data-info
-  (:use [medley.core :only [map-kv]])
   (:require [cemerick.url :as curl]
             [cheshire.core :as cheshire]
             [clj-http.client :as http]
             [clojure.string :as string]
-            [medley.core :refer [remove-vals]]
-            [apps.util.config :as config]
-            [apps.util.service :as service]))
+            [medley.core :refer [map-kv remove-vals]]
+            [apps.util.config :as config]))
 
 (defn- secured-params
   [user]

@@ -1,22 +1,21 @@
 (ns apps.clients.notifications
-  (:require [cemerick.url :as curl]
-            [cheshire.core :as cheshire]
-            [clj-http.client :as http]
-            [clj-time.coerce :as tc]
-            [clj-time.format :as tf]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [apps.clients.iplant-groups :as groups-client]
+  (:require [apps.clients.iplant-groups :as groups-client]
             [apps.clients.notifications.app-sharing :as asn]
             [apps.clients.notifications.job-sharing :as jsn]
             [apps.clients.notifications.tool-sharing :as tool-notifications]
             [apps.persistence.app-metadata :as amp]
             [apps.persistence.jobs :as jp]
             [apps.persistence.tool-requests :as tp]
-            [apps.util.config :as config])
-  (:use [apps.service.util :only [valid-uuid?]]
-        [cemerick.url :only [url]]
-        [pandect.algo.sha256 :only [sha256]]))
+            [apps.service.util :refer [valid-uuid?]]
+            [apps.util.config :as config]
+            [cemerick.url :as curl]
+            [cheshire.core :as cheshire]
+            [clj-http.client :as http]
+            [clj-time.coerce :as tc]
+            [clj-time.format :as tf]
+            [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [pandect.algo.sha256 :only [sha256]]))
 
 (def ^:private emailable-job-statuses
   #{jp/completed-status
@@ -59,7 +58,7 @@
    cemerick.url.
 
    Example usage:
-       (str (interapps-url (url (config/interapps-base)) username external-id))
+       (str (interapps-url (curl/url (config/interapps-base)) username external-id))
      Returns:
        https://abb9730df.cyverse.run"
   [{host :host :as base} username external-id]
@@ -108,9 +107,9 @@
 
 (defn send-interactive-job-status-update
   "Sends notification of an interactive job status update to the user."
-  ([username email-address {status :status user-id :user_id :as job-info} {external-id :external_id :as job-step-info}]
+  ([username email-address {status :status user-id :user_id :as job-info} {external-id :external_id}]
    (if-not (jp/completed? status)
-     (let [access-url (str (interapps-url (url (config/interapps-base)) user-id external-id))]
+     (let [access-url (str (interapps-url (curl/url (config/interapps-base)) user-id external-id))]
        (send-job-status-update username email-address (assoc job-info :access_url access-url)))
      (send-job-status-update username email-address job-info)))
   ([{username :shortUsername email-address :email} job-info job-step-info]

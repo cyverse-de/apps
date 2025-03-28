@@ -1,16 +1,15 @@
 (ns apps.service.apps
-  (:use [apps.constants :only [de-system-id]]
-        [apps.service.apps-client :only [get-apps-client get-apps-client-for-username]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [apps.util.db :only [transaction]]
-        [slingshot.slingshot :only [try+]]
-        [service-logging.thread-context :only [with-logging-context]])
-  (:require [clojure-commons.exception-util :as cxu]
-            [clojure.walk :as walk]
-            [apps.clients.notifications :as cn]
+  (:require [apps.clients.notifications :as cn]
+            [apps.constants :refer [de-system-id]]
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs :as jobs]
-            [apps.util.json :as json-util]))
+            [apps.service.apps-client :refer [get-apps-client get-apps-client-for-username]]
+            [apps.util.conversions :only [remove-nil-vals]]
+            [apps.util.db :only [transaction]]
+            [apps.util.json :as json-util]
+            [clojure-commons.exception-util :as cxu]
+            [clojure.set]
+            [clojure.walk :as walk]))
 
 (defn get-app-categories
   [user params]
