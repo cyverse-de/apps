@@ -1,52 +1,47 @@
 (ns apps.metadata.reference-genomes
-  (:use [apps.persistence.entities]
-        [apps.persistence.users :only [get-user-id]]
-        [apps.user :only [current-user]]
-        [apps.util.assertions :only [assert-not-nil]]
-        [apps.util.conversions :only [date->timestamp]]
-        [clojure.string :only [blank?]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [clojure.tools.logging :as log]
+  (:require [apps.persistence.entities :as entities]
+            [apps.persistence.users :refer [get-user-id]]
+            [apps.user :refer [current-user]]
+            [apps.util.assertions :refer [assert-not-nil]]
             [clojure-commons.exception-util :as cxu]
             [korma.core :as sql]))
 
 (defn- reference-genome-base-query
   "The base query used to list reference genomes."
   []
-  (-> (select* genome_reference)
-      (fields :id :name :path :deleted :created_on :last_modified_on
-              [:created_by.username :created_by]
-              [:last_modified_by.username :last_modified_by])
-      (join created_by)
-      (join last_modified_by)))
+  (-> (sql/select* entities/genome_reference)
+      (sql/fields :id :name :path :deleted :created_on :last_modified_on
+                  [:created_by.username :created_by]
+                  [:last_modified_by.username :last_modified_by])
+      (sql/join entities/created_by)
+      (sql/join entities/last_modified_by)))
 
 (defn- get-reference-genomes-where
   "A convenience function to look up reference genomes that satisfy a simple set of conditions."
   [conditions]
   (-> (reference-genome-base-query)
-      (where conditions)
-      select))
+      (sql/where conditions)
+      sql/select))
 
 (defn get-reference-genomes
   "Lists all of the reference genomes in the database."
   [{:keys [deleted created_by]}]
   (let [query (reference-genome-base-query)
         query (if-not deleted
-                (where query {:deleted false})
+                (sql/where query {:deleted false})
                 query)
         query (if created_by
-                (where query {:created_by.username created_by})
+                (sql/where query {:created_by.username created_by})
                 query)]
-    (select query)))
+    (sql/select query)))
 
 (defn get-reference-genomes-by-id
   "Lists all of the reference genomes in the database."
   [& uuids]
   (if (seq uuids)
-    (select (reference-genome-base-query)
-            (where {:id [in uuids]}))
-    (select (reference-genome-base-query))))
+    (sql/select (reference-genome-base-query)
+                (sql/where {:id [:in uuids]}))
+    (sql/select (reference-genome-base-query))))
 
 (defn list-reference-genomes
   "Lists the reference genomes in the database."
@@ -64,19 +59,19 @@
 (defn- validate-reference-genome-path
   "Verifies that a reference genome with the same path doesn't already exist."
   ([path id]
-   (if (seq (get-reference-genomes-where {:path path :id ['not= id]}))
+   (when (seq (get-reference-genomes-where {:path path :id ['not= id]}))
      (cxu/exists "Another reference genome with the given path already exists." :path path)))
   ([path]
-   (if (seq (get-reference-genomes-where {:path path}))
+   (when (seq (get-reference-genomes-where {:path path}))
      (cxu/exists "A reference genome with the given path already exists." :path path))))
 
 (defn- validate-reference-genome-name
   "Verifies that a reference genome with the same name doesn't already exist."
   ([name id]
-   (if (seq (get-reference-genomes-where {:name name :id ['not= id]}))
+   (when (seq (get-reference-genomes-where {:name name :id ['not= id]}))
      (cxu/exists "Another reference genome with the given name already exists." :name name)))
   ([name]
-   (if (seq (get-reference-genomes-where {:name name}))
+   (when (seq (get-reference-genomes-where {:name name}))
      (cxu/exists "A reference genome with the given name already exists." :name name))))
 
 (defn get-reference-genome
@@ -89,8 +84,8 @@
   [reference-genome-id {:keys [permanent] :or {permanent false}}]
   (get-valid-reference-genome reference-genome-id)
   (if permanent
-    (sql/delete genome_reference (where {:id reference-genome-id}))
-    (sql/update genome_reference (set-fields {:deleted true}) (where {:id reference-genome-id})))
+    (sql/delete entities/genome_reference (sql/where {:id reference-genome-id}))
+    (sql/update entities/genome_reference (sql/set-fields {:deleted true}) (sql/where {:id reference-genome-id})))
   nil)
 
 (defn update-reference-genome
@@ -99,25 +94,25 @@
   (get-valid-reference-genome reference-genome-id)
   (validate-reference-genome-path path reference-genome-id)
   (validate-reference-genome-name name reference-genome-id)
-  (sql/update genome_reference
-              (set-fields (assoc (select-keys reference-genome [:name :path :deleted])
-                                 :last_modified_by (get-user-id (:username current-user))
-                                 :last_modified_on (sqlfn now)))
-              (where {:id reference-genome-id}))
+  (sql/update entities/genome_reference
+              (sql/set-fields (assoc (select-keys reference-genome [:name :path :deleted])
+                                     :last_modified_by (get-user-id (:username current-user))
+                                     :last_modified_on (sql/sqlfn :now)))
+              (sql/where {:id reference-genome-id}))
   (get-reference-genome reference-genome-id))
 
 (defn add-reference-genome
   "Adds a reference genome with the given name and path."
-  [{:keys [name path] :as reference-genome}]
+  [{:keys [name path]}]
   (let [user-id (get-user-id (:username current-user))]
     (validate-reference-genome-path path)
     (validate-reference-genome-name name)
-    (-> (insert genome_reference
-                (values {:name             name
-                         :path             path
-                         :created_by       user-id
-                         :last_modified_by user-id
-                         :created_on       (sqlfn now)
-                         :last_modified_on (sqlfn now)}))
+    (-> (sql/insert entities/genome_reference
+                    (sql/values {:name             name
+                                 :path             path
+                                 :created_by       user-id
+                                 :last_modified_by user-id
+                                 :created_on       (sql/sqlfn :now)
+                                 :last_modified_on (sql/sqlfn :now)}))
         :id
         get-reference-genome)))

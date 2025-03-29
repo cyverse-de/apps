@@ -1,13 +1,13 @@
 (ns apps.core
   (:gen-class)
-  (:use [clojure.java.io :only [file]]
-        [apps.kormadb])
-  (:require [clojure.tools.logging :as log]
+  (:require [apps.kormadb :refer [define-database]]
+            [apps.routes :as routes]
+            [apps.tasks :as tasks]
+            [clojure.java.io :refer [file]]
+            [clojure.tools.logging :as log]
             [common-cli.core :as ccli]
             [me.raynes.fs :as fs]
             [clj-http.client :as http]
-            [apps.routes :as routes]
-            [apps.tasks :as tasks]
             [apps.util.config :as config]
             [service-logging.thread-context :as tc]))
 
@@ -71,9 +71,9 @@
 (defn -main
   [& args]
   (tc/with-logging-context config/svc-info
-    (let [{:keys [options arguments errors summary]} (ccli/handle-args config/svc-info args cli-options)]
+    (let [{:keys [options _arguments _errors _summary]} (ccli/handle-args config/svc-info args cli-options)]
       (when-not (fs/exists? (:config options))
-        (ccli/exit 1 (str "The config file does not exist.")))
+        (ccli/exit 1 "The config file does not exist."))
       (when-not (fs/readable? (:config options))
         (ccli/exit 1 "The config file is not readable."))
       (load-config-from-file (:config options))

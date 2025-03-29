@@ -1,9 +1,9 @@
 (ns apps.metadata.params
-  (:use [apps.metadata.reference-genomes :only [get-reference-genomes-by-id]]
-        [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]])
-  (:require [apps.persistence.app-metadata :as persistence]
-            [apps.util.conversions :as conv]))
+  (:require [apps.metadata.reference-genomes :only [get-reference-genomes-by-id]]
+            [apps.persistence.app-metadata :as persistence]
+            [apps.util.conversions :as conv]
+            [kameleon.uuids :refer [uuidify]]
+            [korma.core :as sql]))
 
 (defn- reference-param?
   [param-type]
@@ -63,30 +63,30 @@
 
 (defn get-param-values
   [id]
-  (-> (select* :parameter_values)
-      (fields :id :parent_id :name :value [:label :display] :description [:is_default :isDefault])
-      (where {:parameter_id id})
-      (order [:parent_id :display_order])
-      (select)))
+  (-> (sql/select* :parameter_values)
+      (sql/fields :id :parent_id :name :value [:label :display] :description [:is_default :isDefault])
+      (sql/where {:parameter_id id})
+      (sql/order [:parent_id :display_order])
+      (sql/select)))
 
 (defn params-base-query
   []
-  (-> (select* [:task_param_listing :p])
-      (fields [:p.description   :description]
-              [:p.id            :id]
-              [:p.name          :name]
-              [:p.label         :label]
-              [:p.is_visible    :is_visible]
-              [:p.required      :required]
-              [:p.omit_if_blank :omit_if_blank]
-              [:p.ordering      :order]
-              [:parameter_type  :type]
-              :retain
-              :is_implicit
-              :repeat_option_flag
-              :info_type
-              :data_format
-              :data_source)))
+  (-> (sql/select* [:task_param_listing :p])
+      (sql/fields [:p.description   :description]
+                  [:p.id            :id]
+                  [:p.name          :name]
+                  [:p.label         :label]
+                  [:p.is_visible    :is_visible]
+                  [:p.required      :required]
+                  [:p.omit_if_blank :omit_if_blank]
+                  [:p.ordering      :order]
+                  [:parameter_type  :type]
+                  :retain
+                  :is_implicit
+                  :repeat_option_flag
+                  :info_type
+                  :data_format
+                  :data_source)))
 
 (defn get-default-value
   [type param-values]
@@ -107,11 +107,11 @@
 (defn get-validators
   [param-id]
   (mapv format-validator
-        (select [:validation_rules :r]
-                (join [:rule_type :t] {:r.rule_type :t.id})
-                (fields :r.id [:t.name :type] [:t.id :type_id])
-                (where {:r.parameter_id param-id
-                        :t.deprecated   false}))))
+        (sql/select [:validation_rules :r]
+                    (sql/join [:rule_type :t] {:r.rule_type :t.id})
+                    (sql/fields :r.id [:t.name :type] [:t.id :type_id])
+                    (sql/where {:r.parameter_id param-id
+                                :t.deprecated   false}))))
 
 (defn- add-default-value
   [{:keys [id type] :as param}]
@@ -119,18 +119,18 @@
 
 (defn load-app-params
   [app-version-id]
-  (->> (select (params-base-query)
-               (join :inner [:app_steps :s] {:p.task_id :s.task_id})
-               (join :inner [:app_versions :v] {:s.app_version_id :v.id})
-               (fields [:s.id :step_id])
-               (where {:v.id app-version-id}))
+  (->> (sql/select (params-base-query)
+                   (sql/join :inner [:app_steps :s] {:p.task_id :s.task_id})
+                   (sql/join :inner [:app_versions :v] {:s.app_version_id :v.id})
+                   (sql/fields [:s.id :step_id])
+                   (sql/where {:v.id app-version-id}))
        (mapv add-default-value)))
 
 (defn load-hidden-params
   [app-version-id]
   (mapv add-default-value
         (-> (params-base-query)
-            (join :inner [:app_steps :s] {:p.task_id :s.task_id})
-            (where {:s.app_version_id app-version-id
-                    :p.is_visible     false})
-            select)))
+            (sql/join :inner [:app_steps :s] {:p.task_id :s.task_id})
+            (sql/where {:s.app_version_id app-version-id
+                        :p.is_visible     false})
+            sql/select)))

@@ -1,45 +1,47 @@
 (ns apps.persistence.app-search
-  (:use [kameleon.queries :only [add-query-offset add-query-limit add-query-sorting]]
-        [kameleon.util :only [query-spy]]
-        [kameleon.util.search :only [format-query-wildcards]]
-        [korma.core :exclude [update]])
-  (:require [apps.constants :as c]))
+  (:require [apps.constants :as c]
+            [kameleon.util :refer [query-spy]]
+            [kameleon.util.search :refer [format-query-wildcards]]
+            [korma.core :as sql]))
+
+;; Declarations for special symbols used by Korma.
+(declare exists)
 
 (defn- get-app-category-subselect
   []
-  (subselect [:app_category_app :aca] (where {:aca.app_id :a.id})))
+  (sql/subselect [:app_category_app :aca] (sql/where {:aca.app_id :a.id})))
 
 (defn- add-app-id-where-clause
   [q {:keys [app-ids orphans public-app-ids]}]
   (if (and orphans (seq public-app-ids))
-    (where q (or {:a.id [in app-ids]}
-                 (and {:a.id [not-in public-app-ids]}
-                      (not (exists (get-app-category-subselect))))))
-    (where q {:a.id [in app-ids]})))
+    (sql/where q (or {:a.id [:in app-ids]}
+                     (and {:a.id [:not-in public-app-ids]}
+                          (not (exists (get-app-category-subselect))))))
+    (sql/where q {:a.id [:in app-ids]})))
 
 (defn- add-app-type-where-clause
   [q {:keys [app-type]}]
   (if app-type
-    (where q {:jt.name app-type})
+    (sql/where q {:jt.name app-type})
     q))
 
 (defn- add-omitted-app-id-where-clause
   [q {:keys [omitted-app-ids]}]
   (if (seq omitted-app-ids)
-    (where q {:a.id [not-in omitted-app-ids]})
+    (sql/where q {:a.id [:not-in omitted-app-ids]})
     q))
 
 (defn- external-step-subselect
   []
-  (subselect [:app_steps :es]
-             (where {:es.app_version_id :v.id
-                     :es.task_id        nil})))
+  (sql/subselect [:app_steps :es]
+                 (sql/where {:es.app_version_id :v.id
+                             :es.task_id        nil})))
 
 (defn- add-tapis-pipeline-where-clause
   [q {tapis-enabled? :tapis-enabled :or {tapis-enabled? "false"}}]
   (let [tapis-enabled? (Boolean/parseBoolean tapis-enabled?)]
     (if-not tapis-enabled?
-      (where q (not (exists (external-step-subselect))))
+      (sql/where q (not (exists (external-step-subselect))))
       q)))
 
 (defn- add-search-term-where-clauses
@@ -53,38 +55,38 @@
 
     (seq pre-matched-app-ids)
     (let [search-term (str "%" (format-query-wildcards search-term) "%")]
-      (where q (or {(sqlfn lower :a.name)            [like (sqlfn lower search-term)]}
-                   {(sqlfn lower :a.description)     [like (sqlfn lower search-term)]}
-                   {(sqlfn lower :i.integrator_name) [like (sqlfn lower search-term)]}
-                   {(sqlfn lower :tool.name)         [like (sqlfn lower search-term)]}
-                   {:a.id                            [in pre-matched-app-ids]})))
+      (sql/where q (or {(sql/sqlfn :lower :a.name)            [:like (sql/sqlfn :lower search-term)]}
+                       {(sql/sqlfn :lower :a.description)     [:like (sql/sqlfn :lower search-term)]}
+                       {(sql/sqlfn :lower :i.integrator_name) [:like (sql/sqlfn :lower search-term)]}
+                       {(sql/sqlfn :lower :tool.name)         [:like (sql/sqlfn :lower search-term)]}
+                       {:a.id                            [:in pre-matched-app-ids]})))
 
     :else
     (let [search-term (str "%" (format-query-wildcards search-term) "%")]
-      (where q (or {(sqlfn lower :a.name)            [like (sqlfn lower search-term)]}
-                   {(sqlfn lower :a.description)     [like (sqlfn lower search-term)]}
-                   {(sqlfn lower :i.integrator_name) [like (sqlfn lower search-term)]}
-                   {(sqlfn lower :tool.name)         [like (sqlfn lower search-term)]})))))
+      (sql/where q (or {(sql/sqlfn :lower :a.name)            [:like (sql/sqlfn :lower search-term)]}
+                       {(sql/sqlfn :lower :a.description)     [:like (sql/sqlfn :lower search-term)]}
+                       {(sql/sqlfn :lower :i.integrator_name) [:like (sql/sqlfn :lower search-term)]}
+                       {(sql/sqlfn :lower :tool.name)         [:like (sql/sqlfn :lower search-term)]})))))
 
 (defn- add-non-admin-where-clauses
   "If the admin option is not set, adds clauses to exclude apps that are not available in
    non-administrative app listings."
   [q {admin? :admin}]
   (if-not admin?
-    (where q {:v.deleted         false
-              :i.integrator_name [not= c/internal-app-integrator]})
+    (sql/where q {:v.deleted         false
+                  :i.integrator_name [not= c/internal-app-integrator]})
     q))
 
 (defn- get-app-search-base-query
   "Gets an app search select query. This function returns only a list of matching app IDs."
   [search-term query-opts]
-  (as-> (select* [:apps :a]) q
-    (join q [:app_versions :v] {:a.id :v.app_id})
-    (join q [:integration_data :i] {:v.integration_data_id :i.id})
-    (join q [:app_steps :s] {:v.id :s.app_version_id})
-    (join q [:tasks :t] {:s.task_id :t.id})
-    (join q [:tools :tool] {:t.tool_id :tool.id})
-    (join q [:job_types :jt] {:t.job_type_id :jt.id})
+  (as-> (sql/select* [:apps :a]) q
+    (sql/join q [:app_versions :v] {:a.id :v.app_id})
+    (sql/join q [:integration_data :i] {:v.integration_data_id :i.id})
+    (sql/join q [:app_steps :s] {:v.id :s.app_version_id})
+    (sql/join q [:tasks :t] {:s.task_id :t.id})
+    (sql/join q [:tools :tool] {:t.tool_id :tool.id})
+    (sql/join q [:job_types :jt] {:t.job_type_id :jt.id})
     (add-app-id-where-clause q query-opts)
     (add-app-type-where-clause q query-opts)
     (add-omitted-app-id-where-clause q query-opts)
@@ -96,16 +98,16 @@
   "Counts the identifiers that match a set of search parameters."
   [search-term query-opts]
   (as-> (get-app-search-base-query search-term query-opts) q
-    (fields q (raw "count(DISTINCT a.id) AS total"))
+    (sql/fields q (sql/raw "count(DISTINCT a.id) AS total"))
     (query-spy "count-matching-app-ids::search_query:" q)
-    (:total (first (select q)))))
+    (:total (first (sql/select q)))))
 
 (defn find-matching-app-ids
   "Finds the identifiers of apps that match a set of search parameters."
   [search-term query-opts]
   (as-> (get-app-search-base-query search-term query-opts) q
-    (modifier q "DISTINCT")
-    (fields q :a.id)
+    (sql/modifier q "DISTINCT")
+    (sql/fields q :a.id)
     (query-spy "find-matching-app-ids::search_query:" q)
-    (select q)
+    (sql/select q)
     (map :id q)))

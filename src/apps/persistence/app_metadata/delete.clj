@@ -1,41 +1,44 @@
 (ns apps.persistence.app-metadata.delete
   "Functions used to remove apps from the database."
-  (:use [apps.persistence.entities]
-        [apps.user :only [current-user]]
-        [apps.util.db :only [transaction]]
-        [korma.core :exclude [update]])
-  (:require [clojure.tools.logging :as log]))
+  (:require [apps.persistence.entities :as entities]
+            [apps.user :refer [current-user]]
+            [apps.util.db :refer [transaction]]
+            [clojure.tools.logging :as log]
+            [korma.core :as sql]))
+
+;; Declarations for special symbols used by Korma.
+(declare count)
 
 (defn- tasks-for-app
   "Loads the list of tasks associated with an app."
   [app-id]
-  (select tasks
-          (join [:app_steps :step]
-                {:step.task_id :tasks.id})
-          (join [:app_versions :versions]
-                {:step.app_version_id :versions.id})
-          (where {:versions.app_id app-id})))
+  (sql/select entities/tasks
+              (sql/join [:app_steps :step]
+                        {:step.task_id :tasks.id})
+              (sql/join [:app_versions :versions]
+                        {:step.app_version_id :versions.id})
+              (sql/where {:versions.app_id app-id})))
 
 (defn- task-orphaned?
   "Determines whether or not a task is orphaned."
   [task-id]
   ((comp zero? :count first)
-   (select :app_steps
-           (aggregate (count :*) :count)
-           (where {:task_id task-id}))))
+   (sql/select :app_steps
+               (sql/aggregate (count :*) :count)
+               (sql/where {:task_id task-id}))))
 
 (defn- delete-orphaned-task
   "Deletes a task if it's orphaned (that is, if it's not used in any app). Task deletes should
    cascade to parameter groups, parameters, and other parameter related tables."
   [task-id]
   (when (task-orphaned? task-id)
-    (delete tasks (where {:id task-id}))))
+    (sql/delete entities/tasks (sql/where {:id task-id}))))
 
 (defn- remove-app
   "Removes an app from the database. App deletes should cascade to app related tables like ratings,
    references, steps, and mappings."
   [app-id]
-  (delete apps (where {:id app-id})))
+  (sql/delete entities/apps (sql/where {:id app-id})))
 
 (defn permanently-delete-app
   "Permanently removes an app from the database."

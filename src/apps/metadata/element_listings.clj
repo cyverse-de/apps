@@ -1,37 +1,37 @@
 (ns apps.metadata.element-listings
-  (:use [apps.persistence.app-metadata :only [parameter-types-for-tool-type]]
-        [apps.persistence.entities]
-        [apps.tools :only [format-tool-listing]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.permissions :as perms-client]
-            [apps.persistence.tools :as tools-db]))
+            [apps.persistence.app-metadata :refer [parameter-types-for-tool-type]]
+            [apps.persistence.entities :as entities]
+            [apps.persistence.tools :as tools-db]
+            [apps.tools :refer [format-tool-listing]]
+            [apps.util.conversions :refer [remove-nil-vals]]
+            [korma.core :as sql]
+            [slingshot.slingshot :only [throw+]]))
 
 (defn get-tool-type-by-name
   "Searches for the tool type with the given name."
   [tool-type-name]
-  (first (select tool_types
-                 (where {:name tool-type-name}))))
+  (first (sql/select entities/tool_types
+                     (sql/where {:name tool-type-name}))))
 
 (defn get-tool-type-by-component-id
   "Searches for the tool type associated with the given deployed component."
   [component-id]
-  (first (select tools
-                 (fields :tool_types.id :tool_types.name :tool_types.label
-                         :tool_types.description)
-                 (join tool_types)
-                 (where {:tools.id component-id}))))
+  (first (sql/select entities/tools
+                     (sql/fields :tool_types.id :tool_types.name :tool_types.label
+                                 :tool_types.description)
+                     (sql/join entities/tool_types)
+                     (sql/where {:tools.id component-id}))))
 
 (defn- base-parameter-type-query
   "Creates the base query used to list parameter types for the metadata element listing service."
   []
-  (-> (select* parameter_types)
-      (fields :parameter_types.id :parameter_types.name
-              [:value_type.name :value_type] :parameter_types.description)
-      (join value_type)
-      (where {:deprecated false})
-      (order :display_order)))
+  (-> (sql/select* entities/parameter_types)
+      (sql/fields :parameter_types.id :parameter_types.name
+                  [:value_type.name :value_type] :parameter_types.description)
+      (sql/join entities/value_type)
+      (sql/where {:deprecated false})
+      (sql/order :display_order)))
 
 (defn- get-tool-type-id
   "Gets the internal identifier associated with a tool type name."
@@ -66,17 +66,17 @@
   [_]
   {:formats
    (map remove-nil-vals
-        (select data_formats
-                (fields :id :name :label)
-                (order :display_order)))})
+        (sql/select entities/data_formats
+                    (sql/fields :id :name :label)
+                    (sql/order :display_order)))})
 
 (defn- list-data-sources
   "Obtains a listing of data sources."
   [_]
   {:data_sources
-   (select data_source
-           (fields :id :name :label :description)
-           (order :display_order))})
+   (sql/select entities/data_source
+               (sql/fields :id :name :label :description)
+               (sql/order :display_order))})
 
 (defn- list-tools
   "Obtains a listing of tools for the metadata element listing service."
@@ -96,10 +96,10 @@
   [_]
   {:info_types
    (map remove-nil-vals
-        (select info_type
-                (fields :id :name :label)
-                (where {:deprecated false})
-                (order :display_order)))})
+        (sql/select entities/info_type
+                    (sql/fields :id :name :label)
+                    (sql/where {:deprecated false})
+                    (sql/order :display_order)))})
 
 (defn- list-property-types
   "Obtains the property types for the metadata element listing service.
@@ -112,7 +112,7 @@
     {:parameter_types
      (map remove-nil-vals
           (if (nil? tool-type-id)
-            (select (base-parameter-type-query))
+            (sql/select (base-parameter-type-query))
             (parameter-types-for-tool-type (base-parameter-type-query) tool-type-id)))}))
 
 (defn- list-rule-types
@@ -125,26 +125,26 @@
        (assoc (dissoc m :value_type)
               :value_types             (mapv :name (:value_type m))
               :rule_description_format (:rule_description_format m ""))))
-    (select rule_type
-            (fields [:rule_type.id :id]
-                    [:rule_type.name :name]
-                    [:rule_type.description :description]
-                    [:rule_subtype.name :subtype]
-                    [:rule_type.rule_description_format :rule_description_format])
-            (join rule_subtype)
-            (with value_type)))})
+    (sql/select entities/rule_type
+                (sql/fields [:rule_type.id :id]
+                            [:rule_type.name :name]
+                            [:rule_type.description :description]
+                            [:rule_subtype.name :subtype]
+                            [:rule_type.rule_description_format :rule_description_format])
+                (sql/join entities/rule_subtype)
+                (sql/with entities/value_type)))})
 
 (defn- list-tool-types
   "Obtains the list of tool types for the metadata element listing service."
   [_]
-  {:tool_types (map remove-nil-vals (select tool_types (fields :id :name :label :description)))})
+  {:tool_types (map remove-nil-vals (sql/select entities/tool_types (sql/fields :id :name :label :description)))})
 
 (defn- list-value-types
   "Obtains the list of value types for the metadata element listing service."
   [_]
   {:value_types
-   (select value_type
-           (fields :id :name :description))})
+   (sql/select entities/value_type
+               (sql/fields :id :name :description))})
 
 (def ^:private listing-fns
   "The listing functions to use for various metadata element types."

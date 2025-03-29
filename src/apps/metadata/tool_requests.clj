@@ -1,17 +1,16 @@
 (ns apps.metadata.tool-requests
-  (:use [apps.persistence.entities]
-        [apps.user :only [load-user]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [apps.util.db :only [transaction]]
-        [clojure.java.io :only [reader]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [throw+]])
   (:require [apps.clients.notifications :as cn]
+            [apps.persistence.entities :as entities]
             [apps.persistence.tool-requests :as queries]
             [apps.persistence.users :as users]
+            [apps.user :refer [load-user]]
+            [apps.util.conversions :refer [remove-nil-vals]]
+            [apps.util.db :refer [transaction]]
             [apps.util.params :as params]
             [clojure.string :as string]
-            [clojure-commons.exception-util :as cxu])
+            [clojure-commons.exception-util :as cxu]
+            [korma.core :as sql]
+            [slingshot.slingshot :refer [throw+]])
   (:import [java.util UUID]))
 
 ;; Status codes.
@@ -30,7 +29,7 @@
 (defn- architecture-name-to-id
   "Gets the internal architecture identifier for an architecture name."
   [architecture]
-  (let [id (:id (first (select tool_architectures (where {:name architecture}))))]
+  (let [id (:id (first (sql/select entities/tool_architectures (sql/where {:name architecture}))))]
     (when (nil? id)
       (throw+ {:type  :clojure-commons.exception/not-found
                :error (str "Could not locate ID for the architecture name: " architecture)}))
@@ -39,9 +38,9 @@
 (defn- status-code-subselect
   "Creates a subselect statement to find the primary key of a status code."
   [status-code]
-  (subselect tool_request_status_codes
-             (fields :id)
-             (where {:name status-code})))
+  (sql/subselect entities/tool_request_status_codes
+                 (sql/fields :id)
+                 (sql/where {:name status-code})))
 
 (defn- handle-new-tool-request
   "Submits a tool request on behalf of the authenticated user."
@@ -51,28 +50,28 @@
          architecture-id (architecture-name-to-id (:architecture req "Others"))
          uuid            (UUID/randomUUID)]
 
-     (insert tool_requests
-             (values {:phone                (:phone req)
-                      :id                   uuid
-                      :tool_id              tool_id
-                      :tool_name            (required-field req :name)
-                      :description          (required-field req :description)
-                      :source_url           (required-field req :source_url :source_upload_file)
-                      :doc_url              (required-field req :documentation_url)
-                      :version              (required-field req :version)
-                      :attribution          (:attribution req "")
-                      :multithreaded        (:multithreaded req)
-                      :test_data_path       (required-field req :test_data_path)
-                      :instructions         (required-field req :cmd_line)
-                      :additional_info      (:additional_info req)
-                      :additional_data_file (:additional_data_file req)
-                      :requestor_id         user-id
-                      :tool_architecture_id architecture-id}))
+     (sql/insert entities/tool_requests
+                 (sql/values {:phone                (:phone req)
+                              :id                   uuid
+                              :tool_id              tool_id
+                              :tool_name            (required-field req :name)
+                              :description          (required-field req :description)
+                              :source_url           (required-field req :source_url :source_upload_file)
+                              :doc_url              (required-field req :documentation_url)
+                              :version              (required-field req :version)
+                              :attribution          (:attribution req "")
+                              :multithreaded        (:multithreaded req)
+                              :test_data_path       (required-field req :test_data_path)
+                              :instructions         (required-field req :cmd_line)
+                              :additional_info      (:additional_info req)
+                              :additional_data_file (:additional_data_file req)
+                              :requestor_id         user-id
+                              :tool_architecture_id architecture-id}))
 
-     (insert tool_request_statuses
-             (values {:tool_request_id             uuid
-                      :tool_request_status_code_id (status-code-subselect initial-status-code)
-                      :updater_id                  user-id}))
+     (sql/insert entities/tool_request_statuses
+                 (sql/values {:tool_request_id             uuid
+                              :tool_request_status_code_id (status-code-subselect initial-status-code)
+                              :updater_id                  user-id}))
      uuid)))
 
 (defn- get-tool-req
@@ -91,15 +90,15 @@
   "Gets the most recent status for a tool request."
   [uuid]
   (let [status ((comp :name first)
-                (select [:tool_requests :tr]
-                        (fields :trsc.name)
-                        (join [:tool_request_statuses :trs]
-                              {:tr.id :trs.tool_request_id})
-                        (join [:tool_request_status_codes :trsc]
-                              {:trs.tool_request_status_code_id :trsc.id})
-                        (where {:tr.id uuid})
-                        (order :trs.date_assigned :DESC)
-                        (limit 1)))]
+                (sql/select [:tool_requests :tr]
+                            (sql/fields :trsc.name)
+                            (sql/join [:tool_request_statuses :trs]
+                                      {:tr.id :trs.tool_request_id})
+                            (sql/join [:tool_request_status_codes :trsc]
+                                      {:trs.tool_request_status_code_id :trsc.id})
+                            (sql/where {:tr.id uuid})
+                            (sql/order :trs.date_assigned :DESC)
+                            (sql/limit 1)))]
     (when (nil? status)
       (throw+ {:type :clojure-commons.exception/failed-dependency
                :error "no status found for tool request"
@@ -110,9 +109,9 @@
   "Attempts to retrieve a status code from the database."
   [status-code]
   (first
-   (select tool_request_status_codes
-           (fields :id :name :description)
-           (where {:name status-code}))))
+   (sql/select entities/tool_request_status_codes
+               (sql/fields :id :name :description)
+               (sql/where {:name status-code}))))
 
 (defn- new-status-code-record
   "Creates a new status code record."
@@ -125,7 +124,7 @@
   "Adds a new status code."
   [status-code]
   (let [rec (new-status-code-record status-code)]
-    (insert tool_request_status_codes (values rec))
+    (sql/insert entities/tool_request_status_codes (sql/values rec))
     rec))
 
 (defn- load-status-code
@@ -146,11 +145,11 @@
          user-id     (users/get-user-id username)
          comments    (:comments update)
          comments    (when-not (string/blank? comments) comments)]
-     (insert tool_request_statuses
-             (values {:tool_request_id             uuid
-                      :tool_request_status_code_id status-id
-                      :updater_id                  user-id
-                      :comments                    comments}))
+     (sql/insert entities/tool_request_statuses
+                 (sql/values {:tool_request_id             uuid
+                              :tool_request_status_code_id status-id
+                              :updater_id                  user-id
+                              :comments                    comments}))
      uuid)))
 
 (defn- get-tool-request-list
@@ -213,7 +212,7 @@
 
 (defn update-tool-request
   "Updates the status of a tool request."
-  [uuid uid-domain {:keys [username] :as user} body]
+  [uuid uid-domain {:keys [username]} body]
   (-> (assoc body :username username)
       (handle-tool-request-update uuid uid-domain)
       (get-tool-request)
@@ -222,7 +221,7 @@
 (defn complete-tool-request
   "Updates the status of a tool request associated with the given tool-id to Completion."
   [tool-id uid-domain user]
-  (if-let [request-id (queries/get-request-id-for-tool tool-id)]
+  (when-let [request-id (queries/get-request-id-for-tool tool-id)]
     (update-tool-request request-id uid-domain user {:status completion-status-code})))
 
 (defn- format-tool-request-dates
@@ -241,18 +240,18 @@
 (defn- add-filter
   [query field filter]
   (if filter
-    (where query {(sqlfn :lower field) [like (str "%" (string/lower-case filter) "%")]})
+    (sql/where query {(sql/sqlfn :lower field) [:like (str "%" (string/lower-case filter) "%")]})
     query))
 
 (defn list-tool-request-status-codes
   "Lists the known tool request status codes."
   [{:keys [filter]}]
   {:status_codes
-   (-> (select* tool_request_status_codes)
-       (fields :id :name :description)
-       (order :name :ASC)
+   (-> (sql/select* entities/tool_request_status_codes)
+       (sql/fields :id :name :description)
+       (sql/order :name :ASC)
        (add-filter :name filter)
-       (select))})
+       (sql/select))})
 
 (defn delete-tool-request-status-code
   "Deletes a tool request status code as long as it's not referenced by a tool request."

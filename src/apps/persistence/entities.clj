@@ -1,319 +1,362 @@
 (ns apps.persistence.entities
-  (:use [korma.core :exclude [update]]))
+  (:require [korma.core :as sql]))
 
-(declare users collaborator requestor workspace app_categories apps app_versions app_steps app_references integration_data
-         tools tool_test_data_files output_mapping input_mapping tasks job_types inputs outputs
-         task_parameters info_type data_formats multiplicity parameter_groups parameters
-         parameter_values parameter_types value_type validation_rules validation_rule_arguments
-         rule_type rule_subtype app_category_listing app_listing tool_listing ratings collaborators
-         genome_reference created_by last_modified_by data_source tool_types
-         tool_request_status_codes tool_architectures tool_requests apps_htcondor_extra
-         tool_request_statuses container-images container-settings container-devices container-volumes container-volumes-from)
+(declare users
+         collaborator
+         requestor
+         workspace
+         app_categories
+         apps
+         app_versions
+         app_steps
+         app_references
+         integration_data
+         tools
+         tool_test_data_files
+         output_mapping
+         input_mapping
+         tasks
+         job_types
+         inputs
+         outputs
+         task_parameters
+         info_type
+         data_formats
+         multiplicity
+         parameter_groups
+         parameters
+         parameter_values
+         parameter_types
+         value_type
+         validation_rules
+         validation_rule_arguments
+         rule_type
+         rule_subtype
+         app_category_listing
+         app_listing
+         tool_listing
+         ratings
+         collaborators
+         genome_reference
+         created_by
+         last_modified_by
+         data_source
+         tool_types
+         tool_request_status_codes
+         tool_architectures
+         tool_requests
+         apps_htcondor_extra
+         tool_request_statuses
+         container-images
+         container-settings
+         container-devices
+         container-volumes
+         container-volumes-from)
 
 ;; Users who have logged into the DE.  Multiple entities are associated with
 ;; the same table in order to allow us to have multiple relationships between
 ;; the same two tables.
-(defentity users
-  (has-one workspace {:fk :user_id})
-  (has-many ratings {:fk :user_id}))
-(defentity collaborator
-  (table :users :collaborator)
-  (has-many collaborators {:fk :collaborator_id}))
+(sql/defentity users
+  (sql/has-one workspace {:fk :user_id})
+  (sql/has-many ratings {:fk :user_id}))
+(sql/defentity collaborator
+  (sql/table :users :collaborator)
+  (sql/has-many collaborators {:fk :collaborator_id}))
 
 ;; The workspaces of users who have logged into the DE.
-(defentity workspace
-  (belongs-to users {:fk :user_id})
-  (belongs-to app_categories {:fk :root_category_id}))
+(sql/defentity workspace
+  (sql/belongs-to users {:fk :user_id})
+  (sql/belongs-to app_categories {:fk :root_category_id}))
 
 ;; An app group.
-(defentity app_categories
-  (belongs-to workspace)
-  (many-to-many app_categories :app_category_group
+(sql/defentity app_categories
+  (sql/belongs-to workspace)
+  (sql/many-to-many app_categories :app_category_group
                 {:lfk :parent_category_id
                  :rfk :child_category_id})
-  (many-to-many apps :app_category_app
+  (sql/many-to-many apps :app_category_app
                 {:lfk :app_category_id
                  :rfk :app_id}))
 
 ;; An app.
-(defentity apps
-  (has-many app_versions {:fk :app_id})
-  (many-to-many app_categories :app_category_app
+(sql/defentity apps
+  (sql/has-many app_versions {:fk :app_id})
+  (sql/many-to-many app_categories :app_category_app
                 {:lfk :app_id
                  :rfk :app_category_id})
-  (has-many ratings {:fk :app_id}))
+  (sql/has-many ratings {:fk :app_id}))
 
 ;; Versions of an app.
-(defentity app_versions
-  (belongs-to integration_data)
-  (has-many app_references {:fk :app_version_id})
-  (many-to-many tasks :app_steps
+(sql/defentity app_versions
+  (sql/belongs-to integration_data)
+  (sql/has-many app_references {:fk :app_version_id})
+  (sql/many-to-many tasks :app_steps
                 {:lfk :app_version_id
                  :rfk :task_id}))
 
 ;; References associated with an app.
-(defentity app_references)
+(sql/defentity app_references)
 
 ;; Extra info for HTCondor
-(defentity apps_htcondor_extra)
+(sql/defentity apps_htcondor_extra)
 
 ;; Information about who integrated an app or a deployed component.
-(defentity integration_data
-  (has-many app_versions)
-  (has-many tools))
+(sql/defentity integration_data
+  (sql/has-many app_versions)
+  (sql/has-many tools))
 
-(defentity data-containers
-  (table :data_containers)
-  (has-one container-volumes-from)
-  (belongs-to container-images))
+(sql/defentity data-containers
+  (sql/table :data_containers)
+  (sql/has-one container-volumes-from)
+  (sql/belongs-to container-images))
 
 ;; Information about containers containing tools.
-(defentity container-images
-  (table :container_images)
-  (has-one data-containers))
+(sql/defentity container-images
+  (sql/table :container_images)
+  (sql/has-one data-containers))
 
-(defentity ports
-  (table :container_ports :ports)
-  (belongs-to container-settings))
+(sql/defentity ports
+  (sql/table :container_ports :ports)
+  (sql/belongs-to container-settings))
 
-(defentity interapps-proxy-settings
-  (table :interactive_apps_proxy_settings)
-  (belongs-to container-settings))
+(sql/defentity interapps-proxy-settings
+  (sql/table :interactive_apps_proxy_settings)
+  (sql/belongs-to container-settings))
 
-(defentity container-settings
-  (table :container_settings)
-  (belongs-to tools)
-  (has-many container-devices)
-  (has-many container-volumes)
-  (has-many container-volumes-from)
-  (has-many ports)
-  (has-one interapps-proxy-settings))
+(sql/defentity container-settings
+  (sql/table :container_settings)
+  (sql/belongs-to tools)
+  (sql/has-many container-devices)
+  (sql/has-many container-volumes)
+  (sql/has-many container-volumes-from)
+  (sql/has-many ports)
+  (sql/has-one interapps-proxy-settings))
 
-(defentity container-devices
-  (table :container_devices)
-  (belongs-to container-settings))
+(sql/defentity container-devices
+  (sql/table :container_devices)
+  (sql/belongs-to container-settings))
 
-(defentity container-volumes
-  (table :container_volumes)
-  (belongs-to container-settings))
+(sql/defentity container-volumes
+  (sql/table :container_volumes)
+  (sql/belongs-to container-settings))
 
-(defentity container-volumes-from
-  (table :container_volumes_from)
-  (belongs-to container-settings)
-  (belongs-to data-containers))
+(sql/defentity container-volumes-from
+  (sql/table :container_volumes_from)
+  (sql/belongs-to container-settings)
+  (sql/belongs-to data-containers))
 
 ;; Information about a deployed tool.
-(defentity tools
-  (belongs-to integration_data)
-  (belongs-to tool_types {:fk :tool_type_id})
-  (has-many tool_test_data_files {:fk :tool_id})
-  (has-many tool_requests {:fk :tool_id})
-  (has-one container-settings))
+(sql/defentity tools
+  (sql/belongs-to integration_data)
+  (sql/belongs-to tool_types {:fk :tool_type_id})
+  (sql/has-many tool_test_data_files {:fk :tool_id})
+  (sql/has-many tool_requests {:fk :tool_id})
+  (sql/has-one container-settings))
 
 ;; Test data files for use with deployed components.
-(defentity tool_test_data_files
-  (belongs-to tools {:fk :tool_id}))
+(sql/defentity tool_test_data_files
+  (sql/belongs-to tools {:fk :tool_id}))
 
 ;; Steps within an app.
-(defentity app_steps
-  (has-many output_mapping {:fk :source_step})
-  (has-many input_mapping {:fk :target_step}))
+(sql/defentity app_steps
+  (sql/has-many output_mapping {:fk :source_step})
+  (sql/has-many input_mapping {:fk :target_step}))
 
 ;; A table that maps outputs from one step to inputs to another set.  Two
 ;; entities are associated with a single table here for convenience.  when I
 ;; have more time, I'd like to try to improve the relation handling in Korma
 ;; so that multiple relationships with the same table work correctly.
-(defentity output_mapping
-  (table :workflow_io_maps :output_mapping))
-(defentity input_mapping
-  (table :workflow_io_maps :input_mapping))
+(sql/defentity output_mapping
+  (sql/table :workflow_io_maps :output_mapping))
+(sql/defentity input_mapping
+  (sql/table :workflow_io_maps :input_mapping))
 
 ;; Data object mappings can't be implemeted as entities until Korma supports
 ;; composite primary keys.  In the meantime, we'll have to deal with this table
 ;; in code.
 
 ;; A job type indicates primarily where a job will be executed.
-(defentity job_types
-  (table :job_types))
+(sql/defentity job_types
+  (sql/table :job_types))
 
 ;; A task defines an interface to a tool that can be called.
-(defentity tasks
-  (has-many parameter_groups {:fk :task_id})
-  (has-many inputs {:fk :task_id})
-  (has-many outputs {:fk :task_id})
-  (has-many task_parameters {:fk :task_id})
-  (belongs-to job_types {:fk :job_type_id}))
+(sql/defentity tasks
+  (sql/has-many parameter_groups {:fk :task_id})
+  (sql/has-many inputs {:fk :task_id})
+  (sql/has-many outputs {:fk :task_id})
+  (sql/has-many task_parameters {:fk :task_id})
+  (sql/belongs-to job_types {:fk :job_type_id}))
 
 ;; Input and output definitions. Once again, multiple entities are associated
 ;; with the same table to allow us to define multiple relationships between
 ;; the same two tables.
-(defentity inputs
-  (table (subselect :task_param_listing (where {:value_type "Input"})) :inputs))
-(defentity outputs
-  (table (subselect :task_param_listing (where {:value_type "Output"})) :outputs))
-(defentity task_parameters
-  (table :task_param_listing :task_parameters))
+(sql/defentity inputs
+  (sql/table (sql/subselect :task_param_listing (sql/where {:value_type "Input"})) :inputs))
+(sql/defentity outputs
+  (sql/table (sql/subselect :task_param_listing (sql/where {:value_type "Output"})) :outputs))
+(sql/defentity task_parameters
+  (sql/table :task_param_listing :task_parameters))
 
 ;; File parameters.
-(defentity file_parameters
-  (belongs-to info_type {:fk :info_type})
-  (belongs-to data_formats {:fk :data_format})
-  (belongs-to multiplicity {:fk :multiplicity})
-  (belongs-to data_source {:fk :data_source_id}))
+(sql/defentity file_parameters
+  (sql/belongs-to info_type {:fk :info_type})
+  (sql/belongs-to data_formats {:fk :data_format})
+  (sql/belongs-to multiplicity {:fk :multiplicity})
+  (sql/belongs-to data_source {:fk :data_source_id}))
 
 ;; The type of information stored in a data object.
-(defentity info_type)
+(sql/defentity info_type)
 
 ;; The format of the data in a data object.
-(defentity data_formats)
+(sql/defentity data_formats)
 
 ;; An input or output multiplicity definition.
-(defentity multiplicity)
+(sql/defentity multiplicity)
 
 ;; A group of parameters.
-(defentity parameter_groups
-  (has-many parameters {:fk :parameter_group_id}))
+(sql/defentity parameter_groups
+  (sql/has-many parameters {:fk :parameter_group_id}))
 
 ;; A single parameter.
-(defentity parameters
-  (has-many parameter_values {:fk :parameter_id})
-  (has-many validation_rules {:fk :parameter_id})
-  (has-one file_parameters {:fk :parameter_id})
-  (belongs-to parameter_types {:fk :parameter_type})
-  (many-to-many tool_types :tool_type_parameter_type
+(sql/defentity parameters
+  (sql/has-many parameter_values {:fk :parameter_id})
+  (sql/has-many validation_rules {:fk :parameter_id})
+  (sql/has-one file_parameters {:fk :parameter_id})
+  (sql/belongs-to parameter_types {:fk :parameter_type})
+  (sql/many-to-many tool_types :tool_type_parameter_type
                 {:lfk :parameter_type_id
                  :rfk :tool_type_id}))
 
-(defentity parameter_values)
+(sql/defentity parameter_values)
 
 ;; The type of a single parameter.
-(defentity parameter_types
-  (belongs-to value_type))
+(sql/defentity parameter_types
+  (sql/belongs-to value_type))
 
 ;; The type of value associated with a parameter.  This is used to determine
 ;; which rule types may be associated with a parameter.
-(defentity value_type
-  (has-one parameter_types)
-  (many-to-many rule_type :rule_type_value_type
+(sql/defentity value_type
+  (sql/has-one parameter_types)
+  (sql/many-to-many rule_type :rule_type_value_type
                 {:lfk :value_type_id
                  :rfk :rule_type_id}))
 
 ;; Validation Rules are used to describe individual validation steps for a parameter.
-(defentity validation_rules
-  (has-many validation_rule_arguments {:fk :rule_id})
-  (belongs-to rule_type {:fk :rule_type}))
+(sql/defentity validation_rules
+  (sql/has-many validation_rule_arguments {:fk :rule_id})
+  (sql/belongs-to rule_type {:fk :rule_type}))
 
 ;; Rule types indicate the validation method to use.
-(defentity rule_type
-  (belongs-to rule_subtype)
-  (many-to-many value_type :rule_type_value_type
+(sql/defentity rule_type
+  (sql/belongs-to rule_subtype)
+  (sql/many-to-many value_type :rule_type_value_type
                 {:lfk :rule_type_id}
                 {:rfk :value_type_id}))
 
 ;; Rule arguments will have to be handled in code until Korma can be enhanced
 ;; to accept composite primary keys.
-(defentity validation_rule_arguments)
+(sql/defentity validation_rule_arguments)
 
 ;; Rule subtypes are used to distinguish different flavors of values that
 ;; rules can be applied to.  For example, Number value types are segregated
 ;; into Integer and Double subtypes.
-(defentity rule_subtype)
+(sql/defentity rule_subtype)
 
 ;; A view used to list app categories.
-(defentity app_category_listing
-  (many-to-many app_category_listing :app_category_group
+(sql/defentity app_category_listing
+  (sql/many-to-many app_category_listing :app_category_group
                 {:lfk :parent_category_id
                  :rfk :child_category_id})
-  (many-to-many app_listing :app_category_app
+  (sql/many-to-many app_listing :app_category_app
                 {:lfk :app_category_id
                  :rfk :app_id}))
 
 ;; A view used to list apps.
-(defentity app_listing
-  (has-many tool_listing {:fk :app_id})
-  (has-many ratings {:fk :app_id}))
+(sql/defentity app_listing
+  (sql/has-many tool_listing {:fk :app_id})
+  (sql/has-many ratings {:fk :app_id}))
 
 ;; A view used to list tools.
-(defentity tool_listing)
+(sql/defentity tool_listing)
 
 ;; Application ratings.
-(defentity ratings
-  (belongs-to users {:fk :user_id})
-  (belongs-to apps {:fk :app_id}))
+(sql/defentity ratings
+  (sql/belongs-to users {:fk :user_id})
+  (sql/belongs-to apps {:fk :app_id}))
 
 ;; Database version entries.
-(defentity version
-  (pk :version))
+(sql/defentity version
+  (sql/pk :version))
 
 ;; Associates users with other users for collaboration.
-(defentity collaborators
-  (belongs-to users {:fk :user_id})
-  (belongs-to collaborator {:fk :collaborator_id}))
+(sql/defentity collaborators
+  (sql/belongs-to users {:fk :user_id})
+  (sql/belongs-to collaborator {:fk :collaborator_id}))
 
 ;; Contains genomic metadata.
-(defentity genome_reference
-  (belongs-to created_by {:fk :created_by})
-  (belongs-to last_modified_by {:fk :last_modified_by}))
-(defentity created_by
-  (table :users :created_by)
-  (has-one genome_reference {:fk :created_by}))
-(defentity last_modified_by
-  (table :users :last_modified_by)
-  (has-one genome_reference {:fk :last_modified_by}))
+(sql/defentity genome_reference
+  (sql/belongs-to created_by {:fk :created_by})
+  (sql/belongs-to last_modified_by {:fk :last_modified_by}))
+(sql/defentity created_by
+  (sql/table :users :created_by)
+  (sql/has-one genome_reference {:fk :created_by}))
+(sql/defentity last_modified_by
+  (sql/table :users :last_modified_by)
+  (sql/has-one genome_reference {:fk :last_modified_by}))
 
 ;; Data source.
-(defentity data_source)
+(sql/defentity data_source)
 
 ;; Tool types.
-(defentity tool_types
-  (many-to-many parameter_types :tool_type_parameter_type
+(sql/defentity tool_types
+  (sql/many-to-many parameter_types :tool_type_parameter_type
                 {:lfk :tool_type_id
                  :rfk :parameter_type_id}))
 
 ;; Tool request status codes.
-(defentity tool_request_status_codes
-  (has-many tool_request_statuses {:fk :tool_request_status_code_id}))
+(sql/defentity tool_request_status_codes
+  (sql/has-many tool_request_statuses {:fk :tool_request_status_code_id}))
 
 ;; Tool architectures.
-(defentity tool_architectures
-  (has-many tool_requests {:fk :tool_architecture_id}))
+(sql/defentity tool_architectures
+  (sql/has-many tool_requests {:fk :tool_architecture_id}))
 
 ;; The user who submitted a tool request.
-(defentity requestor
-  (table :users :requestor)
-  (has-many tool_requests {:fk :requestor_id}))
+(sql/defentity requestor
+  (sql/table :users :requestor)
+  (sql/has-many tool_requests {:fk :requestor_id}))
 
 ;; Tool requests.
-(defentity tool_requests
-  (belongs-to requestor {:fk :requestor_id})
-  (belongs-to tool_architectures {:fk :tool_architecture_id})
-  (belongs-to tools {:fk :tool_id})
-  (has-many tool_request_statuses {:fk :tool_request_id}))
+(sql/defentity tool_requests
+  (sql/belongs-to requestor {:fk :requestor_id})
+  (sql/belongs-to tool_architectures {:fk :tool_architecture_id})
+  (sql/belongs-to tools {:fk :tool_id})
+  (sql/has-many tool_request_statuses {:fk :tool_request_id}))
 
 ;; The user who updated a tool request.
-(defentity updater
-  (table :users :updater)
-  (has-many tool_request_statuses {:fk :updater_id}))
+(sql/defentity updater
+  (sql/table :users :updater)
+  (sql/has-many tool_request_statuses {:fk :updater_id}))
 
 ;; Tool request status changes.
-(defentity tool_request_statuses
-  (belongs-to tool_requests {:fk :tool_request_id})
-  (belongs-to tool_request_status_codes {:fk :tool_request_status_code_id})
-  (belongs-to updater {:fk :updater_id}))
+(sql/defentity tool_request_statuses
+  (sql/belongs-to tool_requests {:fk :tool_request_id})
+  (sql/belongs-to tool_request_status_codes {:fk :tool_request_status_code_id})
+  (sql/belongs-to updater {:fk :updater_id}))
 
-(defentity user-preferences
-  (table :user_preferences)
-  (belongs-to users {:fk :user_id}))
+(sql/defentity user-preferences
+  (sql/table :user_preferences)
+  (sql/belongs-to users {:fk :user_id}))
 
-(defentity user-sessions
-  (table :user_sessions)
-  (belongs-to users {:fk :user_id}))
+(sql/defentity user-sessions
+  (sql/table :user_sessions)
+  (sql/belongs-to users {:fk :user_id}))
 
-(defentity job-status-updates
-  (table :job_status_updates))
+(sql/defentity job-status-updates
+  (sql/table :job_status_updates))
 
 ;; Docker registry auth information
-(defentity docker-registries
-  (table :docker_registries)
-  (entity-fields :name :username :password)
-  (pk :name))
+(sql/defentity docker-registries
+  (sql/table :docker_registries)
+  (sql/entity-fields :name :username :password)
+  (sql/pk :name))
