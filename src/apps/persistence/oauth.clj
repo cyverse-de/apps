@@ -1,41 +1,34 @@
 (ns apps.persistence.oauth
   "Functions to use for storing and retrieving OAuth access tokens."
-  (:use [korma.core :exclude [update]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [korma.core :as sql]
-            [apps.util.pgp :as pgp])
-  (:import [java.sql Timestamp]
-           [java.util UUID]))
+  (:require [apps.util.pgp :as pgp]
+            [korma.core :as sql]
+            [slingshot.slingshot :refer [throw+]])
+  (:import [java.util UUID]))
 
 (defn- user-id-subselect
   "Returns a subselect statement to find a user ID."
   [username]
-  (subselect :users (fields :id) (where {:username username})))
+  (sql/subselect :users (sql/fields :id) (sql/where {:username username})))
 
 (defn- replace-access-token
   "Replaces an existing access token in the database."
   [api-name username expires-at refresh-token access-token]
   (sql/update :access_tokens
-              (set-fields {:token         (pgp/encrypt access-token)
-                           :expires_at    expires-at
-                           :refresh_token (pgp/encrypt refresh-token)})
-              (where {:webapp  api-name
-                      :user_id (user-id-subselect username)})))
+              (sql/set-fields {:token         (pgp/encrypt access-token)
+                               :expires_at    expires-at
+                               :refresh_token (pgp/encrypt refresh-token)})
+              (sql/where {:webapp  api-name
+                          :user_id (user-id-subselect username)})))
 
 (defn- insert-access-token
   "Inserts a new access token into the database."
   [api-name username expires-at refresh-token access-token]
-  (insert :access_tokens
-          (values {:webapp        api-name
-                   :user_id       (user-id-subselect username)
-                   :token         (pgp/encrypt access-token)
-                   :expires_at    expires-at
-                   :refresh_token (pgp/encrypt refresh-token)})))
-
-(defn- determine-expiration-time
-  "Determines a token expiration time given its lifetime in seconds."
-  [lifetime]
-  (Timestamp. (+ (System/currentTimeMillis) (* 1000 lifetime))))
+  (sql/insert :access_tokens
+              (sql/values {:webapp        api-name
+                           :user_id       (user-id-subselect username)
+                           :token         (pgp/encrypt access-token)
+                           :expires_at    expires-at
+                           :refresh_token (pgp/encrypt refresh-token)})))
 
 (defn- decrypt-tokens
   "Decrypts access and refresh tokens retrieved from the database."
@@ -48,14 +41,14 @@
 (defn get-access-token
   "Retrieves an access code from the database."
   [api-name username]
-  (->> (select [:access_tokens :t]
-               (join [:users :u] {:t.user_id :u.id})
-               (fields [:t.webapp        :webapp]
-                       [:t.expires_at    :expires-at]
-                       [:t.refresh_token :refresh-token]
-                       [:t.token         :access-token])
-               (where {:u.username username
-                       :t.webapp   api-name}))
+  (->> (sql/select [:access_tokens :t]
+                   (sql/join [:users :u] {:t.user_id :u.id})
+                   (sql/fields [:t.webapp        :webapp]
+                               [:t.expires_at    :expires-at]
+                               [:t.refresh_token :refresh-token]
+                               [:t.token         :access-token])
+                   (sql/where {:u.username username
+                               :t.webapp   api-name}))
        (first)
        (decrypt-tokens)))
 
@@ -74,25 +67,25 @@
 (defn remove-access-token
   "Removes an OAuth access token from the database."
   [api-name username]
-  (delete :access_tokens
-          (where {:webapp  api-name
-                  :user_id (subselect :users
-                                      (fields :id)
-                                      (where {:username username}))})))
+  (sql/delete :access_tokens
+              (sql/where {:webapp  api-name
+                          :user_id (sql/subselect :users
+                                                  (sql/fields :id)
+                                                  (sql/where {:username username}))})))
 
 (defn- remove-prior-authorization-requests
   "Removes any previous OAuth authorization requests for the user."
   [username]
-  (delete :authorization_requests
-          (where {:user_id (user-id-subselect username)})))
+  (sql/delete :authorization_requests
+              (sql/where {:user_id (user-id-subselect username)})))
 
 (defn- insert-authorization-request
   "Inserts information about a new authorization request into the database."
   [id username state-info]
-  (insert :authorization_requests
-          (values {:id         id
-                   :user_id    (user-id-subselect username)
-                   :state_info state-info})))
+  (sql/insert :authorization_requests
+              (sql/values {:id         id
+                           :user_id    (user-id-subselect username)
+                           :state_info state-info})))
 
 (defn store-authorization-request
   "Stores state information for an OAuth authorization request."
@@ -114,11 +107,11 @@
 (defn- get-authorization-request
   "Gets authorization request information from the database."
   [id]
-  (first (select [:authorization_requests :r]
-                 (join [:users :u] {:r.user_id :u.id})
-                 (fields [:u.username :username]
-                         [:r.state_info :state-info])
-                 (where {:r.id id}))))
+  (first (sql/select [:authorization_requests :r]
+                     (sql/join [:users :u] {:r.user_id :u.id})
+                     (sql/fields [:u.username :username]
+                                 [:r.state_info :state-info])
+                     (sql/where {:r.id id}))))
 
 (defn retrieve-authorization-request-state
   "Retrieves an authorization request for a given UUID."
@@ -127,9 +120,9 @@
         req (get-authorization-request id)]
     (when (nil? req)
       (throw+ {:type  :clojure-commons.exception/bad-request-field
-               :error (str "authorization request " (str id) " not found")}))
+               :error (str "authorization request " id " not found")}))
     (when (not= (:username req) username)
       (throw+ {:type  :clojure-commons.exception/bad-request-field
-               :error (str "wrong user for authorization request " (str id))}))
+               :error (str "wrong user for authorization request " id)}))
     (remove-prior-authorization-requests username)
     (:state-info req)))
