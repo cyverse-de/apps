@@ -17,7 +17,8 @@
             [kameleon.db :refer [now-str]]
             [kameleon.uuids :refer [uuidify]]
             [korma.core :as sql]
-            [permissions-client.core :as pc]))
+            [permissions-client.core :as pc])
+  (:refer-clojure :exclude [count max]))
 
 ;; Declarations for special symbols used by Korma.
 (declare count exists max)

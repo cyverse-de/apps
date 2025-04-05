@@ -4,7 +4,8 @@
             [apps.user :refer [current-user]]
             [apps.util.db :refer [transaction]]
             [clojure.tools.logging :as log]
-            [korma.core :as sql]))
+            [korma.core :as sql])
+  (:refer-clojure :exclude [count]))
 
 ;; Declarations for special symbols used by Korma.
 (declare count)

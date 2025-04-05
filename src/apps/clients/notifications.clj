@@ -15,7 +15,7 @@
             [clj-time.format :as tf]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [pandect.algo.sha256 :only [sha256]]))
+            [pandect.algo.sha256 :refer [sha256]]))
 
 (def ^:private emailable-job-statuses
   #{jp/completed-status

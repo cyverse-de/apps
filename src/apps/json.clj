@@ -1,6 +1,6 @@
 (ns apps.json
   (:require [cheshire.core :as cheshire]
-            [slingshot.slingshot :only [throw+ try+]]))
+            [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn from-json
   "Parses a JSON string, throwing an informative exception if the JSON string

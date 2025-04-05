@@ -1,7 +1,8 @@
 (ns apps.persistence.app-groups
   (:require [apps.persistence.entities :as entities]
             [apps.util.db :refer [sql-array transaction]]
-            [korma.core :as sql]))
+            [korma.core :as sql])
+  (:refer-clojure :exclude [max]))
 
 ;; Declarations for special symbols used by Korma.
 (declare max)

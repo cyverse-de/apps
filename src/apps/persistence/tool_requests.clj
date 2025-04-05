@@ -1,6 +1,7 @@
 (ns apps.persistence.tool-requests
   "Functions for storing and retrieving information about tool requests."
-  (:require [korma.core :as sql]))
+  (:require [korma.core :as sql])
+  (:refer-clojure :exclude [count]))
 
 ;; Declarations for special symbols used by Korma.
 (declare exists count)
@@ -68,7 +69,7 @@
 (defmacro ^:private where-if-defined
   "Adds a where clause to a query, filtering out all conditions for which the value is nil."
   [query clause]
-  `(where ~query (remove-nil-values ~clause)))
+  `(sql/where ~query (remove-nil-values ~clause)))
 
 (defn- list-tool-requests-subselect
   "Creates a subselect query that can be used to list tool requests."

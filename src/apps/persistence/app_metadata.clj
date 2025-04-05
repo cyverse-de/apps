@@ -21,7 +21,8 @@
              :refer [aggregate delete delete* fields insert join modifier order raw select select*
                      set-fields sqlfn subselect update* values where]
              :as sql])
-  (:import [java.util UUID]))
+  (:import [java.util UUID])
+  (:refer-clojure :exclude [max count]))
 
 ;; Declarations for special symbols used by Korma.
 (declare exists max count)

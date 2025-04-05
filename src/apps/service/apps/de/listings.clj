@@ -27,7 +27,8 @@
             [apps.tools.permissions :as tool-perms]
             [cemerick.url :as curl]
             [clojure.set :as set]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:refer-clojure :exclude [count max]))
 
 (def my-public-apps-id  (uuidify "00000000-0000-0000-0000-000000000000"))
 (def shared-with-me-id  (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))

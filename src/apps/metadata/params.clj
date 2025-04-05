@@ -1,5 +1,5 @@
 (ns apps.metadata.params
-  (:require [apps.metadata.reference-genomes :only [get-reference-genomes-by-id]]
+  (:require [apps.metadata.reference-genomes :refer [get-reference-genomes-by-id]]
             [apps.persistence.app-metadata :as persistence]
             [apps.util.conversions :as conv]
             [kameleon.uuids :refer [uuidify]]

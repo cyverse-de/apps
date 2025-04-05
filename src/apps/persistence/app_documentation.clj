@@ -1,5 +1,5 @@
 (ns apps.persistence.app-documentation
-  (:require [apps.persistence.entities :only [app_references]]
+  (:require [apps.persistence.entities :refer [app_references]]
             [korma.core :as sql]))
 
 (defn get-app-references

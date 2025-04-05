@@ -1,7 +1,7 @@
 (ns apps.clients.notifications.tool-sharing
   (:require [apps.clients.notifications.common-sharing :as cs]
             [clojure.string :as string]
-            [medley.core :only [remove-vals]]))
+            [medley.core :refer [remove-vals]]))
 
 (def notification-type "tools")
 (def singular "tool")

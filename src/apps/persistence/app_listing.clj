@@ -4,18 +4,19 @@
             [apps.persistence.entities :as entities]
             [apps.util.assertions :refer [assert-app-version]]
             [apps.util.db :refer [add-date-limits-where-clause]]
+            [clojure.java.jdbc]
             [clojure.string :as str]
             [kameleon.queries :as kq]
             [kameleon.util :refer [query-spy]]
             [korma.core :as sql])
-  (:import [clojure.java.jdbc IResultSetReadColumn]))
+  (:refer-clojure :exclude [count]))
 
 ;; Declarations for special symbols used by Korma.
 (declare count exists)
 
 ;; The `app_listing` view has an array aggregate column that we need to be able to extract. This tells
 ;; `clojure.java.jdbc` how to convert the array to a (possibly nested) vector.
-(extend-protocol IResultSetReadColumn
+(extend-protocol clojure.java.jdbc/IResultSetReadColumn
   org.postgresql.jdbc.PgArray
   (result-set-read-column [x _2 _3]
     (letfn [(object-array? [x] (instance? (Class/forName "[Ljava.lang.Object;") x))

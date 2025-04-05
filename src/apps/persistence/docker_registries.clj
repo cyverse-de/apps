@@ -1,5 +1,5 @@
 (ns apps.persistence.docker-registries
-  (:require [apps.persistence.entities :only [docker-registries]]
+  (:require [apps.persistence.entities :refer [docker-registries]]
             [clojure.string :as string]
             [korma.core :as sql]))
 

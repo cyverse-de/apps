@@ -6,7 +6,7 @@
             [apps.tools :refer [format-tool-listing]]
             [apps.util.conversions :refer [remove-nil-vals]]
             [korma.core :as sql]
-            [slingshot.slingshot :only [throw+]]))
+            [slingshot.slingshot :refer [throw+]]))
 
 (defn get-tool-type-by-name
   "Searches for the tool type with the given name."

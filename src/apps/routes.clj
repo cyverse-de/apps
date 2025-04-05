@@ -31,7 +31,7 @@
             [common-swagger-api.schema :as schema]
             [compojure.core :refer [wrap-routes]]
             [compojure.route :as route]
-            [ring.middleware :refer [wrap-keyword-params]]
+            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [service-logging.middleware :refer [add-user-to-context wrap-logging clean-context]]))
 
 (declare app)
