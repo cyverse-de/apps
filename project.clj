@@ -31,7 +31,7 @@
                  [org.cyverse/metadata-client "3.1.2"]
                  [org.cyverse/common-cli "2.8.2"]
                  [org.cyverse/common-cfg "2.8.3"]
-                 [org.cyverse/common-swagger-api "3.4.10-SNAPSHOT"]
+                 [org.cyverse/common-swagger-api "3.4.11-SNAPSHOT"]
                  [org.cyverse/cyverse-groups-client "0.1.9"]
                  [org.cyverse/permissions-client "2.8.4"]
                  [org.cyverse/service-logging "2.8.4"]
