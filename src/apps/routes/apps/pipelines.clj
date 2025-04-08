@@ -1,12 +1,33 @@
 (ns apps.routes.apps.pipelines
-  (:use [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppIdParam AppVersionIdParam]]
-        [common-swagger-api.schema.apps.pipeline]
-        [apps.routes.params :only [SecuredQueryParamsRequired SecuredQueryParamsEmailRequired]]
-        [apps.user :only [current-user]]
-        [apps.util.coercions :only [coerce!]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.apps :as apps]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParamsEmailRequired SecuredQueryParamsRequired]]
+   [apps.service.apps :as apps]
+   [apps.user :refer [current-user]]
+   [apps.util.coercions :refer [coerce!]]
+   [common-swagger-api.schema :refer [context defroutes GET POST PUT]]
+   [common-swagger-api.schema.apps :refer [AppIdParam AppVersionIdParam]]
+   [common-swagger-api.schema.apps.pipeline
+    :refer [Pipeline
+            PipelineCopyDocs
+            PipelineCopySummary
+            PipelineCreateDocs
+            PipelineCreateRequest
+            PipelineCreateSummary
+            PipelineEditingViewDocs
+            PipelineEditingViewSummary
+            PipelineUpdateDocs
+            PipelineUpdateRequest
+            PipelineUpdateSummary
+            PipelineVersionCopyDocs
+            PipelineVersionCopySummary
+            PipelineVersionCreateDocs
+            PipelineVersionCreateSummary
+            PipelineVersionEditingViewDocs
+            PipelineVersionEditingViewSummary
+            PipelineVersionRequest
+            PipelineVersionUpdateDocs
+            PipelineVersionUpdateSummary]]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes pipelines
   (POST "/" []

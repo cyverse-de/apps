@@ -1,18 +1,16 @@
 (ns apps.routes.apps.metadata
-  (:use [common-swagger-api.routes]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppIdParam]]
-        [common-swagger-api.schema.metadata
-         :only [AvuList
-                AvuListRequest
-                SetAvuRequest]]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [apps.user :only [current-user]]
-        [ring.util.http-response :only [ok]])
-  (:require [common-swagger-api.schema.apps.metadata :as schema]
-            [apps.metadata.avus :as avus]
-            [apps.util.service :as service]
-            [compojure.route :as route]))
+  (:require
+   [apps.metadata.avus :as avus]
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.user :refer [current-user]]
+   [apps.util.service :as service]
+   [common-swagger-api.routes :refer [get-endpoint-delegate-block]]
+   [common-swagger-api.schema :refer [defroutes GET POST POST PUT undocumented]]
+   [common-swagger-api.schema.apps :refer [AppIdParam]]
+   [common-swagger-api.schema.apps.metadata :as schema]
+   [common-swagger-api.schema.metadata :refer [AvuList AvuListRequest SetAvuRequest]]
+   [compojure.route :as route]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes app-metadata
 

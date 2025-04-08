@@ -43,11 +43,13 @@
                  [ring/ring-jetty-adapter "1.12.2"]]
   :eastwood {:exclude-namespaces [apps.protocols :test-paths]
              :linters [:wrong-arity :wrong-ns-form :wrong-pre-post :wrong-tag :misplaced-docstrings]}
-  :plugins [[lein-ancient "0.7.0"]
-            [lein-cljfmt "0.9.2"]
-            [test2junit "1.4.4"]
+  :plugins [[cider/cider-nrepl "0.45.0"]
             [com.github.clj-kondo/lein-clj-kondo "2025.02.20"]
-            [jonase/eastwood "1.4.3"]]
+            [jonase/eastwood "1.4.3"]
+            [lein-ancient "0.7.0"]
+            [lein-cljfmt "0.9.2"]
+            [refactor-nrepl/refactor-nrepl "3.10.0"]
+            [test2junit "1.4.4"]]
   :profiles {:dev {:plugins        [[lein-ring "0.12.6"]]
                    :resource-paths ["conf/test"]}
              :repl {:source-paths ["repl"]}

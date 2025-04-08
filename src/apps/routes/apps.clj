@@ -1,32 +1,29 @@
 (ns apps.routes.apps
-  (:use [common-swagger-api.routes]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.apps.permission
-         :only [AppPermissionListing
-                AppPermissionListingDocs
-                AppPermissionListingRequest
-                AppPermissionListingSummary
-                AppSharingDocs
-                AppSharingRequest
-                AppSharingResponse
-                AppSharingSummary
-                AppUnsharingDocs
-                AppUnsharingRequest
-                AppUnsharingResponse
-                AppUnsharingSummary]]
-        [common-swagger-api.schema.apps.rating]
-        [common-swagger-api.schema.integration-data :only [IntegrationData]]
-        [apps.routes.params
-         :only [SecuredQueryParams
-                SecuredQueryParamsEmailRequired
-                SecuredQueryParamsRequired]]
-        [apps.routes.schemas.app :only [AppSearchParams]]
-        [apps.user :only [current-user]]
-        [apps.util.coercions :only [coerce!]]
-        [ring.util.http-response :only [accepted ok]])
-  (:require [apps.routes.schemas.permission :as perms]
-            [apps.service.apps :as apps]
-            [common-swagger-api.schema.apps :as schema]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams SecuredQueryParamsEmailRequired SecuredQueryParamsRequired]]
+   [apps.routes.schemas.app :refer [AppSearchParams]]
+   [apps.routes.schemas.permission :as perms]
+   [apps.service.apps :as apps]
+   [apps.user :refer [current-user]]
+   [apps.util.coercions :refer [coerce!]]
+   [common-swagger-api.schema :refer [context defroutes DELETE GET PATCH POST PUT]]
+   [common-swagger-api.schema.apps :as schema]
+   [common-swagger-api.schema.apps.permission
+    :refer [AppPermissionListing
+            AppPermissionListingDocs
+            AppPermissionListingRequest
+            AppPermissionListingSummary
+            AppSharingDocs
+            AppSharingRequest
+            AppSharingResponse
+            AppSharingSummary
+            AppUnsharingDocs
+            AppUnsharingRequest
+            AppUnsharingResponse
+            AppUnsharingSummary]]
+   [common-swagger-api.schema.apps.rating :refer [RatingRequest RatingResponse]]
+   [common-swagger-api.schema.integration-data :refer [IntegrationData]]
+   [ring.util.http-response :refer [accepted ok]]))
 
 (defroutes apps
   (GET "/" []

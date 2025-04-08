@@ -1,16 +1,20 @@
 (ns apps.routes.admin.reference-genomes
-  (:use [apps.metadata.reference-genomes
-         :only [add-reference-genome
-                delete-reference-genome
-                update-reference-genome]]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.reference-genome :only [ReferenceGenomeDeletionParams]]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.apps.reference-genomes
-         :only [ReferenceGenome
-                ReferenceGenomeIdParam]]
-        [ring.util.http-response :only [ok]])
-  (:require [common-swagger-api.schema.apps.admin.reference-genomes :as schema]))
+  (:require [apps.metadata.reference-genomes
+             :refer [add-reference-genome
+                     delete-reference-genome
+                     update-reference-genome]]
+            [apps.routes.params :refer [SecuredQueryParams]]
+            [apps.routes.schemas.reference-genome :refer [ReferenceGenomeDeletionParams]]
+            [common-swagger-api.schema
+             :refer [defroutes
+                     DELETE
+                     PATCH
+                     POST]]
+            [common-swagger-api.schema.apps.reference-genomes
+             :refer [ReferenceGenome
+                     ReferenceGenomeIdParam]]
+            [common-swagger-api.schema.apps.admin.reference-genomes :as schema]
+            [ring.util.http-response :refer [ok]]))
 
 (defroutes reference-genomes
   (POST "/" []
