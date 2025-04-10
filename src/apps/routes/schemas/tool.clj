@@ -1,9 +1,10 @@
 (ns apps.routes.schemas.tool
-  (:use [apps.routes.params :only [SecuredQueryParams]]
-        [common-swagger-api.schema :only [->optional-param describe]]
-        [schema.core :only [defschema optional-key]])
-  (:require [common-swagger-api.schema.tools :as schema]
-            [common-swagger-api.schema.tools.admin :as admin-schema]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [common-swagger-api.schema :refer [describe]]
+   [common-swagger-api.schema.tools :as schema]
+   [common-swagger-api.schema.tools.admin :as admin-schema]
+   [schema.core :refer [defschema]]))
 
 (defschema PrivateToolDeleteParams
   (merge SecuredQueryParams

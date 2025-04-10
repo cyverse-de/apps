@@ -1,8 +1,9 @@
 (ns apps.routes.schemas.user
-  (:use [common-swagger-api.schema :only [describe]]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [schema.core :only [defschema optional-key both pred]])
-  (:require [common-swagger-api.schema.sessions :as sessions-schema])
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [common-swagger-api.schema.sessions :as sessions-schema]
+   [common-swagger-api.schema :refer [describe]]
+   [schema.core :refer [defschema optional-key conditional]])
   (:import [java.util UUID]))
 
 (defschema User
@@ -24,5 +25,4 @@
 (defschema ListLoginsParams
   (merge SecuredQueryParams
          {(optional-key :limit)
-          (describe (both Long (pred pos? 'positive-integer?))
-     "Limits the response to X number of results.")}))
+          (describe (conditional pos? Long) "Limits the response to X number of results.")}))

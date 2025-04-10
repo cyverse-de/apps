@@ -1,8 +1,8 @@
 (ns apps.routes.schemas.containers
-  (:use [common-swagger-api.schema :only [->optional-param describe]]
-        [common-swagger-api.schema.containers]
-        [apps.routes.params :only [SecuredQueryParams]])
-  (:require [schema.core :as s])
+  (:require [schema.core :as s]
+            [common-swagger-api.schema :refer [->optional-param describe]]
+            [common-swagger-api.schema.containers :refer [DataContainer Image NewImage]]
+            [apps.routes.params :refer [SecuredQueryParams]])
   (:import (java.util UUID)))
 
 (s/defschema Images
