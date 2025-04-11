@@ -24,7 +24,7 @@
                  [org.cyverse/async-tasks-client "0.0.5"]
                  [org.cyverse/authy "3.0.1"]
                  [org.cyverse/clj-kondo-exports "0.1.0-SNAPSHOT"]
-                 [org.cyverse/clojure-commons "3.0.11-SNAPSHOT"]
+                 [org.cyverse/clojure-commons "3.0.11"]
                  [org.cyverse/debug-utils "2.9.0"]
                  [org.cyverse/kameleon "3.0.10"]
                  [org.cyverse/mescal "4.1.0"]
