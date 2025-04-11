@@ -1,6 +1,7 @@
 (ns apps.translations.app-metadata.external-to-preview-test
-  (:use [clojure.test]
-        [apps.translations.app-metadata.external-to-preview]))
+  (:require
+   [apps.translations.app-metadata.external-to-preview :refer [translate-template]]
+   [clojure.test :refer [deftest is]]))
 
 (deftest no-parameter-groups
   (is (= {:params []}

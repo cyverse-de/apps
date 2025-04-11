@@ -1,7 +1,8 @@
 (ns apps.service.bootstrap
-  (:use [apps.service.apps :only [list-system-ids]]
-        [apps.service.workspace :only [get-workspace]]
-        [apps.webhooks :only [get-webhooks]]))
+  (:require
+   [apps.service.apps :refer [list-system-ids]]
+   [apps.service.workspace :refer [get-workspace]]
+   [apps.webhooks :refer [get-webhooks]]))
 
 (defn bootstrap [current-user]
   (let [si (future (list-system-ids current-user))

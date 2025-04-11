@@ -1,10 +1,11 @@
 (ns apps.service.util
-  (:use [apps.transformers :only [param->long]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [common-swagger-api.schema.apps.admin.apps :only [AdminAppListingJobStatsKeys]])
-  (:require [clojure.string :as string]
-            [clojure-commons.exception-util :as cxu]
-            [kameleon.uuids :as uuids]))
+  (:require
+   [apps.transformers :refer [param->long]]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure.string :as string]
+   [clojure-commons.exception-util :as cxu]
+   [common-swagger-api.schema.apps.admin.apps :refer [AdminAppListingJobStatsKeys]]
+   [kameleon.uuids :as uuids]))
 
 (defn- app-sorter-keyfn
   [sort-field]

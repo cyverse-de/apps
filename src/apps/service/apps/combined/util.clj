@@ -1,9 +1,10 @@
 (ns apps.service.apps.combined.util
-  (:use [apps.service.util :only [sort-apps apply-offset apply-limit]]
-        [apps.service.apps.util :only [supports-job-type?]])
-  (:require [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jp]
-            [clojure-commons.exception-util :as cxu]))
+  (:require
+   [apps.persistence.app-metadata :as ap]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.util :refer [supports-job-type?]]
+   [apps.service.util :refer [apply-limit apply-offset sort-apps]]
+   [clojure-commons.exception-util :as cxu]))
 
 (defn apply-default-search-params
   [params]
@@ -44,7 +45,7 @@
   (= (:job_type job-step) jp/de-job-type))
 
 (defn apps-client-for-job-step
-  [clients {job-type :job_type :as step}]
+  [clients {job-type :job_type}]
   (or (first (filter #(supports-job-type? % job-type) clients))
       (cxu/internal-system-error (str "unsupported job type, " job-type ", found in job step"))))
 

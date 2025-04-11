@@ -1,8 +1,9 @@
 (ns apps.service.apps.de.jobs.io-tickets
-  (:use [slingshot.slingshot :only [try+]])
-  (:require [apps.clients.data-info :as data-info]
-            [apps.service.apps.jobs.util :as job-util]
-            [clojure.tools.logging :as log]))
+  (:require
+   [apps.clients.data-info :as data-info]
+   [apps.service.apps.jobs.util :as job-util]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [try+]]))
 
 (def ^:private extract-input-paths
   "This is a transform used to extract input paths from a list of job steps."
@@ -56,7 +57,7 @@
    On one hand, doing this as a post-processing step seems kind of clunky. On the other hand, doing it after the
    submission has been mostly built allows us to consolidate the ticket generation for all steps and makes it easier
    to keep a copy of the ticket information in an easily accessible place in the job submission."
-  [user {:keys [steps] :as submission}]
+  [user submission]
   (let [output-path   (job-util/create-output-dir user submission)
         input-paths   (remove (partial = output-path)
                               (into [] extract-input-paths (:steps submission)))

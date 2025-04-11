@@ -1,21 +1,21 @@
 (ns apps.service.apps.de.admin
-  (:use [apps.persistence.app-metadata.relabel :only [update-app-labels]]
-        [apps.util.assertions :only [assert-not-nil]]
-        [apps.util.config :only [workspace-public-id]]
-        [apps.util.db :only [transaction]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [cheshire.core :as json]
-            [clojure.tools.logging :as log]
-            [apps.clients.email :as email]
-            [apps.clients.metadata :as metadata-client]
-            [apps.clients.permissions :as perms-client]
-            [apps.persistence.app-groups :as app-groups]
-            [apps.persistence.app-metadata :as persistence]
-            [apps.persistence.categories :as db-categories]
-            [apps.service.apps.de.categorization :as categorization]
-            [apps.service.apps.de.constants :as c]
-            [apps.service.apps.de.validation :as av]
-            [clojure-commons.exception-util :as ex-util]))
+  (:require
+   [apps.clients.email :as email]
+   [apps.clients.metadata :as metadata-client]
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.app-groups :as app-groups]
+   [apps.persistence.app-metadata :as persistence]
+   [apps.persistence.app-metadata.relabel :refer [update-app-labels]]
+   [apps.persistence.categories :as db-categories]
+   [apps.service.apps.de.categorization :as categorization]
+   [apps.service.apps.de.constants :as c]
+   [apps.service.apps.de.validation :as av]
+   [apps.util.assertions :refer [assert-not-nil]]
+   [apps.util.config :refer [workspace-public-id]]
+   [apps.util.db :refer [transaction]]
+   [cheshire.core :as json]
+   [clojure-commons.exception-util :as ex-util]
+   [clojure.tools.logging :as log]))
 
 (def ^:private max-app-category-name-len 255)
 
@@ -83,7 +83,7 @@
   [{app-id :id :keys [deleted disabled]}]
   (when-not (nil? deleted)
     (persistence/delete-app deleted app-id)
-    (if deleted
+    (when deleted
       (app-deletion-notify-all (persistence/get-app app-id))))
   (when-not (nil? disabled)
     (persistence/disable-app disabled app-id)))
@@ -187,7 +187,7 @@
 
 (defn update-category
   "Updates an App Category's name or parent Category."
-  [{category-id :id :keys [name parent_id] :as category}]
+  [{category-id :id :keys [name parent_id]}]
   (transaction
    (let [category (validate-app-category-existence category-id)]
      (when name

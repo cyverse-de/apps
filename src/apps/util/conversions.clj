@@ -1,9 +1,10 @@
 (ns apps.util.conversions
-  (:use [clojure.string :only [blank?]]
-        [medley.core :only [remove-vals]])
-  (:require [clojure.string :as string])
-  (:import [java.sql Timestamp]
-           [com.google.common.primitives Doubles Ints]))
+  (:require
+   [clojure.string :as string]
+   [medley.core :refer [remove-vals]])
+  (:import
+   (com.google.common.primitives Doubles Ints)
+   (java.sql Timestamp)))
 
 (defn to-long
   "Converts a string to a long integer."
@@ -25,7 +26,7 @@
   of java.sql.Timestamp."
   [ms]
   (let [ms (str ms)]
-    (when-not (blank? ms) (Timestamp. (to-long ms)))))
+    (when-not (string/blank? ms) (Timestamp. (to-long ms)))))
 
 (defn date->timestamp
   "Converts a date value into an instance of java.sql.Timestamp."

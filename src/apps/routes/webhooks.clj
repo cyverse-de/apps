@@ -1,9 +1,10 @@
 (ns apps.routes.webhooks
-  (:use [common-swagger-api.schema]
-        [apps.routes.params]
-        [apps.webhooks]
-        [ring.util.http-response :only [ok]])
-  (:require [common-swagger-api.schema.webhooks :as schema]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.webhooks :refer [add-webhooks list-topics list-types list-webhooks]]
+   [common-swagger-api.schema :refer [context defroutes GET PUT]]
+   [common-swagger-api.schema.webhooks :as schema]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes webhooks
   (GET "/" []
@@ -12,6 +13,7 @@
     :summary schema/GetWebhooksSummary
     :description schema/GetWebhooksDesc
     (ok (list-webhooks user)))
+
   (PUT "/" []
     :query [{:keys [user]} SecuredQueryParams]
     :body [body schema/WebhookList]
@@ -19,6 +21,7 @@
     :summary schema/PutWebhooksSummary
     :description schema/PutWebhooksDesc
     (ok (add-webhooks user body)))
+
   (context "/topics" []
     (GET "/" []
       :query [params SecuredQueryParams]
@@ -26,6 +29,7 @@
       :summary schema/GetWebhooksTopicSummary
       :description schema/GetWebhooksTopicDesc
       (ok (list-topics))))
+
   (context "/types" []
     (GET "/" []
       :query [params SecuredQueryParams]

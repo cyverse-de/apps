@@ -1,10 +1,15 @@
 (ns apps.metadata.reference-genomes-test
-  (:use [apps.test-fixtures]
-        [apps.metadata.reference-genomes]
-        [clojure.test]
-        [korma.core :exclude [update]]
-        [korma.db :only [rollback transaction]])
-  (:import [clojure.lang ExceptionInfo]))
+  (:require
+   [apps.metadata.reference-genomes
+    :refer [add-reference-genome
+            get-reference-genome
+            list-reference-genomes
+            update-reference-genome]]
+   [apps.test-fixtures :refer [run-integration-tests with-config with-test-db with-test-user]]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [korma.db :refer [rollback transaction]])
+  (:import
+   (clojure.lang ExceptionInfo)))
 
 (use-fixtures :once run-integration-tests with-test-db with-config with-test-user)
 
@@ -37,9 +42,9 @@
           new-ref-genome (add-reference-genome {:name new-ref-genome-name :path new-ref-genome-path})]
       (is (= new-ref-genome-name (:name new-ref-genome)))
       (is (= new-ref-genome-path (:path new-ref-genome)))
-      (is (not (empty? (get-reference-genome (:id new-ref-genome)))))
-      (is (not (empty? (filter #(= (:id new-ref-genome) (:id %))
-                               (:genomes (list-reference-genomes)))))))))
+      (is (seq (get-reference-genome (:id new-ref-genome))))
+      (is (seq (filter #(= (:id new-ref-genome) (:id %))
+                       (:genomes (list-reference-genomes))))))))
 
 (deftest test-update-reference-genome
   (testing "Updating a reference genome with name and path validations"

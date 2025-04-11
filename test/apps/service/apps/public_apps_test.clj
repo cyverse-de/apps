@@ -1,17 +1,18 @@
 (ns apps.service.apps.public-apps-test
-  (:use [apps.constants :only [de-system-id]]
-        [apps.service.apps.test-utils :only [get-user permanently-delete-app]]
-        [apps.service.apps.de.listings :only [my-public-apps-id trash-category-id]]
-        [clojure.test])
-  (:require [apps.service.apps :as apps]
-            [apps.service.apps.test-fixtures :as atf]
-            [apps.test-fixtures :as tf]
-            [apps.util.config :as config]
-            [apps.validation :as v]
-            [clojure.tools.logging :as log]
-            [korma.core :as sql]
-            [permissions-client.core :as pc])
-  (:import [clojure.lang ExceptionInfo]))
+  (:require
+   [apps.constants :refer [de-system-id]]
+   [apps.service.apps :as apps]
+   [apps.service.apps.de.listings :refer [my-public-apps-id trash-category-id]]
+   [apps.service.apps.test-fixtures :as atf]
+   [apps.service.apps.test-utils :refer [get-user permanently-delete-app]]
+   [apps.test-fixtures :as tf]
+   [apps.util.config :as config]
+   [apps.validation :as v]
+   [clojure.test :refer [deftest is use-fixtures]]
+   [korma.core :as sql]
+   [permissions-client.core :as pc])
+  (:import
+   (clojure.lang ExceptionInfo)))
 
 (use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 (use-fixtures :each atf/with-public-apps atf/with-test-app atf/with-test-tool)

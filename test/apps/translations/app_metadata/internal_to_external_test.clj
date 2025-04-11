@@ -1,6 +1,7 @@
 (ns apps.translations.app-metadata.internal-to-external-test
-  (:use [clojure.test]
-        [apps.translations.app-metadata.internal-to-external]))
+  (:require
+   [clojure.test :refer [deftest is]]
+   [apps.translations.app-metadata.internal-to-external :as i2e]))
 
 (defn- remove-ids
   [v]
@@ -18,31 +19,31 @@
 (deftest validators-from-rules-test
   (is (= [{:type "foo" :params ["bar" "baz"]}
           {:type "bar" :params ["baz" "quux"]}]
-         (validators-from-rules
+         (i2e/validators-from-rules
           [{:foo ["bar" "baz"]}
            {:bar ["baz" "quux"]}]))))
 
 (deftest validators-from-nil-rules-test
-  (is (= [] (validators-from-rules nil))))
+  (is (= [] (i2e/validators-from-rules nil))))
 
 (deftest validators-from-empty-rules-test
-  (is (= [] (validators-from-rules []))))
+  (is (= [] (i2e/validators-from-rules []))))
 
 (deftest get-property-arguments-from-nil-rules-test
-  (is (= [] (get-property-arguments nil))))
+  (is (= [] (i2e/get-property-arguments nil))))
 
 (deftest get-property-arguments-from-empty-rules-test
-  (is (= [] (get-property-arguments []))))
+  (is (= [] (i2e/get-property-arguments []))))
 
 (deftest get-property-arguments-no-must-contain-test
-  (is (= [] (get-property-arguments [{:IntAbove [0]}]))))
+  (is (= [] (i2e/get-property-arguments [{:IntAbove [0]}]))))
 
 (deftest get-property-arguments-test
   (is (= [{:isDefault "false"
            :name      "foo"
            :value     "foo"
            :display   "foo"}]
-         (->> (get-property-arguments
+         (->> (i2e/get-property-arguments
                [{:MustContain
                  [{:isDefault "false"
                    :name      "foo"
@@ -51,17 +52,17 @@
               (remove-ids)))))
 
 (deftest get-empty-default-value-test
-  (is (= nil (get-default-value {} []))))
+  (is (= nil (i2e/get-default-value {} []))))
 
 (deftest get-default-value-from-prop-test
-  (is (= "testing" (get-default-value {:value "testing"} []))))
+  (is (= "testing" (i2e/get-default-value {:value "testing"} []))))
 
 (deftest get-default-value-test
   (is (= {:isDefault "true"
           :name      "foo"
           :value     "foo"
           :display   "foo"}
-         (get-default-value
+         (i2e/get-default-value
           {}
           [{:isDefault "true"
             :name      "foo"
@@ -78,7 +79,7 @@
           :required     false
           :validators   []
           :defaultValue nil}
-         (translate-property {:name "prop-name"}))))
+         (i2e/translate-property {:name "prop-name"}))))
 
 (deftest translate-required-property-test
   (is (= {:name         "prop-name"
@@ -86,7 +87,7 @@
           :required     true
           :validators   []
           :defaultValue nil}
-         (translate-property
+         (i2e/translate-property
           {:name      "prop-name"
            :validator {:required true}}))))
 
@@ -96,7 +97,7 @@
           :required     false
           :validators   []
           :defaultValue "default-value"}
-         (translate-property
+         (i2e/translate-property
           {:name  "prop-name"
            :value "default-value"}))))
 
@@ -107,7 +108,7 @@
           :validators   [{:type   "IntAbove"
                           :params [42]}]
           :defaultValue nil}
-         (translate-property
+         (i2e/translate-property
           {:name      "prop-name"
            :validator {:rules [{:IntAbove [42]}]}}))))
 
@@ -120,7 +121,7 @@
           :required     false
           :validators   []
           :defaultValue nil}
-         ((comp remove-ids-from-prop translate-property)
+         ((comp remove-ids-from-prop i2e/translate-property)
           {:name      "prop-name"
            :validator {:rules [{:MustContain [{:isDefault "false"
                                                :name      "foo"
@@ -143,7 +144,7 @@
                          :name      "foo"
                          :value     "foo"
                          :display   "foo"}}
-         ((comp remove-ids-from-prop translate-property)
+         ((comp remove-ids-from-prop i2e/translate-property)
           {:name      "prop-name"
            :validator {:required true
                        :rules    [{:MustContain [{:isDefault "true"
@@ -172,7 +173,7 @@
                          :name      "foo"
                          :value     "foo"
                          :display   "foo"}}
-         ((comp remove-ids-from-prop translate-property)
+         ((comp remove-ids-from-prop i2e/translate-property)
           {:name      "prop-name"
            :validator {:required true
                        :rules    [{:MustContain [{:isDefault "true"
@@ -228,15 +229,15 @@
 
 (deftest translate-property-with-data-object-test
   (is (= (external-prop "FileInput")
-         (translate-property (internal-prop "One")))))
+         (i2e/translate-property (internal-prop "One")))))
 
 (deftest folder-property-type-translation
   (is (= (external-prop "FolderInput")
-         (translate-property (internal-prop "Folder")))))
+         (i2e/translate-property (internal-prop "Folder")))))
 
 (deftest multi-file-selector-property-type-translation
   (is (= (external-prop "MultiFileSelector")
-         (translate-property (internal-prop "Many")))))
+         (i2e/translate-property (internal-prop "Many")))))
 
 (deftest translate-property-group-test
   (is (= {:name       "group-name"
@@ -245,7 +246,7 @@
                         :required     false
                         :validators   []
                         :defaultValue nil}]}
-         (translate-property-group
+         (i2e/translate-property-group
           {:name       "group-name"
            :properties [{:name "prop-name"}]}))))
 
@@ -257,7 +258,7 @@
                                   :required     false
                                   :validators   []
                                   :defaultValue nil}]}]}
-         (translate-template
+         (i2e/translate-template
           {:name   "template-name"
            :groups [{:name       "group-name"
                      :properties [{:name "prop-name"}]}]}))))

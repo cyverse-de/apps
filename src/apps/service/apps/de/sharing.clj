@@ -1,14 +1,15 @@
 (ns apps.service.apps.de.sharing
-  (:require [apps.clients.permissions :as perms-client]
-            [apps.persistence.app-metadata :as amp]
-            [apps.persistence.app-listing :as app-listing]
-            [apps.service.apps.de.listings :as listings]
-            [apps.service.apps.de.permissions :as perms]
-            [apps.tools.permissions :as tool-perms]
-            [apps.tools.sharing :as tool-sharing]
-            [clojure.tools.logging :as log]
-            [clojure-commons.template :refer [render]]
-            [slingshot.slingshot :refer [try+]]))
+  (:require
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.app-listing :as app-listing]
+   [apps.persistence.app-metadata :as amp]
+   [apps.service.apps.de.listings :as listings]
+   [apps.service.apps.de.permissions :as perms]
+   [apps.tools.permissions :as tool-perms]
+   [apps.tools.sharing :as tool-sharing]
+   [clojure-commons.template :refer [render]]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [try+]]))
 
 (def app-sharing-formats
   {:not-found    "app ID {{app-id}} does not exist"

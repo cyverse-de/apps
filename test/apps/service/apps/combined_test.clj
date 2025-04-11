@@ -1,7 +1,8 @@
 (ns apps.service.apps.combined-test
-  (:use [clojure.test]
-        [kameleon.uuids :only [uuid]]
-        [apps.service.apps.combined]))
+  (:require
+   [apps.protocols]
+   [clojure.test :refer [deftest is testing]]
+   [kameleon.uuids :refer [uuid]]))
 
 (def client1-apps-listing {:total 5, :apps [{:id (uuid)} {:id (uuid)} {:id (uuid)} {:id (uuid)} {:id (uuid)}]})
 (def client2-apps-listing nil)
@@ -12,33 +13,33 @@
   apps.protocols.Apps
 
   (listAppsUnderHierarchy
-    [_ root-iri attr params]
+    [_ _root-iri _attr _params]
     client1-apps-listing)
 
   (adminListAppsUnderHierarchy
-    [_ ontology-version root-iri attr params]
+    [_ _ontology-version _root-iri _attr _params]
     client1-apps-listing))
 
 (deftype TestClient2 []
   apps.protocols.Apps
 
   (listAppsUnderHierarchy
-    [_ root-iri attr params]
+    [_ _root-iri _attr _params]
     client2-apps-listing)
 
   (adminListAppsUnderHierarchy
-    [_ ontology-version root-iri attr params]
+    [_ _ontology-version _root-iri _attr _params]
     client2-apps-listing))
 
 (deftype TestClient3 []
   apps.protocols.Apps
 
   (listAppsUnderHierarchy
-    [_ root-iri attr params]
+    [_ _root-iri _attr _params]
     client3-apps-listing)
 
   (adminListAppsUnderHierarchy
-    [_ ontology-version root-iri attr params]
+    [_ _ontology-version _root-iri _attr _params]
     client3-apps-listing))
 
 (def combined-client (apps.service.apps.combined.CombinedApps.

@@ -1,6 +1,7 @@
 (ns apps.service.apps.resources-test
-  (:require [apps.service.apps.de.jobs.resources :as r]
-            [clojure.test :refer [deftest] :as t]))
+  (:require
+   [apps.service.apps.de.jobs.resources :as r]
+   [clojure.test :as t :refer [deftest]]))
 
 (def gib (* 1024 1024 1024))
 

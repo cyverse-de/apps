@@ -1,9 +1,10 @@
 (ns apps.util.db
   "This namespace contains some database utility functions. For the time being, these functions will use Korma to
    obtain database connections. This code will have to be modified when Korma is removed."
-  (:require [apps.util.conversions :refer [date->timestamp]]
-            [korma.core :as sql]
-            [korma.db :as db]))
+  (:require
+   [apps.util.conversions :refer [date->timestamp]]
+   [korma.core :as sql]
+   [korma.db :as db]))
 
 (defmacro transaction
   "Executes queries within the body in a single transaction. Nested transactions are absorbed into the outermost
@@ -45,7 +46,7 @@
   [query {:keys [start_date end_date]}]
   (cond
     (and start_date end_date)
-    (sql/where query {:end_date [between [(date->timestamp start_date) (date->timestamp end_date)]]})
+    (sql/where query {:end_date [:between [(date->timestamp start_date) (date->timestamp end_date)]]})
 
     (and (not start_date) end_date)
     (sql/where query {:end_date [<= (date->timestamp end_date)]})

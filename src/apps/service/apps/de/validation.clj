@@ -1,21 +1,20 @@
 (ns apps.service.apps.de.validation
-  (:use [apps.persistence.app-metadata :only [get-app
-                                              get-app-tools
-                                              get-app-version-tools
-                                              get-app-version
-                                              list-duplicate-apps
-                                              list-duplicate-apps-by-id
-                                              parameter-types-for-tool-type
-                                              task-ids-for-app-version]]
-        [apps.persistence.entities :only [tools tool_types]]
-        [clojure-commons.exception-util :only [forbidden exists]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.permissions :as perms-client]
-            [apps.service.apps.de.permissions :as perms]
-            [apps.util.config :as config]
-            [clojure-commons.exception-util :as ex-util]
-            [clojure.string :as string]))
+  (:require
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.app-metadata
+    :refer [get-app
+            get-app-tools
+            get-app-version-tools
+            get-app-version
+            list-duplicate-apps
+            list-duplicate-apps-by-id
+            task-ids-for-app-version]]
+   [apps.service.apps.de.permissions :as perms]
+   [apps.util.config :as config]
+   [clojure-commons.exception-util :as ex-util]
+   [clojure.string :as string]
+   [korma.core :refer [fields join select where]]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn validate-app-existence
   "Verifies that apps exist."
@@ -45,9 +44,9 @@
                 {:a.id :v.app_id})
           (join [:app_steps :step]
                 {:v.id :step.app_version_id})
-          (where {:step.task_id [in task-ids]
+          (where {:step.task_id [:in task-ids]
                   :a.step_count 1
-                  :a.id         [not-in public-app-ids]})))
+                  :a.id         [:not-in public-app-ids]})))
 
 (defn- list-unrunnable-tasks
   "Determines which of a collection of task IDs are not runnable."
@@ -55,7 +54,7 @@
   (map :id
        (select [:tasks :t]
                (fields :t.id)
-               (where {:t.id              [in task-ids]
+               (where {:t.id              [:in task-ids]
                        :t.tool_id         nil
                        :t.external_app_id nil}))))
 
@@ -175,19 +174,19 @@
   ([app-name app-id category-ids]
    (when (seq (list-duplicate-apps app-name app-id category-ids))
      (if (seq category-ids)
-       (exists duplicate-app-selected-categories-msg :app_name app-name :category_ids category-ids)
-       (exists duplicate-app-existing-categories-msg :app_name app-name :app_id app-id))))
+       (ex-util/exists duplicate-app-selected-categories-msg :app_name app-name :category_ids category-ids)
+       (ex-util/exists duplicate-app-existing-categories-msg :app_name app-name :app_id app-id))))
   ([app-name app-id category-ids path]
    (when (seq (list-duplicate-apps app-name app-id category-ids))
      (if (seq category-ids)
-       (exists duplicate-app-selected-categories-msg :app_name app-name :category_ids category-ids :path path)
-       (exists duplicate-app-existing-categories-msg :app_name app-name :app_id app-id :path path)))))
+       (ex-util/exists duplicate-app-selected-categories-msg :app_name app-name :category_ids category-ids :path path)
+       (ex-util/exists duplicate-app-existing-categories-msg :app_name app-name :app_id app-id :path path)))))
 
 (defn validate-app-name-in-hierarchy
   [app-name app-ids]
   (let [duplicate-apps (list-duplicate-apps-by-id app-name app-ids)]
     (when-not (empty? duplicate-apps)
-      (exists duplicate-app-existing-categories-msg :app_name app-name :apps duplicate-apps))))
+      (ex-util/exists duplicate-app-existing-categories-msg :app_name app-name :apps duplicate-apps))))
 
 (def protected-attrs
   #{(config/workspace-metadata-beta-attr-iri)
@@ -203,4 +202,4 @@
     (let [requested-attrs (set (map :attr avus))
           forbidden-attrs (set (remove nil? (map protected-attrs requested-attrs)))]
       (when-not (empty? forbidden-attrs)
-        (forbidden protected-attr-msg :attrs (vec forbidden-attrs))))))
+        (ex-util/forbidden protected-attr-msg :attrs (vec forbidden-attrs))))))

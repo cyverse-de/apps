@@ -1,13 +1,14 @@
 (ns apps.service.apps.jobs.resubmit
-  (:use [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.data-info :as data-info]
-            [apps.service.apps.jobs.submissions :as submissions]
-            [apps.service.apps.jobs.submissions.async :as async]
-            [cheshire.core :as cheshire]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-commons.exception-util :as exception-util]
-            [kameleon.uuids :as uuids]))
+  (:require
+   [apps.clients.data-info :as data-info]
+   [apps.service.apps.jobs.submissions :as submissions]
+   [apps.service.apps.jobs.submissions.async :as async]
+   [cheshire.core :as cheshire]
+   [clojure-commons.exception-util :as exception-util]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [kameleon.uuids :as uuids]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- get-paths-exist
   [user paths]

@@ -1,15 +1,16 @@
 (ns apps.service.apps.test-fixtures
-  (:use [apps.constants :only [de-system-id]]
-        [apps.service.apps.test-utils :only [users get-user permanently-delete-app]]
-        [kameleon.uuids :only [uuidify uuid]])
-  (:require [apps.clients.iplant-groups :as ipg]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps :as apps]
-            [apps.service.workspace :as workspace]
-            [apps.tools :as tools]
-            [apps.util.config :as config]
-            [korma.core :as sql]
-            [permissions-client.core :as pc]))
+  (:require
+   [apps.clients.iplant-groups :as ipg]
+   [apps.constants :refer [de-system-id]]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps :as apps]
+   [apps.service.apps.test-utils :refer [get-user permanently-delete-app users]]
+   [apps.service.workspace :as workspace]
+   [apps.tools :as tools]
+   [apps.util.config :as config]
+   [kameleon.uuids :refer [uuidify]]
+   [korma.core :as sql]
+   [permissions-client.core :as pc]))
 
 (def app-definition
   {:description "Testing"
@@ -96,7 +97,7 @@
 
 (defn create-test-tool-app [user name]
   (sql/delete :apps (sql/where {:name name}))
-  (let [tool (tools/get-tool (:shortUsername user) test-tool-id)
+  (let [tool (tools/get-tool (:shortUsername user) test-tool-id {})
         app  (apps/add-app user jp/de-client-name (assoc app-definition :name name :tools [tool]))]
     (apps/owner-add-app-docs user de-system-id (:id app) {:documentation "This is a test."})
     app))
@@ -124,14 +125,14 @@
   []
   (sql/select :app_listing
               (sql/where {:deleted false
-                          :integrator_name [in ["Default DE Tools" "Internal DE Tools"]]})))
+                          :integrator_name [:in ["Default DE Tools" "Internal DE Tools"]]})))
 
 (defn register-public-apps []
   (for [app (list-public-apps)]
     (do (pc/grant-permission (config/permissions-client) "app" (:id app) "group" (ipg/grouper-user-group-id) "read")
         app)))
 
-(defn category-name-subselect [category-name]
+(defn category-name-subselect [_category-name]
   (sql/subselect [:app_category_app :aca]
                  (sql/join [:app_categories :c] {:aca.app_category_id :c.id})
                  (sql/fields :aca.app_id)))
@@ -142,8 +143,8 @@
    DE Tools' is considered to be public by default."
   []
   (sql/select [:app_listing :a]
-              (sql/where {:a.id              [in (category-name-subselect "Beta")]
-                          :a.integrator_name [in ["Default DE Tools" "Internal DE Tools"]]
+              (sql/where {:a.id              [:in (category-name-subselect "Beta")]
+                          :a.integrator_name [:in ["Default DE Tools" "Internal DE Tools"]]
                           :a.deleted         false})))
 
 (defn with-public-apps [f]

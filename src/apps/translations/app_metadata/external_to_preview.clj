@@ -1,7 +1,7 @@
 (ns apps.translations.app-metadata.external-to-preview
-  (:use [apps.translations.app-metadata.util])
-  (:require [clojure.string :as string]
-            [me.raynes.fs :as fs]))
+  (:require
+   [clojure.string :as string]
+   [me.raynes.fs :as fs]))
 
 (defn- base-name
   [path]

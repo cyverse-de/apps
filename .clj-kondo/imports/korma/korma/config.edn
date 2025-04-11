@@ -3,4 +3,5 @@
            korma.core/insert    clojure.core/->
            korma.core/select    clojure.core/->
            korma.core/subselect clojure.core/->
-           korma.core/update    clojure.core/->}}
+           korma.core/update    clojure.core/->
+           korma.core/with      clojure.core/->}}

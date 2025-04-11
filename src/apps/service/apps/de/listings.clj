@@ -1,34 +1,65 @@
 (ns apps.service.apps.de.listings
-  (:use [apps.constants :only [de-system-id executable-tool-type]]
-        [apps.persistence.app-groups]
-        [apps.persistence.app-listing]
-        [apps.persistence.entities]
-        [apps.persistence.tools :only [get-tools-by-id]]
-        [apps.user :only [anonymous?]]
-        [apps.util.assertions :only [assert-not-nil]]
-        [apps.util.config]
-        [apps.util.conversions :only [to-long remove-nil-vals]]
-        [apps.workspace]
-        [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.metadata :as metadata-client]
-            [apps.clients.permissions :as perms-client]
-            [apps.persistence.app-documentation :as app-docs-db]
-            [apps.persistence.app-metadata :refer [get-app get-app-tools] :as amp]
-            [apps.persistence.jobs :as jobs-db]
-            [apps.service.apps.de.constants :as c]
-            [apps.service.apps.de.limits :as limits]
-            [apps.service.apps.de.permissions :as perms]
-            [apps.service.apps.de.docs :as docs]
-            [apps.service.apps.de.validation :as validation]
-            [apps.service.util :as svc-util]
-            [apps.tools :as tools]
-            [apps.tools.permissions :as tool-perms]
-            [cemerick.url :as curl]
-            [clojure.set :as set]
-            [clojure.string :as string])
-  (:refer-clojure :exclude [count max]))
+  (:refer-clojure :exclude [count max])
+  (:require
+   [apps.clients.metadata :as metadata-client]
+   [apps.clients.permissions :as perms-client]
+   [apps.constants :refer [de-system-id executable-tool-type]]
+   [apps.persistence.app-documentation :as app-docs-db]
+   [apps.persistence.app-groups
+    :refer [get-app-category
+            get-app-group-hierarchy
+            get-groups-for-app
+            get-suggested-groups-for-app
+            get-visible-workspaces
+            search-app-groups]]
+   [apps.persistence.app-listing
+    :refer [admin-list-apps-by-id
+            count-apps-for-admin
+            count-apps-for-user
+            count-apps-in-group-for-user
+            count-deleted-and-orphaned-apps
+            count-public-apps-by-user
+            count-shared-apps
+            get-all-app-ids
+            get-app-extra-info
+            get-app-version-details
+            get-apps-for-admin
+            get-apps-for-user
+            get-apps-in-group-for-user
+            get-single-app
+            list-apps-by-id
+            list-deleted-and-orphaned-apps
+            list-public-apps-by-user
+            list-shared-apps]]
+   [apps.persistence.app-metadata :as amp :refer [get-app get-app-tools]]
+   [apps.persistence.entities :refer [app_versions inputs job_types outputs tasks]]
+   [apps.persistence.jobs :as jobs-db]
+   [apps.persistence.tools :refer [get-tools-by-id]]
+   [apps.service.apps.de.constants :as c]
+   [apps.service.apps.de.docs :as docs]
+   [apps.service.apps.de.limits :as limits]
+   [apps.service.apps.de.permissions :as perms]
+   [apps.service.apps.de.validation :as validation]
+   [apps.service.util :as svc-util]
+   [apps.tools :as tools]
+   [apps.tools.permissions :as tool-perms]
+   [apps.user :refer [anonymous?]]
+   [apps.util.assertions :refer [assert-not-nil]]
+   [apps.util.config
+    :refer [trusted-registries
+            workspace-favorites-app-category-index
+            workspace-metadata-beta-attr-iri
+            workspace-metadata-beta-value
+            workspace-metadata-category-attrs
+            workspace-metadata-communities-attr]]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [apps.workspace :refer [get-optional-workspace get-workspace]]
+   [cemerick.url :as curl]
+   [clojure.set :as set]
+   [clojure.string :as string]
+   [kameleon.uuids :refer [uuidify]]
+   [korma.core :refer [fields join select where with]]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (def my-public-apps-id  (uuidify "00000000-0000-0000-0000-000000000000"))
 (def shared-with-me-id  (uuidify "EEEEEEEE-EEEE-EEEE-EEEE-EEEEEEEEEEEE"))
@@ -40,7 +71,7 @@
    :sort-dir   :ASC})
 
 (defn- augment-listing-params
-  ([params short-username perms]
+  ([params _short-username perms]
    (let [public (perms-client/get-public-app-ids)]
      (assoc params
             :app-ids        (set (keys @perms))
@@ -169,8 +200,6 @@
    featured-apps-id   {:format-group   format-featured-apps-category
                        :format-listing list-featured-apps}})
 
-(def ^:private virtual-group-ids (set (keys virtual-group-fns)))
-
 (defn- realize-group
   [group]
   (reduce (fn [group k] (if (or (future? (group k)) (delay? (group k))) (update group k deref) group)) group (keys group)))
@@ -266,17 +295,17 @@
   (let [app_id (:id app)
         step_count (:step_count app)
         overall_job_type (:overall_job_type app)]
-    (if (< step_count 1)
+    (when (< step_count 1)
       (throw+ {:reason
                (str "Analysis, "
                     app_id
                     ", has too few steps for a pipeline.")}))
-    (if (> step_count 1)
+    (when (> step_count 1)
       (throw+ {:reason
                (str "Analysis, "
                     app_id
                     ", has too many steps for a pipeline.")}))
-    (if-not (= overall_job_type executable-tool-type)
+    (when-not (= overall_job_type executable-tool-type)
       (throw+ {:reason
                (str "Job type, "
                     overall_job_type
@@ -436,7 +465,7 @@
 
 (defn- count-apps-in-group
   "Counts the number of apps in an app group, including virtual app groups that may be included."
-  [user {root-group-id :root_category_id} {:keys [id] :as app-group} params]
+  [user {root-group-id :root_category_id} {:keys [id]} params]
   (if (= root-group-id id)
     (count-apps-in-group-for-user id (:username user) params)
     (count-apps-in-group-for-user id params)))
@@ -473,12 +502,6 @@
         params    (fix-sort-params (augment-listing-params params (:shortUsername user) perms))]
     (or (list-apps-in-virtual-group user workspace app-group-id perms params)
         (list-apps-in-real-group user workspace app-group-id perms params))))
-
-(defn has-category
-  "Determines whether or not a category with the given ID exists."
-  [category-id]
-  (or (virtual-group-ids category-id)
-      (seq (select :app_categories (where {:id category-id})))))
 
 (defn list-apps
   "This service fetches a paged list of apps in the user's workspace and all public app groups,
@@ -659,7 +682,7 @@
                   [:tasks.description   :description])
           (with-task-params inputs)
           (with-task-params outputs)
-          (where (in :tasks.id task-ids))))
+          (where {:tasks.id [:in task-ids]})))
 
 (defn- format-task-file-param
   [file-parameter]

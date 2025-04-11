@@ -1,17 +1,18 @@
 (ns apps.service.apps.de.jobs.common
-  (:use [apps.persistence.users :only [get-user-id]]
-        [apps.util.assertions :only [assert-not-nil]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [kameleon.uuids :only [uuid]]
-        [korma.core :exclude [update]]
-        [medley.core :only [remove-vals]])
-  (:require [apps.clients.iplant-groups :as ipg]
-            [apps.containers :as c]
-            [apps.tools :as t]
-            [apps.service.apps.de.jobs.params :as params]
-            [apps.service.apps.de.jobs.resources :as resources]
-            [apps.service.apps.jobs.util :as util]
-            [clojure.string :as string]))
+  (:require
+   [apps.clients.iplant-groups :as ipg]
+   [apps.containers :as c]
+   [apps.persistence.users :refer [get-user-id]]
+   [apps.service.apps.de.jobs.params :as params]
+   [apps.service.apps.de.jobs.resources :as resources]
+   [apps.service.apps.jobs.util :as util]
+   [apps.tools :as t]
+   [apps.util.assertions :refer [assert-not-nil]]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure.string :as string]
+   [kameleon.uuids :refer [uuid]]
+   [korma.core :refer [fields join order select select* where]]
+   [medley.core :refer [remove-vals]]))
 
 (defn- format-io-map
   [mapping]
@@ -144,7 +145,7 @@
            (where {:app_version_id app-version-id}))))
 
 (defn build-extra
-  [request-builder app]
+  [_request-builder app]
   {:htcondor (load-htcondor-extra-requirements (:version_id app))})
 
 (defn- interactive?

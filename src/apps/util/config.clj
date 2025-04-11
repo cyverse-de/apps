@@ -1,14 +1,15 @@
 (ns apps.util.config
-  (:use [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [async-tasks-client.core :as async-tasks-client]
-            [cemerick.url :as curl]
-            [cheshire.core :as cheshire]
-            [clojure-commons.config :as cc]
-            [clojure.tools.logging :as log]
-            [common-cfg.cfg :as cfg]
-            [metadata-client.core :as metadata-client]
-            [permissions-client.core :as pc]))
+  (:require
+   [async-tasks-client.core :as async-tasks-client]
+   [cemerick.url :as curl]
+   [cheshire.core :as cheshire]
+   [clojure-commons.config :as cc]
+   [clojure.tools.logging :as log]
+   [common-cfg.cfg :as cfg]
+   [kameleon.uuids :refer [uuidify]]
+   [metadata-client.core :as metadata-client]
+   [permissions-client.core :as pc]
+   [slingshot.slingshot :refer [throw+]]))
 
 (def docs-uri "/docs")
 

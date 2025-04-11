@@ -1,8 +1,9 @@
 (ns apps.service.apps.combined.job-view
-  (:use [apps.util.assertions :only [assert-not-nil]])
-  (:require [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.combined.util :as util]))
+  (:require
+   [apps.persistence.app-metadata :as ap]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.combined.util :as util]
+   [apps.util.assertions :refer [assert-not-nil]]))
 
 (defn- remove-mapped-inputs
   [mapped-props group]

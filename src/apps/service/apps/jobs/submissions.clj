@@ -1,21 +1,20 @@
 (ns apps.service.apps.jobs.submissions
-  (:use [apps.util.db :only [transaction]]
-        [clojure-commons.core :only [remove-nil-values]]
-        [slingshot.slingshot :only [try+ throw+]]
-        [kameleon.uuids :only [uuid]])
-  (:require [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-commons.file-utils :as ft]
-            [kameleon.db :as db]
-            [apps.clients.data-info :as data-info]
-            [apps.clients.permissions :as perms-client]
-            [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.job-listings :as job-listings]
-            [apps.service.apps.jobs.submissions.async :as async]
-            [apps.service.apps.jobs.submissions.submit :as submit]
-            [apps.util.config :as config]
-            [apps.service.apps.jobs.util :as util]))
+  (:require
+   [apps.clients.data-info :as data-info]
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.app-metadata :as ap]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.job-listings :as job-listings]
+   [apps.service.apps.jobs.submissions.async :as async]
+   [apps.service.apps.jobs.submissions.submit :as submit]
+   [apps.service.apps.jobs.util :as util]
+   [apps.util.config :as config]
+   [apps.util.db :refer [transaction]]
+   [clojure-commons.file-utils :as ft]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [kameleon.db :as db]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- get-app-params
   [app type-set]

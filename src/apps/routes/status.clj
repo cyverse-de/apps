@@ -1,8 +1,9 @@
 (ns apps.routes.status
-  (:use [common-swagger-api.schema]
-        [ring.util.http-response :only [ok internal-server-error]])
-  (:require [clojure-commons.service :as commons-service]
-            [apps.util.config :as config]))
+  (:require
+   [apps.util.config :as config]
+   [clojure-commons.service :as commons-service]
+   [common-swagger-api.schema :refer [defroutes GET StatusParams StatusResponse]]
+   [ring.util.http-response :refer [internal-server-error ok]]))
 
 (defroutes status
   (GET "/" [:as {:keys [server-name server-port]}]

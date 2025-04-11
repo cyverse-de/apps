@@ -1,12 +1,13 @@
 (ns apps.service.apps.de.permissions
-  (:use [apps.constants :only [de-system-id]]
-        [clojure-commons.error-codes :only [clj-http-error?]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.permissions :as perms-client]
-            [apps.persistence.app-metadata :as amp]
-            [apps.service.apps.util :as apps-util]
-            [clojure.string :as string]
-            [clojure-commons.exception-util :as cxu]))
+  (:require
+   [apps.clients.permissions :as perms-client]
+   [apps.constants :refer [de-system-id]]
+   [apps.persistence.app-metadata :as amp]
+   [apps.service.apps.util :as apps-util]
+   [clojure-commons.error-codes :refer [clj-http-error?]]
+   [clojure-commons.exception-util :as cxu]
+   [clojure.string :as string]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn check-app-permissions
   [user required-level app-ids]

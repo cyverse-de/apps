@@ -1,22 +1,21 @@
 (ns apps.service.apps.de.jobs
-  (:use [apps.persistence.users :only [get-user-id]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [apps.util.db :only [transaction]]
-        [clojure-commons.file-utils :only [build-result-folder-path]]
-        [korma.core :only [sqlfn]]
-        [medley.core :only [dissoc-in]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.constants :as c]
-            [clojure.tools.logging :as log]
-            [kameleon.db :as db]
-            [apps.clients.jex :as jex]
-            [apps.clients.vice :as vice]
-            [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.de.jobs.base :as jb]
-            [apps.service.apps.de.jobs.io-tickets :as io-tickets]
-            [apps.util.json :as json-util]
-            [apps.util.config :as cfg]))
+  (:require
+   [apps.clients.jex :as jex]
+   [apps.clients.vice :as vice]
+   [apps.constants :as c]
+   [apps.persistence.app-metadata :as ap]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.de.jobs.base :as jb]
+   [apps.service.apps.de.jobs.io-tickets :as io-tickets]
+   [apps.util.config :as cfg]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [apps.util.db :refer [transaction]]
+   [apps.util.json :as json-util]
+   [clojure-commons.file-utils :refer [build-result-folder-path]]
+   [clojure.tools.logging :as log]
+   [kameleon.db :as db]
+   [korma.core :refer [sqlfn]]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- do-jex-submission
   [job]
@@ -39,7 +38,7 @@
              :system_id          (:system_id submission)
              :app_wiki_url       (:wiki_url job)
              :result_folder_path (:output_dir job)
-             :start_date         (sqlfn now)
+             :start_date         (sqlfn :now)
              :username           (:username user)
              :status             status
              :parent_id          (:parent_id submission))
@@ -59,7 +58,7 @@
   (jp/save-job-step {:job_id          job-id
                      :step_number     1
                      :external_id     (:uuid job)
-                     :start_date      (sqlfn now)
+                     :start_date      (sqlfn :now)
                      :status          status
                      :job_type        (job-type-for-step (-> job :steps first))
                      :app_step_number 1}))
@@ -159,7 +158,7 @@
     (jp/mark-tickets-deleted ticket-map)))
 
 (defn update-job-status
-  [user {:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
+  [user {:keys [external_id] :as job-step} {job-id :id } status end-date]
   (let [end-date (when (jp/completed? status) end-date)]
     (when (jp/status-follows? status (:status job-step))
       (jp/update-job-step job-id external_id status end-date)
@@ -167,7 +166,7 @@
       (when end-date (delete-job-tickets user job-id)))))
 
 (defn get-default-output-name
-  [{output-id :output_id :as io-map} {task-id :task_id :as source-step}]
+  [{output-id :output_id} {task-id :task_id}]
   (ap/get-default-output-name task-id output-id))
 
 (defn get-job-step-status

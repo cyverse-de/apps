@@ -1,14 +1,15 @@
 (ns apps.service.apps.jobs.params
-  (:use [apps.service.apps.util :only [paths-accessible?]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [cheshire.core :as cheshire]
-            [clojure.set :as sets]
-            [clojure.string :as string]
-            [clojure-commons.exception-util :as cxu]
-            [apps.persistence.app-metadata :as ap]
-            [apps.service.apps.jobs.util :as ju]))
+  (:require
+   [apps.persistence.app-metadata :as ap]
+   [apps.service.apps.jobs.util :as ju]
+   [apps.service.apps.util :refer [paths-accessible?]]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [cheshire.core :as cheshire]
+   [clojure-commons.exception-util :as cxu]
+   [clojure.set :as sets]
+   [clojure.string :as string]
+   [kameleon.uuids :refer [uuidify]]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn- get-job-submission
   [job]
@@ -29,7 +30,7 @@
     #{}))
 
 (defn- get-full-param-id
-  [{step-id :step_id param-id :id :as param}]
+  [{step-id :step_id param-id :id}]
   (if-not (string/blank? (str step-id))
     (str step-id "_" param-id)
     (str param-id)))

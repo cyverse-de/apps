@@ -1,13 +1,14 @@
 (ns apps.service.apps.jobs.util
-  (:use [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.data-info :as data-info]
-            [apps.persistence.jobs :as jp]
-            [apps.persistence.app-metadata :as am]
-            [apps.util.service :as service]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-commons.error-codes :as ce]
-            [clojure-commons.file-utils :as ft]))
+  (:require
+   [apps.clients.data-info :as data-info]
+   [apps.persistence.app-metadata :as am]
+   [apps.persistence.jobs :as jp]
+   [apps.util.service :as service]
+   [clojure-commons.error-codes :as ce]
+   [clojure-commons.file-utils :as ft]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn validate-job-existence
   [job-ids]

@@ -1,29 +1,29 @@
 (ns apps.service.apps.de
-  (:use [apps.constants :only [de-system-id]])
-  (:require [clojure.string :as string]
-            [apps.clients.jex :as jex]
-            [apps.clients.vice :as vice]
-            [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jp]
-            [apps.protocols]
-            [apps.service.apps.de.admin :as app-admin]
-            [apps.service.apps.de.categorization :as app-categorization]
-            [apps.service.apps.de.docs :as docs]
-            [apps.service.apps.de.edit :as edit]
-            [apps.service.apps.de.jobs :as de-jobs]
-            [apps.service.apps.de.job-view :as job-view]
-            [apps.service.apps.de.listings :as listings]
-            [apps.service.apps.de.metadata :as app-metadata]
-            [apps.service.apps.de.permissions :as perms]
-            [apps.service.apps.de.pipeline-edit :as pipeline-edit]
-            [apps.service.apps.de.sharing :as sharing]
-            [apps.service.apps.de.validation :as app-validation]
-            [apps.service.apps.job-listings :as job-listings]
-            [apps.service.apps.permissions :as app-permissions]
-            [apps.service.apps.util :as apps-util]
-            [apps.service.integration-data :as integration-data]
-            [apps.service.util :as util :refer [uuidify]]
-            [apps.util.config :as cfg]))
+  (:require
+   [apps.clients.jex :as jex]
+   [apps.clients.vice :as vice]
+   [apps.constants :refer [de-system-id]]
+   [apps.persistence.app-metadata :as ap]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.de.admin :as app-admin]
+   [apps.service.apps.de.categorization :as app-categorization]
+   [apps.service.apps.de.docs :as docs]
+   [apps.service.apps.de.edit :as edit]
+   [apps.service.apps.de.job-view :as job-view]
+   [apps.service.apps.de.jobs :as de-jobs]
+   [apps.service.apps.de.listings :as listings]
+   [apps.service.apps.de.metadata :as app-metadata]
+   [apps.service.apps.de.permissions :as perms]
+   [apps.service.apps.de.pipeline-edit :as pipeline-edit]
+   [apps.service.apps.de.sharing :as sharing]
+   [apps.service.apps.de.validation :as app-validation]
+   [apps.service.apps.job-listings :as job-listings]
+   [apps.service.apps.permissions :as app-permissions]
+   [apps.service.apps.util :as apps-util]
+   [apps.service.integration-data :as integration-data]
+   [apps.service.util :as util :refer [uuidify]]
+   [apps.util.config :as cfg]
+   [clojure.string :as string]))
 
 (def ^:private supported-system-ids #{jp/de-client-name jp/interactive-client-name jp/osg-client-name})
 (def ^:private validate-system-id (partial apps-util/validate-system-id supported-system-ids))
@@ -208,7 +208,7 @@
     (validate-system-id system-id)
     (edit/get-app-ui user (uuidify app-id) version-id))
 
-  (getAppInputIds [_ system-id app-id version-id]
+  (getAppInputIds [_ system-id _app-id version-id]
     (validate-system-id system-id)
     (listings/get-app-input-ids version-id))
 
@@ -255,7 +255,7 @@
          (into {})
          (vector)))
 
-  (submitJob [this submission]
+  (submitJob [_this submission]
     (validate-system-id (:system_id submission))
     (de-jobs/submit user (update-in submission [:app_id] uuidify)))
 

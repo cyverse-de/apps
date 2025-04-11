@@ -1,11 +1,12 @@
 (ns apps.routes.submissions
-  (:use [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppJobView]]
-        [apps.routes.params :only [SecuredQueryParams SubmissionIdPathParam]]
-        [apps.user :only [current-user]]
-        [apps.util.coercions :only [coerce!]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.apps :as apps]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams SubmissionIdPathParam]]
+   [apps.service.apps :as apps]
+   [apps.user :refer [current-user]]
+   [apps.util.coercions :refer [coerce!]]
+   [common-swagger-api.schema :refer [context defroutes GET]]
+   [common-swagger-api.schema.apps :refer [AppJobView]]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes submissions
   (context "/:submission-id" []

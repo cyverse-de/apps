@@ -1,7 +1,8 @@
 (ns apps.service.users
-  (:use [apps.util.conversions :only [remove-nil-vals]])
-  (:require [apps.service.oauth :as oauth]
-            [apps.persistence.users :as up]))
+  (:require
+   [apps.persistence.users :as up]
+   [apps.service.oauth :as oauth]
+   [apps.util.conversions :refer [remove-nil-vals]]))
 
 (defn by-id
   [{:keys [ids]}]
@@ -17,5 +18,5 @@
    :auth_redirect (oauth/get-redirect-uris current-user)})
 
 (defn list-logins
-  [{:keys [username] :as current-user} {:keys [limit] :or {limit 5}}]
+  [{:keys [username] :as _current-user} {:keys [limit] :or {limit 5}}]
   {:logins (mapv remove-nil-vals (up/list-logins username limit))})

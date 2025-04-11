@@ -1,19 +1,19 @@
 (ns apps.service.apps.integration-data-test
-  (:use [apps.constants :only [de-system-id]]
-        [apps.service.apps.test-utils :only [users get-user permanently-delete-app]]
-        [clojure.test]
-        [kameleon.uuids :only [uuid]]
-        [medley.core :only [remove-vals]])
-  (:require [apps.persistence.app-metadata :as amp]
-            [apps.service.apps :as apps]
-            [apps.service.apps.test-fixtures :as atf]
-            [apps.service.integration-data :as ids]
-            [apps.test-fixtures :as tf]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [korma.core :as sql])
-  (:import [clojure.lang ExceptionInfo]
-           [java.util.regex Pattern]))
+  (:require
+   [apps.constants :refer [de-system-id]]
+   [apps.persistence.app-metadata :as amp]
+   [apps.service.apps :as apps]
+   [apps.service.apps.test-fixtures :as atf]
+   [apps.service.apps.test-utils :refer [get-user permanently-delete-app]]
+   [apps.service.integration-data :as ids]
+   [apps.test-fixtures :as tf]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [kameleon.uuids :refer [uuid]]
+   [korma.core :as sql]
+   [medley.core :refer [remove-vals]])
+  (:import
+   (clojure.lang ExceptionInfo)
+   (java.util.regex Pattern)))
 
 (use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 (use-fixtures :each atf/with-public-apps atf/with-test-app atf/with-test-tool)

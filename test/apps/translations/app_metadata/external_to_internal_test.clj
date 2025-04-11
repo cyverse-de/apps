@@ -1,6 +1,7 @@
 (ns apps.translations.app-metadata.external-to-internal-test
-  (:use [clojure.test]
-        [apps.translations.app-metadata.external-to-internal]))
+  (:require
+   [apps.translations.app-metadata.external-to-internal :refer [build-validator-for-property translate-property]]
+   [clojure.test :refer [deftest is]]))
 
 (defn mark-default-arg
   [default n]

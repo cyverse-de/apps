@@ -1,12 +1,13 @@
 (ns apps.service.integration-data
-  (:use [apps.util.db :only [transaction]]
-        [medley.core :only [remove-vals]])
-  (:require [apps.persistence.app-metadata :as amp]
-            [apps.persistence.tools :as tools-db]
-            [apps.service.apps.de.validation :as app-validation]
-            [apps.user :refer [append-username-suffix]]
-            [clojure.string :as string]
-            [clojure-commons.exception-util :as cxu]))
+  (:require
+   [apps.persistence.app-metadata :as amp]
+   [apps.persistence.tools :as tools-db]
+   [apps.service.apps.de.validation :as app-validation]
+   [apps.user :refer [append-username-suffix]]
+   [apps.util.db :refer [transaction]]
+   [clojure.string :as string]
+   [clojure-commons.exception-util :as cxu]
+   [medley.core :refer [remove-vals]]))
 
 (defn- sort-field-to-db-field [sort-field]
   (cond (= sort-field :name)  :integrator_name

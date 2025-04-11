@@ -1,15 +1,16 @@
 (ns apps.service.apps.combined.jobs
-  (:use [apps.constants :only [de-system-id]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [cheshire.core :as cheshire]
-            [clojure.tools.logging :as log]
-            [clojure-commons.file-utils :as ft]
-            [kameleon.db :as db]
-            [kameleon.uuids :as uuids]
-            [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.combined.util :as cu]
-            [apps.util.service :as service]))
+  (:require
+   [apps.constants :refer [de-system-id]]
+   [apps.persistence.app-metadata :as ap]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.combined.util :as cu]
+   [apps.util.service :as service]
+   [cheshire.core :as cheshire]
+   [clojure-commons.file-utils :as ft]
+   [clojure.tools.logging :as log]
+   [kameleon.db :as db]
+   [kameleon.uuids :as uuids]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- app-step-partitioner
   "Partitions app steps into units of execution. Each external app step and each interactive app step has to run by
@@ -196,7 +197,7 @@
          (add-mapped-inputs-to-config combined-client job submission app-steps))))
 
 (defn- submit-next-step
-  [combined-client clients job {:keys [job_id step_number] :as job-step}]
+  [combined-client clients job {:keys [job_id step_number]}]
   (let [next-step (jp/get-job-step-number job_id (inc step_number))]
     (->> (cheshire/decode (.getValue (:submission job)) true)
          (add-mapped-inputs combined-client job next-step)

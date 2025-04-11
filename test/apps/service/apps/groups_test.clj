@@ -1,8 +1,9 @@
 (ns apps.service.apps.groups-test
-  (:use [clojure.test])
-  (:require [apps.service.apps.test-fixtures :as atf]
-            [apps.service.groups :as groups]
-            [apps.test-fixtures :as tf]))
+  (:require
+   [apps.service.apps.test-fixtures :as atf]
+   [apps.service.groups :as groups]
+   [apps.test-fixtures :as tf]
+   [clojure.test :refer [deftest is use-fixtures]]))
 
 (use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 (use-fixtures :each atf/with-public-apps atf/with-test-app atf/with-test-tool)
