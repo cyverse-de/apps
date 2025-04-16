@@ -12,6 +12,7 @@
    [apps.service.apps :as apps]
    [apps.user :refer [current-user]]
    [apps.util.coercions :as coercions :refer [coerce!]]
+   [common-swagger-api.routes]
    [common-swagger-api.schema :refer [defroutes DELETE GET PATCH POST]]
    [common-swagger-api.schema.analyses :as schema]
    [common-swagger-api.schema.analyses.listing :as listing-schema]

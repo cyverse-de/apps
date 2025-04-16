@@ -42,6 +42,7 @@
    [apps.tools.sharing :as tool-sharing]
    [apps.user :refer [current-user]]
    [apps.util.coercions :refer [coerce!]]
+   [common-swagger-api.routes]
    [common-swagger-api.schema :refer [defroutes DELETE GET PATCH POST PUT]]
    [common-swagger-api.schema.apps :refer [AppListing ToolAppListingResponses]]
    [common-swagger-api.schema.apps.admin.apps :refer [AdminAppListing ToolAdminAppListingResponses]]
