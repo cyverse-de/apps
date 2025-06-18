@@ -1,10 +1,11 @@
 (ns apps.util.pgp
-  (:use [slingshot.slingshot :only [throw+]])
-  (:require [clj-pgp.core :as pgp]
-            [clj-pgp.keyring :as keyring]
-            [clj-pgp.message :as pgp-msg]
-            [clojure.java.io :as io]
-            [apps.util.config :as config]))
+  (:require
+   [apps.util.config :as config]
+   [clj-pgp.core :as pgp]
+   [clj-pgp.keyring :as keyring]
+   [clj-pgp.message :as pgp-msg]
+   [clojure.java.io :as io]
+   [slingshot.slingshot :refer [throw+]]))
 
 (def ^:private keyring
   (memoize (fn [] (-> (config/pgp-keyring-path) io/file keyring/load-secret-keyring))))

@@ -1,33 +1,33 @@
 (ns apps.service.apps.de.metadata
   "DE app metadata services."
-  (:use [clojure.java.io :only [reader]]
-        [clojure-commons.client :only [build-url]]
-        [clojure-commons.core :only [unique-by]]
-        [apps.persistence.app-groups :only [add-app-to-category
-                                            decategorize-app
-                                            get-app-subcategory-id
-                                            remove-app-from-category]]
-        [apps.service.apps.de.validation :only [validate-app-existence
-                                                validate-app-version-existence
-                                                verify-app-permission]]
-        [apps.util.db :only [transaction]]
-        [apps.validation :only [get-valid-user-id]]
-        [apps.workspace :only [get-workspace]]
-        [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [throw+ try+]])
-  (:require [apps.clients.email :as email-client]
-            [apps.clients.metadata :as metadata-client]
-            [apps.clients.notifications :as notifications]
-            [apps.clients.permissions :as perms-client]
-            [apps.persistence.app-metadata :as amp]
-            [apps.service.apps.communities :as communities]
-            [apps.service.apps.de.docs :as app-docs]
-            [apps.service.apps.de.permissions :as perms]
-            [apps.translations.app-metadata :as atx]
-            [apps.util.config :as config]
-            [cheshire.core :as cheshire]
-            [clj-http.client :as client]
-            [clojure.tools.logging :as log]))
+  (:require
+   [apps.clients.email :as email-client]
+   [apps.clients.metadata :as metadata-client]
+   [apps.clients.notifications :as notifications]
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.app-groups
+    :refer [add-app-to-category
+            decategorize-app
+            get-app-subcategory-id
+            remove-app-from-category]]
+   [apps.persistence.app-metadata :as amp]
+   [apps.service.apps.communities :as communities]
+   [apps.service.apps.de.docs :as app-docs]
+   [apps.service.apps.de.permissions :as perms]
+   [apps.service.apps.de.validation :refer [validate-app-existence validate-app-version-existence verify-app-permission]]
+   [apps.translations.app-metadata :as atx]
+   [apps.util.config :as config]
+   [apps.util.db :refer [transaction]]
+   [apps.validation :refer [get-valid-user-id]]
+   [apps.workspace :refer [get-workspace]]
+   [cheshire.core :as cheshire]
+   [clj-http.client :as client]
+   [clojure-commons.client :refer [build-url]]
+   [clojure-commons.core :refer [unique-by]]
+   [clojure.java.io :refer [reader]]
+   [clojure.tools.logging :as log]
+   [kameleon.uuids :refer [uuidify]]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- app-ids-from-deletion-request
   "Extracts the app IDs from a deletion request."
@@ -59,7 +59,7 @@
 
 (defn permanently-delete-apps
   "This service removes apps from the database rather than merely marking them as deleted."
-  [user req]
+  [_user req]
   (println "Permanently deleting some apps: " req)
   (transaction
    (dorun (map permanently-delete-app (app-ids-from-deletion-request req)))
@@ -68,7 +68,7 @@
 
 (defn delete-apps
   "This service marks existing apps as deleted in the database."
-  [user req]
+  [_user req]
   (transaction (dorun (map amp/delete-app (app-ids-from-deletion-request req))))
   {})
 
@@ -109,7 +109,7 @@
   (let [user-id (get-valid-user-id (:username user))]
     (when (and (nil? rating) (nil? comment_id))
       (throw+ {:type  :clojure-commons.exception/bad-request-field
-               :error (str "No rating or comment ID given")}))
+               :error "No rating or comment ID given"}))
     (when (or (> 1 rating) (> rating 5))
       (throw+ {:type  :clojure-commons.exception/bad-request-field
                :error (str "Rating must be an integer between 1 and 5 inclusive."
@@ -150,7 +150,7 @@
 (defn remove-app-favorite
   "Removes the given app from the current user's favorites list."
   [user app-id]
-  (let [app (amp/get-app app-id)
+  (let [_app (amp/get-app app-id)
         fav-category-id (get-favorite-category-id user)]
     (remove-app-from-category app-id fav-category-id))
   nil)
@@ -196,7 +196,7 @@
                (cheshire/encode {:avus m}))]
     (metadata-client/update-avus username app-id body))
 
-  (if-let [community-names (communities/extract-full-community-names avus)]
+  (when-let [community-names (communities/extract-full-community-names avus)]
     (notify-community-admins username
                              (:integrator_name (amp/get-integration-data-by-app-id app-id))
                              app-name
@@ -223,7 +223,7 @@
     nil))
 
 (defn- verify-app-documentation
-  [user {app-id :id docs :documentation}]
+  [_user {app-id :id docs :documentation}]
   (when-not (or docs (app-docs/has-docs? app-id))
     (throw+ {:type  :clojure-commons.exception/bad-request-field
              :error (str "App " app-id " does not have documentation.")})))
@@ -249,19 +249,13 @@
   (transaction
    (let [app-name   (or app-name (amp/get-app-name app-id))
          version-id (amp/get-app-latest-version app-id)]
-    (amp/update-app app)
-    (when (:documentation app) (app-docs/add-app-docs user app-id app))
-    (when references (amp/set-app-references version-id references))
-    (publish-app-metadata short-username app-id app-name avus)
-    (let [request-id (amp/create-publication-request username app-id)]
-      (email-client/send-app-publication-request-email username app-name request-id untrusted-tools)))
+     (amp/update-app app)
+     (when (:documentation app) (app-docs/add-app-docs user app-id app))
+     (when references (amp/set-app-references version-id references))
+     (publish-app-metadata short-username app-id app-name avus)
+     (let [request-id (amp/create-publication-request username app-id)]
+       (email-client/send-app-publication-request-email username app-name request-id untrusted-tools)))
    nil))
-
-(defn get-app
-  "This service obtains an app description that can be used to build a job submission form in
-   the user interface."
-  [app-id]
-  (amp/get-app app-id))
 
 (defn get-param-definitions
   [app-id version-id]

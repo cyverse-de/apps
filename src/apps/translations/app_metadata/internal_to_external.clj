@@ -1,8 +1,8 @@
 (ns apps.translations.app-metadata.internal-to-external
-  (:use [apps.translations.app-metadata.util]
-        [apps.metadata.reference-genomes :only [get-reference-genomes-by-id]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [clojure.string :as string]))
+  (:require
+   [apps.metadata.reference-genomes :refer [get-reference-genomes-by-id]]
+   [apps.translations.app-metadata.util :as util]
+   [clojure.string :as string]))
 
 (defn validators-from-rules
   "Converts a list of rules from the internal JSON format to a list of validators for the
@@ -45,7 +45,7 @@
   "Gets the default value for a property and a set of list of selectable arguments."
   ([{default-value :value prop-type :type} args]
    (cond
-     (ref-genome-property-types prop-type) (ref-gen-info default-value)
+     (util/ref-genome-property-types prop-type) (ref-gen-info default-value)
      (not (seq args))                      default-value
      (map? default-value)                  default-value
      (vector? default-value)               default-value
@@ -53,7 +53,7 @@
   ([property args data-object]
    (let [info-type       (:file_info_type data-object)
          output-filename (:output_filename data-object)]
-     (cond (ref-genome-property-types info-type) (ref-gen-info (:value property))
+     (cond (util/ref-genome-property-types info-type) (ref-gen-info (:value property))
            (string/blank? output-filename)       (get-default-value property args)
            :else                                 output-filename))))
 
@@ -85,7 +85,7 @@
              :label        (:name data-obj (:label property))
              :order        (:order data-obj (:order property))
              :required     (:required data-obj (:required property false))
-             :type         (property-type-for type mult info-type)))))
+             :type         (util/property-type-for type mult info-type)))))
 
 (defn translate-property-group
   "Translates a property group from its internal format to its external format."
@@ -97,4 +97,4 @@
   "Translates a template from its internal format to its external format."
   [template]
   (assoc template
-         :groups (map translate-property-group (get-property-groups template))))
+         :groups (map translate-property-group (util/get-property-groups template))))

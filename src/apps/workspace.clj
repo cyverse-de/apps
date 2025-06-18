@@ -1,9 +1,9 @@
 (ns apps.workspace
-  (:use [apps.persistence.users :only [get-existing-user-id]]
-        [apps.persistence.workspace :only [fetch-workspace-by-user-id]]
-        [korma.core :exclude [update]]
-        [apps.user :only [current-user]]
-        [slingshot.slingshot :only [throw+]]))
+  (:require
+   [apps.persistence.users :refer [get-existing-user-id]]
+   [apps.persistence.workspace :refer [fetch-workspace-by-user-id]]
+   [apps.user :refer [current-user]]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn get-workspace
   "Gets a workspace database entry for the given username or the current user."

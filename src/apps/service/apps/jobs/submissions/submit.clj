@@ -1,6 +1,7 @@
 (ns apps.service.apps.jobs.submissions.submit
-  (:use [apps.util.db :only [transaction]])
-  (:require [apps.clients.permissions :as perms-client]))
+  (:require
+   [apps.clients.permissions :as perms-client]
+   [apps.util.db :refer [transaction]]))
 
 (defn submit-and-register-private-job
   [apps-client user submission]

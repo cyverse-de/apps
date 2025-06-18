@@ -1,9 +1,10 @@
 (ns apps.routes.schemas.app
-  (:use [apps.routes.params :only [SecuredQueryParams SecuredQueryParamsEmailRequired]]
-        [schema.core :only [defschema]])
-  (:require [clojure.set :as sets]
-            [common-swagger-api.schema.apps :as app-schema]
-            [common-swagger-api.schema.apps.admin.apps :as admin-schema]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams SecuredQueryParamsEmailRequired]]
+   [clojure.set :as sets]
+   [common-swagger-api.schema.apps :as app-schema]
+   [common-swagger-api.schema.apps.admin.apps :as admin-schema]
+   [schema.core :refer [defschema]]))
 
 (def AdminAppListingValidSortFields
   (sets/union app-schema/AppListingValidSortFields

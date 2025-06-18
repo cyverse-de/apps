@@ -1,0 +1,7 @@
+{:hooks   {:macroexpand {korma.core/defentity korma.core/defentity}}
+ :lint-as {korma.core/delete    clojure.core/->
+           korma.core/insert    clojure.core/->
+           korma.core/select    clojure.core/->
+           korma.core/subselect clojure.core/->
+           korma.core/update    clojure.core/->
+           korma.core/with      clojure.core/->}}

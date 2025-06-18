@@ -1,20 +1,21 @@
 (ns apps.service.apps.jobs.sharing
-  (:require [apps.clients.async-tasks :as async-tasks]
-            [apps.clients.data-info :as data-info]
-            [apps.clients.permissions :as perms-client]
-            [apps.clients.notifications :as cn]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.jobs.params :as job-params]
-            [apps.service.apps.jobs.permissions :as job-permissions]
-            [apps.service.apps-client :refer [get-apps-client-for-username]]
-            [apps.util.service :as service]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-commons.core :refer [remove-nil-values]]
-            [clojure-commons.error-codes :as ce]
-            [clojure-commons.template :refer [render]]
-            [kameleon.uuids :refer [uuidify]]
-            [slingshot.slingshot :refer [try+ throw+]]))
+  (:require
+   [apps.clients.async-tasks :as async-tasks]
+   [apps.clients.data-info :as data-info]
+   [apps.clients.notifications :as cn]
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps-client :refer [get-apps-client-for-username]]
+   [apps.service.apps.jobs.params :as job-params]
+   [apps.service.apps.jobs.permissions :as job-permissions]
+   [apps.util.service :as service]
+   [clojure-commons.core :refer [remove-nil-values]]
+   [clojure-commons.error-codes :as ce]
+   [clojure-commons.template :refer [render]]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [kameleon.uuids :refer [uuidify]]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (def default-failure-reason "unexpected error")
 
@@ -106,7 +107,7 @@
     (job-sharing-error (job-sharing-msg :not-supported job-id))))
 
 (defn- share-app-for-job
-  [apps-client sharer sharee job-id {system-id :system_id app-id :app_id}]
+  [apps-client _sharer sharee _job-id {system-id :system_id app-id :app_id}]
   (when-not (.hasAppPermission apps-client sharee system-id app-id "read")
     (let [response (.shareAppWithSubject apps-client false {} sharee system-id app-id "read")]
       (when-not (:success response)
@@ -155,7 +156,7 @@
 
 (defn- share-analysis
   [job-id sharee level]
-  (if-let [share-error (perms-client/share-analysis job-id sharee level)]
+  (when-let [share-error (perms-client/share-analysis job-id sharee level)]
     (job-sharing-error share-error)))
 
 (defn- share-child-job
@@ -211,7 +212,7 @@
        (cn/send-general-analysis-sharing-failure-notification username async-task-id)))))
 
 (defn share-jobs
-  [apps-client {username :shortUsername} sharing-requests]
+  [_apps-client {username :shortUsername} sharing-requests]
   (-> (async-tasks/new-task "analysis-sharing" username sharing-requests)
       (async-tasks/run-async-thread share-jobs-thread "analysis-sharing")
       (string/replace #".*/tasks/" "")
@@ -229,7 +230,7 @@
                       :reason     failure-reason})}))
 
 (defn- validate-job-sharing-request
-  [apps-client sharer sharee {job-id :analysis_id level :permission}]
+  [apps-client sharer _sharee {job-id :analysis_id level :permission}]
   (if-let [job (jp/get-job-by-id job-id)]
     (try+
      (verify-not-subjob job)
@@ -272,7 +273,7 @@
 
 (defn- unshare-analysis
   [job-id sharee]
-  (if-let [unshare-error (perms-client/unshare-analysis job-id sharee)]
+  (when-let [unshare-error (perms-client/unshare-analysis job-id sharee)]
     (job-sharing-error unshare-error)))
 
 (defn- unshare-child-job
@@ -325,7 +326,7 @@
        (cn/send-general-analysis-unsharing-failure-notification username async-task-id)))))
 
 (defn unshare-jobs
-  [apps-client {username :shortUsername} sharing-requests]
+  [_apps-client {username :shortUsername} sharing-requests]
   (-> (async-tasks/new-task "analysis-unsharing" username sharing-requests)
       (async-tasks/run-async-thread unshare-jobs-thread "analysis-unsharing")
       (string/replace #".*/tasks/" "")
@@ -342,7 +343,7 @@
                       :reason     failure-reason})}))
 
 (defn- validate-job-unsharing-request
-  [apps-client sharer sharee job-id]
+  [apps-client sharer _sharee job-id]
   (if-let [job (jp/get-job-by-id job-id)]
     (try+
      (verify-not-subjob job)

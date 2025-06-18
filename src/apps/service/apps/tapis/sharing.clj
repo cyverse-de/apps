@@ -1,10 +1,11 @@
 (ns apps.service.apps.tapis.sharing
-  (:use [slingshot.slingshot :only [try+]])
-  (:require [apps.clients.iplant-groups :as ipg]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.permissions :as app-permissions]
-            [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
-            [clojure.tools.logging :as log]))
+  (:require
+   [apps.clients.iplant-groups :as ipg]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.permissions :as app-permissions]
+   [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [try+]]))
 
 (defn- try-share-app-with-subject
   [tapis sharee app-id level success-fn failure-fn]

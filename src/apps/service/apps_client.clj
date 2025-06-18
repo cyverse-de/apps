@@ -1,14 +1,15 @@
 (ns apps.service.apps-client
-  (:require [apps.persistence.oauth :as op]
-            [apps.protocols]
-            [apps.service.apps.tapis]
-            [apps.service.apps.combined]
-            [apps.service.apps.de]
-            [apps.service.oauth :refer [authorization-uri has-access-token]]
-            [apps.user :as user]
-            [apps.util.config :as config]
-            [mescal.de :as tapis]
-            [slingshot.slingshot :refer [throw+]]))
+  (:require
+   [apps.persistence.oauth :as op]
+   [apps.protocols]
+   [apps.service.apps.tapis]
+   [apps.service.apps.combined]
+   [apps.service.apps.de]
+   [apps.service.oauth :refer [authorization-uri has-access-token]]
+   [apps.user :as user]
+   [apps.util.config :as config]
+   [mescal.de :as tapis]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn- authorization-redirect
   [server-info username state-info]
@@ -27,12 +28,12 @@
   [state-info username]
   (let [server-info (config/tapis-oauth-settings)]
     (tapis/de-tapis-client-v3
-      (config/tapis-base-url)
-      (config/tapis-storage-system)
-      (partial get-access-token server-info state-info username)
-      (config/tapis-jobs-enabled)
-      :timeout  (config/tapis-read-timeout)
-      :page-len (config/tapis-page-length))))
+     (config/tapis-base-url)
+     (config/tapis-storage-system)
+     (partial get-access-token server-info state-info username)
+     (config/tapis-jobs-enabled)
+     :timeout  (config/tapis-read-timeout)
+     :page-len (config/tapis-page-length))))
 
 (defn- get-tapis-apps-client
   [state-info {:keys [username] :as user}]

@@ -1,11 +1,11 @@
 (ns apps.tools-test
-  (:use [apps.persistence.entities :only [tools]]
-        [apps.test-fixtures :only [run-integration-tests with-test-db with-test-user]]
-        [apps.tools]
-        [apps.user :only [current-user]]
-        [clojure.test]
-        [korma.db]
-        [korma.core :exclude [update]]))
+  (:require
+   [apps.persistence.entities :refer [tools]]
+   [apps.test-fixtures :refer [run-integration-tests with-test-db with-test-user]]
+   [apps.tools :refer [admin-update-tool get-tool]]
+   [apps.user :refer [current-user]]
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [korma.core :refer [select where]]))
 
 (use-fixtures :each with-test-db with-test-user run-integration-tests)
 
@@ -14,7 +14,7 @@
     (testing "(get-tool) returns the right tool"
       (let [tool-id        (:id tool-map)
             user           (:shortUsername current-user)
-            retrieved-tool (get-tool user tool-id)]
+            retrieved-tool (get-tool user tool-id false)]
         (is (= tool-id (:id retrieved-tool)))
         (is (contains? retrieved-tool :restricted))
         (is (contains? retrieved-tool :time_limit_seconds))

@@ -1,9 +1,10 @@
 (ns apps.service.apps.de.jobs.base
-  (:require [apps.metadata.params :as mp]
-            [apps.persistence.app-metadata :as ap]
-            [apps.service.apps.de.jobs.common :as ca]
-            [apps.service.apps.de.jobs.condor]
-            [apps.service.apps.de.jobs.protocol]))
+  (:require
+   [apps.metadata.params :as mp]
+   [apps.persistence.app-metadata :as ap]
+   [apps.service.apps.de.jobs.common :as ca]
+   [apps.service.apps.de.jobs.condor]
+   [apps.service.apps.de.jobs.protocol]))
 
 (defn- build-job-request-formatter
   [user {app-id :app_id version-id :app_version_id :as submission}]

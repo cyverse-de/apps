@@ -1,10 +1,5 @@
 (ns apps.service.apps.jobs
-  (:use [apps.util.db :only [transaction]]
-        [slingshot.slingshot :only [try+]])
-  (:require [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-commons.exception-util :as cxu]
-            [kameleon.db :as db]
+  (:require [kameleon.db :as db]
             [apps.clients.notifications :as cn]
             [apps.persistence.jobs :as jp]
             [apps.persistence.submissions :as sp]
@@ -16,7 +11,12 @@
             [apps.service.apps.jobs.submissions :as submissions]
             [apps.service.apps.jobs.util :as ju]
             [apps.util.conversions :refer [remove-nil-vals]]
-            [apps.util.service :as service]))
+            [apps.util.db :refer [transaction]]
+            [apps.util.service :as service]
+            [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [clojure-commons.exception-util :as cxu]
+            [slingshot.slingshot :refer [try+]]))
 
 (defn validate-job-status-update-step-count
   "Validates the number of steps for an external ID provided in a set of job status updates. If there are too many or
@@ -196,14 +196,14 @@
     (.start (Thread. target (str "batch_stop_" parent-id)))))
 
 (defn- stop-job*
-  [apps-client user job-id status-to-set]
+  [apps-client _user job-id status-to-set]
   (let [{:keys [status] :as job} (jp/get-job-by-id job-id)
         running-children (jp/list-running-child-jobs job-id)]
     (when-not (and (jp/completed? status) (empty? running-children))
 
       ;; A parent job should be stopped right away, to prevent further child jobs from submitting.
       (stop-single-job apps-client status-to-set job true)
-      (if (not (empty? running-children))
+      (when-not (empty? running-children)
         (async-stop-batch-jobs apps-client status-to-set job-id)))))
 
 (defn stop-job

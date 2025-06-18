@@ -1,19 +1,19 @@
 (ns apps.tools
-  (:use [apps.containers :only [add-tool-container set-tool-container tool-container-info]]
-        [apps.persistence.entities :only [tools]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [apps.util.db :only [transaction]]
-        [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.permissions :as perms-client]
-            [apps.persistence.tools :as persistence]
-            [apps.persistence.tool-requests :as tool-req-db]
-            [apps.metadata.tool-requests :as tool-requests]
-            [apps.tools.permissions :as permissions]
-            [apps.util.config :as config]
-            [clojure-commons.exception-util :as exception-util]
-            [clojure.tools.logging :as log]))
+  (:require
+   [apps.clients.permissions :as perms-client]
+   [apps.containers :refer [add-tool-container set-tool-container tool-container-info]]
+   [apps.metadata.tool-requests :as tool-requests]
+   [apps.persistence.tool-requests :as tool-req-db]
+   [apps.persistence.tools :as persistence]
+   [apps.tools.permissions :as permissions]
+   [apps.util.config :as config]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [apps.util.db :refer [transaction]]
+   [apps.validation :refer [validate-tool-not-used verify-tool-name-version]]
+   [clojure-commons.exception-util :as exception-util]
+   [clojure.set :as cset]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn format-tool-listing
   [perms public-tool-ids
@@ -57,9 +57,9 @@
 (defn format-container-settings
   [container-settings include-defaults]
   (if include-defaults
-      (merge {:max_cpu_cores (config/default-cpu-limit)
-              :memory_limit (config/default-memory-limit)}
-             container-settings)
+    (merge {:max_cpu_cores (config/default-cpu-limit)
+            :memory_limit (config/default-memory-limit)}
+           container-settings)
     container-settings))
 
 (defn- filter-listing-tool-ids
@@ -67,7 +67,7 @@
   (if (contains? params :public)
     (if public
       public-tool-ids
-      (clojure.set/difference all-tool-ids public-tool-ids))
+      (cset/difference all-tool-ids public-tool-ids))
     all-tool-ids))
 
 (defn- admin-filter-listing-tool-ids
@@ -180,7 +180,7 @@
       (throw+ {:type  :clojure-commons.exception/bad-request-field
                :error "Tool is using a deprecated image and can not be made public."
                :image image})))
-  (if-let [request-id (tool-req-db/get-request-id-for-tool tool-id)]
+  (when-let [request-id (tool-req-db/get-request-id-for-tool tool-id)]
     (exception-util/exists "A tool request has already been submitted for the given tool"
                            :tool_id tool-id
                            :tool_request_id request-id)))

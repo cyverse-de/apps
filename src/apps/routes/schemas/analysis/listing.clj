@@ -1,7 +1,8 @@
 (ns apps.routes.schemas.analysis.listing
-  (:use [common-swagger-api.schema :only [describe]]
-        [schema.core :only [defschema]])
-  (:require [common-swagger-api.schema.analyses.listing :as schema]))
+  (:require
+   [common-swagger-api.schema :refer [describe]]
+   [common-swagger-api.schema.analyses.listing :as schema]
+   [schema.core :refer [defschema]]))
 
 (defschema ExternalIdList
   {:external_ids (describe [schema/ExternalId] "The list of external identifiers.")})

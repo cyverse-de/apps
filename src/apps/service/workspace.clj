@@ -1,8 +1,8 @@
 (ns apps.service.workspace
-  (:use [apps.user :only [append-username-suffix]]
-        [apps.util.db :only [transaction]])
-  (:require [apps.clients.iplant-groups :as ipg]
-            [apps.persistence.workspace :as wp]))
+  (:require
+   [apps.clients.iplant-groups :as ipg]
+   [apps.persistence.workspace :as wp]
+   [apps.user :refer [append-username-suffix]]))
 
 (defn- format-workspace
   ([workspace]

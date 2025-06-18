@@ -1,8 +1,8 @@
 (ns apps.routes.schemas.workspace
-  (:use [apps.routes.params :only [SecuredQueryParams]]
-        [common-swagger-api.schema :only [describe ->optional-param]]
-        [common-swagger-api.schema.apps.workspace :only [Workspace]]
-        [schema.core :only [defschema optional-key]]))
+  (:require [apps.routes.params :refer [SecuredQueryParams]]
+            [common-swagger-api.schema :refer [describe ->optional-param]]
+            [common-swagger-api.schema.apps.workspace :refer [Workspace]]
+            [schema.core :refer [defschema]]))
 
 (defschema WorkspaceListing
   {:workspaces (describe [Workspace] "The list of workspaces.")})

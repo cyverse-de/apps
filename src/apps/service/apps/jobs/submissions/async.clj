@@ -1,17 +1,18 @@
 (ns apps.service.apps.jobs.submissions.async
-  (:use [apps.util.db :only [transaction]]
-        [clojure-commons.core :only [remove-nil-values]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [clojure-commons.exception-util :as exception-util]
-            [clojure-commons.file-utils :as ft]
-            [apps.clients.notifications :as notifications]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.job-listings :as job-listings]
-            [apps.service.apps.jobs.submissions.submit :as submit]
-            [apps.service.apps.jobs.util :as util]
-            [apps.util.config :as config]))
+  (:require
+   [apps.clients.notifications :as notifications]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.job-listings :as job-listings]
+   [apps.service.apps.jobs.submissions.submit :as submit]
+   [apps.service.apps.jobs.util :as util]
+   [apps.util.config :as config]
+   [apps.util.db :refer [transaction]]
+   [clojure-commons.core :refer [remove-nil-values]]
+   [clojure-commons.exception-util :as exception-util]
+   [clojure-commons.file-utils :as ft]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- max-batch-paths-exceeded
   [max-paths first-list-path first-list-count]

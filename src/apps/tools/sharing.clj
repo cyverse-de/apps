@@ -1,11 +1,12 @@
 (ns apps.tools.sharing
-  (:require [apps.clients.notifications :as cn]
-            [apps.clients.permissions :as perms-client]
-            [apps.persistence.tools :as tools-db]
-            [apps.tools.permissions :as perms]
-            [clojure-commons.error-codes :as error-codes]
-            [clojure-commons.template :refer [render]]
-            [slingshot.slingshot :refer [try+]]))
+  (:require
+   [apps.clients.notifications :as cn]
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.tools :as tools-db]
+   [apps.tools.permissions :as perms]
+   [clojure-commons.error-codes :as error-codes]
+   [clojure-commons.template :refer [render]]
+   [slingshot.slingshot :refer [try+]]))
 
 (defn- get-tool-name
   [tool-id {tool-name :name}]

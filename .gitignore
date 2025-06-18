@@ -35,6 +35,5 @@ Dockerfile.local
 profiles.clj
 /repl/
 telepresence.log
-.clj-kondo/
+.clj-kondo/.cache
 .lsp/
-

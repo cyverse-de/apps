@@ -1,12 +1,13 @@
 (ns apps.routes.apps.elements
-  (:use [apps.metadata.element-listings :only [list-elements]]
-        [apps.routes.params]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.tools :only [ToolListing]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.util.service :as service]
-            [common-swagger-api.schema.apps.elements :as elements-schema]
-            [compojure.route :as route]))
+  (:require
+   [apps.metadata.element-listings :refer [list-elements]]
+   [apps.routes.params :refer [AppElementToolListingParams AppParameterTypeParams SecuredQueryParams]]
+   [apps.util.service :as service]
+   [common-swagger-api.schema :refer [defroutes GET undocumented]]
+   [common-swagger-api.schema.apps.elements :as elements-schema]
+   [common-swagger-api.schema.tools :refer [ToolListing]]
+   [compojure.route :as route]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes app-elements
   (GET "/" []

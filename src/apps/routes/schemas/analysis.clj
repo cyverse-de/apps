@@ -1,7 +1,8 @@
 (ns apps.routes.schemas.analysis
-  (:use [apps.routes.params :only [SecuredQueryParams]]
-        [schema.core :only [defschema]])
-  (:require [common-swagger-api.schema.analyses :as schema]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [common-swagger-api.schema.analyses :as schema]
+   [schema.core :refer [defschema]]))
 
 (defschema StopAnalysisRequest
   (merge SecuredQueryParams schema/StopAnalysisRequest))

@@ -1,22 +1,13 @@
 (ns apps.service.apps.de.jobs.params
-  (:use [kameleon.uuids :only [uuidify]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [clojure.string :as string]
-            [me.raynes.fs :as fs]
-            [apps.service.apps.jobs.util :as util]
-            [apps.util.config :as config]))
+  (:require
+   [apps.service.apps.jobs.util :as util]
+   [clojure.string :as string]
+   [me.raynes.fs :as fs]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn stringify
   [v]
   (when-not (nil? v) (str v)))
-
-(def ^:private irods-home-pattern
-  (memoize #(re-pattern (str "\\A\\Q" (string/replace (config/irods-home) #"/+\z" "")))))
-
-(defn remove-irods-home
-  [path]
-  (when-not (string/blank? path)
-    (string/replace path (irods-home-pattern) "")))
 
 (defn log-output
   [retain?]

@@ -1,23 +1,23 @@
 (ns apps.service.apps.tapis.listings
-  (:use [apps.service.apps.util :only [to-qualified-app-id]]
-        [apps.service.util :only [sort-apps apply-offset apply-limit format-job-stats valid-uuid?]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [slingshot.slingshot :only [try+]])
-  (:require [apps.clients.iplant-groups :as ipg]
-            [apps.persistence.app-metadata :as ap]
-            [apps.persistence.jobs :as jobs-db]
-            [clojure.tools.logging :as log]
-            [clojure-commons.error-codes :as ce :refer [clj-http-error?]]))
+  (:require
+   [apps.clients.iplant-groups :as ipg]
+   [apps.persistence.app-metadata :as ap]
+   [apps.service.apps.util :refer [to-qualified-app-id]]
+   [apps.service.util :refer [apply-limit apply-offset format-job-stats sort-apps valid-uuid?]]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [try+]]))
 
 ;; TODO: restore the job stats gathering when we have a more efficient way to do this.
 (defn- add-tapis-job-stats
-  [{:keys [id] :as app} params admin?]
+  [app _params _admin?]
   (merge app {:job_count_completed 0
               :job_count           0
               :job_count_failed    0})
   #_(merge app (if admin?
-               (jobs-db/get-job-stats id params)
-               (jobs-db/get-public-job-stats id params))))
+                 (jobs-db/get-job-stats id params)
+                 (jobs-db/get-public-job-stats id params))))
 
 (defn- add-app-listing-job-stats
   [app-listing params admin?]
@@ -57,7 +57,7 @@
       remove-nil-vals))
 
 (defn list-apps
-  [tapis category-id params]
+  [tapis _category-id params]
   (-> (.listApps tapis)
       add-app-integrator-info
       (add-app-listing-job-stats params false)

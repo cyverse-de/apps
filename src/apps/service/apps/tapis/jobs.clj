@@ -1,18 +1,14 @@
 (ns apps.service.apps.tapis.jobs
-  (:use [apps.util.conversions :only [remove-nil-vals]]
-        [slingshot.slingshot :only [try+ throw+]]
-        [common-swagger-api.schema :only [NonBlankString]])
-  (:require [cemerick.url :as curl]
-            [cheshire.core :as cheshire]
-            [clojure.tools.logging :as log]
-            [clojure-commons.file-utils :as ft]
-            [kameleon.db :as db]
-            [kameleon.uuids :as uuids]
-            [apps.persistence.jobs :as jp]
-            [apps.util.config :as config]
-            [apps.util.json :as json-util]
-            [apps.util.service :as service]
-            [schema.core :as s]))
+  (:require
+   [apps.persistence.jobs :as jp]
+   [apps.util.config :as config]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [apps.util.json :as json-util]
+   [cemerick.url :as curl]
+   [clojure-commons.file-utils :as ft]
+   [kameleon.db :as db]
+   [kameleon.uuids :as uuids]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- build-callback-url
   [id]
@@ -36,33 +32,6 @@
                           (ft/build-result-folder-path submission)
                           submission)
        (.prepareJobSubmission tapis)))
-
-(def JobInfo
-  "A schema used to validate job information."
-  {:id              NonBlankString
-   :app_id          NonBlankString
-   :app_description s/Str
-   :app_name        NonBlankString
-   :app_disabled    s/Bool
-   :description     s/Str
-   :enddate         s/Str
-   :name            NonBlankString
-   :raw_status      s/Str
-   :resultfolderid  NonBlankString
-   :startdate       s/Str
-   :status          NonBlankString
-   :wiki_url        s/Str})
-
-(defn- validate-job-info
-  [job-info]
-  (try+
-   (s/validate JobInfo job-info)
-   (catch Object _
-     (log/error (:throwable &throw-context)
-                (str "received an invalid job submission response from Tapis:\n"
-                     (cheshire/encode job-info {:pretty true})))
-     (service/request-failure (str "Unexpected job submission response: "
-                                   (.getMessage (:throwable &throw-context)))))))
 
 (defn- determine-start-time
   [job]
@@ -113,23 +82,23 @@
 (defn- format-job-submission-response
   [job-id submission job]
   (remove-nil-vals
-    {:app_description (:app_description job)
-     :app_disabled    false
-     :app_id          (:app_id job)
-     :app_name        (:app_name job)
-     :batch           false
-     :description     (:description job)
-     :enddate         (:enddate job)
-     :system_id       jp/tapis-client-name
-     :id              job-id
-     :name            (:name job)
-     :notify          (:notify job)
-     :resultfolderid  (:resultfolderid job)
-     :startdate       (str (.getTime (:startdate job)))
-     :status          (:status job)
-     :username        (:username job)
-     :wiki_url        (:wiki_url job)
-     :parent_id       (:parent_id submission)}))
+   {:app_description (:app_description job)
+    :app_disabled    false
+    :app_id          (:app_id job)
+    :app_name        (:app_name job)
+    :batch           false
+    :description     (:description job)
+    :enddate         (:enddate job)
+    :system_id       jp/tapis-client-name
+    :id              job-id
+    :name            (:name job)
+    :notify          (:notify job)
+    :resultfolderid  (:resultfolderid job)
+    :startdate       (str (.getTime (:startdate job)))
+    :status          (:status job)
+    :username        (:username job)
+    :wiki_url        (:wiki_url job)
+    :parent_id       (:parent_id submission)}))
 
 (defn- handle-successful-submission
   [user job-id job submission]
@@ -171,7 +140,7 @@
     status))
 
 (defn update-job-status
-  [tapis {:keys [external_id] :as job-step} {job-id :id :as job} status end-date]
+  [tapis {:keys [external_id] :as job-step} {job-id :id} status end-date]
   (let [status   (translate-job-status tapis status)
         end-date (when (jp/completed? status) end-date)]
     (when (and status (jp/status-follows? status (:status job-step)))

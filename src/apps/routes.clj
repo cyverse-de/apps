@@ -1,12 +1,5 @@
 (ns apps.routes
-  (:use [service-logging.middleware :only [add-user-to-context wrap-logging clean-context]]
-        [compojure.core :only [wrap-routes]]
-        [clojure-commons.query-params :only [wrap-query-params]]
-        [common-swagger-api.schema]
-        [apps.user :only [store-current-user]]
-        [ring.middleware keyword-params nested-params])
-  (:require [compojure.route :as route]
-            [apps.routes.admin :as admin-routes]
+  (:require [apps.routes.admin :as admin-routes]
             [apps.routes.admin.apps :as admin-apps-routes]
             [apps.routes.admin.reference-genomes :as admin-reference-genomes-routes]
             [apps.routes.admin.tool-requests :as admin-tool-request-routes]
@@ -30,13 +23,22 @@
             [apps.routes.users :as user-routes]
             [apps.routes.workspaces :as workspace-routes]
             [apps.routes.webhooks :as webhooks-routes]
+            [apps.user :refer [store-current-user]]
             [apps.util.config :as config]
             [apps.util.service :as service]
-            [clojure-commons.exception :as cx]))
+            [clojure-commons.exception :as cx]
+            [clojure-commons.query-params :refer [wrap-query-params]]
+            [common-swagger-api.schema :as schema]
+            [compojure.core :refer [wrap-routes]]
+            [compojure.route :as route]
+            [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+            [service-logging.middleware :refer [add-user-to-context wrap-logging clean-context]]))
 
-(defapi app
+(declare app)
+
+(schema/defapi app
   {:exceptions cx/exception-handlers}
-  (swagger-routes
+  (schema/swagger-routes
    {:ui config/docs-uri
     :options {:ui {:validatorUrl nil}}
     :data {:info {:title "Discovery Environment Apps API"
@@ -79,7 +81,7 @@
                   {:name "admin-integration-data", :description "Admin Integration Data endpoints."}
                   {:name "admin-groups", :description "Admin Group endpoints."}
                   {:name "admin-workspaces", :description "Admin Workspace endpoints"}]}})
-  (context "/" []
+  (schema/context "/" []
     :middleware [clean-context
                  wrap-keyword-params
                  wrap-query-params
@@ -87,119 +89,119 @@
     :tags ["service-info"]
     status-routes/status
 
-    (context "/callbacks" []
+    (schema/context "/callbacks" []
       :tags ["callbacks"]
       callback-routes/callbacks))
-  (context "/" []
+  (schema/context "/" []
     :middleware [clean-context
                  wrap-keyword-params
                  wrap-query-params
                  add-user-to-context
                  store-current-user
                  wrap-logging]
-    (context "/apps/categories" []
+    (schema/context "/apps/categories" []
       :tags ["app-categories"]
       app-category-routes/app-categories)
-    (context "/apps/communities" []
+    (schema/context "/apps/communities" []
       :tags ["app-communities"]
       app-category-routes/app-communities)
-    (context "/apps/hierarchies" []
+    (schema/context "/apps/hierarchies" []
       :tags ["app-hierarchies"]
       app-category-routes/app-hierarchies)
-    (context "/apps/elements" []
+    (schema/context "/apps/elements" []
       :tags ["app-element-types"]
       app-element-routes/app-elements)
-    (context "/apps/pipelines" []
+    (schema/context "/apps/pipelines" []
       :tags ["pipelines"]
       pipeline-routes/pipelines)
-    (context "/apps/:app-id/communities" []
+    (schema/context "/apps/:app-id/communities" []
       :tags ["app-community-tags"]
       app-community-routes/app-community-tags)
-    (context "/apps/:app-id/metadata" []
+    (schema/context "/apps/:app-id/metadata" []
       :tags ["app-metadata"]
       metadata-routes/app-metadata)
-    (context "/apps" []
+    (schema/context "/apps" []
       :tags ["apps"]
       app-routes/apps)
-    (context "/apps" []
+    (schema/context "/apps" []
       :tags ["app-versions"]
       versions-routes/app-versions)
-    (context "/analyses" []
+    (schema/context "/analyses" []
       :tags ["analyses"]
       analysis-routes/analyses)
-    (context "/bootstrap" []
+    (schema/context "/bootstrap" []
       :tags ["bootstrap"]
       bootstrap-routes/bootstrap)
-    (context "/tools" []
+    (schema/context "/tools" []
       :tags ["tools"]
       tool-routes/tools)
-    (context "/workspaces" []
+    (schema/context "/workspaces" []
       :tags ["workspaces"]
       workspace-routes/workspaces)
-    (context "/webhooks" []
+    (schema/context "/webhooks" []
       :tags ["webhooks"]
       webhooks-routes/webhooks)
-    (context "/users" []
+    (schema/context "/users" []
       :tags ["users"]
       user-routes/users)
-    (context "/tool-requests" []
+    (schema/context "/tool-requests" []
       :tags ["tool-requests"]
       tool-routes/tool-requests)
-    (context "/reference-genomes" []
+    (schema/context "/reference-genomes" []
       :tags ["reference-genomes"]
       reference-genome-routes/reference-genomes)
-    (context "/oauth" []
+    (schema/context "/oauth" []
       :tags ["oauth"]
       oauth-routes/oauth)
-    (context "/submissions" []
+    (schema/context "/submissions" []
       :tags ["submissions"]
       submission-routes/submissions)
-    (context "/admin/analyses" []
+    (schema/context "/admin/analyses" []
       :tags ["admin-analyses"]
       admin-routes/admin-analyses)
-    (context "/admin/apps/categories" []
+    (schema/context "/admin/apps/categories" []
       :tags ["admin-categories"]
       admin-routes/admin-categories)
-    (context "/admin/apps/communities" []
+    (schema/context "/admin/apps/communities" []
       :tags ["admin-communities"]
       admin-routes/admin-communities)
-    (context "/admin/apps/:app-id/communities" []
+    (schema/context "/admin/apps/:app-id/communities" []
       :tags ["admin-app-community-tags"]
       app-community-routes/admin-app-community-tags)
-    (context "/admin/apps/:app-id/metadata" []
+    (schema/context "/admin/apps/:app-id/metadata" []
       :tags ["admin-app-metadata"]
       metadata-routes/admin-app-metadata)
-    (context "/admin/apps" []
+    (schema/context "/admin/apps" []
       :tags ["admin-apps"]
       admin-apps-routes/admin-apps)
-    (context "/admin/ontologies" []
+    (schema/context "/admin/ontologies" []
       :tags ["admin-ontologies"]
       admin-routes/admin-ontologies)
-    (context "/admin/reference-genomes" []
+    (schema/context "/admin/reference-genomes" []
       :tags ["admin-reference-genomes"]
       admin-reference-genomes-routes/reference-genomes)
-    (context "/admin/tools/container-images" []
+    (schema/context "/admin/tools/container-images" []
       :tags ["admin-container-images"]
       tool-routes/container-images)
-    (context "/admin/tools/data-containers" []
+    (schema/context "/admin/tools/data-containers" []
       :tags ["admin-data-containers"]
       tool-routes/admin-data-containers)
-    (context "/admin/tools" []
+    (schema/context "/admin/tools" []
       :tags ["admin-tools"]
       tool-routes/admin-tools)
-    (context "/admin/tool-requests" []
+    (schema/context "/admin/tool-requests" []
       :tags ["admin-tool-requests"]
       admin-tool-request-routes/admin-tool-requests)
-    (context "/admin/oauth" []
+    (schema/context "/admin/oauth" []
       :tags ["admin-oauth"]
       oauth-routes/admin-oauth)
-    (context "/admin/integration-data" []
+    (schema/context "/admin/integration-data" []
       :tags ["admin-integration-data"]
       integration-data-routes/admin-integration-data)
-    (context "/admin/groups" []
+    (schema/context "/admin/groups" []
       :tags ["admin-groups"]
       group-routes/admin-group-routes)
-    (context "/admin/workspaces" []
+    (schema/context "/admin/workspaces" []
       :tags ["admin-workspaces"]
       admin-routes/admin-workspaces)
-    (undocumented (route/not-found (service/unrecognized-path-response)))))
+    (schema/undocumented (route/not-found (service/unrecognized-path-response)))))

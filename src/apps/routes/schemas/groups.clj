@@ -1,6 +1,7 @@
 (ns apps.routes.schemas.groups
-  (:use [common-swagger-api.schema :only [describe NonBlankString]])
-  (:require [schema.core :as s]))
+  (:require
+   [common-swagger-api.schema :refer [describe NonBlankString]]
+   [schema.core :as s]))
 
 (s/defschema Group
   {:name

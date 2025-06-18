@@ -1,13 +1,23 @@
 (ns apps.routes.admin.tool-requests
-  (:use [apps.metadata.tool-requests]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.tool :only [ToolRequestListingParams]]
-        [apps.user :only [current-user]]
-        [common-swagger-api.schema]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.util.config :as config]
+  (:require [apps.metadata.tool-requests
+             :refer [delete-tool-request
+                     delete-tool-request-status-code
+                     get-tool-request
+                     list-tool-requests
+                     update-tool-request]]
+            [apps.routes.params :refer [SecuredQueryParams]]
+            [apps.routes.schemas.tool :refer [ToolRequestListingParams]]
+            [apps.user :refer [current-user]]
+            [apps.util.config :as config]
+            [common-swagger-api.schema
+             :refer [context
+                     defroutes
+                     DELETE
+                     GET
+                     POST]]
             [common-swagger-api.schema.tools :as schema]
-            [common-swagger-api.schema.tools.admin :as admin-schema]))
+            [common-swagger-api.schema.tools.admin :as admin-schema]
+            [ring.util.http-response :refer [ok]]))
 
 (defroutes admin-tool-requests
   (GET "/" []

@@ -1,8 +1,9 @@
 (ns apps.service.apps.permissions
-  (:use [medley.core :only [map-kv]])
-  (:require [apps.clients.notifications :as cn]
-            [apps.service.apps.util :as apps-util]
-            [clojure-commons.error-codes :as ce]))
+  (:require
+   [apps.clients.notifications :as cn]
+   [apps.service.apps.util :as apps-util]
+   [clojure-commons.error-codes :as ce]
+   [medley.core :refer [map-kv]]))
 
 (defn- load-app-names
   [apps-client requests]

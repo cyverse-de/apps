@@ -1,9 +1,10 @@
 (ns apps.routes.groups
-  (:use [common-swagger-api.schema]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.routes.schemas.groups :as schema]
-            [apps.service.groups :as groups]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.routes.schemas.groups :as schema]
+   [apps.service.groups :as groups]
+   [common-swagger-api.schema :refer [defroutes describe GET PUT]]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes admin-group-routes
   (GET "/workshop" []

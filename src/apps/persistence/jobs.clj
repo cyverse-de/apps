@@ -1,26 +1,27 @@
 (ns apps.persistence.jobs
   "Functions for storing and retrieving information about jobs that the DE has
    submitted to any excecution service."
-  (:use [apps.persistence.entities :only [job-status-updates]]
-        [apps.persistence.users :only [get-user-id]]
-        [apps.util.db :only [add-date-limits-where-clause sql-array]]
-        [clojure-commons.core :only [remove-nil-values]]
-        [kameleon.db :only [now-str]]
-        [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [throw+]])
   (:require [apps.constants :as c]
+            [apps.persistence.entities :refer [job-status-updates]]
+            [apps.persistence.users :refer [get-user-id]]
             [apps.util.config :as config]
             [apps.util.db :as db]
             [cheshire.core :as cheshire]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.string :as string]
+            [clojure-commons.core :refer [remove-nil-values]]
             [clojure-commons.exception-util :as cxu]
             [honey.sql :as hsql]
             [honey.sql.helpers :as h]
+            [kameleon.db :refer [now-str]]
+            [kameleon.uuids :refer [uuidify]]
             [korma.core :as sql]
-            [permissions-client.core :as pc]))
+            [permissions-client.core :as pc])
+  (:refer-clojure :exclude [count max]))
+
+;; Declarations for special symbols used by Korma.
+(declare count exists max)
 
 (def de-job-type "DE")
 (def agave-job-type "Agave")
@@ -42,7 +43,7 @@
 (def idle-status "Idle")
 (def running-status "Running")
 (def impending-cancellation-status "ImpendingCancellation")
-(def running-status-codes #{running-status impending-cancellation-status})
+#_(def running-status-codes #{running-status impending-cancellation-status})
 (def completed-status-codes #{canceled-status failed-status completed-status})
 
 (def job-status-order
@@ -104,11 +105,6 @@
 
 (def not-completed? (complement completed?))
 
-(defn- nil-if-zero
-  "Returns nil if the argument value is zero."
-  [v]
-  (if (zero? v) nil v))
-
 (defn- hsql-filter-map->where-clause
   "Returns a map for use in a where-clause for filtering job query results."
   [{:keys [field value]}]
@@ -123,7 +119,7 @@
   "Applies 'standard' filters to a query. Standard filters are filters that search for fields that are
    included in the job listing response body."
   [query standard-filter]
-  (condp = (count standard-filter)
+  (condp = (clojure.core/count standard-filter)
     0 query
     1 (h/where query (map hsql-filter-map->where-clause standard-filter))
     (h/where query (cons :or (map hsql-filter-map->where-clause standard-filter)))))
@@ -167,7 +163,7 @@
     (keyword (or (custom-filter-fields field) "standard"))))
 
 (defn- hsql-add-job-query-filter-clause
-  "Filters results returned by the given job query by adding a (where (or ...)) clause based on the
+  "Filters results returned by the given job query by adding a (sql/where (or ...)) clause based on the
    given filter map."
   [query username query-filter]
   (let [categorized-filters (group-by get-filter-type-category query-filter)]
@@ -176,34 +172,34 @@
         (hsql-apply-type-filter (:type categorized-filters)))))
 
 (defn- job-type-id-from-system-id [system-id]
-  (or ((comp :id first) (select :job_types (where {:system_id system-id})))
+  (or ((comp :id first) (sql/select :job_types (sql/where {:system_id system-id})))
       (cxu/bad-request (str "unrecognized system ID: " system-id))))
 
 (defn- get-job-type-id
   "Fetches the primary key for the job type with the given name."
   [job-type]
-  (or ((comp :id first) (select :job_types (where {:name job-type})))
+  (or ((comp :id first) (sql/select :job_types (sql/where {:name job-type})))
       (cxu/bad-request (str "unrecognized job type name: " job-type))))
 
 (defn- save-job-submission
   "Associated a job submission with a saved job in the database."
   [job-id submission]
-  (exec-raw ["UPDATE jobs SET submission = CAST ( ? AS json ) WHERE id = ?"
+  (sql/exec-raw ["UPDATE jobs SET submission = CAST ( ? AS json ) WHERE id = ?"
              [(cast Object submission) job-id]]))
 
 (defn- save-job-with-submission
   "Saves information about a job in the database."
   [job-info submission]
-  (let [job-info (insert :jobs (values job-info))]
+  (let [job-info (sql/insert :jobs (sql/values job-info))]
     (save-job-submission (:id job-info) submission)
     job-info))
 
 (defn- job-step-updates
   "Returns a list of all of the job update received for the job step"
   [external-id]
-  (select job-status-updates
-          (where {:external_id external-id})
-          (order :sent_on :DESC)))
+  (sql/select job-status-updates
+          (sql/where {:external_id external-id})
+          (sql/order :sent_on :DESC)))
 
 (defn- update->date-completed
   [update]
@@ -229,7 +225,7 @@
 
 (defn get-job-status
   [job-id]
-  (-> (select :job_listings (fields :status) (where {:id job-id}))
+  (-> (sql/select :job_listings (sql/fields :status) (sql/where {:id job-id}))
       first
       :status))
 
@@ -248,7 +244,7 @@
   (-> (select-keys job-step-info job-step-fields)
       (assoc :job_type_id (get-job-type-id job-type))
       remove-nil-values
-      (#(insert :job_steps (values %1)))))
+      (#(sql/insert :job_steps (sql/values %1)))))
 
 (defn save-multistep-job
   [job-info job-steps submission]
@@ -286,7 +282,7 @@
   [subject-ids resource-type min-level]
   (pc/accessible-resource-query-dsl
    (config/permissions-client)
-   (sql-array "text" subject-ids)
+   (db/sql-array "text" subject-ids)
    resource-type min-level))
 
 (defn- hsql-count-jobs-of-types-dsl
@@ -341,8 +337,8 @@
 (defn- job-base-query
   "The base query used for retrieving job information from the database."
   []
-  (-> (select* [:job_listings :j])
-      (fields :j.app_description
+  (-> (sql/select* [:job_listings :j])
+      (sql/fields :j.app_description
               :j.system_id
               :j.app_id
               :j.app_version_id
@@ -389,9 +385,9 @@
 (defn- job-step-base-query
   "The base query used for retrieving job step information from the database."
   []
-  (-> (select* [:job_steps :s])
-      (join :inner [:job_types :t] {:s.job_type_id :t.id})
-      (fields :s.job_id
+  (-> (sql/select* [:job_steps :s])
+      (sql/join :inner [:job_types :t] {:s.job_type_id :t.id})
+      (sql/fields :s.job_id
               :s.step_number
               :s.external_id
               :s.start_date
@@ -400,27 +396,19 @@
               [:t.name :job_type]
               :s.app_step_number)))
 
-(defn get-job-step
-  "Retrieves a single job step from the database."
-  [job-id external-id]
-  (first
-   (select (job-step-base-query)
-           (where {:s.job_id      job-id
-                   :s.external_id external-id}))))
-
 (defn get-job-steps-by-external-id
   "Retrieves all of the job steps with an external identifier."
   [external-id]
-  (select (job-step-base-query)
-          (where {:s.external_id external-id})))
+  (sql/select (job-step-base-query)
+          (sql/where {:s.external_id external-id})))
 
 (defn get-max-step-number
   "Gets the maximum step number for a job."
   [job-id]
   ((comp :max-step first)
-   (select :job_steps
-           (aggregate (max :step_number) :max-step)
-           (where {:job_id job-id}))))
+   (sql/select :job_steps
+           (sql/aggregate (max :step_number) :max-step)
+           (sql/where {:job_id job-id}))))
 
 (defn- hsql-add-order
   [query {:keys [sort-field sort-dir]}]
@@ -456,19 +444,19 @@
 (defn list-jobs-by-id
   "Gets a listing of jobs with the given identifiers."
   [job-ids]
-  (-> (select* (job-base-query))
-      (where {:j.id [in (map uuidify job-ids)]})
-      (select)))
+  (-> (sql/select* (job-base-query))
+      (sql/where {:j.id [:in (map uuidify job-ids)]})
+      (sql/select)))
 
 (defn list-jobs-by-external-id
   "Gets a listing of jobs with the given external identifiers. The where clause may seem a bit odd here because
    the job steps are joined in. This is necessary to ensure that all of the external IDs are listed for every
    job even if only one external ID from a particular job is provided to the query."
   [external-ids]
-  (-> (select* (job-base-query))
-      (join [:job_steps :s] {:j.id :s.job_id})
-      (fields [(sqlfn :array_agg :s.external_id) :external_ids])
-      (group :j.app_description
+  (-> (sql/select* (job-base-query))
+      (sql/join [:job_steps :s] {:j.id :s.job_id})
+      (sql/fields [(sql/sqlfn :array_agg :s.external_id) :external_ids])
+      (sql/group :j.app_description
              :j.system_id
              :j.app_id
              :j.app_version_id
@@ -487,56 +475,56 @@
              :j.parent_id
              :j.is_batch
              :j.notify)
-      (where (exists (subselect :job_steps (where {:job_id :j.id :external_id [in external-ids]}))))
-      (select)))
+      (sql/where (exists (sql/subselect :job_steps (sql/where {:job_id :j.id :external_id [:in external-ids]}))))
+      (sql/select)))
 
 (defn list-child-jobs
   "Lists the child jobs within a batch job."
   [batch-id]
-  (select (job-base-query)
-          (fields :submission)
-          (where {:parent_id batch-id})))
+  (sql/select (job-base-query)
+          (sql/fields :submission)
+          (sql/where {:parent_id batch-id})))
 
 (defn list-running-child-jobs
   "Lists the child jobs within a batch job that have not yet completed."
   [batch-id]
-  (select (job-base-query)
-          (where {:parent_id batch-id
-                  :status    [not-in (conj completed-status-codes
+  (sql/select (job-base-query)
+          (sql/where {:parent_id batch-id
+                  :status    [:not-in (conj completed-status-codes
                                            impending-cancellation-status)]})))
 
 (defn list-child-job-statuses
   "Lists the child job statuses within a batch job."
   [batch-id]
-  (-> (select* :job_listings)
-      (fields :status)
-      (aggregate (count :id) :count)
-      (where {:parent_id batch-id})
-      (group :status)
-      (select)))
+  (-> (sql/select* :job_listings)
+      (sql/fields :status)
+      (sql/aggregate (count :id) :count)
+      (sql/where {:parent_id batch-id})
+      (sql/group :status)
+      (sql/select)))
 
 (defn count-child-jobs
   "Counts the child jobs of a batch job."
   [batch-id]
-  (-> (select* :job_listings)
-      (aggregate (count :id) :count)
-      (where {:parent_id batch-id})
-      (select)
+  (-> (sql/select* :job_listings)
+      (sql/aggregate (count :id) :count)
+      (sql/where {:parent_id batch-id})
+      (sql/select)
       first
       :count))
 
 (defn get-job-by-id
   "Gets a single job by its internal identifier."
   [id]
-  (first (select (job-base-query)
-                 (fields :submission)
-                 (where {:j.id (uuidify id)}))))
+  (first (sql/select (job-base-query)
+                 (sql/fields :submission)
+                 (sql/where {:j.id (uuidify id)}))))
 
 (defn- lock-job*
   "Retrieves a job by its internal identifier, placing a lock on the row."
   [id]
-  (-> (select* [:jobs :j])
-      (fields :j.app_description
+  (-> (sql/select* [:jobs :j])
+      (sql/fields :j.app_description
               :j.app_id
               :j.app_version_id
               :j.app_name
@@ -552,25 +540,25 @@
               [:j.submission         :submission]
               :j.parent_id
               :j.user_id)
-      (where {:j.id id})
-      (#(str (as-sql %) " for update"))
-      (#(exec-raw [% [id]] :results))
+      (sql/where {:j.id id})
+      (#(str (sql/as-sql %) " for update"))
+      (#(sql/exec-raw [% [id]] :results))
       (first)))
 
 (defn- add-job-type-info
   "Adds job type information to a job."
   [{:keys [id] :as job}]
-  (merge job (first (select [:jobs :j]
-                            (join [:job_types :t] {:j.job_type_id :t.id})
-                            (fields [:t.name :job_type] :t.system_id)
-                            (where {:j.id id})))))
+  (merge job (first (sql/select [:jobs :j]
+                            (sql/join [:job_types :t] {:j.job_type_id :t.id})
+                            (sql/fields [:t.name :job_type] :t.system_id)
+                            (sql/where {:j.id id})))))
 
 (defn- add-job-username
   "Determines the username of the user who submitted a job."
   [{user-id :user_id :as job}]
-  (merge job (first (select [:users :u]
-                            (fields :u.username)
-                            (where {:u.id user-id})))))
+  (merge job (first (sql/select [:users :u]
+                            (sql/fields :u.username)
+                            (sql/where {:u.id user-id})))))
 
 (defn lock-job
   "Retrieves a job by its internal identifier, placing a lock on the row. For-update queries
@@ -595,28 +583,28 @@
   "Retrieves a job step from the database by its job ID and external job ID, placing a lock on
    the row."
   [job-id external-id]
-  (-> (select* [:job_steps :s])
-      (fields :s.job_id
+  (-> (sql/select* [:job_steps :s])
+      (sql/fields :s.job_id
               :s.step_number
               :s.external_id
               :s.start_date
               :s.end_date
               :s.status
               :s.app_step_number)
-      (where (and {:s.job_id      job-id}
+      (sql/where (and {:s.job_id      job-id}
                   {:s.external_id external-id}))
-      (#(str (as-sql %) " for update"))
-      (#(exec-raw [% [job-id external-id]] :results))
+      (#(str (sql/as-sql %) " for update"))
+      (#(sql/exec-raw [% [job-id external-id]] :results))
       (first)))
 
 (defn- determine-job-step-type
   "Dtermines the job type associated with a job step in the database."
   [job-id external-id]
   ((comp :job_type first)
-   (select [:job_steps :s]
-           (join [:job_types :t] {:s.job_type_id :t.id})
-           (fields [:t.name :job_type])
-           (where {:s.job_id      job-id
+   (sql/select [:job_steps :s]
+           (sql/join [:job_types :t] {:s.job_type_id :t.id})
+           (sql/fields [:t.name :job_type])
+           (sql/where {:s.job_id      job-id
                    :s.external_id external-id}))))
 
 (defn lock-job-step
@@ -635,12 +623,12 @@
   ([id {:keys [status end_date deleted name description]}]
    (when (or status end_date deleted name description)
      (sql/update :jobs
-                 (set-fields (remove-nil-values {:status          status
+                 (sql/set-fields (remove-nil-values {:status          status
                                                  :end_date        end_date
                                                  :deleted         deleted
                                                  :job_name        name
                                                  :job_description description}))
-                 (where {:id id}))))
+                 (sql/where {:id id}))))
   ([id status end-date]
    (update-job id {:status   status
                    :end_date end-date})))
@@ -650,29 +638,29 @@
   [job-id step-number {:keys [external_id status end_date start_date]}]
   (when (or external_id status end_date start_date)
     (sql/update :job_steps
-                (set-fields (remove-nil-values {:external_id external_id
+                (sql/set-fields (remove-nil-values {:external_id external_id
                                                 :status      status
                                                 :end_date    end_date
                                                 :start_date  start_date}))
-                (where {:job_id      job-id
+                (sql/where {:job_id      job-id
                         :step_number step-number}))))
 
 (defn cancel-job-step-numbers
   "Marks a job step as canceled in the database."
   [job-id step-numbers]
   (sql/update :job_steps
-              (set-fields {:status     canceled-status
-                           :start_date (sqlfn coalesce :start_date (sqlfn now))
-                           :end_date   (sqlfn now)})
-              (where {:job_id      job-id
-                      :step_number [in step-numbers]})))
+              (sql/set-fields {:status     canceled-status
+                           :start_date (sql/sqlfn :coalesce :start_date (sql/sqlfn :now))
+                           :end_date   (sql/sqlfn :now)})
+              (sql/where {:job_id      job-id
+                      :step_number [:in step-numbers]})))
 
 (defn get-job-step-number
   "Retrieves a job step from the database by its step number."
   [job-id step-number]
   (first
-   (select (job-step-base-query)
-           (where {:s.job_id      job-id
+   (sql/select (job-step-base-query)
+           (sql/where {:s.job_id      job-id
                    :s.step_number step-number}))))
 
 (defn update-job-step
@@ -680,9 +668,9 @@
   [job-id external-id status end-date]
   (when (or status end-date)
     (sql/update :job_steps
-                (set-fields (remove-nil-values {:status   status
+                (sql/set-fields (remove-nil-values {:status   status
                                                 :end_date end-date}))
-                (where {:job_id      job-id
+                (sql/where {:job_id      job-id
                         :external_id external-id}))))
 
 (defn update-job-steps
@@ -690,15 +678,15 @@
   [job-id status end-date]
   (when (or status end-date)
     (sql/update :job_steps
-                (set-fields (remove-nil-values {:status   status
+                (sql/set-fields (remove-nil-values {:status   status
                                                 :end_date end-date}))
-                (where {:job_id job-id}))))
+                (sql/where {:job_id job-id}))))
 
 (defn list-job-steps
   [job-id]
-  (select (job-step-base-query)
-          (where {:job_id job-id})
-          (order :step_number)))
+  (sql/select (job-step-base-query)
+          (sql/where {:job_id job-id})
+          (sql/order :step_number)))
 
 (defn- related-job-ids-query
   "Returns a query that can be used to obtain the ID and parent ID of every job in the database whose ID or parent ID is
@@ -768,25 +756,16 @@
   (db/with-transaction [tx]
     (jdbc/query tx (list-representative-job-steps-query job-ids))))
 
-(defn list-jobs-to-delete
-  [ids]
-  (select [:jobs :j]
-          (join [:users :u] {:j.user_id :u.id})
-          (fields [:j.id       :id]
-                  [:j.deleted  :deleted]
-                  [:u.username :user])
-          (where {:j.id [in ids]})))
-
 (defn delete-jobs
   [ids]
   (sql/update :jobs
-              (set-fields {:deleted true})
-              (where {:id [in ids]})))
+              (sql/set-fields {:deleted true})
+              (sql/where {:id [:in ids]})))
 
 (defn- get-jobs
   [ids]
-  (select (job-base-query)
-          (where {:j.id [in ids]})))
+  (sql/select (job-base-query)
+          (sql/where {:j.id [:in ids]})))
 
 (defn list-non-existent-job-ids
   [job-id-set]
@@ -799,41 +778,41 @@
   "Adds query fields with subselects similar to the app_listing view's job_count, job_count_failed,
    and last_used columns."
   [query]
-  (fields query
-          [(subselect [:jobs :jc]
-                      (aggregate (count :id) :job_count)
-                      (where {:app_id :j.app_id})
-                      (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
+  (sql/fields query
+          [(sql/subselect [:jobs :jc]
+                      (sql/aggregate (count :id) :job_count)
+                      (sql/where {:app_id :j.app_id})
+                      (sql/where (sql/raw "NOT EXISTS (SQL/SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
            :job_count]
-          [(subselect [:jobs :jc]
-                      (aggregate (count :id) :job_count_failed)
-                      (where {:app_id :j.app_id
+          [(sql/subselect [:jobs :jc]
+                      (sql/aggregate (count :id) :job_count_failed)
+                      (sql/where {:app_id :j.app_id
                               :status failed-status})
-                      (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
+                      (sql/where (sql/raw "NOT EXISTS (SQL/SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
            :job_count_failed]
-          [(subselect :jobs
-                      (aggregate (max :start_date) :last_used)
-                      (where {:app_id :j.app_id}))
+          [(sql/subselect :jobs
+                      (sql/aggregate (max :start_date) :last_used)
+                      (sql/where {:app_id :j.app_id}))
            :last_used]))
 
 (defn- get-job-stats-base-query
   "Fetches job stats for the given app ID, with fields via subselects similar to the app_listing view's
    job_count_completed and job_last_completed columns."
   [^String app-id]
-  (-> (select* [:jobs :j])
-      (fields [(subselect [:jobs :jc]
-                          (aggregate (count :id) :job_count_completed)
-                          (where {:app_id :j.app_id
+  (-> (sql/select* [:jobs :j])
+      (sql/fields [(sql/subselect [:jobs :jc]
+                          (sql/aggregate (count :id) :job_count_completed)
+                          (sql/where {:app_id :j.app_id
                                   :status completed-status})
-                          (where (raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
+                          (sql/where (sql/raw "NOT EXISTS (SQL/SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
                :job_count_completed]
-              [(subselect :jobs
-                          (aggregate (max :end_date) :job_last_completed)
-                          (where {:app_id :j.app_id
+              [(sql/subselect :jobs
+                          (sql/aggregate (max :end_date) :job_last_completed)
+                          (sql/where {:app_id :j.app_id
                                   :status completed-status}))
                :job_last_completed])
-      (where {:app_id app-id})
-      (group :app_id)))
+      (sql/where {:app_id app-id})
+      (sql/group :app_id)))
 
 (defn get-job-stats
   [^String app-id params]
@@ -841,17 +820,17 @@
           :job_count_failed 0
           :job_count_completed 0}
          (-> (get-job-stats-base-query app-id)
-             (add-date-limits-where-clause params)
+             (db/add-date-limits-where-clause params)
              get-job-stats-fields
-             select
+             sql/select
              first)))
 
 (defn get-public-job-stats
   [^String app-id params]
   (merge {:job_count_completed 0}
          (-> (get-job-stats-base-query app-id)
-             (add-date-limits-where-clause params)
-             select
+             (db/add-date-limits-where-clause params)
+             sql/select
              first)))
 
 (defn record-tickets
@@ -859,70 +838,70 @@
   [job-id ticket-map]
   (when (seq ticket-map)
     (let [format-row (fn [[path ticket-id]] {:job_id job-id :ticket ticket-id :irods_path path})]
-      (insert :job_tickets (values (mapv format-row ticket-map))))))
+      (sql/insert :job_tickets (sql/values (mapv format-row ticket-map))))))
 
 (defn mark-tickets-deleted
   "Marks a set of tickets as deleted."
   [ticket-map]
   (when-not (empty? ticket-map)
     (sql/update :job_tickets
-                (set-fields {:deleted true})
-                (where {:ticket [in (vals ticket-map)]}))))
+                (sql/set-fields {:deleted true})
+                (sql/where {:ticket [:in (vals ticket-map)]}))))
 
 (defn load-job-ticket-map
   "Loads the ticket map for the given job ID."
   [job-id]
-  (->> (select :job_tickets (fields :irods_path :ticket) (where {:job_id job-id}))
+  (->> (sql/select :job_tickets (sql/fields :irods_path :ticket) (sql/where {:job_id job-id}))
        (map (juxt :irods_path :ticket))
        (into {})))
 
 (defn add-job-status-update
   "Adds a job status update for a given external ID"
   [external-id message status]
-  (insert :job_status_updates
-          (values {:external_id        external-id
+  (sql/insert :job_status_updates
+          (sql/values {:external_id        external-id
                    :message            message
                    :status             status
-                   :sent_from          (raw "'0.0.0.0'::inet")
+                   :sent_from          (sql/raw "'0.0.0.0'::inet")
                    :sent_from_hostname "0.0.0.0"
                    :sent_on            (System/currentTimeMillis)})))
 
 (defn get-unpropagated-job-status-updates
   "Retrieves the list of unpropagated job status updates for an external ID."
   [external-id]
-  (-> (select* :job_status_updates)
-      (fields :id :status :sent_on)
-      (order :sent_on :ASC)
-      (where {:external_id          external-id
+  (-> (sql/select* :job_status_updates)
+      (sql/fields :id :status :sent_on)
+      (sql/order :sent_on :ASC)
+      (sql/where {:external_id          external-id
               :propagated           false
               :propagation_attempts [< 3]})
-      select))
+      sql/select))
 
 (defn mark-job-status-updates-propagated
   "Marks a set of job status updates as propagated."
   [ids]
   (when (seq ids)
     (sql/update :job_status_updates
-                (set-fields {:propagated true})
-                (where {:id [in ids]}))))
+                (sql/set-fields {:propagated true})
+                (sql/where {:id [:in ids]}))))
 
 (defn mark-job-status-updates-for-external-id-completed
   "Marks all job status updates for an external ID as completed."
   [external-id]
   (sql/update :job_status_updates
-              (set-fields {:propagated true})
-              (where {:external_id external-id})))
+              (sql/set-fields {:propagated true})
+              (sql/where {:external_id external-id})))
 
 (defn get-job-status-updates
   "Retrieves the list of job status updates for an external ID."
   [external-id]
-  (-> (select* :job_status_updates)
-      (fields :id :status :message :sent_on)
-      (order :sent_on :ASC)
-      (where {:external_id external-id})
-      select))
+  (-> (sql/select* :job_status_updates)
+      (sql/fields :id :status :message :sent_on)
+      (sql/order :sent_on :ASC)
+      (sql/where {:external_id external-id})
+      sql/select))
 
 (defn set-lock-timeout
   "Sets a timeout for obtaining locks in the database."
   []
-  (exec-raw ["SET LOCAL lock_timeout='5s'" []]))
+  (sql/exec-raw ["SET LOCAL lock_timeout='5s'" []]))

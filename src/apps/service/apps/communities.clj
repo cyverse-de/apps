@@ -3,7 +3,6 @@
             [apps.clients.metadata :as metadata-client]
             [apps.util.config :as config]
             [cheshire.core :as json]
-            [clojure.set :as sets]
             [clojure-commons.exception-util :as exception-util]))
 
 (defn get-community-admin-set

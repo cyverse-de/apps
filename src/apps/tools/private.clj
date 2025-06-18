@@ -1,15 +1,15 @@
 (ns apps.tools.private
-  (:use [apps.constants :only [executable-tool-type]]
-        [apps.util.db :only [transaction]]
-        [apps.validation :only [verify-tool-name-version validate-tool-not-used]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [apps.clients.permissions :as perms-client]
-            [apps.containers :as containers]
-            [apps.persistence.tools :as persistence]
-            [apps.tools :as tools]
-            [apps.tools.permissions :as perms]
-            [apps.util.config :as cfg]
-            [apps.validation :as validation]))
+  (:require
+   [apps.clients.permissions :as perms-client]
+   [apps.constants :refer [executable-tool-type]]
+   [apps.containers :as containers]
+   [apps.persistence.tools :as persistence]
+   [apps.tools :as tools]
+   [apps.tools.permissions :as perms]
+   [apps.util.config :as cfg]
+   [apps.util.db :refer [transaction]]
+   [apps.validation :refer [validate-tool-not-public validate-tool-not-used verify-tool-name-version]]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn- validate-image-not-deprecated
   [image-info]
@@ -77,7 +77,7 @@
 (defn update-private-tool
   [user {:keys [type container time_limit_seconds] tool-id :id :as tool}]
   (perms/check-tool-permissions user "write" [tool-id])
-  (validation/validate-tool-not-public tool-id)
+  (validate-tool-not-public tool-id)
   (when container
     (validate-image-not-deprecated (:image container)))
   (transaction
@@ -99,7 +99,7 @@
   [user tool-id force-delete]
   (persistence/get-tool tool-id)
   (perms/check-tool-permissions user "own" [tool-id])
-  (validation/validate-tool-not-public tool-id)
+  (validate-tool-not-public tool-id)
   (when-not force-delete
     (validate-tool-not-used tool-id))
   (tools/delete-tool tool-id))

@@ -1,13 +1,14 @@
 (ns apps.service.oauth
   "Service implementations dealing with OAuth 2.0 authentication."
-  (:use [apps.user :only [current-user]]
-        [medley.core :only [remove-vals]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [apps.persistence.oauth :as op]
-            [apps.util.config :as config]
-            [cemerick.url :as curl]
-            [clojure-commons.exception-util :as cxu]
-            [authy.core :as authy]))
+  (:require
+   [apps.persistence.oauth :as op]
+   [apps.user :refer [current-user]]
+   [apps.util.config :as config]
+   [authy.core :as authy]
+   [cemerick.url :as curl]
+   [clojure-commons.exception-util :as cxu]
+   [medley.core :refer [remove-vals]]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn- build-authy-server-info
   "Builds the server info to pass to authy."
@@ -74,7 +75,7 @@
 
 (defn authorization-uri
   "Generates an authorization URI for a remote API."
-  [{:keys [api-name] :as server-info} username state-info]
+  [{:keys [_api-name] :as server-info} username state-info]
   (str (assoc (curl/url (:auth-uri server-info))
               :query {:response_type "code"
                       :client_id     (:client-key server-info)
@@ -83,7 +84,7 @@
 
 (defn has-access-token
   "Determines whether or not a user has an access token for an external API."
-  [{:keys [api-name] :as server-info} username]
+  [{:keys [api-name]} username]
   (seq (op/get-access-token api-name username)))
 
 (defn- build-auth-uri

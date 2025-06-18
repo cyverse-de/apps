@@ -1,13 +1,13 @@
 (ns apps.service.apps.apps-test
-  (:use [apps.constants :only [de-system-id hpc-system-id]]
-        [apps.service.apps.test-utils :only [get-user delete-app permanently-delete-app fake-system-id]]
-        [clojure.test]
-        [kameleon.uuids :only [uuid]])
-  (:require [apps.persistence.jobs :as jp]
-            [apps.service.apps :as apps]
-            [apps.service.apps.test-fixtures :as atf]
-            [apps.test-fixtures :as tf])
-  (:import [clojure.lang ExceptionInfo]))
+  (:require
+   [apps.constants :refer [de-system-id hpc-system-id]]
+   [apps.service.apps :as apps]
+   [apps.service.apps.test-fixtures :as atf]
+   [apps.service.apps.test-utils :refer [delete-app fake-system-id get-user permanently-delete-app]]
+   [apps.test-fixtures :as tf]
+   [clojure.test :refer [deftest is use-fixtures]])
+  (:import
+   (clojure.lang ExceptionInfo)))
 
 (use-fixtures :once tf/run-integration-tests tf/with-test-db tf/with-config atf/with-workspaces)
 
@@ -239,11 +239,3 @@
 (deftest admin-edit-integration-data-with-invalid-system-id
   (test-unrecognized-system-id
    #(apps/update-app-integration-data (get-user :testde1) fake-system-id fake-app-id fake-app-id)))
-
-(deftest admin-edit-integration-data-with-invalid-system-id
-  (test-hpc-integration-data
-   #(apps/update-app-integration-data (get-user :testde1) hpc-system-id fake-app-id fake-app-id)))
-
-(deftest admin-edit-app-docs-with-invalid-app-id
-  (test-non-uuid
-   #(apps/update-app-integration-data (get-user :testde1) de-system-id fake-app-id fake-app-id)))

@@ -39,10 +39,10 @@
   (buildParams [this params outputs]
     (params/build-params this (:config submission) io-maps outputs defaults params))
 
-  (buildInputs [this params]
+  (buildInputs [_this params]
     (params/build-inputs submission defaults params))
 
-  (buildOutputs [this params]
+  (buildOutputs [_this params]
     (conj (params/build-outputs (:config submission) defaults params)
           (params/log-output (:archive_logs submission true))))
 
@@ -59,10 +59,10 @@
              :stdout stdout
              :stderr stderr)))
 
-  (buildEnvironment [this step]
+  (buildEnvironment [_this step]
     (ca/build-environment (:config submission) defaults (params (:id step))))
 
-  (buildComponent [this step requirements]
+  (buildComponent [_this step requirements]
     (ca/build-component step requirements))
 
   (buildStep [this requirements steps step]

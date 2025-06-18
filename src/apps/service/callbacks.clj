@@ -1,9 +1,9 @@
 (ns apps.service.callbacks
-  (:require [apps.persistence.jobs :as jp]
-            [apps.service.apps :as apps]
-            [apps.util.service :as service]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]))
+  (:require
+   [apps.service.apps :as apps]
+   [apps.util.service :as service]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]))
 
 (defn update-de-job-status
   [{:keys [uuid]}]

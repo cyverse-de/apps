@@ -1,18 +1,16 @@
 (ns apps.routes.apps.communities
-  (:use [common-swagger-api.routes]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.apps
-         :only [AppCategoryMetadataAddRequest
-                AppCategoryMetadataDeleteRequest
-                AppIdParam]]
-        [common-swagger-api.schema.metadata :only [AvuList]]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [apps.user :only [current-user]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.apps.communities :as communities]
-            [apps.util.service :as service]
-            [common-swagger-api.schema.apps.communities :as schema]
-            [compojure.route :as route]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.service.apps.communities :as communities]
+   [apps.user :refer [current-user]]
+   [apps.util.service :as service]
+   [common-swagger-api.routes :refer [get-endpoint-delegate-block]]
+   [common-swagger-api.schema :refer [defroutes DELETE POST undocumented]]
+   [common-swagger-api.schema.apps :refer [AppCategoryMetadataAddRequest AppCategoryMetadataDeleteRequest AppIdParam]]
+   [common-swagger-api.schema.apps.communities :as schema]
+   [common-swagger-api.schema.metadata :refer [AvuList]]
+   [compojure.route :as route]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes app-community-tags
 

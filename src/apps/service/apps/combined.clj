@@ -3,15 +3,16 @@
   or more other implementations. This implementation expects at most one the implementations that
   it interacts with to allow users to add new apps and edit existing ones. If this is not the case
   then the first app in the list that is capable of adding or editing apps wins."
-  (:use [apps.util.assertions :only [assert-not-nil]])
-  (:require [apps.persistence.jobs :as jp]
-            [apps.protocols]
-            [apps.service.apps.job-listings :as job-listings]
-            [apps.service.apps.combined.job-view :as job-view]
-            [apps.service.apps.combined.jobs :as combined-jobs]
-            [apps.service.apps.combined.pipelines :as pipelines]
-            [apps.service.apps.combined.util :as util]
-            [apps.service.apps.permissions :as app-permissions]))
+  (:require
+   [apps.persistence.jobs :as jp]
+   [apps.protocols]
+   [apps.service.apps.combined.job-view :as job-view]
+   [apps.service.apps.combined.jobs :as combined-jobs]
+   [apps.service.apps.combined.pipelines :as pipelines]
+   [apps.service.apps.combined.util :as util]
+   [apps.service.apps.job-listings :as job-listings]
+   [apps.service.apps.permissions :as app-permissions]
+   [apps.util.assertions :refer [assert-not-nil]]))
 
 (deftype CombinedApps [clients user]
   apps.protocols.Apps

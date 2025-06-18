@@ -1,28 +1,25 @@
 (ns apps.persistence.app-metadata.relabel
   "Persistence layer for app metadata."
-  (:use [apps.persistence.entities]
-        [apps.util.assertions]
-        [apps.util.conversions :only [long->timestamp
-                                      remove-nil-vals]]
-        [korma.core :exclude [update]]
-        [medley.core :only [remove-vals]]
-        [slingshot.slingshot :only [throw+]])
   (:require [apps.persistence.app-metadata :as app-meta]
-            [korma.core :as sql]))
+            [apps.persistence.entities :as entities]
+            [apps.util.assertions :refer [assert-not-nil]]
+            [apps.util.conversions :refer [remove-nil-vals]]
+            [korma.core :as sql]
+            [slingshot.slingshot :refer [throw+]]))
 
 (defn- get-tasks-for-app
   "Retrieves the list of tasks associated with an app."
   [app-id app-version-id]
-  (select [:apps :a]
-          (fields :t.id :t.external_app_id :t.name :t.description :t.label :t.tool_id)
-          (join [:app_versions :v]
-                {:a.id :v.app_id})
-          (join [:app_steps :step]
-                {:v.id :step.app_version_id})
-          (join [:tasks :t]
-                {:step.task_id :t.id})
-          (where {:a.id app-id
-                  :v.id app-version-id})))
+  (sql/select [:apps :a]
+              (sql/fields :t.id :t.external_app_id :t.name :t.description :t.label :t.tool_id)
+              (sql/join [:app_versions :v]
+                        {:a.id :v.app_id})
+              (sql/join [:app_steps :step]
+                        {:v.id :step.app_version_id})
+              (sql/join [:tasks :t]
+                        {:step.task_id :t.id})
+              (sql/where {:a.id app-id
+                          :v.id app-version-id})))
 
 (defn- get-single-task-for-app
   "Retrieves the task from a single-step app. An exception will be thrown if the app doesn't have
@@ -41,11 +38,11 @@
   (assert-not-nil
    [:group_id group-id]
    (first
-    (select [parameter_groups :pg]
-            (join [:tasks :t]
-                  {:pg.task_id :t.id})
-            (where {:t.id  task-id
-                    :pg.id group-id})))))
+    (sql/select [entities/parameter_groups :pg]
+                (sql/join [:tasks :t]
+                          {:pg.task_id :t.id})
+                (sql/where {:t.id  task-id
+                            :pg.id group-id})))))
 
 (defn- get-parameter-in-group
   "Verifies that a parameter belongs to a specific parameter group."
@@ -53,16 +50,16 @@
   (assert-not-nil
    [:parameter_id parameter-id]
    (first
-    (select [parameters :p]
-            (fields :p.id [:t.name :info_type])
-            (join [:parameter_groups :pg]
-                  {:p.parameter_group_id :pg.id})
-            (join [:file_parameters :f]
-                  {:f.parameter_id :p.id})
-            (join [:info_type :t]
-                  {:t.id :f.info_type})
-            (where {:pg.id group-id
-                    :p.id  parameter-id})))))
+    (sql/select [entities/parameters :p]
+                (sql/fields :p.id [:t.name :info_type])
+                (sql/join [:parameter_groups :pg]
+                          {:p.parameter_group_id :pg.id})
+                (sql/join [:file_parameters :f]
+                          {:f.parameter_id :p.id})
+                (sql/join [:info_type :t]
+                          {:t.id :f.info_type})
+                (sql/where {:pg.id group-id
+                            :p.id  parameter-id})))))
 
 (defn- get-parameter-value
   "Verifies that a parameter value belongs to a specific parameter."
@@ -70,11 +67,11 @@
   (assert-not-nil
    [:parameter_value_id param-value-id]
    (first
-    (select [:parameter_values :v]
-            (join [:parameters :p]
-                  {:p.id :v.parameter_id})
-            (where {:p.id parameter-id
-                    :v.id param-value-id})))))
+    (sql/select [:parameter_values :v]
+                (sql/join [:parameters :p]
+                          {:p.id :v.parameter_id})
+                (sql/where {:p.id parameter-id
+                            :v.id param-value-id})))))
 
 (def ^:private generated-selection-list-info-types
   "The list of info types for which selection lists are generated."
@@ -88,7 +85,7 @@
                      {:description description
                       :label       display})]
     (when (seq update-vals)
-      (sql/update parameter_values (set-fields update-vals) (where {:id id}))))
+      (sql/update entities/parameter_values (sql/set-fields update-vals) (sql/where {:id id}))))
   (when (seq arguments)
     (dorun (map (partial update-parameter-value-labels parameter-id) arguments)))
 
@@ -104,13 +101,13 @@
 
 (defn- update-parameter-labels
   "Updates the labels in a parameter."
-  [group-id {:keys [id description label arguments] :as parameter}]
+  [group-id {:keys [id description label arguments]}]
   (let [{:keys [info_type]} (get-parameter-in-group group-id id)
         update-vals (remove-nil-vals
                      {:description description
                       :label       label})]
     (when (seq update-vals)
-      (sql/update parameters (set-fields update-vals) (where {:id id})))
+      (sql/update entities/parameters (sql/set-fields update-vals) (sql/where {:id id})))
     (when (seq arguments)
       (update-parameter-values id info_type arguments))))
 
@@ -123,7 +120,7 @@
                       :description description
                       :label       label})]
     (when (seq update-vals)
-      (sql/update parameter_groups (set-fields update-vals) (where {:id id}))))
+      (sql/update entities/parameter_groups (sql/set-fields update-vals) (sql/where {:id id}))))
   (dorun (map (partial update-parameter-labels id) (:parameters group))))
 
 (defn- update-task-labels
@@ -133,7 +130,7 @@
                                         :description description
                                         :label       label})]
     (when-not (empty? update-values)
-      (sql/update tasks (set-fields update-values) (where {:id task-id}))))
+      (sql/update entities/tasks (sql/set-fields update-values) (sql/where {:id task-id}))))
   (dorun (map (partial update-parameter-group-labels task-id) groups)))
 
 (defn update-app-labels
@@ -144,6 +141,6 @@
         version-info  {:version version :version_id version-id}
         task          (get-single-task-for-app id version-id)]
     (when-not (empty? update-values)
-      (sql/update apps (set-fields update-values) (where {:id id})))
+      (sql/update entities/apps (sql/set-fields update-values) (sql/where {:id id})))
     (app-meta/update-app-version version-info)
     (update-task-labels req (:id task))))

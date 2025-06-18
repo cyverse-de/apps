@@ -1,11 +1,12 @@
 (ns apps.service.apps.de.docs
-  (:use [slingshot.slingshot :only [throw+]])
-  (:require [apps.persistence.app-documentation :as dp]
-            [apps.persistence.app-metadata :as ap]
-            [apps.service.apps.de.validation :as de-validation]
-            [apps.validation :as v]
-            [clojure-commons.exception-util :as cxu]
-            [clojure-commons.validators :as cv]))
+  (:require
+   [apps.persistence.app-documentation :as dp]
+   [apps.persistence.app-metadata :as ap]
+   [apps.service.apps.de.validation :as de-validation]
+   [apps.validation :as v]
+   [clojure-commons.exception-util :as cxu]
+   [clojure-commons.validators :as cv]
+   [slingshot.slingshot :refer [throw+]]))
 
 (defn- get-references
   "Returns a list of references from the database for the given app version ID."

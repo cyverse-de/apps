@@ -1,6 +1,6 @@
 (ns apps.kormadb
-  (:use [korma.db]
-        [apps.util.config]))
+  (:require [korma.db :refer [create-db default-connection]]
+            [apps.util.config :refer [db-driver-class db-subprotocol db-host db-port db-name db-user db-password]]))
 
 (defn- create-db-spec
   "Creates the database connection spec to use when accessing the database

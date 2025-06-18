@@ -1,11 +1,17 @@
 (ns apps.containers-test
-  (:use [apps.containers]
-        [apps.persistence.entities]
-        [apps.test-fixtures :only [run-integration-tests with-test-db]]
-        [clojure.test]
-        [korma.core :exclude [update]]
-        [korma.db])
-  (:require [korma.core :as sql]))
+  (:require
+   [apps.containers :refer [find-or-add-image-info image-info tool-has-settings? volumes-from-mapping?]]
+   [apps.persistence.entities
+    :refer [container-devices
+            container-images
+            container-settings
+            container-volumes
+            container-volumes-from
+            data-containers
+            tools]]
+   [apps.test-fixtures :refer [run-integration-tests with-test-db]]
+   [clojure.test :refer [deftest is use-fixtures]]
+   [korma.core :as sql]))
 
 ;; Re-def private functions so they can be tested in this namespace.
 (def tool-image-info #'apps.containers/tool-image-info)
@@ -38,7 +44,7 @@
                        :read_only   true}))
 
 (defn- get-tool-map []
-  (first (select tools (where {:name "notreal"}))))
+  (first (sql/select tools (sql/where {:name "notreal"}))))
 
 (defn- add-settings-map [tool-id]
   (add-settings {:name              "test"
@@ -69,17 +75,17 @@
 
 (defn- remove-container-image-references []
   (sql/update tools
-              (set-fields {:container_images_id nil})
-              (where {:container_images_id (:id image-info-map)})))
+              (sql/set-fields {:container_images_id nil})
+              (sql/where {:container_images_id (:id image-info-map)})))
 
 (defn- remove-test-data []
-  (delete container-volumes-from (where {:id (:id volumes-from-map)}))
-  (delete container-volumes (where {:id (:id volume-map)}))
-  (delete container-devices (where {:id (:id devices-map)}))
-  (delete container-settings (where {:id (:id settings-map)}))
-  (delete data-containers (where {:id (:id data-container-map)}))
+  (sql/delete container-volumes-from (sql/where {:id (:id volumes-from-map)}))
+  (sql/delete container-volumes (sql/where {:id (:id volume-map)}))
+  (sql/delete container-devices (sql/where {:id (:id devices-map)}))
+  (sql/delete container-settings (sql/where {:id (:id settings-map)}))
+  (sql/delete data-containers (sql/where {:id (:id data-container-map)}))
   (remove-container-image-references)
-  (delete container-images (where {:id (:id image-info-map)})))
+  (sql/delete container-images (sql/where {:id (:id image-info-map)})))
 
 (defn- with-test-data [f]
   (let [[image-info data-container tool settings device volume volumes-from] (add-test-data)]
@@ -126,9 +132,9 @@
 
 (deftest updated-tool-tests
   (sql/update tools
-              (set-fields {:container_images_id (:id image-info-map)})
-              (where {:id (:id tool-map)}))
-  (let [updated-tool (first (select tools (where {:id (:id tool-map)})))]
+              (sql/set-fields {:container_images_id (:id image-info-map)})
+              (sql/where {:id (:id tool-map)}))
+  (let [updated-tool (first (sql/select tools (sql/where {:id (:id tool-map)})))]
     (is (not (nil? (:id updated-tool))))
 
     (is (= image-info-map (tool-image-info (:id updated-tool))))))

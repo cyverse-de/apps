@@ -1,51 +1,58 @@
 (ns apps.routes.tools
-  (:use [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppListing ToolAppListingResponses]]
-        [common-swagger-api.schema.apps.admin.apps :only [AdminAppListing ToolAdminAppListingResponses]]
-        [common-swagger-api.schema.containers
-         :only [DataContainer
-                Device
-                Image
-                Volume
-                VolumesFrom]]
-        [common-swagger-api.schema.integration-data
-         :only [IntegrationData
-                IntegrationDataIdPathParam]]
-        [apps.constants :only [de-system-id]]
-        [apps.containers]
-        [apps.routes.params]
-        [apps.routes.schemas.containers]
-        [apps.routes.schemas.tool]
-        [apps.tools
-         :only [admin-add-tools
-                admin-delete-tool
-                admin-publish-tool
-                admin-update-tool
-                get-tool
-                list-tools
-                submit-tool-request
-                user-get-tool]]
-        [apps.tools.private
-         :only [add-private-tool
-                delete-private-tool
-                update-private-tool]]
-        [apps.user :only [current-user]]
-        [apps.util.coercions :only [coerce!]]
-        [apps.util.service]
-        [slingshot.slingshot :only [throw+]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.metadata.tool-requests :as tool-requests]
-            [apps.routes.schemas.permission :as permission]
-            [apps.service.apps :as apps]
-            [apps.service.apps.de.listings :as app-listings]
-            [apps.tools.permissions :as tool-permissions]
-            [apps.tools.sharing :as tool-sharing]
-            [common-swagger-api.routes]                     ;; for :description-file
-            [common-swagger-api.schema.apps.permission :as perm-schema]
-            [common-swagger-api.schema.containers :as containers-schema]
-            [common-swagger-api.schema.tools :as schema]
-            [common-swagger-api.schema.tools.admin :as admin-schema]
-            [compojure.api.middleware :as middleware]))
+  (:require
+   [apps.constants :refer [de-system-id]]
+   [apps.containers
+    :refer [delete-image
+            find-or-add-image-info
+            image-info
+            image-public-tools
+            list-images
+            modify-data-container
+            modify-image-info]]
+   [apps.metadata.tool-requests :as tool-requests]
+   [apps.routes.params :refer [SecuredQueryParams SecuredQueryParamsRequired ToolSearchParams]]
+   [apps.routes.schemas.containers
+    :refer [DataContainerIdParam
+            DataContainerUpdateRequest
+            ImageId
+            ImageUpdateParams
+            ImageUpdateRequest
+            Images]]
+   [apps.routes.schemas.permission :as permission]
+   [apps.routes.schemas.tool
+    :refer [ImagePublicAppToolListing
+            PrivateToolDeleteParams
+            ToolDetailsParams
+            ToolRequestListingParams
+            ToolRequestStatusCodeListingParams
+            ToolUpdateParams]]
+   [apps.service.apps :as apps]
+   [apps.service.apps.de.listings :as app-listings]
+   [apps.tools
+    :refer [admin-add-tools
+            admin-delete-tool
+            admin-publish-tool
+            admin-update-tool
+            get-tool
+            list-tools
+            submit-tool-request
+            user-get-tool]]
+   [apps.tools.permissions :as tool-permissions]
+   [apps.tools.private :refer [add-private-tool delete-private-tool update-private-tool]]
+   [apps.tools.sharing :as tool-sharing]
+   [apps.user :refer [current-user]]
+   [apps.util.coercions :refer [coerce!]]
+   [common-swagger-api.routes]
+   [common-swagger-api.schema :refer [defroutes DELETE GET PATCH POST PUT]]
+   [common-swagger-api.schema.apps :refer [AppListing ToolAppListingResponses]]
+   [common-swagger-api.schema.apps.admin.apps :refer [AdminAppListing ToolAdminAppListingResponses]]
+   [common-swagger-api.schema.apps.permission :as perm-schema]
+   [common-swagger-api.schema.containers :as containers-schema :refer [DataContainer Image]]
+   [common-swagger-api.schema.integration-data :refer [IntegrationData IntegrationDataIdPathParam]]
+   [common-swagger-api.schema.tools :as schema]
+   [common-swagger-api.schema.tools.admin :as admin-schema]
+   [compojure.api.middleware :refer [no-response-coercion]]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes container-images
   (GET "/" []
@@ -157,7 +164,7 @@
   (DELETE "/:tool-id" []
     :path-params [tool-id :- schema/ToolIdParam]
     :query [{:keys [user force-delete]} PrivateToolDeleteParams]
-    :coercion middleware/no-response-coercion
+    :coercion no-response-coercion
     :responses schema/ToolDeleteResponses
     :summary schema/ToolDeleteSummary
     :description schema/ToolDeleteDocs
@@ -241,7 +248,7 @@
   (DELETE "/:tool-id" []
     :path-params [tool-id :- schema/ToolIdParam]
     :query [{:keys [user]} SecuredQueryParams]
-    :coercion middleware/no-response-coercion
+    :coercion no-response-coercion
     :responses admin-schema/ToolDeleteResponses
     :summary admin-schema/ToolDeleteSummary
     :description admin-schema/ToolDeleteDocs

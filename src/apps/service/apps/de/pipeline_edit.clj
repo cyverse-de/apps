@@ -1,34 +1,25 @@
 (ns apps.service.apps.de.pipeline-edit
-  (:use [apps.persistence.app-metadata :only [add-app
-                                              add-app-version
-                                              add-mapping
-                                              add-step
-                                              add-task
-                                              get-app
-                                              get-app-latest-version
-                                              remove-app-steps
-                                              update-app
-                                              update-app-version]]
-        [apps.persistence.entities :only [app_steps input_mapping]]
-        [apps.service.apps.de.edit :only [add-app-to-user-dev-category app-copy-name]]
-        [apps.service.apps.de.validation :only [app-tasks-and-tools-publishable?
-                                                validate-app-name
-                                                verify-app-editable
-                                                verify-app-permission]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [apps.util.db :only [transaction]]
-        [apps.validation :only [validate-external-app-step
-                                validate-pipeline]]
-        [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [medley.core :only [find-first]]
-        [slingshot.slingshot :only [try+]])
-  (:require [apps.clients.permissions :as permissions]
-            [apps.persistence.app-metadata :as persistence]
-            [apps.service.apps.de.docs :as docs]
-            [apps.service.apps.de.constants :as c]
-            [apps.service.apps.de.listings :as listings]
-            [clojure-commons.exception-util :as ex-util]))
+  (:require
+   [apps.clients.permissions :as permissions]
+   [apps.persistence.app-metadata :as persistence]
+   [apps.persistence.entities :refer [app_steps input_mapping]]
+   [apps.service.apps.de.constants :as c]
+   [apps.service.apps.de.docs :as docs]
+   [apps.service.apps.de.edit :refer [add-app-to-user-dev-category app-copy-name]]
+   [apps.service.apps.de.listings :as listings]
+   [apps.service.apps.de.validation
+    :refer [app-tasks-and-tools-publishable?
+            validate-app-name
+            verify-app-editable
+            verify-app-permission]]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [apps.util.db :refer [transaction]]
+   [apps.validation :refer [validate-external-app-step validate-pipeline]]
+   [clojure-commons.exception-util :as ex-util]
+   [kameleon.uuids :refer [uuidify]]
+   [korma.core :refer [fields group join order select where with]]
+   [medley.core :refer [find-first]]
+   [slingshot.slingshot :refer [try+]]))
 
 (defn- add-app-type
   [step]
@@ -150,10 +141,10 @@
 
 (defn- add-app-mapping
   [app-version-id steps {:keys [source_step target_step map]}]
-  (add-mapping {:app_version_id app-version-id
-                :source_step    (nth steps source_step)
-                :target_step    (nth steps target_step)
-                :map            map}))
+  (persistence/add-mapping {:app_version_id app-version-id
+                            :source_step    (nth steps source_step)
+                            :target_step    (nth steps target_step)
+                            :map            map}))
 
 (defn- generate-external-app-task
   [step]
@@ -166,14 +157,14 @@
 (defn- add-external-app-task
   [step-number step]
   (validate-external-app-step step-number step)
-  (-> step generate-external-app-task add-task))
+  (-> step generate-external-app-task persistence/add-task))
 
 (defn- add-pipeline-step
   [app-version-id step-number step]
   (if (nil? (:task_id step))
     (let [task-id (:id (add-external-app-task step-number step))]
-      (add-step app-version-id step-number (assoc step :task_id task-id)))
-    (add-step app-version-id step-number step)))
+      (persistence/add-step app-version-id step-number (assoc step :task_id task-id)))
+    (persistence/add-step app-version-id step-number step)))
 
 (defn- add-pipeline-steps
   "Adds steps to a pipeline. The app type isn't stored in the database, but needs to be kept in
@@ -193,7 +184,7 @@
 
 (defn- add-pipeline-version*
   [user {app-id :id :as app}]
-  (let [app-version-id (-> app (dissoc :id) (assoc :app_id app-id) (add-app-version user) :id)]
+  (let [app-version-id (-> app (dissoc :id) (assoc :app_id app-id) (persistence/add-app-version user) :id)]
     (add-app-steps-mappings (assoc app :id app-id :version_id app-version-id))
     app-version-id))
 
@@ -201,7 +192,7 @@
   [user app]
   (validate-pipeline app)
   (transaction
-   (let [app-id (:id (add-app app))]
+   (let [app-id (:id (persistence/add-app app))]
      (add-pipeline-version* user (assoc app :id app-id))
      (add-app-to-user-dev-category user app-id)
      (permissions/register-private-app (:shortUsername user) app-id)
@@ -211,10 +202,10 @@
   [user {app-id :id app-version-id :version_id :as app}]
   (validate-pipeline app)
   (transaction
-    (verify-app-editable user (get-app app-id))
-    (update-app app)
-    (update-app-version app)
-    (remove-app-steps app-version-id)
+    (verify-app-editable user (persistence/get-app app-id))
+    (persistence/update-app app)
+    (persistence/update-app-version app)
+    (persistence/remove-app-steps app-version-id)
     (add-app-steps-mappings app)
     app-id))
 
@@ -239,7 +230,7 @@
 (defn add-pipeline-version
   "Adds a single-step app version to an existing app, if the user has write permission on that app."
   [user {app-id :id app-name :name :keys [steps] :as app} admin?]
-  (verify-app-permission user (get-app app-id) "write" admin?)
+  (verify-app-permission user (persistence/get-app app-id) "write" admin?)
   (validate-pipeline app)
   (transaction
     (validate-app-name app-name app-id)
@@ -253,7 +244,7 @@
                                                                   (persistence/get-task-tools task-ids))]
       (when (and app-public (not publishable?))
         (ex-util/bad-request reason)))
-    (update-app app)
+    (persistence/update-app app)
     (let [documentation  (try+
                            (docs/get-app-docs user app-id)
                            (catch [:type :clojure-commons.exception/not-found] _ nil))
@@ -271,7 +262,7 @@
 
 (defn update-pipeline
   [user {app-id :id version-id :version_id :as workflow}]
-  (let [version-id (or version-id (get-app-latest-version app-id))]
+  (let [version-id (or version-id (persistence/get-app-latest-version app-id))]
     (->> (assoc workflow :version_id version-id)
          preprocess-pipeline
          (update-pipeline-app user))
@@ -288,7 +279,7 @@
   "This service makes a copy of a pipeline's latest version for the current user
    and returns the JSON for editing the copy in the client."
   [user app-id]
-  (copy-pipeline* user (get-app app-id)))
+  (copy-pipeline* user (persistence/get-app app-id)))
 
 (defn copy-pipeline-version
   "This service makes a copy of a pipeline version for the current user

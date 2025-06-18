@@ -1,32 +1,49 @@
 (ns apps.service.apps.de.edit
-  (:use [apps.metadata.params :only [format-reference-genome-value]]
-        [apps.persistence.app-groups :only [add-app-to-category get-app-subcategory-id]]
-        [apps.persistence.entities]
-        [apps.service.apps.de.validation :only [validate-app-name
-                                                validate-app-version-existence
-                                                verify-app-editable
-                                                verify-app-permission
-                                                verify-tools-for-public-app]]
-        [apps.util.config :only [workspace-dev-app-category-index]]
-        [apps.util.conversions :only [remove-nil-vals convert-rule-argument]]
-        [apps.util.db :only [transaction]]
-        [apps.validation :only [validate-parameter]]
-        [apps.workspace :only [get-workspace]]
-        [clojure.string :only [blank?]]
-        [clojure-commons.validators :only [user-owns-app?]]
-        [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.permissions :as permissions]
-            [apps.persistence.app-metadata :as persistence]
-            [apps.persistence.app-metadata.relabel :as relabel]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.de.docs :as docs]
-            [apps.service.apps.de.categorization :as categorization]
-            [apps.service.apps.de.constants :as c]
-            [apps.service.apps.jobs.util :as job-util]
-            [clojure.set :as set]
-            [clojure-commons.exception-util :as cxu]))
+  (:require
+   [apps.clients.permissions :as permissions]
+   [apps.metadata.params :refer [format-reference-genome-value]]
+   [apps.persistence.app-groups :refer [add-app-to-category get-app-subcategory-id]]
+   [apps.persistence.app-metadata :as persistence]
+   [apps.persistence.app-metadata.relabel :as relabel]
+   [apps.persistence.entities
+    :refer [app_references
+            app_versions
+            apps data_formats
+            data_source
+            file_parameters
+            info_type
+            parameter_groups
+            parameter_types
+            parameter_values
+            parameters
+            rule_type
+            tasks
+            validation_rule_arguments
+            validation_rules
+            value_type]]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.de.categorization :as categorization]
+   [apps.service.apps.de.constants :as c]
+   [apps.service.apps.de.docs :as docs]
+   [apps.service.apps.de.validation
+    :refer [validate-app-name
+            validate-app-version-existence
+            verify-app-editable
+            verify-app-permission
+            verify-tools-for-public-app]]
+   [apps.service.apps.jobs.util :as job-util]
+   [apps.util.config :refer [workspace-dev-app-category-index]]
+   [apps.util.conversions :refer [convert-rule-argument remove-nil-vals]]
+   [apps.util.db :refer [transaction]]
+   [apps.validation :refer [validate-parameter]]
+   [apps.workspace :refer [get-workspace]]
+   [clojure-commons.exception-util :as cxu]
+   [clojure-commons.validators :refer [user-owns-app?]]
+   [clojure.set :as set]
+   [clojure.string :refer [blank?]]
+   [kameleon.uuids :refer [uuidify]]
+   [korma.core :refer [fields order select select* with where with]]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (def ^:private copy-prefix "Copy of ")
 (def ^:private max-app-name-len 255)
@@ -306,7 +323,7 @@
 
 (defn- validate-rule-arg-not-nil [arg]
   (when (nil? arg)
-    (cxu/bad-request (str "nil rule arguments are not allowed"))))
+    (cxu/bad-request "nil rule arguments are not allowed")))
 
 (defn- validate-integer-arg-value [arg]
   (try
@@ -326,7 +343,7 @@
 
 (defn- validate-rule-arg
   "Validates a single rule argument."
-  [{type :argument_type :as arg-def} arg]
+  [{type :argument_type} arg]
   (condp = type
     "String"  (validate-string-arg arg)
     "Integer" (validate-integer-arg arg)

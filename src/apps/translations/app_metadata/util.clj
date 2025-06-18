@@ -1,6 +1,5 @@
 (ns apps.translations.app-metadata.util
-  (:use [slingshot.slingshot :only [throw+]])
-  (:require [clojure.set :as set]))
+  (:require [clojure.set :as cset]))
 
 (def input-property-types
   #{"Input" "FileInput" "FolderInput" "MultiFileSelector"})
@@ -12,7 +11,7 @@
   #{"ReferenceAnnotation" "ReferenceGenome" "ReferenceSequence"})
 
 (def io-property-types
-  (set/union input-property-types output-property-types ref-genome-property-types))
+  (cset/union input-property-types output-property-types ref-genome-property-types))
 
 (def ^:private input-multiplicities-and-prop-types
   [["FileInput"         "One"]

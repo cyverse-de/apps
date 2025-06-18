@@ -1,9 +1,10 @@
 (ns apps.user
-  (:use [apps.util.config :only [uid-domain]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [apps.clients.iplant-groups :as ipg]))
+  (:require
+   [apps.clients.iplant-groups :as ipg]
+   [apps.util.config :refer [uid-domain]]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [slingshot.slingshot :refer [throw+]]))
 
 (def
   ^{:doc "The authenticated user or nil if the service is unsecured."
@@ -19,7 +20,7 @@
   [user-attributes]
   (log/debug user-attributes)
   (let [uid (user-attributes :user)]
-    (if (empty? uid)
+    (when (empty? uid)
       (throw+ {:type :clojure-commons.exception/not-authorized
                :error "Invalid user credentials provided."
                :user (select-keys user-attributes [:username :shortUsername :first-name :last-name :email])}))
@@ -37,7 +38,7 @@
   "Creates a function that takes a request, binds current-user to a new instance
    of org.iplantc.authn.user.User that is built from the user attributes found
    in the given params map, then passes request to the given handler."
-  [handler & [opts]]
+  [handler & [_opts]]
   (fn [request]
     (with-user [(:params request)] (handler request))))
 

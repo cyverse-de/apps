@@ -1,15 +1,15 @@
 (ns apps.service.apps.job-listings
-  (:use [cemerick.url :only [url]]
-        [kameleon.uuids :only [uuidify]]
-        [apps.clients.notifications :only [interapps-url]]
-        [apps.util.conversions :only [remove-nil-vals]])
-  (:require [apps.clients.permissions :as perms-client]
-            [apps.clients.iplant-groups :as ipg]
-            [apps.persistence.jobs :as jp]
-            [apps.service.apps.jobs.permissions :as job-permissions]
-            [apps.service.util :as util]
-            [apps.util.config :as config]
-            [kameleon.db :as db]))
+  (:require
+   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.notifications :refer [interapps-url]]
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.jobs.permissions :as job-permissions]
+   [apps.service.util :as util]
+   [apps.util.config :as config]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [cemerick.url :refer [url]]
+   [kameleon.db :as db]))
 
 (defn- job-timestamp
   [timestamp]

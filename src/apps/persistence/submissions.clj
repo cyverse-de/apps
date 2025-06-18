@@ -1,13 +1,13 @@
 (ns apps.persistence.submissions
-  (:use [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]])
-  (:require [cheshire.core :as json]))
+  (:require [cheshire.core :as json]
+            [kameleon.uuids :refer [uuidify]]
+            [korma.core :as sql]))
 
 (defn get-submission-by-id [submission-id]
-  (some-> (select* :submissions)
-          (fields :submission)
-          (where {:id (uuidify submission-id)})
-          select
+  (some-> (sql/select* :submissions)
+          (sql/fields :submission)
+          (sql/where {:id (uuidify submission-id)})
+          sql/select
           first
           :submission
           .getValue

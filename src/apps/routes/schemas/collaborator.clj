@@ -1,6 +1,6 @@
 (ns apps.routes.schemas.collaborator
-  (:use [common-swagger-api.schema :only [describe]]
-        [schema.core :only [defschema optional-key]]))
+  (:require [common-swagger-api.schema :refer [describe]]
+            [schema.core :refer [defschema optional-key]]))
 
 (defschema Collaborator
   {(optional-key :id)          (describe String "The collaborator's ID in Trellis")

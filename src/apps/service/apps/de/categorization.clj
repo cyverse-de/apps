@@ -1,14 +1,14 @@
 (ns apps.service.apps.de.categorization
-  (:use [apps.persistence.app-groups :only [add-app-to-category decategorize-app get-app-category]]
-        [apps.persistence.app-listing :only [get-app-listing]]
-        [apps.util.assertions :only [assert-not-nil]]
-        [apps.util.db :only [transaction]]
-        [kameleon.uuids :only [uuidify]])
-  (:require [apps.clients.metadata :as metadata-client]
-            [apps.clients.permissions :as perms-client]
-            [apps.service.apps.de.validation :as av]
-            [apps.util.config :as config]
-            [clojure-commons.exception-util :as cxu]))
+  (:require
+   [apps.clients.metadata :as metadata-client]
+   [apps.clients.permissions :as perms-client]
+   [apps.persistence.app-groups :refer [add-app-to-category decategorize-app get-app-category]]
+   [apps.persistence.app-listing :refer [get-app-listing]]
+   [apps.service.apps.de.validation :as av]
+   [apps.util.config :as config]
+   [apps.util.db :refer [transaction]]
+   [clojure-commons.exception-util :as cxu]
+   [kameleon.uuids :refer [uuidify]]))
 
 (defn validate-app-name-in-hierarchy-avus
   [username app-id app-name avus]

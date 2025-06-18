@@ -1,20 +1,20 @@
 (ns apps.service.apps.de.job-view
-  (:use [apps.service.apps.de.validation :only [verify-app-permission]]
-        [apps.service.apps.util :only [paths-accessible?]]
-        [apps.util.assertions :only [assert-not-nil]]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [korma.core :exclude [update]]
-        [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.clients.data-info :as data-info]
-            [apps.metadata.params :as mp]
-            [apps.constants :as ac]
-            [apps.persistence.app-metadata :as amp]
-            [apps.service.apps.de.constants :as c]
-            [apps.service.apps.de.limits :as limits]
-            [apps.service.apps.jobs.util :as util]
-            [apps.util.service :as service]
-            [apps.util.config :as config]
-            [clojure-commons.exception-util :as cxu]))
+  (:require
+   [apps.clients.data-info :as data-info]
+   [apps.metadata.params :as mp]
+   [apps.constants :as ac]
+   [apps.persistence.app-metadata :as amp]
+   [apps.service.apps.de.constants :as c]
+   [apps.service.apps.de.limits :as limits]
+   [apps.service.apps.de.validation :refer [verify-app-permission]]
+   [apps.service.apps.jobs.util :as util]
+   [apps.service.apps.util :refer [paths-accessible?]]
+   [apps.util.service :as service]
+   [apps.util.config :as config]
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure-commons.exception-util :as cxu]
+   [korma.core :refer [fields join order select subselect where]]
+   [slingshot.slingshot :refer [try+ throw+]]))
 
 (defn- format-step-resource-requirements
   [requirements step-number add-defaults?]
@@ -50,7 +50,7 @@
       (order :p.display_order)
       (where {:p.parameter_group_id group-id})
       (add-hidden-parameters-clause include-hidden-params?)
-      (where (and (not (exists (mapped-input-subselect step-id)))
+      (where (and [:not [:exists (mapped-input-subselect step-id)]]
                   (or {:value_type  "Input"}
                       {:is_implicit nil}
                       {:is_implicit false})))

@@ -1,29 +1,29 @@
 (ns apps.routes.apps.categories
-  (:use [common-swagger-api.routes]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.apps
-         :only [AppCategoryIdPathParam
-                AppListing
-                SystemId]]
-        [common-swagger-api.schema.ontologies
-         :only [OntologyClassIRIParam
-                OntologyHierarchy
-                OntologyHierarchyList]]
-        [apps.constants :only [de-system-id]]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.app :only [AppListingPagingParams]]
-        [apps.routes.schemas.app.category
-         :only [CategoryListingParams
-                OntologyAppListingPagingParams
-                OntologyHierarchyFilterParams]]
-        [apps.user :only [current-user]]
-        [apps.util.coercions :only [coerce!]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.apps :as apps]
-            [apps.service.apps.de.listings :as listings]
-            [apps.util.service :as service]
-            [common-swagger-api.schema.apps.categories :as schema]
-            [compojure.route :as route]))
+  (:require
+   [apps.constants :refer [de-system-id]]
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.routes.schemas.app :refer [AppListingPagingParams]]
+   [apps.routes.schemas.app.category
+    :refer [CategoryListingParams
+            OntologyAppListingPagingParams
+            OntologyHierarchyFilterParams]]
+   [apps.service.apps :as apps]
+   [apps.service.apps.de.listings :as listings]
+   [apps.user :refer [current-user]]
+   [apps.util.coercions :refer [coerce!]]
+   [apps.util.service :as service]
+   [common-swagger-api.schema :refer [context defroutes GET undocumented]]
+   [common-swagger-api.schema.apps
+    :refer [AppCategoryIdPathParam
+            AppListing
+            SystemId]]
+   [common-swagger-api.schema.apps.categories :as schema]
+   [common-swagger-api.schema.ontologies
+    :refer [OntologyClassIRIParam
+            OntologyHierarchy
+            OntologyHierarchyList]]
+   [compojure.route :as route]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes app-categories
   (GET "/" []

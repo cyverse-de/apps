@@ -1,14 +1,8 @@
 (ns apps.test-fixtures
-  (:use [korma.db :only [create-db default-connection]]
-        [korma.core :only [delete where]]
-        [slingshot.slingshot :only [throw+]])
-  (:require [apps.persistence.categories :as cp]
-            [apps.user :as user]
-            [apps.util.config :as config]
-            [apps.util.service :as service]
-            [cemerick.url :as curl]
-            [clj-http.client :as http]
-            [clojure.java.io :as io]))
+  (:require
+   [apps.user :as user]
+   [apps.util.config :as config]
+   [korma.db :refer [create-db default-connection]]))
 
 (def default-config-path "/etc/iplant/de/apps.properties")
 (def default-db-uri "jdbc:postgresql://dedb/de?user=de&password=notprod")
@@ -25,10 +19,6 @@
 (defn with-test-db [f]
   (default-connection (create-db {:connection-uri (or (System/getenv "DBURI") default-db-uri)}))
   (f))
-
-(defn- find-resource [resource-name]
-  (or (io/resource resource-name)
-      (throw+ {:message (str "resource " resource-name " not found")})))
 
 (defn with-test-user [f]
   (user/with-user [{:user       "ipctest"

@@ -1,6 +1,7 @@
 (ns apps.routes.schemas.oauth
-  (:use [common-swagger-api.schema :only [describe doc-only]])
-  (:require [schema.core :as s]))
+  (:require
+   [common-swagger-api.schema :refer [describe]]
+   [schema.core :as s]))
 
 (s/defschema OAuthCallbackResponse
   {:state_info (describe String "Arbitrary state information required by the UI.")})

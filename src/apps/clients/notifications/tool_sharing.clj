@@ -1,7 +1,7 @@
 (ns apps.clients.notifications.tool-sharing
-  (:use [apps.clients.notifications.common-sharing]
-        [medley.core :only [remove-vals]])
-  (:require [clojure.string :as string]))
+  (:require [apps.clients.notifications.common-sharing :as cs]
+            [clojure.string :as string]
+            [medley.core :refer [remove-vals]]))
 
 (def notification-type "tools")
 (def singular "tool")
@@ -23,8 +23,8 @@
           response-count (count responses)]
       {:type    notification-type
        :user    recipient
-       :subject (format-subject formats singular plural action sharer sharee response-desc response-count)
-       :message (format-message formats singular plural action sharer sharee response-desc response-count)
+       :subject (cs/format-subject formats singular plural action sharer sharee response-desc response-count)
+       :message (cs/format-message formats singular plural action sharer sharee response-desc response-count)
        :payload (format-payload action responses)})))
 
 (defn- format-sharer-notification
@@ -40,24 +40,24 @@
   [sharer sharee responses]
   (let [responses (group-by :success responses)]
     (remove nil?
-            [(format-sharer-notification sharer-success-formats share-action sharer sharee (responses true))
-             (format-sharee-notification sharee-success-formats share-action sharer sharee (responses true))
-             (format-sharer-notification failure-formats share-action sharer sharee (responses false))])))
+            [(format-sharer-notification cs/sharer-success-formats cs/share-action sharer sharee (responses true))
+             (format-sharee-notification cs/sharee-success-formats cs/share-action sharer sharee (responses true))
+             (format-sharer-notification cs/failure-formats cs/share-action sharer sharee (responses false))])))
 
 (defn format-sharing-notifications
   "Formats sharing notifications for tools."
   [sharer sharee responses]
-  (notifications-for-sharee format-sharing-notifications* sharer sharee responses))
+  (cs/notifications-for-sharee format-sharing-notifications* sharer sharee responses))
 
 (defn format-unsharing-notifications*
   "Formats unsharing notifications for tools."
   [sharer sharee responses]
   (let [responses (group-by :success responses)]
     (remove nil?
-            [(format-sharer-notification sharer-success-formats unshare-action sharer sharee (responses true))
-             (format-sharer-notification failure-formats unshare-action sharer sharee (responses false))])))
+            [(format-sharer-notification cs/sharer-success-formats cs/unshare-action sharer sharee (responses true))
+             (format-sharer-notification cs/failure-formats cs/unshare-action sharer sharee (responses false))])))
 
 (defn format-unsharing-notifications
   "Formats unsharing notifications for tools."
   [sharer sharee responses]
-  (notifications-for-sharee format-unsharing-notifications* sharer sharee responses))
+  (cs/notifications-for-sharee format-unsharing-notifications* sharer sharee responses))

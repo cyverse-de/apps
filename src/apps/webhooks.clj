@@ -1,11 +1,10 @@
 (ns apps.webhooks
-  (:use [apps.util.db :only [transaction]]
-        [korma.core :exclude [update]]
-        [apps.persistence.users :only [get-user-id]])
-  (:require [clojure.tools.logging :as log]
-            [clojure-commons.exception-util :as cxu]
-            [apps.user :refer [append-username-suffix]]
-            [korma.core :as sql]))
+  (:require
+   [apps.persistence.users :refer [get-user-id]]
+   [apps.user :refer [append-username-suffix]]
+   [apps.util.db :refer [transaction]]
+   [clojure-commons.exception-util :as cxu]
+   [korma.core :refer [delete fields insert join select sqlfn values where]]))
 
 (defn- get-webhook-topics [webhook-id]
   (map :topic (select [:webhooks_topic :wt]
@@ -27,7 +26,7 @@
                           (join [:users :u] {:w.user_id :u.id})
                           (join [:webhooks_type :wt] {:w.type_id :wt.id})
                           (fields [:w.id :id] [:wt.type :type] [:w.url :url])
-                          (where {(sqlfn regexp_replace :u.username "@.*" "")
+                          (where {(sqlfn :regexp_replace :u.username "@.*" "")
                                   user}))]
      (map format-webhook webhooks))))
 

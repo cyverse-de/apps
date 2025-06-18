@@ -1,10 +1,10 @@
 (ns apps.service.apps.util
-  (:use [slingshot.slingshot :only [try+ throw+]])
-  (:require [apps.util.config :as config]
-            [apps.util.service :as service]
-            [apps.clients.data-info :as data-info]
-            [clojure.string :as string]
-            [clojure-commons.exception-util :as cxu]))
+  (:require
+   [apps.clients.data-info :as data-info]
+   [apps.util.service :as service]
+   [clojure-commons.exception-util :as cxu]
+   [clojure.string :as string]
+   [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn supports-job-type?
   [apps-client job-type]

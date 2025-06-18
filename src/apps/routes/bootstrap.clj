@@ -1,10 +1,11 @@
 (ns apps.routes.bootstrap
-  (:use [apps.routes.params :only [SecuredQueryParams]]
-        [apps.user :only [current-user]]
-        [common-swagger-api.schema]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.bootstrap :as svc]
-            [common-swagger-api.schema.apps.bootstrap :as schema]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.service.bootstrap :as svc]
+   [apps.user :refer [current-user]]
+   [common-swagger-api.schema :refer [defroutes GET]]
+   [common-swagger-api.schema.apps.bootstrap :as schema]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes bootstrap
   (GET "/" []

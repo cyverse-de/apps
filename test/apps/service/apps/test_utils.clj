@@ -1,11 +1,9 @@
 (ns apps.service.apps.test-utils
-  (:use [apps.user :only [user-from-attributes]])
-  (:require [apps.constants :as c]
-            [apps.service.apps :as apps]))
+  (:require
+   [apps.service.apps :as apps]
+   [apps.user :refer [user-from-attributes]]))
 
 (def fake-system-id "notreal")
-(def hpc-system-id c/hpc-system-id)
-(def de-system-id c/de-system-id)
 
 (defn create-user [i]
   (let [username (str "testde" i)]

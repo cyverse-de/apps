@@ -1,11 +1,12 @@
 (ns apps.routes.oauth
-  (:use [apps.routes.params]
-        [apps.routes.schemas.oauth]
-        [apps.user :only [current-user load-user]]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.oauth :only [RedirectUrisResponse]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.oauth :as oauth]))
+  (:require
+   [apps.routes.params :refer [ApiName OAuthCallbackQueryParams SecuredQueryParams TokenInfoProxyParams]]
+   [apps.routes.schemas.oauth :refer [AdminTokenInfo OAuthCallbackResponse TokenInfo]]
+   [apps.service.oauth :as oauth]
+   [apps.user :refer [current-user load-user]]
+   [common-swagger-api.schema :refer [context defroutes DELETE GET]]
+   [common-swagger-api.schema.oauth :refer [RedirectUrisResponse]]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes oauth
   (GET "/access-code/:api-name" []

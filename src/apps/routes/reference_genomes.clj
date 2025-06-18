@@ -1,10 +1,11 @@
 (ns apps.routes.reference-genomes
-  (:use [common-swagger-api.schema]
-        [apps.metadata.reference-genomes :only [get-reference-genome list-reference-genomes]]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.reference-genome]
-        [ring.util.http-response :only [ok]])
-  (:require [common-swagger-api.schema.apps.reference-genomes :as schema]))
+  (:require
+   [apps.metadata.reference-genomes :refer [get-reference-genome list-reference-genomes]]
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.routes.schemas.reference-genome :refer [ReferenceGenomeListingParams]]
+   [common-swagger-api.schema :refer [defroutes GET]]
+   [common-swagger-api.schema.apps.reference-genomes :as schema]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes reference-genomes
   (GET "/" []

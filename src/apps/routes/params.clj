@@ -1,19 +1,21 @@
 (ns apps.routes.params
-  (:use [common-swagger-api.schema
-         :only [->optional-param
-                describe
-                NonBlankString
-                PagingParams
-                SortFieldDocs
-                SortFieldOptionalKey
-                StandardUserQueryParams]]
-        [common-swagger-api.schema.common :only [IncludeHiddenParams]])
-  (:require [common-swagger-api.schema.analyses :as analysis-schema]
-            [common-swagger-api.schema.analyses.listing :as listing-schema]
-            [common-swagger-api.schema.apps.elements :as elements-schema]
-            [common-swagger-api.schema.tools :as tools-schema]
-            [schema.core :as s])
-  (:import [java.util UUID]))
+  (:require
+   [common-swagger-api.schema
+    :refer [->optional-param
+            describe
+            NonBlankString
+            PagingParams
+            SortFieldDocs
+            SortFieldOptionalKey
+            StandardUserQueryParams]]
+   [common-swagger-api.schema.analyses :as analysis-schema]
+   [common-swagger-api.schema.analyses.listing :as listing-schema]
+   [common-swagger-api.schema.apps.elements :as elements-schema]
+   [common-swagger-api.schema.common :refer [IncludeHiddenParams]]
+   [common-swagger-api.schema.tools :as tools-schema]
+   [schema.core :as s])
+  (:import
+   [java.util UUID]))
 
 (def ApiName (describe String "The name of the external API"))
 

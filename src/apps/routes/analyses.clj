@@ -1,25 +1,24 @@
 (ns apps.routes.analyses
-  (:use [apps.routes.params
-         :only [AnalysisListingParams
-                AnalysisStatParams
-                FilterParams
-                SecuredQueryParams
-                SecuredQueryParamsEmailRequired]]
-        [apps.routes.schemas.analysis]
-        [apps.routes.schemas.analysis.listing]
-        [apps.user :only [current-user]]
-        [apps.util.coercions :only [coerce!]]
-        [common-swagger-api.routes]                         ;; for :description-file
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.apps :only [AppJobView]]
-        [ring.util.http-response :only [ok bad-request]])
-  (:require [apps.json :as json]
-            [apps.routes.schemas.permission :as perms]
-            [apps.service.apps :as apps]
-            [apps.util.coercions :as coercions]
-            [common-swagger-api.schema.analyses :as schema]
-            [common-swagger-api.schema.analyses.listing :as listing-schema]
-            [common-swagger-api.schema.apps.permission :as perms-schema]))
+  (:require
+   [apps.json :as json]
+   [apps.routes.params
+    :refer [AnalysisListingParams
+            AnalysisStatParams
+            FilterParams
+            SecuredQueryParams
+            SecuredQueryParamsEmailRequired]]
+   [apps.routes.schemas.analysis :refer [StopAnalysisRequest]]
+   [apps.routes.schemas.permission :as perms]
+   [apps.service.apps :as apps]
+   [apps.user :refer [current-user]]
+   [apps.util.coercions :as coercions :refer [coerce!]]
+   [common-swagger-api.routes]
+   [common-swagger-api.schema :refer [defroutes DELETE GET PATCH POST]]
+   [common-swagger-api.schema.analyses :as schema]
+   [common-swagger-api.schema.analyses.listing :as listing-schema]
+   [common-swagger-api.schema.apps :refer [AppJobView]]
+   [common-swagger-api.schema.apps.permission :as perms-schema]
+   [ring.util.http-response :refer [bad-request ok]]))
 
 (defroutes analyses
   (GET "/" []

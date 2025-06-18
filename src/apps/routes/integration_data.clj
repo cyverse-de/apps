@@ -1,10 +1,11 @@
 (ns apps.routes.integration-data
-  (:use [common-swagger-api.schema]
-        [apps.routes.params :only [IntegrationDataSearchParams SecuredQueryParams]]
-        [apps.user :only [current-user]]
-        [ring.util.http-response :only [ok]])
-  (:require [common-swagger-api.schema.integration-data :as schema]
-            [apps.service.integration-data :as integration-data]))
+  (:require
+   [apps.routes.params :refer [IntegrationDataSearchParams SecuredQueryParams]]
+   [apps.service.integration-data :as integration-data]
+   [apps.user :refer [current-user]]
+   [common-swagger-api.schema :refer [defroutes DELETE describe GET POST PUT]]
+   [common-swagger-api.schema.integration-data :as schema]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes admin-integration-data
   (GET "/" []

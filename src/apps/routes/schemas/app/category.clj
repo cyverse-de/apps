@@ -1,20 +1,13 @@
 (ns apps.routes.schemas.app.category
-  (:use [common-swagger-api.schema
-         :only [->optional-param
-                describe
-                NonBlankString
-                SortFieldDocs
-                SortFieldOptionalKey]]
-        [apps.routes.params
-         :only [SecuredQueryParams
-                SecuredQueryParamsEmailRequired]]
-        [apps.routes.schemas.app
-         :only [AdminAppListingValidSortFields
-                AppListingPagingParams]]
-        [schema.core :only [defschema optional-key enum]])
-  (:require [common-swagger-api.schema.apps.categories :as categories-schema]
-            [common-swagger-api.schema.ontologies :as ontologies-schema])
-  (:import [java.util Date UUID]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams SecuredQueryParamsEmailRequired]]
+   [apps.routes.schemas.app :refer [AdminAppListingValidSortFields AppListingPagingParams]]
+   [common-swagger-api.schema :refer [->optional-param NonBlankString SortFieldDocs SortFieldOptionalKey describe]]
+   [common-swagger-api.schema.apps.categories :as categories-schema]
+   [common-swagger-api.schema.ontologies :as ontologies-schema]
+   [schema.core :refer [defschema enum optional-key]])
+  (:import
+   (java.util Date UUID)))
 
 (defschema CategoryListingParams
   (merge SecuredQueryParamsEmailRequired

@@ -1,16 +1,15 @@
 (ns apps.service.apps.tapis
-  (:use [kameleon.uuids :only [uuidify]])
-  (:require [clojure.string :as string]
-            [apps.persistence.jobs :as jp]
-            [apps.protocols]
-            [apps.service.apps.tapis.listings :as listings]
-            [apps.service.apps.tapis.pipelines :as pipelines]
-            [apps.service.apps.tapis.jobs :as tapis-jobs]
-            [apps.service.apps.tapis.sharing :as sharing]
-            [apps.service.apps.job-listings :as job-listings]
-            [apps.service.apps.permissions :as app-permissions]
-            [apps.service.apps.util :as apps-util]
-            [apps.util.service :as service]))
+  (:require
+   [apps.persistence.jobs :as jp]
+   [apps.service.apps.job-listings :as job-listings]
+   [apps.service.apps.permissions :as app-permissions]
+   [apps.service.apps.tapis.jobs :as tapis-jobs]
+   [apps.service.apps.tapis.listings :as listings]
+   [apps.service.apps.tapis.pipelines :as pipelines]
+   [apps.service.apps.tapis.sharing :as sharing]
+   [apps.service.apps.util :as apps-util]
+   [apps.util.service :as service]
+   [clojure.string :as string]))
 
 (defn- reject-app-versions-request
   []
@@ -85,13 +84,13 @@
       (listings/list-apps tapis category-id params)
       (.emptyAppListing tapis)))
 
-  (listAppsUnderHierarchy [self root-iri attr params]
+  (listAppsUnderHierarchy [self root-iri _attr params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
         (listings/list-apps-with-ontology tapis root-iri params false)
         (.emptyAppListing tapis))))
 
-  (adminListAppsUnderHierarchy [self ontology-version root-iri attr params]
+  (adminListAppsUnderHierarchy [self _ontology-version root-iri _attr params]
     (when (user-has-access-token?)
       (if (apps-util/app-type-qualifies? self params)
         (listings/list-apps-with-ontology tapis root-iri params true)
@@ -160,7 +159,7 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (deleteApp [_ system-id app-id]
+  (deleteApp [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
@@ -168,19 +167,19 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (relabelApp [_ system-id app-id]
+  (relabelApp [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (updateApp [_ system-id app-id]
+  (updateApp [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (setAppVersionsOrder [_ system-id app-id versions]
+  (setAppVersionsOrder [_ system-id _app-id _versions]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (copyApp [_ system-id app-id]
+  (copyApp [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
@@ -196,39 +195,39 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (removeAppFavorite [_ system-id app-id]
+  (removeAppFavorite [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-favorite-request))
 
-  (addAppFavorite [_ system-id app-id]
+  (addAppFavorite [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-favorite-request))
 
-  (isAppPublishable [_ system-id app-id _]
+  (isAppPublishable [_ system-id _app-id _]
     (validate-system-id system-id)
     [false app-publishable-error])
 
-  (listToolsInUntrustedRegistries [_ system-id app-id]
+  (listToolsInUntrustedRegistries [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (usesToolsInUntrustedRegistries [_ system-id app-id]
+  (usesToolsInUntrustedRegistries [_ system-id  _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (createPublicationRequest [_ system-id app-id _]
+  (createPublicationRequest [_ system-id _app-id _]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (makeAppPublic [_ system-id app]
+  (makeAppPublic [_ system-id _app]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (deleteAppRating [_ system-id app-id]
+  (deleteAppRating [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-rating-request))
 
-  (rateApp [_ system-id app-id rating]
+  (rateApp [_ system-id _app-id _rating]
     (validate-system-id system-id)
     (reject-app-rating-request))
 
@@ -248,7 +247,7 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (getAppUi [_ system-id app-id]
+  (getAppUi [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
@@ -276,7 +275,7 @@
     (validate-system-ids (set (map :system_id qualified-app-ids)))
     (listings/load-app-tables tapis (set (map :app_id qualified-app-ids))))
 
-  (submitJob [this submission]
+  (submitJob [_this submission]
     (validate-system-id (:system_id submission))
     (tapis-jobs/submit tapis user submission))
 
@@ -320,19 +319,19 @@
   (permanentlyDeleteApps [this req]
     (.validateDeletionRequest this req))
 
-  (adminDeleteApp [_ system-id app-id]
+  (adminDeleteApp [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (adminUpdateApp [_ system-id app-id]
+  (adminUpdateApp [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (adminBlessApp [_ system-id app-id]
+  (adminBlessApp [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
-  (adminRemoveAppBlessing [_ system-id app-id]
+  (adminRemoveAppBlessing [_ system-id _app-id]
     (validate-system-id system-id)
     (reject-app-integration-request))
 
@@ -362,7 +361,7 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (getAppIntegrationData [_ system-id app-id]
+  (getAppIntegrationData [_ system-id _app-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
@@ -370,23 +369,23 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (getToolIntegrationData [_ system-id tool-id]
+  (getToolIntegrationData [_ system-id _tool-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (updateAppIntegrationData [_ system-id app-id integration-data-id]
+  (updateAppIntegrationData [_ system-id _app-id _integration-data-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (updateAppVersionIntegrationData [_ system-id app-id version-id integration-data-id]
+  (updateAppVersionIntegrationData [_ system-id _app-id _version-id _integration-data-id]
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (updateToolIntegrationData [_ system-id tool-id integration-data-id]
+  (updateToolIntegrationData [_ system-id _tool-id _integration-data-id]
     (validate-system-id system-id)
     (service/bad-request integration-data-rejection))
 
-  (ownerEditAppDocs [_ system-id app-id _]
+  (ownerEditAppDocs [_ system-id _app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
@@ -394,7 +393,7 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (ownerAddAppDocs [_ system-id app-id _]
+  (ownerAddAppDocs [_ system-id  _app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
@@ -402,7 +401,7 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (adminEditAppDocs [_ system-id app-id _]
+  (adminEditAppDocs [_ system-id _app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 
@@ -410,7 +409,7 @@
     (validate-system-id system-id)
     (reject-app-versions-request))
 
-  (adminAddAppDocs [_ system-id app-id _]
+  (adminAddAppDocs [_ system-id _app-id _]
     (validate-system-id system-id)
     (reject-app-documentation-edit-request))
 

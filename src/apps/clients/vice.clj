@@ -2,8 +2,7 @@
   (:require [cemerick.url :as curl]
             [cheshire.core :as cheshire]
             [clj-http.client :as http]
-            [apps.util.config :as cfg]
-            [clojure.tools.logging :as log]))
+            [apps.util.config :as cfg]))
 
 (defn- app-exposer-url
   [& components]

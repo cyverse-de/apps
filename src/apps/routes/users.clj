@@ -1,11 +1,12 @@
 (ns apps.routes.users
-  (:use [common-swagger-api.schema]
-        [apps.routes.params]
-        [apps.routes.schemas.user]
-        [apps.user :only [current-user]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.users :as users]
-            [common-swagger-api.schema.sessions :as sessions-schema]))
+  (:require
+   [apps.routes.params :refer [SecuredQueryParams]]
+   [apps.routes.schemas.user :refer [ListLoginsParams LoginParams User UserIds Users]]
+   [apps.service.users :as users]
+   [apps.user :refer [current-user]]
+   [common-swagger-api.schema :refer [defroutes describe GET POST]]
+   [common-swagger-api.schema.sessions :as sessions-schema]
+   [ring.util.http-response :refer [ok]]))
 
 (defroutes users
   (POST "/by-id" []
@@ -30,7 +31,7 @@
     :description "Terrain calls this service to record when a user logs in
           and to fetch user session info."
     (ok (users/login current-user params)))
-  
+
   (GET "/logins" []
     :query [params ListLoginsParams]
     :return sessions-schema/ListLoginsResponse

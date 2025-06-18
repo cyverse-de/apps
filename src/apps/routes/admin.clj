@@ -1,39 +1,57 @@
 (ns apps.routes.admin
-  (:use [common-swagger-api.routes]
-        [common-swagger-api.schema]
-        [common-swagger-api.schema.analyses.listing :only [ExternalId]]
-        [common-swagger-api.schema.apps
-         :only [AppCategoryIdPathParam
-                SystemId]]
-        [common-swagger-api.schema.apps.categories
-         :only [AppCategoryListing
-                AppCategoryAppListing
-                AppCommunityGroupNameParam]]
-        [common-swagger-api.schema.ontologies
-         :only [OntologyClassIRIParam
-                OntologyHierarchy
-                OntologyVersionParam]]
-        [apps.routes.params :only [SecuredQueryParams]]
-        [apps.routes.schemas.analysis.listing]
-        [apps.routes.schemas.app]
-        [apps.routes.schemas.app.category]
-        [apps.routes.schemas.workspace]
-        [apps.user :only [current-user]]
-        [apps.util.coercions :only [coerce!]]
-        [ring.util.http-response :only [ok]])
-  (:require [apps.service.apps :as apps]
+  (:require [apps.routes.params :refer [SecuredQueryParams]]
+            [apps.routes.schemas.analysis.listing :as listing-schema]
+            [apps.routes.schemas.app.category
+             :refer [AdminOntologyAppListingPagingParams
+                     ActiveOntologyDetailsList
+                     AdminAppListingPagingParams
+                     AdminCategorySearchParams
+                     AppCategoryOntologyVersionDetails
+                     AppCategoryPatchRequest
+                     AppCategoryRequest
+                     AppCategorySearchResults
+                     OntologyHierarchyFilterParams]]
+            [apps.routes.schemas.workspace
+             :refer [WorkspaceDeletionParams
+                     WorkspaceListing
+                     WorkspaceListingParams]]
+            [apps.service.apps :as apps]
             [apps.service.apps.de.admin :as admin]
             [apps.service.apps.de.listings :as listings]
             [apps.service.workspace :as workspace]
-            [common-swagger-api.schema.apps.admin.apps :as schema]))
+            [apps.user :refer [current-user]]
+            [apps.util.coercions :refer [coerce!]]
+            [common-swagger-api.routes :as routes]
+            [common-swagger-api.schema
+             :refer [context
+                     defroutes
+                     describe
+                     DELETE
+                     GET
+                     PATCH
+                     POST]]
+            [common-swagger-api.schema.analyses.listing :refer [ExternalId]]
+            [common-swagger-api.schema.apps.admin.apps :as schema]
+            [common-swagger-api.schema.apps
+             :refer [AppCategoryIdPathParam
+                     SystemId]]
+            [common-swagger-api.schema.apps.categories
+             :refer [AppCategoryListing
+                     AppCategoryAppListing
+                     AppCommunityGroupNameParam]]
+            [common-swagger-api.schema.ontologies
+             :refer [OntologyClassIRIParam
+                     OntologyHierarchy
+                     OntologyVersionParam]]
+            [ring.util.http-response :refer [ok]]))
 
 (defroutes admin-analyses
   (context "/by-external-id" []
 
     (POST "/" []
       :query [params SecuredQueryParams]
-      :body [body ExternalIdList]
-      :return AdminAnalysisList
+      :body [body listing-schema/ExternalIdList]
+      :return listing-schema/AdminAnalysisList
       :summary "Look Up Analyses by External ID"
       :description "This endpoint is used to retrieve information about analyses with a given set of external
       identifiers."
@@ -42,7 +60,7 @@
     (GET "/:external-id" []
       :path-params [external-id :- ExternalId]
       :query [params SecuredQueryParams]
-      :return AdminAnalysisList
+      :return listing-schema/AdminAnalysisList
       :summary "Look Up an Analysis by External ID"
       :description "This endpoint is used to retrieve information about an analysis with a given external identifier."
       (ok (apps/admin-list-jobs-with-external-ids current-user [external-id])))))
@@ -102,7 +120,7 @@
     :return schema/AdminAppListing
     :summary "List Apps in a Community"
     :description (str "Lists all of the apps under an App Community that are visible to an admin."
-                      (get-endpoint-delegate-block
+                      (routes/get-endpoint-delegate-block
                        "metadata"
                        "POST /avus/filter-targets"))
     (ok (coerce! schema/AdminAppListing (apps/admin-list-apps-in-community current-user community-id params)))))
@@ -115,7 +133,7 @@
     :summary "List Ontology Details"
     :description (str
                   "Lists Ontology details saved in the metadata service."
-                  (get-endpoint-delegate-block
+                  (routes/get-endpoint-delegate-block
                    "metadata"
                    "GET /ontologies"))
     (ok (admin/list-ontologies current-user)))
@@ -127,7 +145,7 @@
     :description (str
                   "Marks an Ontology as deleted in the metadata service.
  Returns `ERR_ILLEGAL_ARGUMENT` when attempting to delete the active `ontology-version`."
-                  (get-endpoint-delegate-block
+                  (routes/get-endpoint-delegate-block
                    "metadata"
                    "DELETE /admin/ontologies/{ontology-version}"))
     (admin/delete-ontology current-user ontology-version))
@@ -151,7 +169,7 @@
     :description (str
                   "Gets the list of app categories that are visible to the user for the given `ontology-version`,
  rooted at the given `root-iri`."
-                  (get-endpoint-delegate-block
+                  (routes/get-endpoint-delegate-block
                    "metadata"
                    "POST /ontologies/{ontology-version}/{root-iri}/filter")
                   "Please see the metadata service documentation for response information.")
@@ -166,7 +184,7 @@
     :description (str
                   "Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
  that are visible to the user."
-                  (get-endpoint-delegate-block
+                  (routes/get-endpoint-delegate-block
                    "metadata"
                    "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
     (ok (coerce! schema/AdminAppListing
@@ -181,7 +199,7 @@
     :description (str
                   "Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
  its subcategories, for the given `ontology-version`."
-                  (get-endpoint-delegate-block
+                  (routes/get-endpoint-delegate-block
                    "metadata"
                    "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
     (ok (coerce! schema/AdminAppListing

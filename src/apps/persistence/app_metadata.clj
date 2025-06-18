@@ -1,25 +1,31 @@
 (ns apps.persistence.app-metadata
   "Persistence layer for app metadata."
-  (:use [apps.constants :only [de-system-id]]
-        [apps.persistence.entities]
-        [apps.persistence.users :only [get-user-id]]
-        [apps.user :only [current-user]]
-        [apps.util.assertions]
-        [apps.util.conversions :only [remove-nil-vals]]
-        [apps.util.db :only [transaction]]
-        [kameleon.queries :only [add-query-sorting add-query-offset add-query-limit conditional-where]]
-        [kameleon.util :only [normalize-string]]
-        [kameleon.util.search :only [format-query-wildcards]]
-        [kameleon.uuids :only [uuidify]]
-        [korma.core :exclude [update]])
   (:require [apps.clients.permissions :as perms-client]
+            [apps.constants :refer [de-system-id]]
             [apps.persistence.app-listing :as app-listing]
             [apps.persistence.app-metadata.delete :as delete]
+            [apps.persistence.entities :as entities]
+            [apps.persistence.users :refer [get-user-id]]
+            [apps.user :refer [current-user]]
+            [apps.util.assertions :refer [assert-app-version assert-not-nil]]
+            [apps.util.conversions :refer [remove-nil-vals]]
+            [apps.util.db :refer [transaction]]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
-            [korma.core :as sql])
-  (:import [java.util UUID]))
+            [kameleon.queries :refer [add-query-sorting add-query-offset add-query-limit conditional-where]]
+            [kameleon.util :refer [normalize-string]]
+            [kameleon.util.search :refer [format-query-wildcards]]
+            [kameleon.uuids :refer [uuidify]]
+            [korma.core
+             :refer [aggregate delete delete* fields insert join modifier order raw select select*
+                     set-fields sqlfn subselect update* values where]
+             :as sql])
+  (:import [java.util UUID])
+  (:refer-clojure :exclude [max count]))
+
+;; Declarations for special symbols used by Korma.
+(declare exists max count)
 
 (def param-multi-input-type "MultiFileSelector")
 (def param-flex-input-type "FileFolderInput")
@@ -114,7 +120,7 @@
 (defn get-app-max-version-order
   "Retrieves the largest version order field from the app_versions table in the database."
   [app-id]
-  (-> (select app_versions
+  (-> (select entities/app_versions
               (aggregate (max :version_order) :max_order)
               (where {:app_id app-id}))
       first
@@ -131,7 +137,7 @@
   ([app-id]
    (list-app-versions app-id false))
   ([app-id include-deleted?]
-   (-> (select* app_versions)
+   (-> (select* entities/app_versions)
        (fields :version [:id :version_id])
        (where {:app_id app-id})
        (add-deleted-versions-clause include-deleted?)
@@ -142,10 +148,10 @@
   "Retrieves top-level app and version fields from the database."
   [app-id version-id]
   (assert-app-version
-    [app-id version-id]
-    (first (select :app_versions_listing
-                   (where {:id         app-id
-                           :version_id version-id})))))
+   [app-id version-id]
+   (first (select :app_versions_listing
+                  (where {:id         app-id
+                          :version_id version-id})))))
 
 (defn- user-id-subselect [username]
   (subselect :users
@@ -153,16 +159,16 @@
              (where {:username username})))
 
 (defn get-integration-data-by-username [username]
-  (first (select integration_data (where {:user_id (user-id-subselect username)}))))
+  (first (select entities/integration_data (where {:user_id (user-id-subselect username)}))))
 
 (defn get-integration-data-by-email [integrator-email]
-  (first (select integration_data (where {:integrator_email integrator-email}))))
+  (first (select entities/integration_data (where {:integrator_email integrator-email}))))
 
 (defn- add-integration-data [username integrator-email integrator-name]
   (when username (get-user-id username))
-  (insert integration_data (values {:integrator_email integrator-email
-                                    :integrator_name  integrator-name
-                                    :user_id          (user-id-subselect username)})))
+  (insert entities/integration_data (values {:integrator_email integrator-email
+                                             :integrator_name  integrator-name
+                                             :user_id          (user-id-subselect username)})))
 
 (defn- lookup-integration-data [username integrator-email integrator-name]
   (or (get-integration-data-by-username username)
@@ -179,12 +185,12 @@
 
 (defn- auto-update-integration-data [{:keys [id]} username integrator-email integrator-name]
   (when (can-update-integration-data? id integrator-email integrator-name)
-    (sql/update integration_data
+    (sql/update entities/integration_data
                 (set-fields {:integrator_email integrator-email
                              :integrator_name  integrator-name
                              :user_id          (user-id-subselect username)})
                 (where {:id id})))
-  (first (select integration_data (where {:id id}))))
+  (first (select entities/integration_data (where {:id id}))))
 
 (defn get-integration-data
   "Retrieves integrator info from the database, adding it first if not already there."
@@ -203,7 +209,7 @@
 (defn update-integration-data
   "Updates an integration data record."
   [id name email]
-  (sql/update integration_data
+  (sql/update entities/integration_data
               (set-fields {:integrator_email email
                            :integrator_name  name})
               (where {:id id})))
@@ -212,8 +218,8 @@
   (if-not (nil? search)
     (let [search (str "%" (format-query-wildcards search) "%")]
       (where query
-             (or {(sqlfn lower :integrator_name) [like (sqlfn lower search)]}
-                 {(sqlfn lower :integrator_email) [like (sqlfn lower search)]})))
+             (or {(sqlfn :lower :integrator_name) [:like (sqlfn :lower search)]}
+                 {(sqlfn :lower :integrator_email) [:like (sqlfn :lower search)]})))
     query))
 
 (defn- integration-data-base-query []
@@ -248,15 +254,15 @@
 
 (defn get-integration-data-by-app-id-for-all-versions [app-id]
   (-> (integration-data-base-query)
-      (where {:d.id [in (subselect :app_versions
-                                   (fields :integration_data_id)
-                                   (where {:app_id app-id}))]})
+      (where {:d.id [:in (subselect :app_versions
+                                    (fields :integration_data_id)
+                                    (where {:app_id app-id}))]})
       select))
 
 (defn update-app-integration-data [app-id integration-data-id]
   (-> (update* :app_versions)
       (set-fields {:integration_data_id integration-data-id})
-      (where {:id (subselect app_listing (fields :version_id) (where {:id app-id}))})
+      (where {:id (subselect entities/app_listing (fields :version_id) (where {:id app-id}))})
       (sql/update)))
 
 (defn update-app-version-integration-data [version-id integration-data-id]
@@ -311,7 +317,7 @@
 (defn- get-tool-listing-base-query
   "Common select query for tool listings."
   []
-  (-> (select* tool_listing)
+  (-> (select* entities/tool_listing)
       (fields [:tool_id :id]
               :name
               :description
@@ -335,19 +341,19 @@
   "Loads information about the tools associated with undeleted versions of an app."
   [app-id]
   (-> (get-app-tools-base-query app-id)
-      (where {:app_version_id [in (subselect app_versions
-                                             (fields :id)
-                                             (where {:app_id  app-id
-                                                     :deleted false}))]})
+      (where {:app_version_id [:in (subselect entities/app_versions
+                                              (fields :id)
+                                              (where {:app_id  app-id
+                                                      :deleted false}))]})
       select))
 
 (defn get-all-app-tools
   "Loads information about the tools associated with all versions of an app."
   [app-id]
   (-> (get-app-tools-base-query app-id)
-      (where {:app_version_id [in (subselect app_versions
-                                             (fields :id)
-                                             (where {:app_id app-id}))]})
+      (where {:app_version_id [:in (subselect entities/app_versions
+                                              (fields :id)
+                                              (where {:app_id app-id}))]})
       select))
 
 (defn get-app-version-tools
@@ -372,9 +378,9 @@
        (select [:app_steps :step]
                (fields :step.task_id)
                (where {:step.app_version_id
-                       [in (subselect app_versions
-                                      (fields :id)
-                                      (where {:app_id app-id}))]}))))
+                       [:in (subselect entities/app_versions
+                                       (fields :id)
+                                       (where {:app_id app-id}))]}))))
 
 (defn get-task-tools
   "Loads information about the tools associated with tasks with the given IDs."
@@ -386,7 +392,7 @@
               [:container_images.url :image_url]
               [:container_images.deprecated :deprecated])
       (join :tasks {:tasks.tool_id :tool_listing.tool_id})
-      (where {:tasks.id [in task-ids]})
+      (where {:tasks.id [:in task-ids]})
       select))
 
 (defn get-app-notification-types
@@ -403,7 +409,7 @@
 (defn subselect-tool-ids-using-data-container
   "Query subselect for tool IDs of tools using a Docker image as a data container."
   [data-container-image-id]
-  (subselect tools
+  (subselect entities/tools
              (fields :id)
              (join [:container_settings :settings]
                    {:settings.tools_id :tools.id})
@@ -418,29 +424,29 @@
   [img-id]
   (select (get-tool-listing-base-query)
           (modifier "DISTINCT")
-          (where {:app_id [in (perms-client/get-public-app-ids)]})
+          (where {:app_id [:in (perms-client/get-public-app-ids)]})
           (where (or {:container_images_id img-id}
-                     {:tool_id [in (subselect-tool-ids-using-data-container img-id)]}))))
+                     {:tool_id [:in (subselect-tool-ids-using-data-container img-id)]}))))
 
 (defn get-app-ids-by-tool-id
   "Gets a list of IDs of the apps using the tool with the given ID."
   [tool-id]
-  (let [tool-app-ids (select tool_listing (fields :app_id) (where {:tool_id tool-id}))]
+  (let [tool-app-ids (select entities/tool_listing (fields :app_id) (where {:tool_id tool-id}))]
     (map :app_id tool-app-ids)))
 
 (defn get-public-apps-by-tool-id
   "Loads information about the public apps using the tool with the given ID."
   [tool-id]
-  (->> (select tool_listing
+  (->> (select entities/tool_listing
                (fields :app_id)
                (where {:tool_id tool-id
-                       :app_id  [in (perms-client/get-public-app-ids)]}))
+                       :app_id  [:in (perms-client/get-public-app-ids)]}))
        (map (comp get-app :app_id))))
 
 (defn parameter-types-for-tool-type
   "Lists the valid parameter types for the tool type with the given identifier."
   ([tool-type-id]
-   (parameter-types-for-tool-type (select* parameter_types) tool-type-id))
+   (parameter-types-for-tool-type (select* entities/parameter_types) tool-type-id))
   ([base-query tool-type-id]
    (select base-query
            (join :tool_type_parameter_type
@@ -452,7 +458,7 @@
   "Adds top-level app info to the database and returns the new app info, including its new ID."
   [app]
   (as-> (select-keys app [:id :name :description]) app-info
-        (insert apps (values app-info))))
+    (insert entities/apps (values app-info))))
 
 (defn add-app-version
   "Adds top-level app version info to the database and returns the new info, including its new ID."
@@ -460,10 +466,10 @@
    (add-app-version app-version current-user))
   ([{:keys [version] :as app-version :or {version "Unversioned"}} user]
    (as-> (select-keys app-version [:id :app_id :version_order]) version-info
-         (assoc version-info :version version
-                             :integration_data_id (:id (get-integration-data user))
-                             :edited_date         (sqlfn now))
-         (insert app_versions (values version-info)))))
+     (assoc version-info :version version
+            :integration_data_id (:id (get-integration-data user))
+            :edited_date         (sqlfn :now))
+     (insert entities/app_versions (values version-info)))))
 
 (defn add-step
   "Adds an app step to the database for the given app ID."
@@ -473,7 +479,7 @@
                  (update-in [:task_id] uuidify)
                  (assoc :app_version_id version-id
                         :step step-number))]
-    (insert app_steps (values step))))
+    (insert entities/app_steps (values step))))
 
 (defn- add-workflow-io-map
   [mapping]
@@ -513,7 +519,7 @@
                 (select-keys [:name :description :wiki_url])
                 (remove-nil-vals))]
     (when-not (empty? app)
-      (sql/update apps (set-fields app) (where {:id app-id})))))
+      (sql/update entities/apps (set-fields app) (where {:id app-id})))))
 
 (defn update-app-version
   "Updates top-level app version info in the database."
@@ -523,16 +529,16 @@
    (let [version-id   (:version_id version-info)
          version-info (-> version-info
                           (select-keys [:version :deleted :disabled])
-                          (assoc :edited_date (sqlfn now)
-                                 :integration_date (when publish? (sqlfn now)))
+                          (assoc :edited_date (sqlfn :now)
+                                 :integration_date (when publish? (sqlfn :now)))
                           (remove-nil-vals))]
-     (sql/update app_versions (set-fields version-info) (where {:id version-id})))))
+     (sql/update entities/app_versions (set-fields version-info) (where {:id version-id})))))
 
 (defn set-app-versions-order
   [app-id versions]
   (transaction
-    (doseq [[index id] (map-indexed (fn [i v] [i (:version_id v)]) (rseq versions))]
-      (sql/update app_versions (set-fields {:version_order index}) (where {:app_id app-id :id id})))))
+   (doseq [[index id] (map-indexed (fn [i v] [i (:version_id v)]) (rseq versions))]
+     (sql/update entities/app_versions (set-fields {:version_order index}) (where {:app_id app-id :id id})))))
 
 (defn- get-app-publication-status-code-id
   [status-code]
@@ -565,21 +571,21 @@
 (defn- add-app-reference
   "Adds an App's reference to the database."
   [version-id reference]
-  (insert app_references (values {:app_version_id version-id, :reference_text reference})))
+  (insert entities/app_references (values {:app_version_id version-id, :reference_text reference})))
 
 (defn set-app-references
   "Resets the given App's references with the given list."
   [version-id references]
   (transaction
-   (delete app_references (where {:app_version_id version-id}))
+   (delete entities/app_references (where {:app_version_id version-id}))
    (dorun (map (partial add-app-reference version-id) references))))
 
 (defn set-htcondor-extra
   [version-id extra-requirements]
   (transaction
-   (delete apps_htcondor_extra (where {:app_version_id version-id}))
-   (if-not (or (nil? extra-requirements) (empty? (string/trim extra-requirements)))
-     (insert apps_htcondor_extra (values {:app_version_id version-id, :extra_requirements extra-requirements})))))
+   (delete entities/apps_htcondor_extra (where {:app_version_id version-id}))
+   (when-not (or (nil? extra-requirements) (empty? (string/trim extra-requirements)))
+     (insert entities/apps_htcondor_extra (values {:app_version_id version-id, :extra_requirements extra-requirements})))))
 
 (defn- get-job-type-id-for-system* [system-id]
   (:id (first (select :job_types (fields :id) (where {:system_id system-id})))))
@@ -622,20 +628,20 @@
    (add-task (:system_id task) task))
   ([system-id task]
    (let [job-type-id (get-job-type-id-for-task system-id task)]
-     (insert tasks (values (assoc (filter-valid-task-values task) :job_type_id job-type-id))))))
+     (insert entities/tasks (values (assoc (filter-valid-task-values task) :job_type_id job-type-id))))))
 
 (defn update-task
   "Updates a task in the database."
   [system-id {task-id :id :as task}]
   (let [job-type-id (get-job-type-id-for-task system-id task)]
-    (sql/update tasks
+    (sql/update entities/tasks
                 (set-fields (assoc (filter-valid-task-values task) :job_type_id job-type-id))
                 (where {:id task-id}))))
 
 (defn remove-tool-from-tasks
   "Removes the given tool ID from all tasks."
   [tool-id]
-  (sql/update tasks
+  (sql/update entities/tasks
               (set-fields {:tool_id nil})
               (where      {:tool_id tool-id})))
 
@@ -643,7 +649,7 @@
   "Removes all steps from an App. This delete will cascade to workflow_io_maps and
   input_output_mapping entries."
   [app-version-id]
-  (delete app_steps (where {:app_version_id app-version-id})))
+  (delete entities/app_steps (where {:app_version_id app-version-id})))
 
 (defn remove-workflow-map-orphans
   "Removes any orphaned workflow_io_maps table entries."
@@ -664,33 +670,33 @@
 (defn get-app-group
   "Fetches an App group."
   ([group-id]
-   (first (select parameter_groups (where {:id group-id}))))
+   (first (select entities/parameter_groups (where {:id group-id}))))
   ([group-id task-id]
-   (first (select parameter_groups (where {:id group-id, :task_id task-id})))))
+   (first (select entities/parameter_groups (where {:id group-id, :task_id task-id})))))
 
 (defn add-app-group
   "Adds an App group to the database."
   [group]
-  (insert parameter_groups (values (filter-valid-app-group-values group))))
+  (insert entities/parameter_groups (values (filter-valid-app-group-values group))))
 
 (defn update-app-group
   "Updates an App group in the database."
   [{group-id :id :as group}]
-  (sql/update parameter_groups
+  (sql/update entities/parameter_groups
               (set-fields (filter-valid-app-group-values group))
               (where {:id group-id})))
 
 (defn remove-app-group-orphans
   "Removes groups associated with the given task ID, but not in the given group-ids list."
   [task-id group-ids]
-  (delete parameter_groups (where {:task_id task-id
-                                   :id [not-in group-ids]})))
+  (delete entities/parameter_groups (where {:task_id task-id
+                                            :id [:not-in group-ids]})))
 
 (defn get-parameter-type-id
   "Gets the ID of the given parameter type name."
   [parameter-type]
   (:id (first
-        (select parameter_types
+        (select entities/parameter_types
                 (fields :id)
                 (where {:name parameter-type :deprecated false})))))
 
@@ -698,7 +704,7 @@
   "Gets the ID of the given info type name."
   [info-type]
   (:id (first
-        (select info_type
+        (select entities/info_type
                 (fields :id)
                 (where {:name info-type :deprecated false})))))
 
@@ -706,7 +712,7 @@
   "Gets the ID of the data format with the given name."
   [data-format]
   (:id (first
-        (select data_formats
+        (select entities/data_formats
                 (fields :id)
                 (where {:name data-format})))))
 
@@ -714,28 +720,28 @@
   "Gets the ID of the data source with the given name."
   [data-source]
   (:id (first
-        (select data_source
+        (select entities/data_source
                 (fields :id)
                 (where {:name data-source})))))
 
 (defn get-app-parameter
   "Fetches an App parameter."
   ([parameter-id]
-   (first (select parameters (where {:id parameter-id}))))
+   (first (select entities/parameters (where {:id parameter-id}))))
   ([parameter-id task-id]
    (first (select :task_param_listing (where {:id parameter-id, :task_id task-id})))))
 
 (defn add-app-parameter
   "Adds an App parameter to the parameters table."
   [{param-type :type :as parameter}]
-  (insert parameters
+  (insert entities/parameters
           (values (filter-valid-app-parameter-values
                    (assoc parameter :parameter_type (get-parameter-type-id param-type))))))
 
 (defn update-app-parameter
   "Updates a parameter in the parameters table."
   [{parameter-id :id param-type :type :as parameter}]
-  (sql/update parameters
+  (sql/update entities/parameters
               (set-fields (filter-valid-app-parameter-values
                            (assoc parameter
                                   :parameter_type (get-parameter-type-id param-type))))
@@ -744,18 +750,18 @@
 (defn remove-parameter-orphans
   "Removes parameters associated with the given group ID, but not in the given parameter-ids list."
   [group-id parameter-ids]
-  (delete parameters (where {:parameter_group_id group-id
-                             :id [not-in parameter-ids]})))
+  (delete entities/parameters (where {:parameter_group_id group-id
+                                      :id [:not-in parameter-ids]})))
 
 (defn clear-group-parameters
   "Removes parameters associated with the given group ID."
   [group-id]
-  (delete parameters (where {:parameter_group_id group-id})))
+  (delete entities/parameters (where {:parameter_group_id group-id})))
 
 (defn add-file-parameter
   "Adds file parameter fields to the database."
   [{info-type :file_info_type data-format :format data-source :data_source :as file-parameter}]
-  (insert file_parameters
+  (insert entities/file_parameters
           (values (filter-valid-file-parameter-values
                    (assoc file-parameter
                           :info_type (get-info-type-id info-type)
@@ -765,7 +771,7 @@
 (defn remove-file-parameter
   "Removes all file parameters associated with the given parameter ID."
   [parameter-id]
-  (delete file_parameters (where {:parameter_id parameter-id})))
+  (delete entities/file_parameters (where {:parameter_id parameter-id})))
 
 (defn get-rule-type
   "Retrieves information about a validation rule from the database."
@@ -798,9 +804,9 @@
 (defn add-validation-rule
   "Adds a validation rule to the database."
   [parameter-id rule-type]
-  (insert validation_rules
+  (insert entities/validation_rules
           (values {:parameter_id parameter-id
-                   :rule_type    (subselect rule_type
+                   :rule_type    (subselect entities/rule_type
                                             (fields :id)
                                             (where {:name rule-type
                                                     :deprecated false}))})))
@@ -808,47 +814,31 @@
 (defn remove-parameter-validation-rules
   "Removes all validation rules and rule arguments associated with the given parameter ID."
   [parameter-id]
-  (delete validation_rules (where {:parameter_id parameter-id})))
+  (delete entities/validation_rules (where {:parameter_id parameter-id})))
 
 (defn add-validation-rule-argument
   "Adds a validation rule argument to the database."
   [validation-rule-id ordering argument-value]
-  (insert validation_rule_arguments (values {:rule_id validation-rule-id
-                                             :ordering ordering
-                                             :argument_value argument-value})))
+  (insert entities/validation_rule_arguments (values {:rule_id validation-rule-id
+                                                      :ordering ordering
+                                                      :argument_value argument-value})))
 
 (defn add-parameter-default-value
   "Adds a parameter's default value to the database."
   [parameter-id default-value]
-  (insert parameter_values (values {:parameter_id parameter-id
-                                    :value        default-value
-                                    :is_default   true})))
+  (insert entities/parameter_values (values {:parameter_id parameter-id
+                                             :value        default-value
+                                             :is_default   true})))
 
 (defn add-app-parameter-value
   "Adds a parameter value to the database."
   [parameter-value]
-  (insert parameter_values (values (filter-valid-parameter-value-values parameter-value))))
+  (insert entities/parameter_values (values (filter-valid-parameter-value-values parameter-value))))
 
 (defn remove-parameter-values
   "Removes all parameter values associated with the given parameter IDs."
   [parameter-ids]
-  (delete parameter_values (where {:parameter_id [in parameter-ids]})))
-
-(defn app-accessible-by
-  "Obtains the list of users who can access an app."
-  [app-id]
-  (map :username
-       (select [:apps :a]
-               (join [:app_category_app :aca]
-                     {:a.id :aca.app_id})
-               (join [:app_categories :g]
-                     {:aca.app_category_id :g.id})
-               (join [:workspace :w]
-                     {:g.workspace_id :w.id})
-               (join [:users :u]
-                     {:w.user_id :u.id})
-               (fields :u.username)
-               (where {:a.id app-id}))))
+  (delete entities/parameter_values (where {:parameter_id [:in parameter-ids]})))
 
 (defn count-external-steps
   "Counts how many steps have an external ID in the given app."
@@ -889,19 +879,19 @@
 (defn rate-app
   "Adds or updates a user's rating and comment ID for the given app."
   [app-id user-id request]
-  (let [rating (first (select ratings (where {:app_id app-id, :user_id user-id})))]
+  (let [rating (first (select entities/ratings (where {:app_id app-id, :user_id user-id})))]
     (if rating
-      (sql/update ratings
+      (sql/update entities/ratings
                   (set-fields (remove-nil-vals request))
                   (where {:app_id app-id
                           :user_id user-id}))
-      (insert ratings
+      (insert entities/ratings
               (values (assoc (remove-nil-vals request) :app_id app-id, :user_id user-id))))))
 
 (defn delete-app-rating
   "Removes a user's rating and comment ID for the given app."
   [app-id user-id]
-  (delete ratings
+  (delete entities/ratings
           (where {:app_id app-id
                   :user_id user-id})))
 
@@ -909,7 +899,7 @@
   "Gets the average and total number of user ratings for the given app ID."
   [app-id]
   (first
-   (select ratings
+   (select entities/ratings
            (fields (raw "CAST(COALESCE(AVG(rating), 0.0) AS DOUBLE PRECISION) AS average"))
            (aggregate (count :rating) :total)
            (where {:app_id app-id}))))
@@ -957,8 +947,8 @@
 
 (defn load-app-details
   [app-ids]
-  (select app_listing
-          (where {:id [in (map uuidify app-ids)]})))
+  (select entities/app_listing
+          (where {:id [:in (map uuidify app-ids)]})))
 
 (defn get-default-output-name
   [task-id parameter-id]
@@ -1011,7 +1001,7 @@
   [app-ids]
   (select :apps
           (fields :id :name)
-          (where {:id [in (map uuidify app-ids)]})))
+          (where {:id [:in (map uuidify app-ids)]})))
 
 (defn get-app-name
   [app-id]
@@ -1048,7 +1038,7 @@
           (fields :id :name :description)
           (where {(normalize-string :name) (normalize-string app-name)
                   :deleted                 false
-                  :id                      [in app-id-set]})))
+                  :id                      [:in app-id-set]})))
 
 (defn- list-duplicate-apps*
   [app-name app-id category-id-set]
@@ -1058,7 +1048,7 @@
           (join [:app_category_app :aca] {:a.id :aca.app_id})
           (where {(normalize-string :a.name) (normalize-string app-name)
                   :a.deleted                 false
-                  :aca.app_category_id       [in category-id-set]
+                  :aca.app_category_id       [:in category-id-set]
                   :a.id                      [not= app-id]})))
 
 (defn- app-category-id-subselect
@@ -1080,13 +1070,13 @@
   [app-ids]
   (->> (select :apps
                (fields :id)
-               (where {:id [in app-ids]
+               (where {:id [:in app-ids]
                        :deleted false}))
        (map :id)))
 
 (defn get-resource-requirements-for-task
   [task-id]
-  (-> (select* [container-settings :c])
+  (-> (select* [entities/container-settings :c])
       (join [:tasks :t] {:t.tool_id :c.tools_id})
       (fields :memory_limit
               :min_memory_limit
@@ -1104,9 +1094,9 @@
       (join [:users :u] {:apr.requestor_id :u.id})
       (fields :apr.id
               :apr.app_id
-              [(sqlfn regexp_replace :u.username "@.*" "") :requestor])
+              [(sqlfn :regexp_replace :u.username "@.*" "") :requestor])
       (conditional-where app-id {:apr.app_id app-id})
-      (conditional-where requestor {(sqlfn regexp_replace :u.username "@.*" "") requestor})
+      (conditional-where requestor {(sqlfn :regexp_replace :u.username "@.*" "") requestor})
       (conditional-where (not include-completed)
                          (not (exists (subselect [:app_publication_request_statuses :aprs]
                                                  (join [:app_publication_request_status_codes :aprsc]
