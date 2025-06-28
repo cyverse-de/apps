@@ -2,6 +2,7 @@
   (:require [apps.metadata.reference-genomes :refer [get-reference-genomes-by-id]]
             [apps.persistence.app-metadata :as persistence]
             [apps.util.conversions :as conv]
+            [honey.sql.helpers :as h]
             [kameleon.uuids :refer [uuidify]]
             [korma.core :as sql]))
 
@@ -68,6 +69,25 @@
       (sql/where {:parameter_id id})
       (sql/order [:parent_id :display_order])
       (sql/select)))
+
+(defn hsql-params-base-query
+  []
+  (-> (h/select [:p.description    :description]
+                [:p.id             :id]
+                [:p.name           :name]
+                [:p.label          :label]
+                [:p.is_visible     :is_visible]
+                [:p.required       :required]
+                [:p.omit_if_blank  :omit_if_blank]
+                [:p.ordering       :order]
+                [:p.parameter_type :type]
+                :p.retain
+                :p.is_implicit
+                :p.repeat_option_flag
+                :p.info_type
+                :p.data_format
+                :p.data_source)
+      (h/from [:task_param_listing :p])))
 
 (defn params-base-query
   []
