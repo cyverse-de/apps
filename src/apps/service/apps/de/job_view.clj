@@ -11,9 +11,13 @@
    [apps.service.apps.util :refer [paths-accessible?]]
    [apps.util.service :as service]
    [apps.util.config :as config]
+   [apps.util.db :as db]
    [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure.java.jdbc :as jdbc]
    [clojure-commons.exception-util :as cxu]
-   [korma.core :refer [fields join order select subselect where]]
+   [honey.sql :as sql]
+   [honey.sql.helpers :as h]
+   [korma.core :refer [fields join order select where]]
    [slingshot.slingshot :refer [try+ throw+]]))
 
 (defn- format-step-resource-requirements
@@ -33,28 +37,31 @@
 
 (defn- mapped-input-subselect
   [step-id]
-  (subselect [:workflow_io_maps :wm]
-             (join [:input_output_mapping :iom] {:wm.id :iom.mapping_id})
-             (where {:iom.input      :p.id
-                     :wm.target_step step-id})))
+  (-> (h/select :*)
+      (h/from [:workflow_io_maps :wm])
+      (h/join [:input_output_mapping :iom] [:= :wm.id :iom.mapping_id])
+      (h/where [:and
+                [:= :iom.input :p.id]
+                [:= :wm.target_step step-id]])))
 
-(defn- add-hidden-parameters-clause
-  [query include-hidden-params?]
-  (if-not include-hidden-params?
-    (where query {:p.is_visible true})
-    query))
+(defn- get-parameters-query
+  [step-id group-id include-hidden-params?]
+  (-> (mp/hsql-params-base-query)
+      (h/order-by :p.display-order)
+      (h/where [:and
+                [:= :p.parameter_group_id group-id]
+                (when include-hidden-params? :p.is_visible)
+                [:and
+                 [:not [:exists (mapped-input-subselect step-id)]]
+                 [:or
+                  [:= :p.value_type "Input"]
+                  [:not [:coalesce :is_implicit false]]]]])
+      (sql/format)))
 
 (defn- get-parameters
-  [step-id group-id include-hidden-params?]
-  (-> (mp/params-base-query)
-      (order :p.display_order)
-      (where {:p.parameter_group_id group-id})
-      (add-hidden-parameters-clause include-hidden-params?)
-      (where (and [:not [:exists (mapped-input-subselect step-id)]]
-                  (or {:value_type  "Input"}
-                      {:is_implicit nil}
-                      {:is_implicit false})))
-      select))
+  [step-id group-id include-hidden-parameters]
+  (db/with-transaction [tx]
+    (jdbc/query tx (get-parameters-query step-id group-id include-hidden-parameters))))
 
 (defn- get-default-value
   [user type values]
