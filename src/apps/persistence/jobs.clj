@@ -782,13 +782,13 @@
           [(sql/subselect [:jobs :jc]
                       (sql/aggregate (count :id) :job_count)
                       (sql/where {:app_id :j.app_id})
-                      (sql/where (sql/raw "NOT EXISTS (SQL/SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
+                      (sql/where (sql/raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
            :job_count]
           [(sql/subselect [:jobs :jc]
                       (sql/aggregate (count :id) :job_count_failed)
                       (sql/where {:app_id :j.app_id
                               :status failed-status})
-                      (sql/where (sql/raw "NOT EXISTS (SQL/SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
+                      (sql/where (sql/raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
            :job_count_failed]
           [(sql/subselect :jobs
                       (sql/aggregate (max :start_date) :last_used)
@@ -804,7 +804,7 @@
                           (sql/aggregate (count :id) :job_count_completed)
                           (sql/where {:app_id :j.app_id
                                   :status completed-status})
-                          (sql/where (sql/raw "NOT EXISTS (SQL/SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
+                          (sql/where (sql/raw "NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = jc.id)")))
                :job_count_completed]
               [(sql/subselect :jobs
                           (sql/aggregate (max :end_date) :job_last_completed)
