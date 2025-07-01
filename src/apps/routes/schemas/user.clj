@@ -3,7 +3,7 @@
    [apps.routes.params :refer [SecuredQueryParams]]
    [common-swagger-api.schema.sessions :as sessions-schema]
    [common-swagger-api.schema :refer [describe]]
-   [schema.core :refer [defschema optional-key conditional]])
+   [schema.core :refer [defschema optional-key]])
   (:import [java.util UUID]))
 
 (defschema User
@@ -25,4 +25,4 @@
 (defschema ListLoginsParams
   (merge SecuredQueryParams
          {(optional-key :limit)
-          (describe (conditional pos? Long) "Limits the response to X number of results.")}))
+          (describe Long "Limits the response to X number of results.")}))

@@ -2,7 +2,8 @@
   (:require
    [apps.persistence.users :as up]
    [apps.service.oauth :as oauth]
-   [apps.util.conversions :refer [remove-nil-vals]]))
+   [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure-commons.exception-util :refer [bad-request]]))
 
 (defn by-id
   [{:keys [ids]}]
@@ -19,4 +20,6 @@
 
 (defn list-logins
   [{:keys [username] :as _current-user} {:keys [limit] :or {limit 5}}]
+  (when-not (pos? limit)
+    (bad-request "the value of the 'limit' query parameter must be positive"))
   {:logins (mapv remove-nil-vals (up/list-logins username limit))})
