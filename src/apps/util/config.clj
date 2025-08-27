@@ -129,12 +129,12 @@
   [props config-valid configs]
   "apps.tools.default.cpu-limit" 4)
 
-(cc/defprop-optint default-memory-limit
+(cc/defprop-optlong default-memory-limit
   "The memory limit, in bytes, to be used as the default resource limit when one is not set in a tool definition."
   [props config-valid configs]
   "apps.tools.default.memory-limit" (* 16 1024 1024 1024)) ;; 16GB
 
-(cc/defprop-optint default-disk-limit
+(cc/defprop-optlong default-disk-limit
   "The disk usage limit, in bytes, to be used as the default resource limit when one is not set in a tool definition."
   [props config-valid configs]
   "apps.tools.default-disk-limit" (* 32 1024 1024 1024)) ;; 32GB
