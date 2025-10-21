@@ -139,6 +139,11 @@
   [props config-valid configs]
   "apps.tools.default-disk-limit" (* 32 1024 1024 1024)) ;; 32GB
 
+(cc/defprop-optint default-gpu-limit
+  "The GPU limit, in number of GPUs, to be used as the default resource limit when one is not set in a tool definition."
+  [props config-valid configs]
+  "apps.tools.default.gpu-limit" 0)
+
 (cc/defprop-optstr workspace-root-app-category
   "The name of the root app category in a user's workspace."
   [props config-valid configs]

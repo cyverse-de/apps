@@ -6,11 +6,13 @@
 (def gib (* 1024 1024 1024))
 
 (defn reqs
-  [min-mem max-mem min-cpu max-cpu]
+  [min-mem max-mem min-cpu max-cpu & [min-gpu max-gpu]]
   {:min_memory_limit (when min-mem (* min-mem gib))
    :memory_limit     (when max-mem (* max-mem gib))
    :min_cpu_cores    min-cpu
-   :max_cpu_cores    max-cpu})
+   :max_cpu_cores    max-cpu
+   :min_gpus         min-gpu
+   :max_gpus         max-gpu})
 
 (def test-cases
   [{:container    (reqs 2 256 2 256)
@@ -74,6 +76,36 @@
     :expected     (reqs nil nil nil nil)
     :desc         "no requests specified, and no container minimums specified"}])
 
+(def gpu-test-cases
+  [{:container    (reqs 2 256 2 256 1 4)
+    :requirements (reqs 4 32 4 16 2 3)
+    :expected     (reqs 4 32 4 16 2 3)
+    :desc         "GPU: all values specified and within range"}
+   {:container    (reqs 2 256 2 256 1 4)
+    :requirements (reqs 4 32 4 16 nil 3)
+    :expected     (reqs 4 32 4 16 1 3)
+    :desc         "GPU: unspecified minimum GPU setting"}
+   {:container    (reqs 2 256 2 256 1 4)
+    :requirements (reqs 4 32 4 16 2 nil)
+    :expected     (reqs 4 32 4 16 2 2)
+    :desc         "GPU: unspecified maximum GPU setting"}
+   {:container    (reqs 2 256 2 256 1 4)
+    :requirements (reqs 4 32 4 16 0 2)
+    :expected     (reqs 4 32 4 16 1 2)
+    :desc         "GPU: minimum request less than container minimum"}
+   {:container    (reqs 2 256 2 256 1 4)
+    :requirements (reqs 4 32 4 16 2 5)
+    :expected     (reqs 4 32 4 16 2 4)
+    :desc         "GPU: maximum request greater than container maximum"}
+   {:container    (reqs 2 256 2 256 1 4)
+    :requirements (reqs 4 32 4 16 nil nil)
+    :expected     (reqs 4 32 4 16 1 1)
+    :desc         "GPU: no GPU requests specified"}
+   {:container    (reqs 2 256 2 256 nil nil)
+    :requirements (reqs 4 32 4 16 2 2)
+    :expected     (reqs 4 32 4 16 0 0)
+    :desc         "GPU: no container GPU settings specified"}])
+
 (deftest test-resource-requests
   (doseq [{:keys [container requirements expected desc]} test-cases]
     (t/testing desc
@@ -81,3 +113,9 @@
       (t/is (= (:memory_limit expected) (r/get-max-memory container requirements)))
       (t/is (= (:min_cpu_cores expected) (r/get-required-cpus container requirements)))
       (t/is (= (:max_cpu_cores expected) (r/get-max-cpus container requirements))))))
+
+(deftest test-gpu-resource-requests
+  (doseq [{:keys [container requirements expected desc]} gpu-test-cases]
+    (t/testing desc
+      (t/is (= (:min_gpus expected) (r/get-required-gpus container requirements)))
+      (t/is (= (:max_gpus expected) (r/get-max-gpus container requirements))))))
