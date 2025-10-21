@@ -25,6 +25,7 @@
   (if add-defaults?
     (merge {:max_cpu_cores (config/default-cpu-limit)
             :memory_limit (config/default-memory-limit)
+            :max_gpus (config/default-gpu-limit)
             :step_number step-number}
            requirements)
     (assoc requirements :step_number step-number)))
