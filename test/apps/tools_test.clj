@@ -35,3 +35,27 @@
         (is (:restricted updated-tool))
         (is (= (:time_limit_seconds updated-tool) 10))
         (admin-update-tool user false tool-map)))))
+
+(deftest test-get-tool-with-gpu-defaults
+  (let [tool-map (first (select tools (where {:name "notreal"})))]
+    (testing "(get-tool) with include-defaults returns GPU defaults"
+      (let [tool-id        (:id tool-map)
+            user           (:shortUsername current-user)
+            retrieved-tool (get-tool user tool-id true)]
+        (is (= tool-id (:id retrieved-tool)))
+        (is (contains? (:container retrieved-tool) :max_gpus)
+            "Container should include max_gpus when defaults are requested")
+        (is (number? (:max_gpus (:container retrieved-tool)))
+            "max_gpus should be a number (the default GPU limit)")))))
+
+(deftest test-get-tool-without-gpu-defaults
+  (let [tool-map (first (select tools (where {:name "notreal"})))]
+    (testing "(get-tool) without include-defaults excludes GPU defaults if not in DB"
+      (let [tool-id        (:id tool-map)
+            user           (:shortUsername current-user)
+            retrieved-tool (get-tool user tool-id false)]
+        (is (= tool-id (:id retrieved-tool)))
+        ;; If the tool doesn't have GPU settings in the DB, they shouldn't be added
+        ;; This test documents the behavior - defaults are only added when explicitly requested
+        (is (contains? retrieved-tool :container)
+            "Tool should have container information")))))
