@@ -74,7 +74,7 @@
       format-resubmission-name))
 
 (defn resubmit-jobs
-  [apps-client user jobs]
+  [apps-client user jobs params]
   (let [jobs                  (map (comp format-resubmission decode-job-submission) jobs)
         [ht-jobs single-jobs] ((juxt filter remove) :is_batch jobs)
         existing-output-dirs  (find-existing-output-dirs user jobs)]
@@ -82,6 +82,6 @@
       (exception-util/exists "One or more output folders already exist." :paths existing-output-dirs))
 
     (when-not (empty? single-jobs)
-      (async/resubmit-jobs apps-client user single-jobs))
+      (async/resubmit-jobs apps-client user single-jobs params))
     (doseq [ht-job ht-jobs]
-      (submissions/submit apps-client user (:submission ht-job)))))
+      (submissions/submit apps-client user (:submission ht-job) params))))

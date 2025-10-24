@@ -32,6 +32,11 @@
       (->optional-param :first-name)
       (->optional-param :last-name)))
 
+(s/defschema AnalysisSubmissionQueryParams
+  (merge SecuredQueryParamsEmailRequired
+         {(s/optional-key :disable-resource-tracking)
+          (describe Boolean "When true, bypasses resource quota and concurrent job limit enforcement. Intended for service-to-service calls. Defaults to false.")}))
+
 (s/defschema SecuredQueryParams
   (-> SecuredQueryParamsEmailRequired
       (->optional-param :email)))

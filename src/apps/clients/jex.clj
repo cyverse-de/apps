@@ -15,7 +15,10 @@
                 :as               :json}))
 
 (defn submit-job
-  [job]
-  (http/post (jex-url)
-             {:body         (cheshire/encode job)
-              :content-type :json}))
+  [job params]
+  (let [query-params (when (:disable-resource-tracking params)
+                       {:query-params {"disable-resource-tracking" "true"}})]
+    (http/post (jex-url)
+               (merge {:body         (cheshire/encode job)
+                       :content-type :json}
+                      query-params))))

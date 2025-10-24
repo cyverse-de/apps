@@ -4,6 +4,7 @@
    [apps.routes.params
     :refer [AnalysisListingParams
             AnalysisStatParams
+            AnalysisSubmissionQueryParams
             FilterParams
             SecuredQueryParams
             SecuredQueryParamsEmailRequired]]
@@ -47,14 +48,14 @@
                                      (assoc params :filter (json/from-json filter)))))))
 
   (POST "/" []
-    :query [params SecuredQueryParamsEmailRequired]
+    :query [params AnalysisSubmissionQueryParams]
     :middleware [schema/coerce-analysis-submission-requirements]
     :body [body schema/AnalysisSubmission]
     :return schema/AnalysisResponse
     :summary listing-schema/AnalysisSubmitSummary
     :description listing-schema/AnalysisSubmitDocs
     (ok (coerce! schema/AnalysisResponse
-                 (apps/submit-job current-user body))))
+                 (apps/submit-job current-user body params))))
 
   (POST "/permission-lister" []
     :query [params perms/PermissionListerQueryParams]
@@ -65,11 +66,11 @@
     (ok (apps/list-job-permissions current-user (:analyses body) params)))
 
   (POST "/relauncher" []
-    :query [params SecuredQueryParams]
+    :query [params AnalysisSubmissionQueryParams]
     :body [{:keys [analyses]} schema/AnalysesRelauncherRequest]
     :summary schema/AnalysesRelauncherSummary
     :description-file "docs/analyses/relauncher.md"
-    (ok (apps/relaunch-jobs current-user analyses)))
+    (ok (apps/relaunch-jobs current-user analyses params)))
 
   (POST "/sharing" []
     :query [params SecuredQueryParams]

@@ -152,13 +152,13 @@
                                                 input-params-by-id)))
 
 (defn- submit-batch-job
-  [apps-client user input-params-by-id input-paths-by-id path-list-stats job-types app submission]
+  [apps-client user input-params-by-id input-paths-by-id path-list-stats job-types app submission params]
   (pre-submit-batch-validation input-params-by-id input-paths-by-id path-list-stats)
 
   (let [ht-paths   (set (map :path path-list-stats))
         output-dir (util/create-output-dir user submission)
         batch-id   (save-batch user job-types app submission output-dir)]
-    (async/submit-batch-jobs apps-client user ht-paths submission output-dir batch-id)
+    (async/submit-batch-jobs apps-client user ht-paths submission output-dir batch-id params)
     (job-listings/list-job apps-client batch-id)))
 
 (defn- substitute-multi-input-param-values
@@ -215,7 +215,7 @@
     (into {} (map (juxt identity get-property-value) (keys input-params-by-id)))))
 
 (defn submit
-  [apps-client user {app-id :app_id system-id :system_id :as submission}]
+  [apps-client user {app-id :app_id system-id :system_id :as submission} params]
   (let [[job-types app]    (.getAppSubmissionInfo apps-client system-id app-id)
         input-params-by-id (get-app-params app ap/param-ds-input-types)
         input-paths-by-id  (build-input-path-map (:config submission) input-params-by-id)
@@ -223,6 +223,6 @@
         ht-path-list-stats (filter-stats-by-info-type (config/ht-path-list-info-type) path-stats)
         submission         (pre-process-submission submission user input-params-by-id input-paths-by-id path-stats)]
     (if (empty? ht-path-list-stats)
-      (submit/submit-and-register-private-job apps-client user submission)
+      (submit/submit-and-register-private-job apps-client user submission params)
       (submit-batch-job apps-client user input-params-by-id input-paths-by-id
-                        ht-path-list-stats job-types app submission))))
+                        ht-path-list-stats job-types app submission params))))

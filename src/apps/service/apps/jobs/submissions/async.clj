@@ -62,10 +62,10 @@
            :output_dir (ft/path-join (:output_dir submission) job-suffix))))
 
 (defn- submit-job-in-batch
-  [apps-client user submission job-number path-map]
+  [apps-client user submission job-number path-map params]
   (try+
    (->> (format-submission-in-batch submission job-number path-map)
-        (submit/submit-and-register-private-job apps-client user)
+        (submit/submit-and-register-private-job apps-client user params)
         :status)
    (catch Object _
      (log/error (:throwable &throw-context)
@@ -73,7 +73,7 @@
      jp/failed-status)))
 
 (defn- batch-job-reducer
-  [apps-client user {:keys [parent-id parent-status total submission batch-status] :as results} path-map]
+  [apps-client user params {:keys [parent-id parent-status total submission batch-status] :as results} path-map]
   (transaction
     ;; re-check for completed parent status before each submission
    (let [parent-status (if (jp/completed? parent-status)
@@ -81,7 +81,7 @@
                          (jp/get-job-status parent-id))
          job-status    (if (jp/completed? parent-status)
                          jp/canceled-status
-                         (submit-job-in-batch apps-client user submission total path-map))]
+                         (submit-job-in-batch apps-client user submission total path-map params))]
      (assoc results
             :parent-status parent-status
             :total         (inc total)
@@ -95,13 +95,13 @@
          :create_output_subdir false))
 
 (defn- submit-batch-jobs-thread
-  [apps-client {username :shortUsername email-address :email :as user} ht-paths submission output-dir parent-id]
+  [apps-client {username :shortUsername email-address :email :as user} ht-paths submission output-dir parent-id params]
   (try+
    (log/info "batch job submissions starting...")
    (let [path-lists    (validate-path-lists (util/get-path-list-contents-map user ht-paths))
          path-maps     (map-slices path-lists)
          submission    (preprocess-batch-submission submission output-dir parent-id)
-         job-stats     (reduce (partial batch-job-reducer apps-client user)
+         job-stats     (reduce (partial batch-job-reducer apps-client user params)
                                {:parent-id     parent-id
                                 :parent-status jp/submitted-status
                                 :total         0
@@ -132,17 +132,18 @@
    `output-dir` is the path to the output folder created for the parent job,
    and `parent-id` is the parent job's ID to use for each sub-job's `parent_id` field.
    A notification will be sent to the user on success or on failure to submit all sub-jobs."
-  [apps-client user ht-paths submission output-dir parent-id]
-  (let [^Runnable target #(submit-batch-jobs-thread apps-client user ht-paths submission output-dir parent-id)]
+  [apps-client user ht-paths submission output-dir parent-id params]
+  (let [^Runnable target #(submit-batch-jobs-thread apps-client user ht-paths submission output-dir parent-id params)]
     (.start (Thread. target (str "batch_submit_" parent-id)))))
 
 (defn- resubmit-job-reducer
   [apps-client
    user
+   params
    {:keys [total batch-status] :as results}
    {:keys [submission]}]
   (let [job-status (->> submission
-                        (submit/submit-and-register-private-job apps-client user)
+                        (submit/submit-and-register-private-job apps-client user params)
                         :status)
         parent-id  (:parent_id submission)]
     ;; Reset parent job to submitted when relaunching one of its subjobs
@@ -156,9 +157,9 @@
            :batch-status  (update batch-status job-status (fnil inc 0)))))
 
 (defn- resubmit-jobs-thread
-  [apps-client {username :shortUsername email-address :email :as user} jobs]
+  [apps-client {username :shortUsername email-address :email :as user} jobs params]
   (try+
-   (let [resubmit-stats (reduce (partial resubmit-job-reducer apps-client user)
+   (let [resubmit-stats (reduce (partial resubmit-job-reducer apps-client user params)
                                 {:total        0
                                  :batch-status {jp/submitted-status 0}}
                                 jobs)
@@ -173,6 +174,6 @@
      (notifications/send-job-status-update user (first jobs)))))
 
 (defn resubmit-jobs
-  [apps-client user jobs]
-  (let [^Runnable target #(resubmit-jobs-thread apps-client user jobs)]
+  [apps-client user jobs params]
+  (let [^Runnable target #(resubmit-jobs-thread apps-client user jobs params)]
     (.start (Thread. target (str "resubmit_" (:username user) "_" (-> jobs first :id))))))

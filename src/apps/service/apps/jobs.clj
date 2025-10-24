@@ -132,9 +132,9 @@
     (cxu/not-found "submission information not found")))
 
 (defn relaunch-jobs
-  [apps-client user job-ids]
+  [apps-client user job-ids params]
   (validate-jobs-for-user user job-ids "read")
-  (resubmit/resubmit-jobs apps-client user (map jp/get-job-by-id job-ids))
+  (resubmit/resubmit-jobs apps-client user (map jp/get-job-by-id job-ids) params)
   nil)
 
 (defn- stop-job-steps
@@ -233,8 +233,8 @@
   (listings/list-job-steps job-id))
 
 (defn submit
-  [apps-client user submission]
-  (submissions/submit apps-client user submission))
+  [apps-client user submission params]
+  (submissions/submit apps-client user submission params))
 
 (defn list-job-permissions
   [apps-client user job-ids params]

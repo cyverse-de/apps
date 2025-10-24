@@ -226,9 +226,9 @@
       (clojure.set/rename-keys {:startdate :start-date})))
 
 (defn submit-job
-  [{username :shortUsername email :email :as user} submission]
+  [{username :shortUsername email :email :as user} submission params]
   (json-util/log-json "submission" submission)
-  (let [job-info (jobs/submit (get-apps-client user) user submission)]
+  (let [job-info (jobs/submit (get-apps-client user) user submission params)]
     (cn/send-job-status-update username email job-info)
     (format-job-submission-response job-info)))
 
@@ -299,8 +299,8 @@
   (jobs/get-submission-launch-info (get-apps-client user) user submission-id))
 
 (defn relaunch-jobs
-  [user job-ids]
-  (jobs/relaunch-jobs (get-apps-client user) user job-ids))
+  [user job-ids params]
+  (jobs/relaunch-jobs (get-apps-client user) user job-ids params))
 
 (defn stop-job
   [user job-id params]

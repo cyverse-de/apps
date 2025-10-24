@@ -257,7 +257,8 @@
 
   (submitJob [_this submission]
     (validate-system-id (:system_id submission))
-    (de-jobs/submit user (update-in submission [:app_id] uuidify)))
+    (let [params (or (:params submission) {})]
+      (de-jobs/submit user (update-in submission [:app_id] uuidify) params)))
 
   (submitJobStep [_ job-id submission]
     (de-jobs/submit-step user job-id (update-in submission [:app_id] uuidify)))

@@ -18,12 +18,12 @@
    [slingshot.slingshot :refer [throw+ try+]]))
 
 (defn- do-jex-submission
-  [job]
+  [job params]
   (try+
    (if (and (cfg/vice-k8s-enabled)
             (= (:execution_target job) "interapps"))
-     (vice/submit-job job)
-     (jex/submit-job job))
+     (vice/submit-job job params)
+     (jex/submit-job job params))
    (catch Object _
      (log/error (:throwable &throw-context) "job submission failed")
      (throw+ {:type  :clojure-commons.exception/request-failed
@@ -100,25 +100,25 @@
     :wiki_url        (:wiki_url jex-submission)}))
 
 (defn- submit-job-in-batch
-  [user submission job]
+  [user submission params job]
   (->> (try+
-        (do-jex-submission job)
+        (do-jex-submission job params)
         (save-job-submission user job submission)
         (catch Object _
           (save-job-submission user job submission jp/failed-status)))
        (format-job-submission-response user job true)))
 
 (defn- submit-standalone-job
-  [user submission job]
-  (do-jex-submission job)
+  [user submission params job]
+  (do-jex-submission job params)
   (->> (save-job-submission user job submission)
        (format-job-submission-response user job false)))
 
 (defn- submit-job
-  [user submission job]
+  [user submission params job]
   (if (:parent_id submission)
-    (submit-job-in-batch user submission job)
-    (submit-standalone-job user submission job)))
+    (submit-job-in-batch user submission params job)
+    (submit-standalone-job user submission params job)))
 
 (defn- prep-submission
   [{:keys [config] :as submission}]
@@ -132,11 +132,11 @@
   (remove-nil-vals (jb/build-submission user submission)))
 
 (defn submit
-  [user submission]
+  [user submission params]
   (->> (prep-submission submission)
        (build-submission user)
        (json-util/log-json "job")
-       (submit-job user submission)))
+       (submit-job user submission params)))
 
 (defn submit-step
   [user job-id submission]

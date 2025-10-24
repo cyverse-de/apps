@@ -15,7 +15,10 @@
               :as               :json}))
 
 (defn submit-job
-  [job]
-  (http/post (app-exposer-url "vice" "launch")
-             {:content-type :json
-              :body         (cheshire/encode job)}))
+  [job params]
+  (let [query-params (when (:disable-resource-tracking params)
+                       {:query-params {"disable-resource-tracking" "true"}})]
+    (http/post (app-exposer-url "vice" "launch")
+               (merge {:content-type :json
+                       :body         (cheshire/encode job)}
+                      query-params))))

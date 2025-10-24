@@ -4,8 +4,9 @@
    [apps.util.db :refer [transaction]]))
 
 (defn submit-and-register-private-job
-  [apps-client user submission]
+  [apps-client user params submission]
   (transaction
-   (let [job-info (.submitJob apps-client submission)]
+   (let [submission-with-params (assoc submission :params params)
+         job-info (.submitJob apps-client submission-with-params)]
      (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
      job-info)))
