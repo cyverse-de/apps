@@ -64,7 +64,7 @@
           requirements {:min_cpu_cores 2}
           result       (#'common/reconcile-container-requirements container requirements)]
       ;; When neither container nor requirements specify GPUs, they shouldn't appear in result
-      (is (or (not (contains? result :min_gpus)) (nil? (:min_gpus result)))
-          "Should not include min_gpus or should be nil when not specified")
-      (is (or (not (contains? result :max_gpus)) (nil? (:max_gpus result)))
-          "Should not include max_gpus or should be nil when not specified"))))
+      (is (not (contains? result :min_gpus))
+          "Should not include min_gpus when not specified")
+      (is (not (contains? result :max_gpus))
+          "Should not include max_gpus when not specified"))))
