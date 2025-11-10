@@ -58,7 +58,8 @@
   [container-settings include-defaults]
   (if include-defaults
     (merge {:max_cpu_cores (config/default-cpu-limit)
-            :memory_limit (config/default-memory-limit)}
+            :memory_limit (config/default-memory-limit)
+            :max_gpus (config/default-gpu-limit)}
            container-settings)
     container-settings))
 

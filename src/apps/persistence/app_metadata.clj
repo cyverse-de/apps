@@ -1082,6 +1082,8 @@
               :min_memory_limit
               :min_cpu_cores
               :max_cpu_cores
+              :min_gpus
+              :max_gpus
               :min_disk_space)
       (where {:t.id task-id})
       select
