@@ -101,18 +101,22 @@
 
 (defn- submit-job-in-batch
   [user submission job]
-  (->> (try+
-        (do-jex-submission job)
-        (save-job-submission user job submission)
-        (catch Object _
-          (save-job-submission user job submission jp/failed-status)))
-       (format-job-submission-response user job true)))
+  (let [{job-id :id :as saved-job} (save-job-submission user job submission)]
+    (try+
+     (do-jex-submission (assoc job :id (str job-id)))
+     (catch Object _
+       (jp/update-job job-id jp/failed-status nil)))
+    (format-job-submission-response user job true saved-job)))
 
 (defn- submit-standalone-job
   [user submission job]
-  (do-jex-submission job)
-  (->> (save-job-submission user job submission)
-       (format-job-submission-response user job false)))
+  (let [{job-id :id :as saved-job} (save-job-submission user job submission)]
+    (try+
+     (do-jex-submission (assoc job :id (str job-id)))
+     (catch Object _
+       (jp/update-job job-id jp/failed-status nil)
+       (throw+)))
+    (format-job-submission-response user job false saved-job)))
 
 (defn- submit-job
   [user submission job]
