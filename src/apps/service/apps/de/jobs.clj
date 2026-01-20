@@ -99,22 +99,37 @@
     :username        (:username user)
     :wiki_url        (:wiki_url jex-submission)}))
 
+(defn- record-submission-failure
+  "Records a job submission failure with end date and status history."
+  [job-id external-id error-message]
+  (let [end-date (db/now)]
+    (jp/update-job job-id jp/failed-status end-date)
+    (jp/update-job-step job-id external-id jp/failed-status end-date)
+    (jp/add-job-status-update external-id
+                              (or error-message "Job submission failed")
+                              jp/failed-status)))
+
 (defn- submit-job-in-batch
   [user submission job]
-  (let [{job-id :id :as saved-job} (save-job-submission user job submission)]
+  (let [{job-id :id :as saved-job} (save-job-submission user job submission)
+        failed? (atom false)]
     (try+
      (do-jex-submission (assoc job :id (str job-id)))
-     (catch Object _
-       (jp/update-job job-id jp/failed-status nil)))
-    (format-job-submission-response user job true saved-job)))
+     (catch Object e
+       (record-submission-failure job-id (:uuid job) (:error e))
+       (reset! failed? true)))
+    (format-job-submission-response user job true
+                                    (if @failed?
+                                      (assoc saved-job :status jp/failed-status)
+                                      saved-job))))
 
 (defn- submit-standalone-job
   [user submission job]
   (let [{job-id :id :as saved-job} (save-job-submission user job submission)]
     (try+
      (do-jex-submission (assoc job :id (str job-id)))
-     (catch Object _
-       (jp/update-job job-id jp/failed-status nil)
+     (catch Object e
+       (record-submission-failure job-id (:uuid job) (:error e))
        (throw+)))
     (format-job-submission-response user job false saved-job)))
 
