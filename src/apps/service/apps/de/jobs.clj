@@ -11,23 +11,65 @@
    [apps.util.conversions :refer [remove-nil-vals]]
    [apps.util.db :refer [transaction]]
    [apps.util.json :as json-util]
+   [cheshire.core :as cheshire]
    [clojure-commons.file-utils :refer [build-result-folder-path]]
+   [clojure.string :as str]
    [clojure.tools.logging :as log]
    [kameleon.db :as db]
    [korma.core :refer [sqlfn]]
    [slingshot.slingshot :refer [throw+ try+]]))
 
+(defn- record-submission-failure
+  "Records a job submission failure with end date and status history.
+   Catches and logs any errors to prevent failure recording from
+   interfering with the caller."
+  [job-id external-id error-message]
+  (try
+    (let [end-date (db/now)]
+      (jp/update-job job-id jp/failed-status end-date)
+      (jp/update-job-step job-id external-id jp/failed-status end-date)
+      (jp/add-job-status-update external-id
+                                (or error-message "Job submission failed")
+                                jp/failed-status))
+    (catch Exception e
+      (log/error e "failed to record submission failure for job" job-id))))
+
+(defn- extract-submission-error
+  "Extracts error message and status code from HTTP exception.
+   Tries to parse JSON body and extract 'message' field.
+   Returns map with :message and :status-code."
+  [e]
+  (let [body (:body e)
+        status-code (:status e)
+        reason-phrase (:reason-phrase e)
+        message (or (when (string? body)
+                      (try
+                        (:message (cheshire/parse-string body true))
+                        (catch Exception _ nil)))
+                    (first (remove str/blank? [body reason-phrase]))
+                    "job submission failed")]
+    {:message     message
+     :status-code (or status-code 500)}))
+
 (defn- do-jex-submission
-  [job]
+  "Submits the job to JEX or VICE. On success, returns the job unchanged.
+   On failure, records the failure and returns the job with status set to Failed
+   and error details added."
+  [{job-id :id external-id :uuid :as job}]
   (try+
    (if (and (cfg/vice-k8s-enabled)
             (= (:execution_target job) "interapps"))
      (vice/submit-job job)
      (jex/submit-job job))
-   (catch Object _
-     (log/error (:throwable &throw-context) "job submission failed")
-     (throw+ {:type  :clojure-commons.exception/request-failed
-              :error "job submission failed"}))))
+   job
+   (catch Object e
+     (let [{:keys [message status-code]} (extract-submission-error e)]
+       (log/error (:throwable &throw-context) (str "job submission failed: " message))
+       (record-submission-failure job-id external-id message)
+       (assoc job
+              :status jp/failed-status
+              :error-reason message
+              :error-status-code status-code)))))
 
 (defn- store-submitted-job
   "Saves information about a job in the database."
@@ -64,7 +106,8 @@
                      :app_step_number 1}))
 
 (defn- save-job-submission
-  "Saves a DE job and its job-step in the database."
+  "Saves a DE job and its job-step in the database. Returns the job map
+   with :id and :status merged in."
   ([user job submission]
    (save-job-submission user job submission jp/submitted-status))
   ([user {ticket-map :ticket_map :as job} submission status]
@@ -73,52 +116,40 @@
      (let [job-id (:id (store-submitted-job user job submission status))]
        (store-job-step job-id job status)
        (jp/record-tickets job-id ticket-map)
-       {:id     job-id
-        :status status})
+       (assoc job :id (str job-id) :status status))
      (catch Object _
        (io-tickets/delete-tickets user ticket-map)
        (throw+))))))
 
 (defn- format-job-submission-response
-  [user jex-submission batch? {job-id :id status :status}]
+  [user jex-submission batch? {job-id :id status :status error-reason :error-reason error-status-code :error-status-code}]
   (remove-nil-vals
-   {:app_description (:app_description jex-submission)
-    :app_disabled    false
-    :app_id          (:app_id jex-submission)
-    :app_version_id  (:app_version_id jex-submission)
-    :app_name        (:app_name jex-submission)
-    :batch           batch?
-    :description     (:description jex-submission)
-    :system_id       "de"
-    :id              (str job-id)
-    :name            (:name jex-submission)
-    :notify          (:notify jex-submission)
-    :resultfolderid  (:output_dir jex-submission)
-    :startdate       (str (.getTime (db/now)))
-    :status          status
-    :username        (:username user)
-    :wiki_url        (:wiki_url jex-submission)}))
-
-(defn- submit-job-in-batch
-  [user submission job]
-  (->> (try+
-        (do-jex-submission job)
-        (save-job-submission user job submission)
-        (catch Object _
-          (save-job-submission user job submission jp/failed-status)))
-       (format-job-submission-response user job true)))
-
-(defn- submit-standalone-job
-  [user submission job]
-  (do-jex-submission job)
-  (->> (save-job-submission user job submission)
-       (format-job-submission-response user job false)))
+   {:app_description   (:app_description jex-submission)
+    :app_disabled      false
+    :app_id            (:app_id jex-submission)
+    :app_version_id    (:app_version_id jex-submission)
+    :app_name          (:app_name jex-submission)
+    :batch             batch?
+    :description       (:description jex-submission)
+    :system_id         "de"
+    :id                (str job-id)
+    :name              (:name jex-submission)
+    :notify            (:notify jex-submission)
+    :resultfolderid    (:output_dir jex-submission)
+    :startdate         (str (.getTime (db/now)))
+    :status            status
+    :error             error-reason
+    :error_status_code error-status-code
+    :username          (:username user)
+    :wiki_url          (:wiki_url jex-submission)}))
 
 (defn- submit-job
-  [user submission job]
-  (if (:parent_id submission)
-    (submit-job-in-batch user submission job)
-    (submit-standalone-job user submission job)))
+  "Submits a job to JEX/VICE. The do-jex-submission function handles errors
+   internally and returns the job with updated status if submission failed."
+  [user {parent-id :parent_id :as submission} job]
+  (as-> (save-job-submission user job submission) saved-job
+    (do-jex-submission saved-job)
+    (format-job-submission-response user job (boolean parent-id) saved-job)))
 
 (defn- prep-submission
   [{:keys [config] :as submission}]
