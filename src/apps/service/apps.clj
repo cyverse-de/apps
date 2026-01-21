@@ -225,11 +225,24 @@
       (select-keys [:id :name :status :startdate :missing-paths])
       (clojure.set/rename-keys {:startdate :start-date})))
 
+(defn- throw-submission-failure
+  "Throws appropriate exception type based on upstream error status code."
+  [job-info]
+  (let [reason (or (:error job-info) "job submission failed")
+        status-code (:error_status_code job-info)]
+    (if (and status-code (>= status-code 400) (< status-code 500))
+      (cxu/bad-request reason)
+      (cxu/internal-system-error reason))))
+
 (defn submit-job
   [{username :shortUsername email :email :as user} submission]
   (json-util/log-json "submission" submission)
   (let [job-info (jobs/submit (get-apps-client user) user submission)]
     (cn/send-job-status-update username email job-info)
+    ;; For standalone jobs that failed, throw HTTP error with reason
+    (when (and (= (:status job-info) jp/failed-status)
+               (not (:batch job-info)))
+      (throw-submission-failure job-info))
     (format-job-submission-response job-info)))
 
 (defn update-job-status
