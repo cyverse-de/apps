@@ -144,6 +144,11 @@
   [props config-valid configs]
   "apps.tools.default.gpu-limit" 0)
 
+(cc/defprop-optvec valid-gpu-models
+  "The list of valid GPU model names that can be configured for tools."
+  [props config-valid configs]
+  "apps.tools.valid-gpu-models" ["NVIDIA-A16", "NVIDIA-A100-SXM4-40GB", "NVIDIA-A100-SXM4-80GB"])
+
 (cc/defprop-optstr workspace-root-app-category
   "The name of the root app category in a user's workspace."
   [props config-valid configs]

@@ -74,6 +74,7 @@
                   {:name "admin-ontologies", :description "Admin App Ontology endpoints."}
                   {:name "admin-container-images", :description "Admin Tool Docker Images endpoints."}
                   {:name "admin-data-containers", :description "Admin Docker Data Container endpoints."}
+                  {:name "admin-gpu-models", :description "Admin GPU Model Configuration endpoints."}
                   {:name "admin-tools", :description "Admin Tool endpoints."}
                   {:name "admin-reference-genomes", :description "Admin Reference Genome endpoints."}
                   {:name "admin-tool-requests", :description "Admin Tool Request endpoints."}
@@ -186,6 +187,9 @@
     (schema/context "/admin/tools/data-containers" []
       :tags ["admin-data-containers"]
       tool-routes/admin-data-containers)
+    (schema/context "/admin/tools/gpu-models" []
+      :tags ["admin-gpu-models"]
+      tool-routes/gpu-models)
     (schema/context "/admin/tools" []
       :tags ["admin-tools"]
       tool-routes/admin-tools)

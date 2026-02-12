@@ -51,7 +51,8 @@
          container-settings
          container-devices
          container-volumes
-         container-volumes-from)
+         container-volumes-from
+         container-gpu-models)
 
 ;; Users who have logged into the DE.  Multiple entities are associated with
 ;; the same table in order to allow us to have multiple relationships between
@@ -129,6 +130,7 @@
   (sql/has-many container-devices)
   (sql/has-many container-volumes)
   (sql/has-many container-volumes-from)
+  (sql/has-many container-gpu-models)
   (sql/has-many ports)
   (sql/has-one interapps-proxy-settings))
 
@@ -144,6 +146,10 @@
   (sql/table :container_volumes_from)
   (sql/belongs-to container-settings)
   (sql/belongs-to data-containers))
+
+(sql/defentity container-gpu-models
+  (sql/table :container_gpu_models)
+  (sql/belongs-to container-settings))
 
 ;; Information about a deployed tool.
 (sql/defentity tools

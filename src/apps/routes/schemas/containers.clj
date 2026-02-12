@@ -35,3 +35,13 @@
        (->optional-param :name)
        (dissoc :id))
    "A map for updating data container settings."))
+
+(s/defschema GpuModels
+  (describe
+   {:gpu_models [s/Str]}
+   "A list of valid GPU model names."))
+
+(s/defschema GpuModel
+  (describe
+   s/Str
+   "A GPU model name (e.g., 'NVIDIA-A16')."))
