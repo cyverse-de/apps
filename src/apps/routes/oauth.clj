@@ -1,11 +1,13 @@
 (ns apps.routes.oauth
   (:require
-   [apps.routes.params :refer [ApiName OAuthCallbackQueryParams SecuredQueryParams TokenInfoProxyParams]]
-   [apps.routes.schemas.oauth :refer [AdminTokenInfo OAuthCallbackResponse TokenInfo]]
+   [apps.routes.params :refer [OAuthCallbackQueryParams SecuredQueryParams
+                               TokenInfoProxyParams]]
    [apps.service.oauth :as oauth]
    [apps.user :refer [current-user load-user]]
    [common-swagger-api.schema :refer [context defroutes DELETE GET]]
-   [common-swagger-api.schema.oauth :refer [RedirectUrisResponse]]
+   [common-swagger-api.schema.oauth :refer [AdminTokenInfo ApiName
+                                            OAuthCallbackResponse
+                                            RedirectUrisResponse TokenInfo]]
    [ring.util.http-response :refer [ok]]))
 
 (defroutes oauth
