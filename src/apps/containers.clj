@@ -7,11 +7,13 @@
                                                container-devices
                                                container-volumes
                                                container-volumes-from
+                                               container-gpu-models
                                                data-containers
                                                interapps-proxy-settings
                                                ports]]
             [apps.persistence.tools :refer [update-tool]]
             [apps.util.assertions :refer [assert-not-nil]]
+            [apps.util.config :as config]
             [apps.util.conversions :refer [remove-nil-vals remove-empty-vals]]
             [apps.util.db :refer [transaction]]
             [apps.validation :refer [validate-image-not-used-in-public-apps
@@ -159,6 +161,43 @@
               (sql/values (merge
                            (select-keys volume-map [:host_path :container_path])
                            {:container_settings_id (uuidify settings-uuid)}))))
+
+(defn- gpu-model-mapping?
+  "Returns true if the combination of container_settings UUID and GPU model
+   already exists in the database."
+  [settings-uuid gpu-model]
+  (pos? (count (sql/select container-gpu-models
+                           (sql/where (and (= :container_settings_id (uuidify settings-uuid))
+                                           (= :gpu_model gpu-model)))))))
+
+(defn- validate-gpu-model
+  "Validates that a GPU model is in the list of valid GPU models."
+  [gpu-model]
+  (let [valid-models (set (config/valid-gpu-models))]
+    (when-not (contains? valid-models gpu-model)
+      (cxu/bad-request (str "Invalid GPU model: " gpu-model ". Valid models are: " (clojure.string/join ", " valid-models))))))
+
+(defn- add-gpu-model
+  "Associates a GPU model with the given container_settings UUID."
+  [settings-uuid gpu-model]
+  (validate-gpu-model gpu-model)
+  (when (gpu-model-mapping? settings-uuid gpu-model)
+    (cxu/exists (str "GPU model mapping already exists: " settings-uuid " " gpu-model)))
+  (sql/insert container-gpu-models
+              (sql/values {:container_settings_id (uuidify settings-uuid)
+                           :gpu_model gpu-model})))
+
+(defn- delete-gpu-model
+  "Removes a GPU model association from the given container_settings UUID."
+  [settings-uuid gpu-model]
+  (sql/delete container-gpu-models
+              (sql/where (and (= :container_settings_id (uuidify settings-uuid))
+                              (= :gpu_model gpu-model)))))
+
+(defn list-valid-gpu-models
+  "Returns the list of valid GPU models that can be configured."
+  []
+  {:gpu_models (vec (config/valid-gpu-models))})
 
 (defn- data-container
   "Returns a map describing a data container."
@@ -331,12 +370,15 @@
                                            (sql/fields :name_prefix :read_only)
                                            (sql/with container-images
                                                      (sql/fields :name :tag :url :deprecated :osg_image_path))))
+                       (sql/with container-gpu-models
+                                 (sql/fields :gpu_model))
                        (sql/with ports
                                  (sql/fields :host_port :container_port :bind_to_host :id))
                        (sql/where {:tools_id id}))
            first
            add-interapps-info
            (update :container_volumes_from add-data-container-auth :auth? auth?)
+           (update :container_gpu_models #(mapv :gpu_model %))
            (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
 
@@ -394,6 +436,7 @@
         volumes        (:container_volumes info-map)
         vfs            (:container_volumes_from info-map)
         ports          (:container_ports info-map)
+        gpu-models     (:container_gpu_models info-map)
         proxy-settings (:interactive_apps info-map)
         info-map       (assoc info-map :tools_id (uuidify tool-uuid))]
     (log/warn "adding container information for tool" tool-uuid ":" info-map)
@@ -414,13 +457,15 @@
          (add-settings-volumes-from settings-uuid vf))
        (doseq [p ports]
          (add-port settings-uuid p))
+       (doseq [gm gpu-models]
+         (add-gpu-model settings-uuid gm))
        (tool-container-info tool-uuid)))))
 
 (defn set-tool-container
   "Removes all existing container settings for the given tool-id, replacing them with the given settings."
   [tool-id
    overwrite-public
-   {:keys [container_devices container_volumes container_volumes_from container_ports interactive_apps] :as settings}]
+   {:keys [container_devices container_volumes container_volumes_from container_ports container_gpu_models interactive_apps] :as settings}]
   (when-not overwrite-public
     (validate-tool-not-used-in-public-apps tool-id))
   (transaction
@@ -441,5 +486,7 @@
        (add-settings-volumes-from settings-id volume))
      (doseq [port container_ports]
        (add-port settings-id port))
+     (doseq [gpu-model container_gpu_models]
+       (add-gpu-model settings-id gpu-model))
 
      (tool-container-info tool-id))))
