@@ -378,7 +378,7 @@
            first
            add-interapps-info
            (update :container_volumes_from add-data-container-auth :auth? auth?)
-           (update :container_gpu_models #(mapv :gpu_model %))
+           (update :gpu_models #(mapv :gpu_model %))
            (merge {:image (tool-image-info tool-uuid :auth? auth?)})
            filter-returns))))
 
@@ -436,7 +436,7 @@
         volumes        (:container_volumes info-map)
         vfs            (:container_volumes_from info-map)
         ports          (:container_ports info-map)
-        gpu-models     (:container_gpu_models info-map)
+        gpu-models     (:gpu_models info-map)
         proxy-settings (:interactive_apps info-map)
         info-map       (assoc info-map :tools_id (uuidify tool-uuid))]
     (log/warn "adding container information for tool" tool-uuid ":" info-map)
@@ -465,7 +465,7 @@
   "Removes all existing container settings for the given tool-id, replacing them with the given settings."
   [tool-id
    overwrite-public
-   {:keys [container_devices container_volumes container_volumes_from container_ports container_gpu_models interactive_apps] :as settings}]
+   {:keys [container_devices container_volumes container_volumes_from container_ports gpu_models interactive_apps] :as settings}]
   (when-not overwrite-public
     (validate-tool-not-used-in-public-apps tool-id))
   (transaction
@@ -486,7 +486,7 @@
        (add-settings-volumes-from settings-id volume))
      (doseq [port container_ports]
        (add-port settings-id port))
-     (doseq [gpu-model container_gpu_models]
+     (doseq [gpu-model gpu_models]
        (add-gpu-model settings-id gpu-model))
 
      (tool-container-info tool-id))))
