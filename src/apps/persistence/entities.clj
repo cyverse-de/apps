@@ -148,7 +148,7 @@
   (sql/belongs-to data-containers))
 
 (sql/defentity container-gpu-models
-  (sql/table :container_gpu_models)
+  (sql/table :container_gpu_models :gpu_models)
   (sql/belongs-to container-settings))
 
 ;; Information about a deployed tool.
