@@ -187,13 +187,6 @@
               (sql/values {:container_settings_id (uuidify settings-uuid)
                            :gpu_model gpu-model})))
 
-(defn- delete-gpu-model
-  "Removes a GPU model association from the given container_settings UUID."
-  [settings-uuid gpu-model]
-  (sql/delete container-gpu-models
-              (sql/where (and (= :container_settings_id (uuidify settings-uuid))
-                              (= :gpu_model gpu-model)))))
-
 (defn list-valid-gpu-models
   "Returns the list of valid GPU models that can be configured."
   []
