@@ -37,3 +37,24 @@
                     (some? (:max_gpus result))
                     (not (contains? requirements :max_gpus))))
           "Should not add max_gpus default when add-defaults is false"))))
+
+;; ---------------------------------------------------------------------------
+;; GPU model preservation and non-injection
+;; ---------------------------------------------------------------------------
+
+(deftest test-format-step-resource-requirements-preserves-gpu-models
+  (testing "Existing gpu_models in requirements are preserved by format-step-resource-requirements"
+    (let [requirements {:gpu_models ["A16" "A40"]
+                        :max_gpus   2}
+          step-number  1
+          result       (#'job-view/format-step-resource-requirements requirements step-number true)]
+      (is (= ["A16" "A40"] (:gpu_models result))
+          "Should preserve the tool's gpu_models list when present"))))
+
+(deftest test-format-step-resource-requirements-no-gpu-models-when-not-interactive
+  (testing "gpu_models not injected when add-defaults is false, even if absent"
+    (let [requirements {:max_gpus 2}
+          step-number  1
+          result       (#'job-view/format-step-resource-requirements requirements step-number false)]
+      (is (not (contains? result :gpu_models))
+          "Should not inject gpu_models when add-defaults is false"))))
