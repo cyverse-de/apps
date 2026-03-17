@@ -1,23 +1,17 @@
 (ns apps.routes.params
   (:require
    [common-swagger-api.schema
-    :refer [->optional-param
-            describe
-            NonBlankString
-            PagingParams
-            SortFieldDocs
-            SortFieldOptionalKey
-            StandardUserQueryParams]]
+    :refer [->optional-param describe NonBlankString PagingParams
+            SortFieldDocs SortFieldOptionalKey StandardUserQueryParams]]
    [common-swagger-api.schema.analyses :as analysis-schema]
    [common-swagger-api.schema.analyses.listing :as listing-schema]
    [common-swagger-api.schema.apps.elements :as elements-schema]
    [common-swagger-api.schema.common :refer [IncludeHiddenParams]]
+   [common-swagger-api.schema.oauth :as oauth-schema]
    [common-swagger-api.schema.tools :as tools-schema]
    [schema.core :as s])
   (:import
    [java.util UUID]))
-
-(def ApiName (describe String "The name of the external API"))
 
 (def SubmissionIdPathParam (describe UUID "The Submission UUID"))
 
@@ -37,14 +31,10 @@
       (->optional-param :email)))
 
 (s/defschema TokenInfoProxyParams
-  (merge SecuredQueryParams
-         {(s/optional-key :proxy-user)
-          (describe NonBlankString "The name of the proxy user for admin service calls.")}))
+  (merge SecuredQueryParams oauth-schema/TokenInfoProxyParams))
 
 (s/defschema OAuthCallbackQueryParams
-  (merge SecuredQueryParams
-         {:code  (describe NonBlankString "The authorization code used to obtain the access token.")
-          :state (describe NonBlankString "The authorization state information.")}))
+  (merge SecuredQueryParams oauth-schema/OAuthCallbackQueryParams))
 
 (s/defschema AppElementToolListingParams
   (merge SecuredQueryParams IncludeHiddenParams))

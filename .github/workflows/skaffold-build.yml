@@ -9,7 +9,7 @@ on:
 
 jobs:
   call-workflow-passing-data:
-    uses: cyverse-de/github-workflows/.github/workflows/skaffold-build.yml@v0.0.7
+    uses: cyverse-de/github-workflows/.github/workflows/skaffold-build.yml@v0.2.3
     with:
       build-prerelease: ${{ contains(github.ref_name, '-rc') }}
     secrets:

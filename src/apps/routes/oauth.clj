@@ -1,57 +1,62 @@
 (ns apps.routes.oauth
   (:require
-   [apps.routes.params :refer [ApiName OAuthCallbackQueryParams SecuredQueryParams TokenInfoProxyParams]]
-   [apps.routes.schemas.oauth :refer [AdminTokenInfo OAuthCallbackResponse TokenInfo]]
+   [apps.routes.params :as params]
    [apps.service.oauth :as oauth]
    [apps.user :refer [current-user load-user]]
    [common-swagger-api.schema :refer [context defroutes DELETE GET]]
-   [common-swagger-api.schema.oauth :refer [RedirectUrisResponse]]
+   [common-swagger-api.schema.oauth :as oauth-schema]
    [ring.util.http-response :refer [ok]]))
 
 (defroutes oauth
   (GET "/access-code/:api-name" []
-    :path-params [api-name :- ApiName]
-    :query       [params OAuthCallbackQueryParams]
-    :return      OAuthCallbackResponse
-    :summary     "Obtain an OAuth access token for an authorization code."
+    :path-params [api-name :- oauth-schema/ApiName]
+    :query       [params params/OAuthCallbackQueryParams]
+    :return      oauth-schema/OAuthCallbackResponse
+    :summary     oauth-schema/GetAccessCodeSummary
+    :description oauth-schema/GetAccessCodeDescription
     (ok (oauth/get-access-token api-name params)))
 
   (context "/token-info/:api-name" []
-    :path-params [api-name :- ApiName]
+    :path-params [api-name :- oauth-schema/ApiName]
 
     (GET "/" []
-      :query   [params SecuredQueryParams]
-      :return  TokenInfo
-      :summary "Return information about an OAuth access token, not including the token itself."
+      :query       [params params/SecuredQueryParams]
+      :return      oauth-schema/TokenInfo
+      :summary     oauth-schema/GetTokenInfoSummary
+      :description oauth-schema/GetTokenInfoDescription
       (ok (oauth/get-token-info api-name current-user)))
 
     (DELETE "/" []
-      :query   [params SecuredQueryParams]
-      :summary "Remove a user's OAuth access token from the DE."
+      :query       [params params/SecuredQueryParams]
+      :summary     oauth-schema/DeleteTokenInfoSummary
+      :description oauth-schema/DeleteTokenInfoDescription
       (oauth/remove-token-info api-name current-user)
       (ok)))
 
   (GET "/redirect-uris" []
-    :query [params SecuredQueryParams]
-    :return RedirectUrisResponse
-    :summary "Return a set of OAuth redirect URIs if the user hasn't authenticated with the remote API yet."
+    :query       [params params/SecuredQueryParams]
+    :return      oauth-schema/RedirectUrisResponse
+    :summary     oauth-schema/GetRedirectUrisSummary
+    :description oauth-schema/GetRedirectUrisDescription
     (ok (oauth/get-redirect-uris current-user))))
 
 (defroutes admin-oauth
   (context "/token-info/:api-name" []
-    :path-params [api-name :- ApiName]
+    :path-params [api-name :- oauth-schema/ApiName]
 
     (GET "/" []
-      :query   [params TokenInfoProxyParams]
-      :return  AdminTokenInfo
-      :summary "Return information about an OAuth access token."
+      :query       [params params/TokenInfoProxyParams]
+      :return      oauth-schema/AdminTokenInfo
+      :summary     oauth-schema/AdminGetTokenInfoSummary
+      :description oauth-schema/AdminGetTokenInfoDescription
       (ok (oauth/get-admin-token-info api-name (if (:proxy-user params)
                                                  (load-user (:proxy-user params))
                                                  current-user))))
 
     (DELETE "/" []
-      :query   [params TokenInfoProxyParams]
-      :summary "Remove a user's OAuth access token from the DE."
+      :query       [params params/TokenInfoProxyParams]
+      :summary     oauth-schema/AdminDeleteTokenInfoSummary
+      :description oauth-schema/AdminDeleteTokenInfoDescription
       (oauth/remove-token-info api-name (if (:proxy-user params)
                                           (load-user (:proxy-user params))
                                           current-user))
