@@ -1076,19 +1076,27 @@
 
 (defn get-resource-requirements-for-task
   [task-id]
-  (-> (select* [entities/container-settings :c])
-      (join [:tasks :t] {:t.tool_id :c.tools_id})
-      (fields :memory_limit
-              :min_memory_limit
-              :min_cpu_cores
-              :max_cpu_cores
-              :min_gpus
-              :max_gpus
-              :min_disk_space)
-      (where {:t.id task-id})
-      select
-      first
-      remove-nil-vals))
+  (when-let [reqs (-> (select* [entities/container-settings :c])
+                      (join [:tasks :t] {:t.tool_id :c.tools_id})
+                      (fields :c.id
+                              :memory_limit
+                              :min_memory_limit
+                              :min_cpu_cores
+                              :max_cpu_cores
+                              :min_gpus
+                              :max_gpus
+                              :min_disk_space)
+                      (where {:t.id task-id})
+                      select
+                      first
+                      remove-nil-vals)]
+    (let [gpu-models (mapv :gpu_model
+                           (select entities/container-gpu-models
+                                   (fields :gpu_model)
+                                   (where {:container_settings_id (:id reqs)})))]
+      (-> reqs
+          (dissoc :id)
+          (cond-> (seq gpu-models) (assoc :gpu_models gpu-models))))))
 
 (defn list-app-publication-requests
   [app-id requestor include-completed]

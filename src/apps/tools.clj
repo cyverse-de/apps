@@ -57,10 +57,13 @@
 (defn format-container-settings
   [container-settings include-defaults]
   (if include-defaults
-    (merge {:max_cpu_cores (config/default-cpu-limit)
-            :memory_limit (config/default-memory-limit)
-            :max_gpus (config/default-gpu-limit)}
-           container-settings)
+    (let [defaults {:max_cpu_cores (config/default-cpu-limit)
+                    :memory_limit (config/default-memory-limit)
+                    :max_gpus (config/default-gpu-limit)}
+          merged (merge defaults container-settings)]
+      (if (and (not (empty? (config/default-gpu-models))) (empty? (:gpu_models merged)))
+        (assoc merged :gpu_models (vec (config/default-gpu-models)))
+        merged))
     container-settings))
 
 (defn- filter-listing-tool-ids

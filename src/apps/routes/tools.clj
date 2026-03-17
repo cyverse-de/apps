@@ -7,6 +7,7 @@
             image-info
             image-public-tools
             list-images
+            list-valid-gpu-models
             modify-data-container
             modify-image-info]]
    [apps.metadata.tool-requests :as tool-requests]
@@ -14,6 +15,8 @@
    [apps.routes.schemas.containers
     :refer [DataContainerIdParam
             DataContainerUpdateRequest
+            GpuModel
+            GpuModels
             ImageId
             ImageUpdateParams
             ImageUpdateRequest
@@ -119,6 +122,14 @@
     :summary "Update Data Container"
     :description "Updates a data container's settings."
     (ok (modify-data-container data-container-id body))))
+
+(defroutes gpu-models
+  (GET "/" []
+    :query [params SecuredQueryParams]
+    :return GpuModels
+    :summary "List Valid GPU Models"
+    :description "Returns the list of valid GPU model names that can be configured for tools."
+    (ok (list-valid-gpu-models))))
 
 (defroutes tools
   (GET "/" []

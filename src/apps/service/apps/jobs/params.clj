@@ -157,17 +157,19 @@
     (merge step-reqs
            (-> requested-step-reqs
                (select-keys [:max_cpu_cores
-                             :min_cpu_cores
-                             :min_gpus
-                             :max_gpus
-                             :min_memory_limit
-                             :min_disk_space])
+                              :min_cpu_cores
+                              :min_gpus
+                              :max_gpus
+                              :min_memory_limit
+                              :min_disk_space
+                              :gpu_models])
                (sets/rename-keys {:max_cpu_cores    :default_max_cpu_cores
                                   :min_cpu_cores    :default_cpu_cores
                                   :min_gpus         :default_gpus
                                   :max_gpus         :default_max_gpus
                                   :min_memory_limit :default_memory
-                                  :min_disk_space   :default_disk_space})))))
+                                  :min_disk_space   :default_disk_space
+                                  :gpu_models       :default_gpu_models})))))
 
 (defn- update-resources-reqs
   "Converts resource requests from the original submission JSON into default requirement settings,

@@ -68,3 +68,89 @@
           "Should not include min_gpus when not specified")
       (is (not (contains? result :max_gpus))
           "Should not include max_gpus when not specified"))))
+
+;; ---------------------------------------------------------------------------
+;; reconcile-gpu-models — direct tests of the GPU model intersection logic
+;; ---------------------------------------------------------------------------
+
+(deftest test-reconcile-gpu-models-user-subset
+  (testing "User's valid subset of tool models is used"
+    (let [container    {:gpu_models ["A16" "A40" "A100"]}
+          requirements {:gpu_models ["A16" "A40"]}
+          result       (#'common/reconcile-gpu-models container requirements)]
+      (is (= (set result) #{"A16" "A40"})
+          "Should return exactly the user's valid selections"))))
+
+(deftest test-reconcile-gpu-models-invalid-dropped
+  (testing "Invalid user selections are silently dropped"
+    (let [container    {:gpu_models ["A16" "A40"]}
+          requirements {:gpu_models ["A16" "BOGUS"]}
+          result       (#'common/reconcile-gpu-models container requirements)]
+      (is (= (set result) #{"A16"})
+          "Should keep only models that appear in the tool's allowed list"))))
+
+(deftest test-reconcile-gpu-models-all-invalid-falls-back
+  (testing "Falls back to full tool list when all user selections are invalid"
+    (let [container    {:gpu_models ["A16" "A40"]}
+          requirements {:gpu_models ["BOGUS"]}
+          result       (#'common/reconcile-gpu-models container requirements)]
+      (is (= (set result) #{"A16" "A40"})
+          "Should fall back to full tool list when intersection is empty"))))
+
+(deftest test-reconcile-gpu-models-empty-user-falls-back
+  (testing "Falls back to full tool list when user sends empty gpu_models"
+    (let [container    {:gpu_models ["A16" "A40"]}
+          requirements {:gpu_models []}
+          result       (#'common/reconcile-gpu-models container requirements)]
+      (is (= (set result) #{"A16" "A40"})
+          "Should fall back to full tool list when user list is empty"))))
+
+(deftest test-reconcile-gpu-models-nil-user-falls-back
+  (testing "Falls back to full tool list when user gpu_models is nil"
+    (let [container    {:gpu_models ["A16" "A40"]}
+          requirements {}
+          result       (#'common/reconcile-gpu-models container requirements)]
+      (is (= (set result) #{"A16" "A40"})
+          "Should fall back to full tool list when user list is nil"))))
+
+(deftest test-reconcile-gpu-models-tool-no-models-returns-nil
+  (testing "Returns nil when tool has no GPU models"
+    (let [result-empty (#'common/reconcile-gpu-models {:gpu_models []} {:gpu_models ["A16"]})
+          result-nil   (#'common/reconcile-gpu-models {} {:gpu_models ["A16"]})]
+      (is (nil? result-empty)
+          "Should return nil when tool's gpu_models is empty")
+      (is (nil? result-nil)
+          "Should return nil when tool has no gpu_models key"))))
+
+;; ---------------------------------------------------------------------------
+;; reconcile-container-requirements — GPU model field in end-to-end result
+;; ---------------------------------------------------------------------------
+
+(deftest test-reconcile-container-requirements-gpu-models-intersection
+  (testing "Container requirements result includes gpu_models as the user/tool intersection"
+    (let [container    {:min_gpus 0 :max_gpus 4
+                        :gpu_models ["A16" "A40" "A100"]}
+          requirements {:min_gpus 1 :max_gpus 2
+                        :gpu_models ["A16" "A100"]}
+          result       (#'common/reconcile-container-requirements container requirements)]
+      (is (= (set (:gpu_models result)) #{"A16" "A100"})
+          "Should contain the intersection of user and tool GPU models"))))
+
+(deftest test-reconcile-container-requirements-gpu-models-fallback
+  (testing "Container requirements falls back to full tool model list when user list is empty"
+    (let [container    {:min_gpus 0 :max_gpus 4
+                        :gpu_models ["A16" "A40"]}
+          requirements {:min_gpus 1 :max_gpus 2
+                        :gpu_models []}
+          result       (#'common/reconcile-container-requirements container requirements)]
+      (is (= (set (:gpu_models result)) #{"A16" "A40"})
+          "Should fall back to full tool list when user sends empty gpu_models"))))
+
+(deftest test-reconcile-container-requirements-gpu-models-absent-when-tool-has-none
+  (testing "gpu_models key is absent from result when tool has no GPU models"
+    (let [container    {:min_gpus 0 :max_gpus 2}
+          requirements {:min_gpus 1 :max_gpus 2
+                        :gpu_models ["A16"]}
+          result       (#'common/reconcile-container-requirements container requirements)]
+      (is (not (contains? result :gpu_models))
+          "gpu_models key must be absent (not nil or empty) when tool has no models"))))
