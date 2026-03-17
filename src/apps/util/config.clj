@@ -149,6 +149,11 @@
   [props config-valid configs]
   "apps.tools.valid-gpu-models" ["NVIDIA-A16"])
 
+(cc/defprop-optvec default-gpu-models
+  "The default GPU models to use when a tool does not specify any and defaults are requested."
+  [props config-valid configs]
+  "apps.tools.default.gpu-models" [])
+
 (cc/defprop-optstr workspace-root-app-category
   "The name of the root app category in a user's workspace."
   [props config-valid configs]

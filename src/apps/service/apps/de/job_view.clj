@@ -23,11 +23,14 @@
 (defn- format-step-resource-requirements
   [requirements step-number add-defaults?]
   (if add-defaults?
-    (merge {:max_cpu_cores (config/default-cpu-limit)
-            :memory_limit (config/default-memory-limit)
-            :max_gpus (config/default-gpu-limit)
-            :step_number step-number}
-           requirements)
+    (let [defaults {:max_cpu_cores (config/default-cpu-limit)
+                    :memory_limit (config/default-memory-limit)
+                    :max_gpus (config/default-gpu-limit)
+                    :step_number step-number}
+          merged (merge defaults requirements)]
+      (if (and (not (empty? (config/default-gpu-models))) (empty? (:gpu_models merged)))
+        (assoc merged :gpu_models (vec (config/default-gpu-models)))
+        merged))
     (assoc requirements :step_number step-number)))
 
 (defn- get-step-resource-requirements
