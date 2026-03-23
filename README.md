@@ -38,3 +38,7 @@ running locally. To get Apps up and running with de-db as the database, fire off
 run the following:
 
     lein run -- --config test.properties
+
+## pre-commit
+
+Install pre-commit hooks with `pre-commit install`
