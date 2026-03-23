@@ -6,7 +6,7 @@
 (defn get-registry
   [name]
   (first (sql/select docker-registries
-                 (sql/where {:name name}))))
+                     (sql/where {:name name}))))
 
 (defn get-registry-from-image
   [image-name]

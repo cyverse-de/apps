@@ -1,7 +1,6 @@
 (ns apps.service.apps.de.jobs.common-test
   (:require
    [apps.service.apps.de.jobs.common :as common]
-   [apps.service.apps.de.jobs.resources :as resources]
    [clojure.test :as t :refer [deftest is testing]]))
 
 (deftest test-reconcile-container-requirements-includes-gpus

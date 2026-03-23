@@ -189,7 +189,7 @@
     (jp/mark-tickets-deleted ticket-map)))
 
 (defn update-job-status
-  [user {:keys [external_id] :as job-step} {job-id :id } status end-date]
+  [user {:keys [external_id] :as job-step} {job-id :id} status end-date]
   (let [end-date (when (jp/completed? status) end-date)]
     (when (jp/status-follows? status (:status job-step))
       (jp/update-job-step job-id external_id status end-date)

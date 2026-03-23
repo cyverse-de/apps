@@ -202,12 +202,12 @@
   [user {app-id :id app-version-id :version_id :as app}]
   (validate-pipeline app)
   (transaction
-    (verify-app-editable user (persistence/get-app app-id))
-    (persistence/update-app app)
-    (persistence/update-app-version app)
-    (persistence/remove-app-steps app-version-id)
-    (add-app-steps-mappings app)
-    app-id))
+   (verify-app-editable user (persistence/get-app app-id))
+   (persistence/update-app app)
+   (persistence/update-app-version app)
+   (persistence/remove-app-steps app-version-id)
+   (add-app-steps-mappings app)
+   app-id))
 
 (defn- prepare-pipeline-step
   "Prepares a single step in a pipeline for submission to apps. DE steps can be left as-is.
@@ -233,32 +233,32 @@
   (verify-app-permission user (persistence/get-app app-id) "write" admin?)
   (validate-pipeline app)
   (transaction
-    (validate-app-name app-name app-id)
-    (let [public-app-ids        (permissions/get-public-app-ids)
-          app-public            (contains? public-app-ids app-id)
-          task-ids              (set (map (comp uuidify :task_id) steps))
-          [publishable? reason] (app-tasks-and-tools-publishable? (:shortUsername user)
-                                                                  admin?
-                                                                  public-app-ids
-                                                                  task-ids
-                                                                  (persistence/get-task-tools task-ids))]
-      (when (and app-public (not publishable?))
-        (ex-util/bad-request reason)))
-    (persistence/update-app app)
-    (let [documentation  (try+
-                           (docs/get-app-docs user app-id)
-                           (catch [:type :clojure-commons.exception/not-found] _ nil))
-          new-version-id (->> app-id
-                              persistence/get-app-max-version-order
-                              inc
-                              (assoc app :version_order)
-                              (add-pipeline-version* user))]
-      (when documentation
-        (docs/add-app-version-docs user
-                                   app-id
-                                   new-version-id
-                                   (select-keys documentation [:documentation])))
-      (edit-pipeline user app-id new-version-id))))
+   (validate-app-name app-name app-id)
+   (let [public-app-ids        (permissions/get-public-app-ids)
+         app-public            (contains? public-app-ids app-id)
+         task-ids              (set (map (comp uuidify :task_id) steps))
+         [publishable? reason] (app-tasks-and-tools-publishable? (:shortUsername user)
+                                                                 admin?
+                                                                 public-app-ids
+                                                                 task-ids
+                                                                 (persistence/get-task-tools task-ids))]
+     (when (and app-public (not publishable?))
+       (ex-util/bad-request reason)))
+   (persistence/update-app app)
+   (let [documentation  (try+
+                         (docs/get-app-docs user app-id)
+                         (catch [:type :clojure-commons.exception/not-found] _ nil))
+         new-version-id (->> app-id
+                             persistence/get-app-max-version-order
+                             inc
+                             (assoc app :version_order)
+                             (add-pipeline-version* user))]
+     (when documentation
+       (docs/add-app-version-docs user
+                                  app-id
+                                  new-version-id
+                                  (select-keys documentation [:documentation])))
+     (edit-pipeline user app-id new-version-id))))
 
 (defn update-pipeline
   [user {app-id :id version-id :version_id :as workflow}]

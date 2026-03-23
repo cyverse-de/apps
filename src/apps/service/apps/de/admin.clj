@@ -135,8 +135,8 @@
            app-public        (contains? @public-app-ids app-id)]
        (when app-public
          (av/verify-tools-for-public-app
-           tools
-           "Cannot restore public app version(s) that use private or missing tool(s)")
+          tools
+          "Cannot restore public app version(s) that use private or missing tool(s)")
          (av/app-tasks-and-tools-publishable? username true @public-app-ids task-ids tools))))
 
    (if (empty? (select-keys app [:name :description :wiki_url :references :groups :extra]))

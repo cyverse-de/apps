@@ -376,9 +376,9 @@
   "apps.email.base-url" "http://iplant-email:60000")
 
 (cc/defprop-optstr requests-base-url
-   "The base URL for the requests service."
-   [props config-valid configs]
-   "apps.requests.base-url" "http://requests:8080")
+  "The base URL for the requests service."
+  [props config-valid configs]
+  "apps.requests.base-url" "http://requests:8080")
 
 (cc/defprop-str app-deletion-notification-src-addr
   "The source email address of app deletion notification messages."
