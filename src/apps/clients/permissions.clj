@@ -180,6 +180,16 @@
 (def share-tool (partial share-resource (rt-tool)))
 (def unshare-tool (partial unshare-resource (rt-tool)))
 
+(defn get-analysis-allowed-users
+  "Returns a deduplicated list of subject IDs that have any permission on the
+   given analysis. The caller must append the domain suffix to match Keycloak
+   preferred_username claims."
+  [analysis-id]
+  (->> (pc/list-resource-permissions (client) (rt-analysis) analysis-id)
+       :permissions
+       (map (comp :subject_id :subject))
+       distinct))
+
 (defn- get-public-resource-ids [resource-type]
   (->> (pc/get-abbreviated-subject-permissions-for-resource-type
         (client) "group" (ipg/grouper-user-group-id) resource-type false)

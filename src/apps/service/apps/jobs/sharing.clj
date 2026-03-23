@@ -4,10 +4,12 @@
    [apps.clients.data-info :as data-info]
    [apps.clients.notifications :as cn]
    [apps.clients.permissions :as perms-client]
+   [apps.clients.vice :as vice]
    [apps.persistence.jobs :as jp]
    [apps.service.apps-client :refer [get-apps-client-for-username]]
    [apps.service.apps.jobs.params :as job-params]
    [apps.service.apps.jobs.permissions :as job-permissions]
+   [apps.util.config :as cfg]
    [apps.util.service :as service]
    [clojure-commons.core :refer [remove-nil-values]]
    [clojure-commons.error-codes :as ce]
@@ -124,19 +126,19 @@
   [sharer sharee {:keys [result_folder_path]}]
   (let [sharee (get-user-from-subject sharee)]
     (try+
-      (data-info/share-path sharer result_folder_path sharee "read")
-      nil
-      (catch ce/clj-http-error? {:keys [body]}
-        (str "unable to share result folder: " (:error_code (service/parse-json body)))))))
+     (data-info/share-path sharer result_folder_path sharee "read")
+     nil
+     (catch ce/clj-http-error? {:keys [body]}
+       (str "unable to share result folder: " (:error_code (service/parse-json body)))))))
 
 (defn- share-input-file
   [sharer sharee path]
   (let [sharee (get-user-from-subject sharee)]
     (try+
-      (data-info/share-path sharer path sharee "read")
-      nil
-      (catch ce/clj-http-error? {:keys [body]}
-        (str "unable to share input file, " path ": " (:error_code (service/parse-json body)))))))
+     (data-info/share-path sharer path sharee "read")
+     nil
+     (catch ce/clj-http-error? {:keys [body]}
+       (str "unable to share input file, " path ": " (:error_code (service/parse-json body)))))))
 
 (defn- process-child-jobs
   [f job-id]
@@ -153,6 +155,26 @@
 (defn- process-job-inputs
   [f apps-client job]
   (doall (remove nil? (map f (list-job-inputs apps-client job)))))
+
+(defn- push-vice-permissions
+  "Queries the permissions service for all users with access to the analysis,
+   then pushes the full allowed-users list to the operator via app-exposer.
+   Only applies to interactive (VICE) analyses. Failures are logged at error
+   level but don't block the share/unshare operation."
+  [job-id job]
+  (when (= "interactive" (:job_type_name job))
+    (try+
+     (let [users    (perms-client/get-analysis-allowed-users job-id)
+           domain   (cfg/uid-domain)
+           ;; Append the domain suffix to match preferred_username in Keycloak JWTs.
+           full-users (mapv #(str % "@" domain) users)]
+       (when (seq full-users)
+         (let [resp (vice/update-permissions (str job-id) full-users)]
+           (when-not (<= 200 (:status resp) 299)
+             (log/error "failed to push VICE permissions for analysis" job-id
+                        "status:" (:status resp) "body:" (:body resp))))))
+     (catch Exception e
+       (log/error "error pushing VICE permissions for analysis" job-id ":" (str e))))))
 
 (defn- share-analysis
   [job-id sharee level]
@@ -175,6 +197,8 @@
            input-share-errs       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
            output-share-err-msg   (share-output-folder sharer sharee job)
            app-share-err-msg      (share-app-for-job apps-client sharer sharee job-id job)]
+       ;; Push the updated allowed-users list to the VICE operator.
+       (push-vice-permissions job-id job)
        (update-fn (format "shared job ID %s with %s" job-id sharee))
        (job-sharing-success job-id
                             job
@@ -257,19 +281,19 @@
   [sharer sharee {:keys [result_folder_path]}]
   (let [sharee (get-user-from-subject sharee)]
     (try+
-      (data-info/unshare-path sharer result_folder_path sharee)
-      nil
-      (catch ce/clj-http-error? {:keys [body]}
-        (str "unable to unshare result folder: " (:error_code (service/parse-json body)))))))
+     (data-info/unshare-path sharer result_folder_path sharee)
+     nil
+     (catch ce/clj-http-error? {:keys [body]}
+       (str "unable to unshare result folder: " (:error_code (service/parse-json body)))))))
 
 (defn- unshare-input-file
   [sharer sharee path]
   (let [sharee (get-user-from-subject sharee)]
     (try+
-      (data-info/unshare-path sharer path sharee)
-      nil
-      (catch ce/clj-http-error? {:keys [body]}
-        (str "unable to unshare input file, " path ": " (:error_code (service/parse-json body)))))))
+     (data-info/unshare-path sharer path sharee)
+     nil
+     (catch ce/clj-http-error? {:keys [body]}
+       (str "unable to unshare input file, " path ": " (:error_code (service/parse-json body)))))))
 
 (defn- unshare-analysis
   [job-id sharee]
@@ -291,6 +315,8 @@
      (let [child-input-unshare-errs (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)
            input-unshare-errs       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
            output-unshare-err-msg   (unshare-output-folder sharer sharee job)]
+       ;; Push the updated allowed-users list to the VICE operator.
+       (push-vice-permissions job-id job)
        (update-fn (format "unshared job ID %s with %s" job-id sharee))
        (job-unsharing-success job-id
                               job
