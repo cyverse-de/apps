@@ -21,6 +21,7 @@
                                      validate-tool-not-used-in-public-apps]]
             [cheshire.core :as json]
             [clojure.tools.logging :as log]
+            [clojure.string :as string]
             [clojure-commons.exception-util :as cxu]
             [kameleon.uuids :refer [uuidify]]
             [korma.core :as sql])
@@ -175,7 +176,7 @@
   [gpu-model]
   (let [valid-models (set (config/valid-gpu-models))]
     (when-not (contains? valid-models gpu-model)
-      (cxu/bad-request (str "Invalid GPU model: " gpu-model ". Valid models are: " (clojure.string/join ", " valid-models))))))
+      (cxu/bad-request (str "Invalid GPU model: " gpu-model ". Valid models are: " (string/join ", " valid-models))))))
 
 (defn- add-gpu-model
   "Associates a GPU model with the given container_settings UUID."

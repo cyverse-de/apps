@@ -28,7 +28,7 @@
                     :max_gpus (config/default-gpu-limit)
                     :step_number step-number}
           merged (merge defaults requirements)]
-      (if (and (not (empty? (config/default-gpu-models))) (empty? (:gpu_models merged)))
+      (if (and (seq (config/default-gpu-models)) (empty? (:gpu_models merged)))
         (assoc merged :gpu_models (vec (config/default-gpu-models)))
         merged))
     (assoc requirements :step_number step-number)))

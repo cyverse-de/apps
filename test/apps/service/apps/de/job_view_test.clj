@@ -33,7 +33,7 @@
           result       (#'job-view/format-step-resource-requirements requirements step-number false)]
       (is (= 1 (:step_number result)) "Should include step number")
       (is (= 2147483648 (:memory_limit result)) "Should preserve existing values")
-      (is (not (and (contains? result :max_gpus) 
+      (is (not (and (contains? result :max_gpus)
                     (some? (:max_gpus result))
                     (not (contains? requirements :max_gpus))))
           "Should not add max_gpus default when add-defaults is false"))))

@@ -61,7 +61,7 @@
                     :memory_limit (config/default-memory-limit)
                     :max_gpus (config/default-gpu-limit)}
           merged (merge defaults container-settings)]
-      (if (and (not (empty? (config/default-gpu-models))) (empty? (:gpu_models merged)))
+      (if (and (seq (config/default-gpu-models)) (empty? (:gpu_models merged)))
         (assoc merged :gpu_models (vec (config/default-gpu-models)))
         merged))
     container-settings))
