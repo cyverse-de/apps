@@ -177,11 +177,11 @@
 (defn format-featured-apps-category
   "Formats the virtual group for apps that are certified as blessed"
   [_ _ params]
-   {:system_id de-system-id
-    :id        featured-apps-id
-    :name      "Featured Apps"
-    :is_public false
-    :total     (future (count-apps-for-user nil nil params))})
+  {:system_id de-system-id
+   :id        featured-apps-id
+   :name      "Featured Apps"
+   :is_public false
+   :total     (future (count-apps-for-user nil nil params))})
 
 (defn list-featured-apps
   [_ workspace params]
@@ -208,16 +208,16 @@
   "Formats any virtual groups that should appear in a user's workspace."
   [user workspace params]
   (map realize-group
-    (doall (remove :is_public ;; resolve immediately to start futures executing
-      (map (fn [[_ {f :format-group}]] (f user workspace params)) virtual-group-fns)))))
+       (doall (remove :is_public ;; resolve immediately to start futures executing
+                      (map (fn [[_ {f :format-group}]] (f user workspace params)) virtual-group-fns)))))
 
 (defn- add-private-virtual-groups
   [user group workspace params]
   (let [virtual-groups (format-private-virtual-groups user workspace params)
         actual-count   (future (count-apps-in-group-for-user
-                                 (:id group)
-                                 (:username user)
-                                 params))]
+                                (:id group)
+                                (:username user)
+                                params))]
     (-> group
         (update-in [:categories] concat virtual-groups)
         (assoc :total actual-count))))

@@ -92,7 +92,6 @@
      component)
    :id))
 
-
 (defn- load-tool-info
   [task-id]
   (-> (select* :tasks)

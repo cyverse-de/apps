@@ -10,7 +10,7 @@
 (defn list-vice-requests
   [username]
   (:body
-    (http/get (requests-url "requests")
-              {:query-params {:request-type     "vice"
-                              :requesting-user  username}
-               :as           :json})))
+   (http/get (requests-url "requests")
+             {:query-params {:request-type     "vice"
+                             :requesting-user  username}
+              :as           :json})))

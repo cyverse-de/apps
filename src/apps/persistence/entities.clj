@@ -73,18 +73,18 @@
 (sql/defentity app_categories
   (sql/belongs-to workspace)
   (sql/many-to-many app_categories :app_category_group
-                {:lfk :parent_category_id
-                 :rfk :child_category_id})
+                    {:lfk :parent_category_id
+                     :rfk :child_category_id})
   (sql/many-to-many apps :app_category_app
-                {:lfk :app_category_id
-                 :rfk :app_id}))
+                    {:lfk :app_category_id
+                     :rfk :app_id}))
 
 ;; An app.
 (sql/defentity apps
   (sql/has-many app_versions {:fk :app_id})
   (sql/many-to-many app_categories :app_category_app
-                {:lfk :app_id
-                 :rfk :app_category_id})
+                    {:lfk :app_id
+                     :rfk :app_category_id})
   (sql/has-many ratings {:fk :app_id}))
 
 ;; Versions of an app.
@@ -92,8 +92,8 @@
   (sql/belongs-to integration_data)
   (sql/has-many app_references {:fk :app_version_id})
   (sql/many-to-many tasks :app_steps
-                {:lfk :app_version_id
-                 :rfk :task_id}))
+                    {:lfk :app_version_id
+                     :rfk :task_id}))
 
 ;; References associated with an app.
 (sql/defentity app_references)
@@ -230,8 +230,8 @@
   (sql/has-one file_parameters {:fk :parameter_id})
   (sql/belongs-to parameter_types {:fk :parameter_type})
   (sql/many-to-many tool_types :tool_type_parameter_type
-                {:lfk :parameter_type_id
-                 :rfk :tool_type_id}))
+                    {:lfk :parameter_type_id
+                     :rfk :tool_type_id}))
 
 (sql/defentity parameter_values)
 
@@ -244,8 +244,8 @@
 (sql/defentity value_type
   (sql/has-one parameter_types)
   (sql/many-to-many rule_type :rule_type_value_type
-                {:lfk :value_type_id
-                 :rfk :rule_type_id}))
+                    {:lfk :value_type_id
+                     :rfk :rule_type_id}))
 
 ;; Validation Rules are used to describe individual validation steps for a parameter.
 (sql/defentity validation_rules
@@ -256,8 +256,8 @@
 (sql/defentity rule_type
   (sql/belongs-to rule_subtype)
   (sql/many-to-many value_type :rule_type_value_type
-                {:lfk :rule_type_id}
-                {:rfk :value_type_id}))
+                    {:lfk :rule_type_id}
+                    {:rfk :value_type_id}))
 
 ;; Rule arguments will have to be handled in code until Korma can be enhanced
 ;; to accept composite primary keys.
@@ -271,11 +271,11 @@
 ;; A view used to list app categories.
 (sql/defentity app_category_listing
   (sql/many-to-many app_category_listing :app_category_group
-                {:lfk :parent_category_id
-                 :rfk :child_category_id})
+                    {:lfk :parent_category_id
+                     :rfk :child_category_id})
   (sql/many-to-many app_listing :app_category_app
-                {:lfk :app_category_id
-                 :rfk :app_id}))
+                    {:lfk :app_category_id
+                     :rfk :app_id}))
 
 ;; A view used to list apps.
 (sql/defentity app_listing
@@ -316,8 +316,8 @@
 ;; Tool types.
 (sql/defentity tool_types
   (sql/many-to-many parameter_types :tool_type_parameter_type
-                {:lfk :tool_type_id
-                 :rfk :parameter_type_id}))
+                    {:lfk :tool_type_id
+                     :rfk :parameter_type_id}))
 
 ;; Tool request status codes.
 (sql/defentity tool_request_status_codes

@@ -115,10 +115,10 @@
   (validate-jobs-for-user user [job-id] "read")
   (let [job (jp/get-job-by-id job-id)]
     (remove-nil-vals
-      {:app_id         (:app_id job)
-       :app_version_id (:app_version_id job)
-       :system_id      (:system_id job)
-       :parameters     (job-params/get-parameter-values apps-client job)})))
+     {:app_id         (:app_id job)
+      :app_version_id (:app_version_id job)
+      :system_id      (:system_id job)
+      :parameters     (job-params/get-parameter-values apps-client job)})))
 
 (defn get-job-relaunch-info
   [apps-client user job-id]
