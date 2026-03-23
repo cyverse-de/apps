@@ -532,9 +532,9 @@
   "This service will add a single-step App, including the information at its top level."
   [{:keys [username] :as user} {app-name :name :as app}]
   (transaction
-    (->> (get-user-subcategory username (workspace-dev-app-category-index))
-         vector
-         (validate-app-name app-name nil))
+   (->> (get-user-subcategory username (workspace-dev-app-category-index))
+        vector
+        (validate-app-name app-name nil))
    (let [app-id (:id (persistence/add-app app))]
      (add-app-version* user (assoc app :id app-id))
      (add-app-to-user-dev-category user app-id)
@@ -547,25 +547,25 @@
   (verify-app-permission user (persistence/get-app app-id) "write" admin?)
   (when (contains? (permissions/get-public-app-ids) app-id)
     (verify-tools-for-public-app
-      tools
-      "Cannot add public app version that uses private or missing tool(s)"))
+     tools
+     "Cannot add public app version that uses private or missing tool(s)"))
   (transaction
-    (validate-updated-app-name (:shortUsername user) app-id app-name)
-    (persistence/update-app app)
-    (let [documentation  (try+
-                           (docs/get-app-docs user app-id)
-                           (catch [:type :clojure-commons.exception/not-found] _ nil))
-          new-version-id (->> app-id
-                              persistence/get-app-max-version-order
-                              inc
-                              (assoc app :version_order)
-                              (add-app-version* user))]
-      (when documentation
-        (docs/add-app-version-docs user
-                                   app-id
-                                   new-version-id
-                                   (select-keys documentation [:documentation])))
-      (get-app-ui user app-id new-version-id))))
+   (validate-updated-app-name (:shortUsername user) app-id app-name)
+   (persistence/update-app app)
+   (let [documentation  (try+
+                         (docs/get-app-docs user app-id)
+                         (catch [:type :clojure-commons.exception/not-found] _ nil))
+         new-version-id (->> app-id
+                             persistence/get-app-max-version-order
+                             inc
+                             (assoc app :version_order)
+                             (add-app-version* user))]
+     (when documentation
+       (docs/add-app-version-docs user
+                                  app-id
+                                  new-version-id
+                                  (select-keys documentation [:documentation])))
+     (get-app-ui user app-id new-version-id))))
 
 (defn- name-too-long?
   "Determines if a name is too long to be extended for a copy name."
@@ -641,6 +641,6 @@
     (when-not (user-owns-app? user app)
       (verify-app-permission user app "write"))
     (transaction
-      (validate-updated-app-name (:shortUsername user) app-id app-name)
-      (relabel/update-app-labels (assoc body :version_id version-id)))
+     (validate-updated-app-name (:shortUsername user) app-id app-name)
+     (relabel/update-app-labels (assoc body :version_id version-id)))
     (get-app-ui user app-id version-id)))

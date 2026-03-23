@@ -30,16 +30,16 @@
   [tapis app-names sharee app-id level]
   (let [category-id (:id (.hpcAppGroup tapis))]
     (try-share-app-with-subject
-      tapis sharee app-id level
-      #(app-permissions/app-sharing-success app-names jp/tapis-client-name app-id level category-id category-id)
-      (partial
-        app-permissions/app-sharing-failure app-names jp/tapis-client-name app-id level category-id category-id))))
+     tapis sharee app-id level
+     #(app-permissions/app-sharing-success app-names jp/tapis-client-name app-id level category-id category-id)
+     (partial
+      app-permissions/app-sharing-failure app-names jp/tapis-client-name app-id level category-id category-id))))
 
 (defn unshare-app-with-subject
   [tapis app-names sharee app-id]
   (let [category-id (:id (.hpcAppGroup tapis))]
     (try-share-app-with-subject
-      tapis sharee app-id nil
-      #(app-permissions/app-unsharing-success app-names jp/tapis-client-name app-id category-id)
-      (partial
-        app-permissions/app-unsharing-failure app-names jp/tapis-client-name app-id category-id))))
+     tapis sharee app-id nil
+     #(app-permissions/app-unsharing-success app-names jp/tapis-client-name app-id category-id)
+     (partial
+      app-permissions/app-unsharing-failure app-names jp/tapis-client-name app-id category-id))))

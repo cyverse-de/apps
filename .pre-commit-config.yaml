@@ -9,13 +9,13 @@ repos:
 
   - repo: local
     hooks:
-#      - id: cljfmt
-#        name: cljfmt
-#        language: system
-#        entry: lein cljfmt check
-#        pass_filenames: false
-#        types: [file]
-#        files: \.clj$
+      - id: cljfmt
+        name: cljfmt
+        language: system
+        entry: lein cljfmt check
+        pass_filenames: false
+        types: [file]
+        files: \.clj$
 
       - id: clj-kondo
         name: clj-kondo

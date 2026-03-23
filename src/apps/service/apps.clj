@@ -15,8 +15,8 @@
   [user params]
   (let [client (get-apps-client user "type=apps")]
     {:categories (transaction
-                   (walk/prewalk (fn [x] (if (or (future? x) (delay? x)) (deref x) x))
-                     (.listAppCategories client params)))}))
+                  (walk/prewalk (fn [x] (if (or (future? x) (delay? x)) (deref x) x))
+                                (.listAppCategories client params)))}))
 
 (defn list-apps-in-category
   [user system-id category-id params]
@@ -360,7 +360,7 @@
 (defn get-admin-app-categories
   [user params]
   (walk/prewalk (fn [x] (if (or (future? x) (delay? x)) (deref x) x))
-    {:categories (.getAdminAppCategories (get-apps-client user) params)}))
+                {:categories (.getAdminAppCategories (get-apps-client user) params)}))
 
 (defn search-admin-app-categories
   [user params]
