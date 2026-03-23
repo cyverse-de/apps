@@ -45,4 +45,3 @@
   (describe
    {:gpu_models [GpuModel]}
    "A list of valid GPU model names."))
-

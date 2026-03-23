@@ -15,7 +15,6 @@
    [apps.routes.schemas.containers
     :refer [DataContainerIdParam
             DataContainerUpdateRequest
-            GpuModel
             GpuModels
             ImageId
             ImageUpdateParams

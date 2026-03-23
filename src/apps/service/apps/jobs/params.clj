@@ -157,12 +157,12 @@
     (merge step-reqs
            (-> requested-step-reqs
                (select-keys [:max_cpu_cores
-                              :min_cpu_cores
-                              :min_gpus
-                              :max_gpus
-                              :min_memory_limit
-                              :min_disk_space
-                              :gpu_models])
+                             :min_cpu_cores
+                             :min_gpus
+                             :max_gpus
+                             :min_memory_limit
+                             :min_disk_space
+                             :gpu_models])
                (sets/rename-keys {:max_cpu_cores    :default_max_cpu_cores
                                   :min_cpu_cores    :default_cpu_cores
                                   :min_gpus         :default_gpus

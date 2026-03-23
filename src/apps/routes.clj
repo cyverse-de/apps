@@ -75,7 +75,7 @@
                   {:name "admin-ontologies", :description "Admin App Ontology endpoints."}
                   {:name "admin-container-images", :description "Admin Tool Docker Images endpoints."}
                   {:name "admin-data-containers", :description "Admin Docker Data Container endpoints."}
-                   {:name "admin-tools", :description "Admin Tool endpoints."}
+                  {:name "admin-tools", :description "Admin Tool endpoints."}
                   {:name "admin-reference-genomes", :description "Admin Reference Genome endpoints."}
                   {:name "admin-tool-requests", :description "Admin Tool Request endpoints."}
                   {:name "admin-oauth", :description "Admin OAuth endpoints."}
