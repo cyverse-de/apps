@@ -9,6 +9,7 @@
    [apps.tools :as t]
    [apps.util.assertions :refer [assert-not-nil]]
    [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure.set :as set]
    [clojure.string :as string]
    [kameleon.uuids :refer [uuid]]
    [korma.core :refer [fields join order select select* where]]
@@ -54,6 +55,18 @@
        (mapcat (partial build-environment-entries config default-values))
        (into {})))
 
+(defn- reconcile-gpu-models
+  "Returns the effective GPU model list for a job step.
+   Filters user-requested models to only those in the tool's allowed set.
+   Uses the filtered user subset if non-empty, otherwise falls back to
+   the tool's full list. Returns nil if the tool has no GPU models."
+  [container requirements]
+  (let [tool-models (set (:gpu_models container))
+        user-models (set (:gpu_models requirements))
+        valid-user  (set/intersection user-models tool-models)]
+    (when (seq tool-models)
+      (vec (if (seq valid-user) valid-user tool-models)))))
+
 (defn- reconcile-container-requirements
   "reconcile submission requirement requests with tool requirements"
   [container requirements]
@@ -64,7 +77,8 @@
              :max_cpu_cores    (resources/get-max-cpus container requirements)
              :min_gpus         (resources/get-required-gpus container requirements)
              :max_gpus         (resources/get-max-gpus container requirements)
-             :min_disk_space   (resources/get-required-disk-space container requirements))
+             :min_disk_space   (resources/get-required-disk-space container requirements)
+             :gpu_models       (reconcile-gpu-models container requirements))
       remove-nil-vals))
 
 (defn- add-container-info
