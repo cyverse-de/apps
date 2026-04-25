@@ -3,8 +3,10 @@
    [apps.persistence.jobs :as jp]
    [apps.util.config :as config]
    [apps.util.conversions :refer [remove-nil-vals]]
+   [apps.util.db :refer [transaction]]
    [apps.util.json :as json-util]
    [cemerick.url :as curl]
+   [clojure.tools.logging :as log]
    [clojure-commons.file-utils :as ft]
    [kameleon.db :as db]
    [kameleon.uuids :as uuids]
@@ -100,17 +102,25 @@
     :wiki_url        (:wiki_url job)
     :parent_id       (:parent_id submission)}))
 
+(defn- store-job-and-step
+  [user job-id job submission]
+  (transaction
+   (try+
+    (store-tapis-job user job-id job submission)
+    (store-job-step job-id job)
+    (catch Object _
+      (log/errorf (:throwable &throw-context) "failed to record TAPIS job %s" job)
+      (throw+)))))
+
 (defn- handle-successful-submission
   [user job-id job submission]
-  (store-tapis-job user job-id job submission)
-  (store-job-step job-id job)
+  (store-job-and-step user job-id job submission)
   (format-job-submission-response job-id submission job))
 
 (defn- handle-failed-submission
   [user job-id job submission]
   (let [job (assoc job :status jp/failed-status)]
-    (store-tapis-job user job-id job submission)
-    (store-job-step job-id job)
+    (store-job-and-step user job-id job submission)
     (format-job-submission-response job-id submission job)))
 
 (defn- send-submission

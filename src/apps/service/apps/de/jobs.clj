@@ -25,12 +25,13 @@
    interfering with the caller."
   [job-id external-id error-message]
   (try
-    (let [end-date (db/now)]
-      (jp/update-job job-id jp/failed-status end-date)
-      (jp/update-job-step job-id external-id jp/failed-status end-date)
-      (jp/add-job-status-update external-id
-                                (or error-message "Job submission failed")
-                                jp/failed-status))
+    (transaction
+     (let [end-date (db/now)]
+       (jp/update-job job-id jp/failed-status end-date)
+       (jp/update-job-step job-id external-id jp/failed-status end-date)
+       (jp/add-job-status-update external-id
+                                 (or error-message "Job submission failed")
+                                 jp/failed-status)))
     (catch Exception e
       (log/error e "failed to record submission failure for job" job-id))))
 

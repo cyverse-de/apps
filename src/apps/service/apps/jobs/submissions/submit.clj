@@ -1,11 +1,10 @@
 (ns apps.service.apps.jobs.submissions.submit
   (:require
-   [apps.clients.permissions :as perms-client]
-   [apps.util.db :refer [transaction]]))
+   [apps.clients.permissions :as perms-client]))
 
 (defn submit-and-register-private-job
+  "Submits a job for execution and calls the `permissions` service to record permissions."
   [apps-client user submission]
-  (transaction
-   (let [job-info (.submitJob apps-client submission)]
-     (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
-     job-info)))
+  (let [job-info (.submitJob apps-client submission)]
+    (perms-client/register-private-analysis (:shortUsername user) (:id job-info))
+    job-info))

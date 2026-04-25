@@ -4,6 +4,7 @@
    [apps.persistence.app-metadata :as ap]
    [apps.persistence.jobs :as jp]
    [apps.service.apps.combined.util :as cu]
+   [apps.util.db :refer [transaction]]
    [apps.util.service :as service]
    [cheshire.core :as cheshire]
    [clojure-commons.file-utils :as ft]
@@ -102,10 +103,11 @@
 
 (defn- record-step-submission
   [job-id step-number external-id]
-  (->>  {:external_id external-id
-         :status      jp/submitted-status
-         :start_date  (db/now)}
-        (jp/update-job-step-number job-id step-number)))
+  (transaction
+   (->>  {:external_id external-id
+          :status      jp/submitted-status
+          :start_date  (db/now)}
+         (jp/update-job-step-number job-id step-number))))
 
 (defn- submit-job-step
   [client {:keys [id] :as job-info} job-step submission]
@@ -114,7 +116,7 @@
         (.submitJobStep client id)
         (record-step-submission id (:step_number job-step)))
    (catch Object _
-     (log/error (:throwable (:throwable &throw-context) "job step submission failed"))
+     (log/error (:throwable &throw-context) "job step submission failed")
      (when-not (boolean (:parent_id submission)) (throw+)))))
 
 (defn submit
@@ -126,7 +128,8 @@
         job-info    (build-job-save-info user (ft/build-result-folder-path submission)
                                          job-id system-id version-id app-info submission)
         job-step    (first job-steps)]
-    (jp/save-multistep-job job-info job-steps submission)
+    (transaction
+     (jp/save-multistep-job job-info job-steps submission))
     (submit-job-step (cu/apps-client-for-job-step clients job-step) job-info job-step submission)
     job-id))
 
