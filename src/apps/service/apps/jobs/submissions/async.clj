@@ -74,18 +74,17 @@
 
 (defn- batch-job-reducer
   [apps-client user {:keys [parent-id parent-status total submission batch-status] :as results} path-map]
-  (transaction
-    ;; re-check for completed parent status before each submission
-   (let [parent-status (if (jp/completed? parent-status)
-                         parent-status
-                         (jp/get-job-status parent-id))
-         job-status    (if (jp/completed? parent-status)
-                         jp/canceled-status
-                         (submit-job-in-batch apps-client user submission total path-map))]
-     (assoc results
-            :parent-status parent-status
-            :total         (inc total)
-            :batch-status  (update batch-status job-status (fnil inc 0))))))
+  ;; re-check for completed parent status before each submission
+  (let [parent-status (if (jp/completed? parent-status)
+                        parent-status
+                        (jp/get-job-status parent-id))
+        job-status    (if (jp/completed? parent-status)
+                        jp/canceled-status
+                        (submit-job-in-batch apps-client user submission total path-map))]
+    (assoc results
+           :parent-status parent-status
+           :total         (inc total)
+           :batch-status  (update batch-status job-status (fnil inc 0)))))
 
 (defn- preprocess-batch-submission
   [submission output-dir parent-id]
