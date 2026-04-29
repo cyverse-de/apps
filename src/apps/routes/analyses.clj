@@ -11,7 +11,7 @@
    [apps.routes.schemas.permission :as perms]
    [apps.service.apps :as apps]
    [apps.user :refer [current-user]]
-   [apps.util.coercions :as coercions :refer [coerce!]]
+   [apps.util.coercions :refer [coerce!]]
    [common-swagger-api.routes]
    [common-swagger-api.schema :refer [defroutes DELETE GET PATCH POST]]
    [common-swagger-api.schema.analyses :as schema]
@@ -30,7 +30,7 @@
     ;; so we have to decode the String filter param and validate it here.
     (ok (coerce! listing-schema/AnalysisList
                  (apps/list-jobs current-user
-                                 (coercions/coerce!
+                                 (coerce!
                                   (assoc AnalysisListingParams listing-schema/OptionalKeyFilter [FilterParams])
                                   (assoc params :filter (json/from-json filter)))))))
   (GET "/stats" []
@@ -42,7 +42,7 @@
       ;; so we have to decode the String filter param and validate it here.
     (ok (coerce! schema/AnalysisStats
                  (apps/list-job-stats current-user
-                                      (coercions/coerce!
+                                      (coerce!
                                        (assoc AnalysisStatParams listing-schema/OptionalKeyFilter [FilterParams])
                                        (assoc params :filter (json/from-json filter)))))))
 

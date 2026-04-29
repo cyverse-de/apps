@@ -1,5 +1,4 @@
 (ns apps.service.apps.de.listings
-  (:refer-clojure :exclude [count max])
   (:require
    [apps.clients.metadata :as metadata-client]
    [apps.clients.permissions :as perms-client]

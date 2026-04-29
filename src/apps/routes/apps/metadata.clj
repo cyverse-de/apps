@@ -5,7 +5,7 @@
    [apps.user :refer [current-user]]
    [apps.util.service :as service]
    [common-swagger-api.routes :refer [get-endpoint-delegate-block]]
-   [common-swagger-api.schema :refer [defroutes GET POST POST PUT undocumented]]
+   [common-swagger-api.schema :refer [defroutes GET POST PUT undocumented]]
    [common-swagger-api.schema.apps :refer [AppIdParam]]
    [common-swagger-api.schema.apps.metadata :as schema]
    [common-swagger-api.schema.metadata :refer [AvuList AvuListRequest SetAvuRequest]]

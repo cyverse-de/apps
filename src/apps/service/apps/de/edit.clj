@@ -42,7 +42,7 @@
    [clojure.set :as set]
    [clojure.string :refer [blank?]]
    [kameleon.uuids :refer [uuidify]]
-   [korma.core :refer [fields order select select* with where with]]
+   [korma.core :refer [fields order select select* with where]]
    [slingshot.slingshot :refer [throw+ try+]]))
 
 (def ^:private copy-prefix "Copy of ")
