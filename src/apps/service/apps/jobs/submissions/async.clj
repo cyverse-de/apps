@@ -6,7 +6,6 @@
    [apps.service.apps.jobs.submissions.submit :as submit]
    [apps.service.apps.jobs.util :as util]
    [apps.util.config :as config]
-   [apps.util.db :refer [transaction]]
    [clojure-commons.core :refer [remove-nil-values]]
    [clojure-commons.exception-util :as exception-util]
    [clojure-commons.file-utils :as ft]

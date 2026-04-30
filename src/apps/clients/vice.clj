@@ -1,8 +1,8 @@
 (ns apps.clients.vice
-  (:require [cemerick.url :as curl]
-            [cheshire.core :as cheshire]
-            [clj-http.client :as http]
-            [apps.util.config :as cfg]))
+  (:require
+   [apps.util.config :as cfg]
+   [cemerick.url :as curl]
+   [clj-http.client :as http]))
 
 (defn- app-exposer-url
   [& components]
@@ -18,4 +18,13 @@
   [job]
   (http/post (app-exposer-url "vice" "launch")
              {:content-type :json
-              :body         (cheshire/encode job)}))
+              :form-params  job}))
+
+(defn update-permissions
+  "Pushes an updated list of allowed users to app-exposer, which routes the update to the operator managing the
+   analysis."
+  [analysis-id allowed-users]
+  (http/put (app-exposer-url "vice" analysis-id "permissions")
+            {:content-type :json
+             :form-params  {:allowedUsers allowed-users}
+             :as           :json}))
