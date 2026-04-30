@@ -688,6 +688,11 @@
               (sql/where {:job_id job-id})
               (sql/order :step_number)))
 
+(defn has-interactive-steps?
+  "Returns true if any step in the job with the provided ID has interactive steps."
+  [job-id]
+  (some (comp (partial = "Interactive") :job_type) (list-job-steps job-id)))
+
 (defn- related-job-ids-query
   "Returns a query that can be used to obtain the ID and parent ID of every job in the database whose ID or parent ID is
   in the given set of job IDs. This helps to force the representative job steps query to narrow its result set down
