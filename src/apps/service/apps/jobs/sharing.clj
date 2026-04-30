@@ -4,10 +4,12 @@
    [apps.clients.data-info :as data-info]
    [apps.clients.notifications :as cn]
    [apps.clients.permissions :as perms-client]
+   [apps.clients.vice :as vice]
    [apps.persistence.jobs :as jp]
    [apps.service.apps-client :refer [get-apps-client-for-username]]
    [apps.service.apps.jobs.params :as job-params]
    [apps.service.apps.jobs.permissions :as job-permissions]
+   [apps.user :refer [append-username-suffix]]
    [apps.util.service :as service]
    [clojure-commons.core :refer [remove-nil-values]]
    [clojure-commons.error-codes :as ce]
@@ -142,6 +144,20 @@
   [f job-id]
   (doall (remove nil? (mapcat f (jp/list-child-jobs job-id)))))
 
+(defn- push-vice-permissions
+  "Queries the permissions service for all users with access to the analysis, then pushes the full allowed-users list to
+   the operator via app-exposer. Only applies to interactive (VICE) analyses. Failures are logged at error level but
+   don't block the share/unshare operation."
+  [job-id {job-type-name :job_type_name}]
+  (when (= "interactive" job-type-name)
+    (try+
+     (some->> (seq (mapv append-username-suffix (perms-client/get-analysis-users job-id)))
+              (vice/update-permissions job-id))
+     (catch (fn [obj] (and (:status obj) (not (< 200 (:status obj) 299)))) {:keys [status body]}
+       (log/error "failed to push VICE permissions for analysis" job-id "status:" status "body:" body))
+     (catch Object _
+       (log/error (:throwable &throw-context) "error pushing VICE permissions for analysis" job-id)))))
+
 (defn- list-job-inputs
   [apps-client {system-id :system_id app-id :app_id app-version-id :app_version_id :as job}]
   (->> (mapv keyword (.getAppInputIds apps-client system-id app-id app-version-id))
@@ -175,6 +191,7 @@
            input-share-errs       (process-job-inputs (partial share-input-file sharer sharee) apps-client job)
            output-share-err-msg   (share-output-folder sharer sharee job)
            app-share-err-msg      (share-app-for-job apps-client sharer sharee job-id job)]
+       (push-vice-permissions job-id job)
        (update-fn (format "shared job ID %s with %s" job-id sharee))
        (job-sharing-success job-id
                             job
@@ -291,6 +308,7 @@
      (let [child-input-unshare-errs (process-child-jobs (partial unshare-child-job apps-client sharer sharee) job-id)
            input-unshare-errs       (process-job-inputs (partial unshare-input-file sharer sharee) apps-client job)
            output-unshare-err-msg   (unshare-output-folder sharer sharee job)]
+       (push-vice-permissions job-id job)
        (update-fn (format "unshared job ID %s with %s" job-id sharee))
        (job-unsharing-success job-id
                               job

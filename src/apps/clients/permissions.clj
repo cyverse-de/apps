@@ -189,3 +189,12 @@
 
 (def get-public-app-ids (partial get-public-resource-ids "app"))
 (def get-public-tool-ids (partial get-public-resource-ids "tool"))
+
+(defn- get-resource-users
+  "Lists users with any level of access to a resource."
+  [resource-type resource-name]
+  (->> (pc/list-resource-permissions (client) resource-type resource-name true)
+       :permissions
+       (mapv (comp :subject_id :subject))))
+
+(def get-analysis-users (partial get-resource-users (rt-analysis)))
