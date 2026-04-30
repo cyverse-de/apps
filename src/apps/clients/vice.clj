@@ -25,7 +25,6 @@
    analysis."
   [analysis-id allowed-users]
   (http/put (app-exposer-url "vice" analysis-id "permissions")
-            {:content-type     :json
-             :form-params      {:allowedUsers allowed-users}
-             :throw-exceptions :false
-             :as               :json}))
+            {:content-type :json
+             :form-params  {:allowedUsers allowed-users}
+             :as           :json}))

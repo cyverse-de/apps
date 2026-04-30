@@ -153,7 +153,7 @@
    (when (jp/has-interactive-steps? job-id)
      (some->> (seq (mapv append-username-suffix (perms-client/get-analysis-users job-id)))
               (vice/update-permissions job-id)))
-   (catch (fn [{:keys [status]}] (and status (not (< 200 status 299)))) {:keys [status body]}
+   (catch (fn [{:keys [status]}] (and status (<= 400 status))) {:keys [status body]}
      (log/error "failed to push VICE permissions for analysis" job-id "status:" status "body:" body))
    (catch Object _
      (log/error (:throwable &throw-context) "error pushing VICE permissions for analysis" job-id))))

@@ -689,7 +689,7 @@
               (sql/order :step_number)))
 
 (defn has-interactive-steps?
-  "Returns true if any step in the job with the provided ID has interactive steps."
+  "Returns true if any step in the job with the provided ID is interactive."
   [job-id]
   (some (comp (partial = "Interactive") :job_type) (list-job-steps job-id)))
 
