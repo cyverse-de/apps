@@ -335,12 +335,9 @@
     (cxu/bad-request (str "unrecognized sort field: " (name field)))))
 
 (defn- job-base-query
-  "The base query used for retrieving job information from the database. The
-   operators table is left-joined so each job carries the base URL of the
-   operator it was launched on (nil for jobs with no operator_id)."
+  "The base query used for retrieving job information from the database."
   []
   (-> (sql/select* [:job_listings :j])
-      (sql/join :left [:operators :o] {:o.id :j.operator_id})
       (sql/fields :j.app_description
                   :j.system_id
                   :j.app_id
@@ -360,12 +357,10 @@
                   :j.parent_id
                   :j.is_batch
                   :j.notify
-                  [:o.base_url :operator_base_url])))
+                  :j.operator_base_url)))
 
 (defn- hsql-job-base-query
-  "The HoneySQL version of the base query used for retrieving job information from the database.
-   Like job-base-query, it left-joins operators so each job carries the base URL of the operator
-   it was launched on (nil for jobs with no operator_id)."
+  "The HoneySQL version of the base query used for retrieving job information from the database."
   []
   (-> (h/select :j.app_description
                 :j.system_id
@@ -386,9 +381,8 @@
                 :j.parent_id
                 :j.is_batch
                 :j.notify
-                [:o.base_url :operator_base_url])
-      (h/from [:job_listings :j])
-      (h/left-join [:operators :o] [:= :o.id :j.operator_id])))
+                :j.operator_base_url)
+      (h/from [:job_listings :j])))
 
 (defn- job-step-base-query
   "The base query used for retrieving job step information from the database."
@@ -483,7 +477,7 @@
                  :j.parent_id
                  :j.is_batch
                  :j.notify
-                 :o.base_url)
+                 :j.operator_base_url)
       (sql/where (exists (sql/subselect :job_steps (sql/where {:job_id :j.id :external_id [:in external-ids]}))))
       (sql/select)))
 
