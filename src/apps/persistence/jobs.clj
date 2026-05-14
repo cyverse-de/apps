@@ -363,7 +363,9 @@
                   [:o.base_url :operator_base_url])))
 
 (defn- hsql-job-base-query
-  "The HoneySQL version of the base query used for retrieving job information from the database."
+  "The HoneySQL version of the base query used for retrieving job information from the database.
+   Like job-base-query, it left-joins operators so each job carries the base URL of the operator
+   it was launched on (nil for jobs with no operator_id)."
   []
   (-> (h/select :j.app_description
                 :j.system_id
