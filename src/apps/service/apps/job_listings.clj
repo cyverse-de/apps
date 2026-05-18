@@ -66,9 +66,14 @@
     :batch_status    (when (:is_batch job) (format-batch-status id))}))
 
 (defn- interactive-urls
-  [{user-id :user_id :as job} rep-steps]
-  (let [interactive? (fn [step] (= (:job_type step) jp/interactive-job-type))
-        get-url      (fn [step] (str (interapps-url (url (config/interapps-base)) user-id (:external_id step))))]
+  [{user-id :user_id operator-base-url :operator_base_url :as job} rep-steps]
+  ;; Use the base URL of the operator the job was launched on so the URL
+  ;; points at the cluster actually running the analysis. Jobs with no
+  ;; operator_id (legacy / pre-operator launches) fall back to the static
+  ;; interactive-apps base URL.
+  (let [base         (url (or operator-base-url (config/interapps-base)))
+        interactive? (fn [step] (= (:job_type step) jp/interactive-job-type))
+        get-url      (fn [step] (str (interapps-url base user-id (:external_id step))))]
     (when-not (:is_batch job)
       (seq (map get-url (filter interactive? (rep-steps (:id job))))))))
 

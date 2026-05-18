@@ -356,7 +356,8 @@
                   :j.job_type
                   :j.parent_id
                   :j.is_batch
-                  :j.notify)))
+                  :j.notify
+                  :j.operator_base_url)))
 
 (defn- hsql-job-base-query
   "The HoneySQL version of the base query used for retrieving job information from the database."
@@ -379,7 +380,8 @@
                 :j.job_type
                 :j.parent_id
                 :j.is_batch
-                :j.notify)
+                :j.notify
+                :j.operator_base_url)
       (h/from [:job_listings :j])))
 
 (defn- job-step-base-query
@@ -474,7 +476,8 @@
                  :j.job_type
                  :j.parent_id
                  :j.is_batch
-                 :j.notify)
+                 :j.notify
+                 :j.operator_base_url)
       (sql/where (exists (sql/subselect :job_steps (sql/where {:job_id :j.id :external_id [:in external-ids]}))))
       (sql/select)))
 

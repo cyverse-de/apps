@@ -106,11 +106,18 @@
    (send-job-status-update username email-address job-info)))
 
 (defn send-interactive-job-status-update
-  "Sends notification of an interactive job status update to the user."
-  ([username email-address {status :status user-id :user_id :as job-info} {external-id :external_id}]
-   (if-not (jp/completed? status)
-     (let [access-url (str (interapps-url (curl/url (config/interapps-base)) user-id external-id))]
-       (send-job-status-update username email-address (assoc job-info :access_url access-url)))
+  "Sends notification of an interactive job status update to the user, attaching
+   the analysis access URL so the cluster running it is reachable from the
+   notification. job-info is the formatted job, whose :interactive_urls were
+   already built against the correct per-operator base URL."
+  ([username email-address {status :status :as job-info} _job-step-info]
+   ;; Attach :access_url only for a still-running job that actually has an
+   ;; interactive URL. Completed jobs get no URL (the analysis is gone), and a
+   ;; job with no :interactive_urls (no interactive steps) simply has none to
+   ;; attach -- in both cases the plain status update is sent.
+   (if-let [access-url (and (not (jp/completed? status))
+                            (first (:interactive_urls job-info)))]
+     (send-job-status-update username email-address (assoc job-info :access_url access-url))
      (send-job-status-update username email-address job-info)))
   ([{username :shortUsername email-address :email} job-info job-step-info]
    (send-interactive-job-status-update username email-address job-info job-step-info)))
