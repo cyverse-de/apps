@@ -210,6 +210,7 @@
   "Sets the active ontology-version for use in apps hierarchy endpoints."
   [{:keys [username]} ontology-version]
   (let [version-details (db-categories/add-hierarchy-version username ontology-version)]
+    (db-categories/invalidate-hierarchy-version-cache)
     (assoc version-details :applied_by username)))
 
 (defn delete-ontology
