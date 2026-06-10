@@ -1,5 +1,6 @@
 (ns apps.clients.permissions
   (:require [apps.clients.iplant-groups :as ipg]
+            [apps.util.cache :as cache]
             [apps.util.config :as config]
             [apps.util.service :as service]
             [clojure.tools.logging :as log]
@@ -116,6 +117,24 @@
   [tool-id]
   (pc/delete-resource (client) tool-id (rt-tool)))
 
+(defn- get-public-resource-ids [resource-type]
+  (->> (pc/get-abbreviated-subject-permissions-for-resource-type
+        (client) "group" (ipg/grouper-user-group-id) resource-type false)
+       :permissions
+       (map (comp uuidify :resource_name))
+       set))
+
+(def ^:private public-app-ids-cache
+  "60-second TTL cache for the set of public app IDs."
+  (cache/ttl-cache #(get-public-resource-ids "app") 60000))
+
+(def ^:private public-tool-ids-cache
+  "60-second TTL cache for the set of public tool IDs."
+  (cache/ttl-cache #(get-public-resource-ids "tool") 60000))
+
+(def get-public-app-ids (:lookup public-app-ids-cache))
+(def get-public-tool-ids (:lookup public-tool-ids-cache))
+
 (defn- revoke-app-user-permission
   "Revokes a user's permission to access an app, ignoring cases where the user didn't already have access."
   [user app-id]
@@ -126,11 +145,13 @@
 (defn make-app-public
   [user app-id]
   (revoke-app-user-permission user app-id)
-  (pc/grant-permission (client) (rt-app) app-id "group" (ipg/grouper-user-group-id) "read"))
+  (pc/grant-permission (client) (rt-app) app-id "group" (ipg/grouper-user-group-id) "read")
+  ((:invalidate public-app-ids-cache)))
 
 (defn register-public-tool
   [tool-id]
-  (pc/grant-permission (client) (rt-tool) tool-id "group" (ipg/grouper-user-group-id) "read"))
+  (pc/grant-permission (client) (rt-tool) tool-id "group" (ipg/grouper-user-group-id) "read")
+  ((:invalidate public-tool-ids-cache)))
 
 (defn make-tool-public
   [tool-id]
@@ -179,16 +200,6 @@
 (def unshare-analysis (partial unshare-resource (rt-analysis)))
 (def share-tool (partial share-resource (rt-tool)))
 (def unshare-tool (partial unshare-resource (rt-tool)))
-
-(defn- get-public-resource-ids [resource-type]
-  (->> (pc/get-abbreviated-subject-permissions-for-resource-type
-        (client) "group" (ipg/grouper-user-group-id) resource-type false)
-       :permissions
-       (map (comp uuidify :resource_name))
-       set))
-
-(def get-public-app-ids (partial get-public-resource-ids "app"))
-(def get-public-tool-ids (partial get-public-resource-ids "tool"))
 
 (defn- get-resource-users
   "Lists users with any level of access to a resource."
