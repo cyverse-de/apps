@@ -827,7 +827,7 @@
     (if (empty? requests)
       []
       (let [{:keys [username shortUsername]} user
-            app-ids         (distinct (map :app_id requests))
+            app-ids         (vec (distinct (map :app_id requests)))
 
             ;; Phase A: Fire I/O that only depends on app-ids immediately.
             ;; These run in parallel with the version-ids-map query below.

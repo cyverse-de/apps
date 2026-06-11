@@ -921,9 +921,10 @@
   (when (seq app-ids)
     (let [rows (-> (sql/select* [:jobs :j])
                    (sql/fields :j.app_id
-                               [(sql/raw "COUNT(j.id) FILTER (WHERE j.status = 'Completed' AND NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id))")
+                               [(sql/raw (str "COUNT(j.id) FILTER (WHERE j.status = '" completed-status "'"
+                                              " AND NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id))"))
                                 :job_count_completed]
-                               [(sql/raw "MAX(j.end_date) FILTER (WHERE j.status = 'Completed')")
+                               [(sql/raw (str "MAX(j.end_date) FILTER (WHERE j.status = '" completed-status "')"))
                                 :job_last_completed])
                    (sql/where {:j.app_id [:in app-ids]})
                    (db/add-date-limits-where-clause params)
