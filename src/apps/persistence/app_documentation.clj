@@ -3,9 +3,17 @@
             [korma.core :as sql]))
 
 (defn get-app-references
-  "Retrieves references for the given app ID."
+  "Retrieves references for the given app version ID."
   [app-version-id]
   (sql/select app_references (sql/where {:app_version_id app-version-id})))
+
+(defn get-app-references-for-versions
+  "Retrieves references for multiple app version IDs.
+   Returns a map of version-id -> [reference-row ...]."
+  [version-ids]
+  (when (seq version-ids)
+    (group-by :app_version_id
+              (sql/select app_references (sql/where {:app_version_id [:in version-ids]})))))
 
 (defn get-documentation
   "Retrieves documentation details for the given app ID."
@@ -26,6 +34,15 @@
                            [:creators.username :created_by]
                            [:editors.username :modified_by])
                (sql/where {:app_version_id app-version-id}))))
+
+(defn get-version-ids-with-docs
+  "Returns the set of version IDs (from the given collection) that have documentation."
+  [version-ids]
+  (when (seq version-ids)
+    (set (map :app_version_id
+              (sql/select :app_documentation
+                          (sql/fields :app_version_id)
+                          (sql/where {:app_version_id [:in version-ids]}))))))
 
 (defn add-documentation
   "Inserts an App's documentation into the database."

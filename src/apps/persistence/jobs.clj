@@ -913,3 +913,24 @@
   "Sets a timeout for obtaining locks in the database."
   []
   (sql/exec-raw ["SET LOCAL lock_timeout='5s'" []]))
+
+(defn get-public-job-stats-batch
+  "Fetches public job stats (job_count_completed and job_last_completed) for multiple app IDs.
+   Returns a map of app-id-string -> {:job_count_completed N :job_last_completed timestamp-or-nil}."
+  [app-ids params]
+  (when (seq app-ids)
+    (let [rows (-> (sql/select* [:jobs :j])
+                   (sql/fields :j.app_id
+                               [(sql/raw "COUNT(j.id) FILTER (WHERE j.status = 'Completed' AND NOT EXISTS (SELECT parent_id FROM jobs jp WHERE jp.parent_id = j.id))")
+                                :job_count_completed]
+                               [(sql/raw "MAX(j.end_date) FILTER (WHERE j.status = 'Completed')")
+                                :job_last_completed])
+                   (sql/where {:j.app_id [:in app-ids]})
+                   (db/add-date-limits-where-clause params)
+                   (sql/group :j.app_id)
+                   sql/select)]
+      (into {}
+            (map (fn [{:keys [app_id] :as row}]
+                   [app_id (merge {:job_count_completed 0}
+                                  (dissoc row :app_id))]))
+            rows))))

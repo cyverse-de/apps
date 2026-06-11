@@ -156,6 +156,25 @@
               (sql/where {:app_category_app.app_id app-id
                           :is_public true})))
 
+(defn get-groups-for-apps
+  "Retrieves a listing of all groups each of the given apps is listed under.
+   Returns a map of app-id -> [{:id ... :name ...} ...]."
+  [app-ids]
+  (when (seq app-ids)
+    (let [rows (sql/select entities/app_category_listing
+                           (sql/fields :id
+                                       :name
+                                       [:app_category_app.app_id :app_id])
+                           (sql/join :app_category_app
+                                     (= :app_category_app.app_category_id
+                                        :app_category_listing.id))
+                           (sql/where {:app_category_app.app_id [:in app-ids]
+                                       :is_public true}))]
+      (into {}
+            (map (fn [[app-id groups]]
+                   [app-id (mapv #(select-keys % [:id :name]) groups)]))
+            (group-by :app_id rows)))))
+
 (defn get-suggested-groups-for-app
   "Retrieves a listing of all groups the integrator recommneds for the app."
   [app-id]
@@ -166,3 +185,21 @@
                         (= :app_categories.id
                            :suggested_groups.app_category_id))
               (sql/where {:suggested_groups.app_id app-id})))
+
+(defn get-suggested-groups-for-apps
+  "Retrieves a listing of all suggested groups for the given apps.
+   Returns a map of app-id -> [{:id ... :name ...} ...]."
+  [app-ids]
+  (when (seq app-ids)
+    (let [rows (sql/select :suggested_groups
+                           (sql/fields :app_categories.id
+                                       :app_categories.name
+                                       [:suggested_groups.app_id :app_id])
+                           (sql/join :app_categories
+                                     (= :app_categories.id
+                                        :suggested_groups.app_category_id))
+                           (sql/where {:suggested_groups.app_id [:in app-ids]}))]
+      (into {}
+            (map (fn [[app-id groups]]
+                   [app-id (mapv #(select-keys % [:id :name]) groups)]))
+            (group-by :app_id rows)))))

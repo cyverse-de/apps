@@ -414,6 +414,33 @@
          sql/select
          first))))
 
+(defn get-app-version-details-batch
+  "Retrieves details for multiple apps by version ID.
+   Returns a map of version-id -> details-row."
+  [user-id workspace-root-group-id favorites-group-index version-ids]
+  (when (seq version-ids)
+    (let [rating-avg-subselect (sql/subselect
+                                entities/ratings
+                                (sql/fields (sql/raw "CAST(COALESCE(AVG(rating), 0.0) AS DOUBLE PRECISION) AS average_rating"))
+                                (sql/where {:ratings.app_id
+                                            :app_versions_listing.id}))
+          rating-total-subselect (sql/subselect
+                                  entities/ratings
+                                  (sql/aggregate (count :ratings.rating) :total_ratings)
+                                  (sql/where {:ratings.app_id
+                                              :app_versions_listing.id}))
+          rows (-> (sql/select* :app_versions_listing)
+                   (sql/fields :*
+                               [rating-avg-subselect :average_rating]
+                               [rating-total-subselect :total_ratings])
+                   (add-app-versions-listing-is-favorite-field
+                    workspace-root-group-id
+                    favorites-group-index)
+                   (add-app-version-listing-ratings-fields user-id)
+                   (sql/where {:version_id [:in version-ids]})
+                   sql/select)]
+      (into {} (map (juxt :version_id identity) rows)))))
+
 (defn- add-deleted-and-orphaned-where-clause
   [query public-app-ids]
   (sql/where query
