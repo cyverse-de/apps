@@ -1,6 +1,7 @@
 (ns apps.clients.metadata
   (:require [apps.persistence.categories :as db-categories]
             [apps.util.config :as config]
+            [kameleon.uuids :refer [uuidify]]
             [metadata-client.core :as metadata-client]
             [slingshot.slingshot :refer [throw+]]))
 
@@ -59,6 +60,26 @@
                                       attrs
                                       app-target-type
                                       app-id))
+
+(defn filter-hierarchies-batch
+  "Fetches ontology hierarchy classifications for multiple apps in one request.
+   Returns a map of app-id -> {:hierarchies [...]}."
+  [username app-ids attrs]
+  (let [ontology-version (get-active-hierarchy-version :validate false)]
+    (if (and ontology-version (seq app-ids))
+      #_:clj-kondo/ignore
+      (let [result (metadata-client/filter-hierarchies-batch
+                    (config/metadata-client)
+                    username
+                    ontology-version
+                    attrs
+                    [app-target-type]
+                    app-ids)]
+        ;; result is {:targets [{:id UUID :hierarchies [...]} ...]}
+        (into {} (map (fn [{:keys [id hierarchies]}]
+                        [(uuidify id) {:hierarchies hierarchies}]))
+              (:targets result)))
+      {})))
 
 (defn filter-targets-by-ontology-search
   [username category-attrs search-term app-ids & {:keys [validate] :or {validate true}}]

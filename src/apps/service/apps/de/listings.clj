@@ -8,7 +8,9 @@
     :refer [get-app-category
             get-app-group-hierarchy
             get-groups-for-app
+            get-groups-for-apps
             get-suggested-groups-for-app
+            get-suggested-groups-for-apps
             get-visible-workspaces
             search-app-groups]]
    [apps.persistence.app-listing
@@ -22,6 +24,7 @@
             get-all-app-ids
             get-app-extra-info
             get-app-version-details
+            get-app-version-details-batch
             get-apps-for-admin
             get-apps-for-user
             get-apps-in-group-for-user
@@ -541,9 +544,16 @@
      :apps  apps}))
 
 (defn- format-wiki-url
-  "CORE-6510: Remove the wiki_url from app details responses if the App has documentation saved."
-  [{:keys [id wiki_url] :as app}]
-  (assoc app :wiki_url (if (docs/has-docs? id) nil wiki_url)))
+  "CORE-6510: Remove the wiki_url from app details responses if the App has documentation saved.
+   Accepts an optional has-docs-set for batched use; when provided, checks set membership
+   by version-id instead of querying the database."
+  ([app]
+   (format-wiki-url app nil))
+  ([{:keys [id version_id wiki_url] :as app} has-docs-set]
+   (let [has-docs? (if has-docs-set
+                     (contains? has-docs-set version_id)
+                     (docs/has-docs? id))]
+     (assoc app :wiki_url (if has-docs? nil wiki_url)))))
 
 (defn- format-app-hierarchies
   [{app-id :id :as app} username]
@@ -569,10 +579,10 @@
     nil))
 
 (defn- format-app-documentation
-  [app-id version-id username admin?]
+  [app-id version-id user admin?]
   (when admin?
     (try+
-     (docs/get-app-version-docs username app-id version-id admin?)
+     (docs/get-app-version-docs user app-id version-id admin?)
      (catch [:type :clojure-commons.exception/not-found] _ nil))))
 
 (defn- format-tool-image [{:keys [image_name image_tag image_url deprecated]}]
@@ -587,41 +597,66 @@
          :container {:image (format-tool-image tool)}))
 
 (defn- format-app-details
-  "Formats information for the get-app-details service."
-  [{username :shortUsername :as user} details tools app-references admin?]
-  (let [{app-id :id version-id :version_id} details]
-    (-> details
-        (select-keys [:id
-                      :wiki_url
-                      :version
-                      :version_id
-                      :deleted
-                      :disabled
-                      :edited_date
-                      :integration_date
-                      :integrator_name
-                      :integrator_email
-                      :step_count
-                      :tool_count
-                      :external_app_count
-                      :task_count
-                      :overall_job_type
-                      :average_rating
-                      :total_ratings
-                      :is_favorite])
-        (assoc :name                 (:name details "")
-               :description          (:description details "")
-               :versions             (amp/list-app-versions app-id admin?)
-               :references           (map :reference_text app-references)
-               :tools                (map format-app-tool tools)
-               :job_stats            (format-app-details-job-stats (str app-id) nil admin?)
-               :extra                (format-app-extra-info version-id admin?)
-               :documentation        (format-app-documentation app-id version-id user admin?)
-               :categories           (get-groups-for-app app-id)
-               :suggested_categories (get-suggested-groups-for-app app-id)
-               :system_id            c/system-id)
-        (format-app-hierarchies username)
-        format-wiki-url)))
+  "Formats information for the get-app-details service.
+   Accepts an optional `prefetched` map for batched use. When keys are present in the map,
+   they are used instead of performing per-app I/O. Supported keys:
+     :versions-map      - {app-id -> [{:version ... :version_id ...} ...]}
+     :job-stats-map     - {app-id-string -> {:job_count_completed N ...}}
+     :groups-map        - {app-id -> [{:id :name} ...]}
+     :suggested-map     - {app-id -> [{:id :name} ...]}
+     :hierarchies-map   - {app-id -> {:hierarchies [...]}}
+     :has-docs-set      - #{version-id ...}  (for format-wiki-url)"
+  ([user details tools app-references admin?]
+   (format-app-details user details tools app-references admin? nil))
+  ([{username :shortUsername :as user} details tools app-references admin?
+    {:keys [versions-map job-stats-map groups-map suggested-map hierarchies-map has-docs-set]}]
+   (let [{app-id :id version-id :version_id} details]
+     (-> details
+         (select-keys [:id
+                       :wiki_url
+                       :version
+                       :version_id
+                       :deleted
+                       :disabled
+                       :edited_date
+                       :integration_date
+                       :integrator_name
+                       :integrator_email
+                       :step_count
+                       :tool_count
+                       :external_app_count
+                       :task_count
+                       :overall_job_type
+                       :average_rating
+                       :total_ratings
+                       :is_favorite])
+         (assoc :name                 (:name details "")
+                :description          (:description details "")
+                :versions             (if versions-map
+                                        (mapv #(select-keys % [:version :version_id])
+                                              (get versions-map app-id []))
+                                        (amp/list-app-versions app-id admin?))
+                :references           (map :reference_text app-references)
+                :tools                (map format-app-tool tools)
+                :job_stats            (if job-stats-map
+                                        (remove-nil-vals
+                                         (or (get job-stats-map (str app-id))
+                                             {:job_count_completed 0}))
+                                        (format-app-details-job-stats (str app-id) nil admin?))
+                :extra                (format-app-extra-info version-id admin?)
+                :documentation        (format-app-documentation app-id version-id user admin?)
+                :categories           (if groups-map
+                                        (get groups-map app-id [])
+                                        (get-groups-for-app app-id))
+                :suggested_categories (if suggested-map
+                                        (get suggested-map app-id [])
+                                        (get-suggested-groups-for-app app-id))
+                :system_id            c/system-id)
+         ((fn [app]
+            (if hierarchies-map
+              (merge app (get hierarchies-map app-id {:hierarchies []}))
+              (format-app-hierarchies app username))))
+         (format-wiki-url has-docs-set)))))
 
 ;; This function was split from `get-app-details` to provide a way for administrative endpoints to skip permission
 ;; checks without including the app stat information.
@@ -768,17 +803,80 @@
        (filter (comp amp/param-ds-input-types :type))
        (mapv #(str (:step_id %) "_" (:id %)))))
 
-(defn- format-app-publication-request
-  [user {app-id :app_id :keys [id requestor]}]
-  {:id        id
-   :app       (get-app-details* user app-id false)
-   :requestor requestor})
+(defn- format-app-publication-request-batched
+  "Formats a single publication request using pre-fetched batch data.
+   Delegates to format-app-details with pre-fetched maps to avoid duplicating formatting logic."
+  [user format-app details-map tools-map refs-map prefetched
+   {app-id :app_id :keys [id requestor]}]
+  (let [details (get details-map app-id)
+        version-id (:version_id details)
+        tools   (get tools-map version-id [])
+        refs    (get refs-map version-id [])]
+    {:id        id
+     :app       (when details
+                  (->> (format-app-details user details tools refs false prefetched)
+                       format-app
+                       (remove-nil-vals)))
+     :requestor requestor}))
 
 (defn list-app-publication-requests
-  "Lists app publication requests, optionally filtering the listing by app ID or requestor."
+  "Lists app publication requests, optionally filtering the listing by app ID or requestor.
+   Uses batched queries to avoid the N+1 problem."
   [user {app-id :app_id include-completed :include_completed :keys [requestor]}]
-  (mapv (partial format-app-publication-request user)
-        (amp/list-app-publication-requests app-id requestor include-completed)))
+  (let [requests (amp/list-app-publication-requests app-id requestor include-completed)]
+    (if (empty? requests)
+      []
+      (let [{:keys [username shortUsername]} user
+            app-ids         (vec (distinct (map :app_id requests)))
+
+            ;; Phase A: Fire I/O that only depends on app-ids immediately.
+            ;; These run in parallel with the version-ids-map query below.
+            workspace       (get-workspace username)
+            public-app-ids  (future (perms-client/get-public-app-ids))
+            perms           (future (perms-client/load-app-permissions shortUsername app-ids))
+            hierarchies-map (future (metadata-client/filter-hierarchies-batch
+                                     shortUsername
+                                     app-ids
+                                     (workspace-metadata-category-attrs)))
+            versions-map    (future (amp/list-app-versions-for-apps app-ids))
+            groups-map      (future (get-groups-for-apps app-ids))
+            suggested-map   (future (get-suggested-groups-for-apps app-ids))
+            job-stats-map   (future (jobs-db/get-public-job-stats-batch (map str app-ids) nil))
+
+            ;; Phase B: Resolve version-ids (one DB query); then fire I/O that depends on them.
+            version-ids-map (amp/get-app-latest-versions app-ids)
+            version-ids     (into [] (comp (filter some?) (distinct)) (vals version-ids-map))
+
+            details-map     (future (get-app-version-details-batch
+                                     (:user_id workspace)
+                                     (:root_category_id workspace)
+                                     (workspace-favorites-app-category-index)
+                                     version-ids))
+            tools-map       (future (amp/get-app-version-tools-batch version-ids))
+            refs-map        (future (app-docs-db/get-app-references-for-versions version-ids))
+            has-docs-set    (future (app-docs-db/get-version-ids-with-docs version-ids))
+
+            ;; Phase C: Deref all futures and assemble results.
+            ;; Re-key details-map by app-id for easier lookup
+            details-by-app  (into {}
+                                  (map (fn [[_ details]]
+                                         [(:id details) details]))
+                                  (or @details-map {}))
+
+            ;; Build the listing formatter (batches beta/certified/limits internally)
+            format-app      (get-app-listing-formatter user false @perms app-ids @public-app-ids)
+
+            ;; Assemble the pre-fetched map for format-app-details
+            prefetched      {:versions-map    @versions-map
+                             :job-stats-map   @job-stats-map
+                             :groups-map      @groups-map
+                             :suggested-map   @suggested-map
+                             :hierarchies-map @hierarchies-map
+                             :has-docs-set    @has-docs-set}]
+
+        (mapv (partial format-app-publication-request-batched
+                       user format-app details-by-app @tools-map @refs-map prefetched)
+              requests)))))
 
 (defn list-tools-in-untrusted-registries
   "Lists tools in untrusted registries that are in use by an app."
