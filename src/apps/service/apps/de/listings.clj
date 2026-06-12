@@ -859,7 +859,7 @@
             ;; Phase C: Deref all futures and assemble results.
             ;; Re-key details-map by app-id for easier lookup
             details-by-app  (into {}
-                                  (map (fn [[vid details]]
+                                  (map (fn [[_ details]]
                                          [(:id details) details]))
                                   (or @details-map {}))
 

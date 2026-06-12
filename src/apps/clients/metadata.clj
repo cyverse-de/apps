@@ -67,6 +67,7 @@
   [username app-ids attrs]
   (let [ontology-version (get-active-hierarchy-version :validate false)]
     (if (and ontology-version (seq app-ids))
+      #_:clj-kondo/ignore
       (let [result (metadata-client/filter-hierarchies-batch
                     (config/metadata-client)
                     username
