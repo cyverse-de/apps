@@ -611,52 +611,51 @@
   ([{username :shortUsername :as user} details tools app-references admin?
     {:keys [versions-map job-stats-map groups-map suggested-map hierarchies-map has-docs-set]}]
    (let [{app-id :id version-id :version_id} details]
-     (-> details
-         (select-keys [:id
-                       :wiki_url
-                       :version
-                       :version_id
-                       :deleted
-                       :disabled
-                       :edited_date
-                       :integration_date
-                       :integrator_name
-                       :integrator_email
-                       :step_count
-                       :tool_count
-                       :external_app_count
-                       :task_count
-                       :overall_job_type
-                       :average_rating
-                       :total_ratings
-                       :is_favorite])
-         (assoc :name                 (:name details "")
-                :description          (:description details "")
-                :versions             (if versions-map
-                                        (mapv #(select-keys % [:version :version_id])
-                                              (get versions-map app-id []))
-                                        (amp/list-app-versions app-id admin?))
-                :references           (map :reference_text app-references)
-                :tools                (map format-app-tool tools)
-                :job_stats            (if job-stats-map
-                                        (remove-nil-vals
-                                         (or (get job-stats-map (str app-id))
-                                             {:job_count_completed 0}))
-                                        (format-app-details-job-stats (str app-id) nil admin?))
-                :extra                (format-app-extra-info version-id admin?)
-                :documentation        (format-app-documentation app-id version-id user admin?)
-                :categories           (if groups-map
-                                        (get groups-map app-id [])
-                                        (get-groups-for-app app-id))
-                :suggested_categories (if suggested-map
-                                        (get suggested-map app-id [])
-                                        (get-suggested-groups-for-app app-id))
-                :system_id            c/system-id)
-         ((fn [app]
-            (if hierarchies-map
-              (merge app (get hierarchies-map app-id {:hierarchies []}))
-              (format-app-hierarchies app username))))
-         (format-wiki-url has-docs-set)))))
+     (as-> details app
+       (select-keys app [:id
+                         :wiki_url
+                         :version
+                         :version_id
+                         :deleted
+                         :disabled
+                         :edited_date
+                         :integration_date
+                         :integrator_name
+                         :integrator_email
+                         :step_count
+                         :tool_count
+                         :external_app_count
+                         :task_count
+                         :overall_job_type
+                         :average_rating
+                         :total_ratings
+                         :is_favorite])
+       (assoc app :name                 (:name details "")
+                  :description          (:description details "")
+                  :versions             (if versions-map
+                                          (mapv #(select-keys % [:version :version_id])
+                                                (get versions-map app-id []))
+                                          (amp/list-app-versions app-id admin?))
+                  :references           (map :reference_text app-references)
+                  :tools                (map format-app-tool tools)
+                  :job_stats            (if job-stats-map
+                                          (remove-nil-vals
+                                           (or (get job-stats-map (str app-id))
+                                               {:job_count_completed 0}))
+                                          (format-app-details-job-stats (str app-id) nil admin?))
+                  :extra                (format-app-extra-info version-id admin?)
+                  :documentation        (format-app-documentation app-id version-id user admin?)
+                  :categories           (if groups-map
+                                          (get groups-map app-id [])
+                                          (get-groups-for-app app-id))
+                  :suggested_categories (if suggested-map
+                                          (get suggested-map app-id [])
+                                          (get-suggested-groups-for-app app-id))
+                  :system_id            c/system-id)
+       (if hierarchies-map
+         (merge app (get hierarchies-map app-id {:hierarchies []}))
+         (format-app-hierarchies app username))
+       (format-wiki-url app has-docs-set)))))
 
 ;; This function was split from `get-app-details` to provide a way for administrative endpoints to skip permission
 ;; checks without including the app stat information.
