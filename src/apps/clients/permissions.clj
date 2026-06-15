@@ -204,7 +204,6 @@
 (defn- get-resource-users
   "Lists users with any level of access to a resource."
   [resource-type resource-name]
-  #_:clj-kondo/ignore
   (->> (pc/list-resource-permissions (client) resource-type resource-name true)
        :permissions
        (mapv (comp :subject_id :subject))))
