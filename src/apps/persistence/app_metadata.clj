@@ -326,22 +326,22 @@
               :version
               :attribution)))
 
-(defn- get-app-tools-base-query
-  "Returns a query for information about the tools associated with an app."
-  [app-id]
+(defn- get-tools-with-images-base-query
+  "Returns a base query for tool information including the container image join and fields."
+  []
   (-> (get-tool-listing-base-query)
       (join :container_images {:tool_listing.container_images_id :container_images.id})
       (fields [:container_images.name :image_name]
               [:container_images.tag :image_tag]
               [:container_images.url :image_url]
-              [:container_images.deprecated :deprecated])
-      (where {:app_id app-id})))
+              [:container_images.deprecated :deprecated])))
 
 (defn get-app-tools
   "Loads information about the tools associated with undeleted versions of an app."
   [app-id]
-  (-> (get-app-tools-base-query app-id)
-      (where {:app_version_id [:in (subselect entities/app_versions
+  (-> (get-tools-with-images-base-query)
+      (where {:app_id         app-id
+              :app_version_id [:in (subselect entities/app_versions
                                               (fields :id)
                                               (where {:app_id  app-id
                                                       :deleted false}))]})
@@ -350,8 +350,9 @@
 (defn get-all-app-tools
   "Loads information about the tools associated with all versions of an app."
   [app-id]
-  (-> (get-app-tools-base-query app-id)
-      (where {:app_version_id [:in (subselect entities/app_versions
+  (-> (get-tools-with-images-base-query)
+      (where {:app_id         app-id
+              :app_version_id [:in (subselect entities/app_versions
                                               (fields :id)
                                               (where {:app_id app-id}))]})
       select))
@@ -359,8 +360,9 @@
 (defn get-app-version-tools
   "Loads information about the tools associated with a specific app version."
   [app-id version-id]
-  (-> (get-app-tools-base-query app-id)
-      (where {:app_version_id version-id})
+  (-> (get-tools-with-images-base-query)
+      (where {:app_id         app-id
+              :app_version_id version-id})
       select))
 
 (defn task-ids-for-app-version
@@ -1159,13 +1161,8 @@
    Returns a map of version-id -> [tool ...]."
   [version-ids]
   (when (seq version-ids)
-    (let [rows (-> (get-tool-listing-base-query)
-                   (join :container_images {:tool_listing.container_images_id :container_images.id})
-                   (fields [:container_images.name :image_name]
-                           [:container_images.tag :image_tag]
-                           [:container_images.url :image_url]
-                           [:container_images.deprecated :deprecated]
-                           :app_version_id)
+    (let [rows (-> (get-tools-with-images-base-query)
+                   (fields :app_version_id)
                    (where {:app_version_id [:in version-ids]})
                    select)]
       (group-by :app_version_id rows))))
