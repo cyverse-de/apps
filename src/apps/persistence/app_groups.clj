@@ -156,6 +156,15 @@
               (sql/where {:app_category_app.app_id app-id
                           :is_public true})))
 
+(defn- group-categories-by-app-id
+  "Groups query rows by :app_id and extracts only :id and :name from each group entry.
+   Returns a map of app-id -> [{:id ... :name ...} ...]."
+  [rows]
+  (into {}
+        (map (fn [[app-id groups]]
+               [app-id (mapv #(select-keys % [:id :name]) groups)]))
+        (group-by :app_id rows)))
+
 (defn get-groups-for-apps
   "Retrieves a listing of all groups each of the given apps is listed under.
    Returns a map of app-id -> [{:id ... :name ...} ...]."
@@ -170,10 +179,7 @@
                                         :app_category_listing.id))
                            (sql/where {:app_category_app.app_id [:in app-ids]
                                        :is_public true}))]
-      (into {}
-            (map (fn [[app-id groups]]
-                   [app-id (mapv #(select-keys % [:id :name]) groups)]))
-            (group-by :app_id rows)))))
+      (group-categories-by-app-id rows))))
 
 (defn get-suggested-groups-for-app
   "Retrieves a listing of all groups the integrator recommneds for the app."
@@ -199,7 +205,4 @@
                                      (= :app_categories.id
                                         :suggested_groups.app_category_id))
                            (sql/where {:suggested_groups.app_id [:in app-ids]}))]
-      (into {}
-            (map (fn [[app-id groups]]
-                   [app-id (mapv #(select-keys % [:id :name]) groups)]))
-            (group-by :app_id rows)))))
+      (group-categories-by-app-id rows))))
