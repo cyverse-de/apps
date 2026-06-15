@@ -1,5 +1,6 @@
 (ns apps.persistence.app-documentation
   (:require [apps.persistence.entities :refer [app_references]]
+            [apps.util.db :as db]
             [korma.core :as sql]))
 
 (defn get-app-references
@@ -13,7 +14,7 @@
   [version-ids]
   (when (seq version-ids)
     (group-by :app_version_id
-              (sql/select app_references (sql/where {:app_version_id [:in version-ids]})))))
+              (sql/select app_references (sql/where {:app_version_id (db/sqlfn-any-array "uuid" version-ids)})))))
 
 (defn get-documentation
   "Retrieves documentation details for the given app ID."
@@ -42,7 +43,7 @@
     (set (map :app_version_id
               (sql/select :app_documentation
                           (sql/fields :app_version_id)
-                          (sql/where {:app_version_id [:in version-ids]}))))))
+                          (sql/where {:app_version_id (db/sqlfn-any-array "uuid" version-ids)}))))))
 
 (defn add-documentation
   "Inserts an App's documentation into the database."

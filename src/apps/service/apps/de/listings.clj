@@ -808,10 +808,10 @@
    Delegates to format-app-details with pre-fetched maps to avoid duplicating formatting logic."
   [user format-app details-map tools-map refs-map prefetched
    {app-id :app_id :keys [id requestor]}]
-  (let [details (get details-map app-id)
+  (let [details    (get details-map app-id)
         version-id (:version_id details)
-        tools   (get tools-map version-id [])
-        refs    (get refs-map version-id [])]
+        tools      (get tools-map version-id [])
+        refs       (get refs-map version-id [])]
     {:id        id
      :app       (when details
                   (->> (format-app-details user details tools refs false prefetched)
