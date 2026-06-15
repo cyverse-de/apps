@@ -1146,12 +1146,12 @@
    (list-app-versions-for-apps app-ids false))
   ([app-ids include-deleted?]
    (when (seq app-ids)
-     (let [rows (-> (select* entities/app_versions)
-                    (fields :app_id :version [:id :version_id])
-                    (where {:app_id [:in app-ids]})
-                    ((fn [q] (if-not include-deleted? (where q {:deleted false}) q)))
-                    (order :version_order :DESC)
-                    select)]
+      (let [rows (-> (select* entities/app_versions)
+                     (fields :app_id :version [:id :version_id])
+                     (where {:app_id [:in app-ids]})
+                     (add-deleted-versions-clause include-deleted?)
+                     (order :version_order :DESC)
+                     select)]
        (group-by :app_id rows)))))
 
 (defn get-app-version-tools-batch
