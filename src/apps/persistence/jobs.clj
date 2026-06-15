@@ -926,7 +926,7 @@
                                 :job_count_completed]
                                [(sql/raw (str "MAX(j.end_date) FILTER (WHERE j.status = '" completed-status "')"))
                                 :job_last_completed])
-                   (sql/where {:j.app_id [:in app-ids]})
+                   (sql/where {:j.app_id (db/sqlfn-any-array "varchar" app-ids)})
                    (db/add-date-limits-where-clause params)
                    (sql/group :j.app_id)
                    sql/select)]

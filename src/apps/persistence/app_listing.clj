@@ -3,7 +3,7 @@
             [apps.persistence.app-search :refer [count-matching-app-ids find-matching-app-ids]]
             [apps.persistence.entities :as entities]
             [apps.util.assertions :refer [assert-app-version]]
-            [apps.util.db :refer [add-date-limits-where-clause]]
+            [apps.util.db :refer [add-date-limits-where-clause sqlfn-any-array]]
             [clojure.java.jdbc]
             [clojure.string :as str]
             [kameleon.queries :as kq]
@@ -435,7 +435,7 @@
                     workspace-root-group-id
                     favorites-group-index)
                    (add-app-version-listing-ratings-fields user-id)
-                   (sql/where {:version_id [:in version-ids]})
+                   (sql/where {:version_id (sqlfn-any-array "uuid" version-ids)})
                    sql/select)]
       (into {} (map (juxt :version_id identity) rows)))))
 
