@@ -386,53 +386,51 @@
     (query-spy "get-single-app::search-query:" q)
     (sql/select q)))
 
+(defn- rating-avg-subselect
+  "Subselect for computing the average rating of an app in the app_versions_listing view."
+  []
+  (sql/subselect
+   entities/ratings
+   (sql/fields (sql/raw "CAST(COALESCE(AVG(rating), 0.0) AS DOUBLE PRECISION) AS average_rating"))
+   (sql/where {:ratings.app_id
+               :app_versions_listing.id})))
+
+(defn- rating-total-subselect
+  "Subselect for computing the total number of ratings for an app in the app_versions_listing view."
+  []
+  (sql/subselect
+   entities/ratings
+   (sql/aggregate (count :ratings.rating) :total_ratings)
+   (sql/where {:ratings.app_id
+               :app_versions_listing.id})))
+
 (defn get-app-version-details
   "Retrieves the details for a single app."
   [user-id workspace-root-group-id favorites-group-index app-id version-id]
-  (let [rating-avg-subselect (sql/subselect
-                              entities/ratings
-                              (sql/fields (sql/raw "CAST(COALESCE(AVG(rating), 0.0) AS DOUBLE PRECISION) AS average_rating"))
-                              (sql/where {:ratings.app_id
-                                          :app_versions_listing.id}))
-        rating-total-subselect (sql/subselect
-                                entities/ratings
-                                (sql/aggregate (count :ratings.rating) :total_ratings)
-                                (sql/where {:ratings.app_id
-                                            :app_versions_listing.id}))]
-    (assert-app-version
-     [app-id version-id]
-     (-> (sql/select* :app_versions_listing)
-         (sql/fields :*
-                     [rating-avg-subselect :average_rating]
-                     [rating-total-subselect :total_ratings])
-         (add-app-versions-listing-is-favorite-field
-          workspace-root-group-id
-          favorites-group-index)
-         (add-app-version-listing-ratings-fields user-id)
-         (sql/where {:id         app-id
-                     :version_id version-id})
-         sql/select
-         first))))
+  (assert-app-version
+   [app-id version-id]
+   (-> (sql/select* :app_versions_listing)
+       (sql/fields :*
+                   [(rating-avg-subselect) :average_rating]
+                   [(rating-total-subselect) :total_ratings])
+       (add-app-versions-listing-is-favorite-field
+        workspace-root-group-id
+        favorites-group-index)
+       (add-app-version-listing-ratings-fields user-id)
+       (sql/where {:id         app-id
+                   :version_id version-id})
+       sql/select
+       first)))
 
 (defn get-app-version-details-batch
   "Retrieves details for multiple apps by version ID.
    Returns a map of version-id -> details-row."
   [user-id workspace-root-group-id favorites-group-index version-ids]
   (when (seq version-ids)
-    (let [rating-avg-subselect (sql/subselect
-                                entities/ratings
-                                (sql/fields (sql/raw "CAST(COALESCE(AVG(rating), 0.0) AS DOUBLE PRECISION) AS average_rating"))
-                                (sql/where {:ratings.app_id
-                                            :app_versions_listing.id}))
-          rating-total-subselect (sql/subselect
-                                  entities/ratings
-                                  (sql/aggregate (count :ratings.rating) :total_ratings)
-                                  (sql/where {:ratings.app_id
-                                              :app_versions_listing.id}))
-          rows (-> (sql/select* :app_versions_listing)
+    (let [rows (-> (sql/select* :app_versions_listing)
                    (sql/fields :*
-                               [rating-avg-subselect :average_rating]
-                               [rating-total-subselect :total_ratings])
+                               [(rating-avg-subselect) :average_rating]
+                               [(rating-total-subselect) :total_ratings])
                    (add-app-versions-listing-is-favorite-field
                     workspace-root-group-id
                     favorites-group-index)
