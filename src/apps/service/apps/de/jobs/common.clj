@@ -203,5 +203,6 @@
          :uuid                 (or (:uuid submission) (uuid))
          :wiki_url             (:wiki_url app)
          :skip-parent-meta     (:skip-parent-meta submission)
-         :file-metadata        (:file-metadata submission)}
+         :file-metadata        (:file-metadata submission)
+         :mount_data_store     (:mount_data_store submission true)}
         execution-target)))
