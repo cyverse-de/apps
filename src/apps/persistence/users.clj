@@ -56,11 +56,11 @@
   "Gets an existing login record that matches all fields"
   [user-id ip-address session-id login-time]
   (first
-    (sql/select :logins
-                (sql/where {:user_id user-id
-                            :ip_address ip-address
-                            :session_id session-id
-                            :login_time (long->timestamp login-time)}))))
+   (sql/select :logins
+               (sql/where {:user_id user-id
+                           :ip_address ip-address
+                           :session_id session-id
+                           :login_time (long->timestamp login-time)}))))
 
 (defn- upsert-login-record
   "Records a user login, if at least one field differs from an existing entry."

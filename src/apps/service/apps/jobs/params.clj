@@ -181,11 +181,12 @@
 
 (defn get-job-relaunch-info
   [apps-client user {system-id :system_id app-id :app_id version-id :app_version_id :as job}]
-  (let [{:keys [debug config requirements] :or {debug false}} (get-job-submission job)]
+  (let [{:keys [debug config requirements mount_data_store] :or {debug false mount_data_store true}} (get-job-submission job)]
     (-> (if version-id
           (.getAppVersionJobView apps-client system-id app-id version-id)
           (.getAppJobView apps-client system-id app-id))
         (assoc :debug debug)
+        (assoc :mount_data_store mount_data_store)
         (update :groups (partial update-app-groups user config))
         (update :requirements update-resources-reqs requirements))))
 
@@ -193,7 +194,9 @@
   [apps-client user {system-id :system_id app-id :app_id :as submission}]
   (when-not system-id (cxu/internal-system-error "no system ID assocaited with submission"))
   (when-not app-id (cxu/internal-system-error "no app ID associated with submission"))
-  (update (assoc (.getAppJobView apps-client system-id (uuidify app-id)) :debug (:debug submission false))
+  (update (assoc (.getAppJobView apps-client system-id (uuidify app-id))
+                 :debug (:debug submission false)
+                 :mount_data_store (:mount_data_store submission true))
           :groups
           (partial update-app-groups user (:config submission))))
 
