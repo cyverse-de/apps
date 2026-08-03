@@ -216,6 +216,14 @@
 
 (defn submit
   [apps-client user {app-id :app_id system-id :system_id :as submission}]
+  (when-let [tls (:time_limit_seconds submission)]
+    (when-not (pos? tls)
+      (throw+ {:type  :clojure-commons.exception/bad-request
+               :error "time_limit_seconds must be a positive integer"}))
+    (let [max-tls (config/vice-max-initial-time-limit-seconds)]
+      (when (> tls max-tls)
+        (throw+ {:type  :clojure-commons.exception/bad-request
+                 :error (str "time_limit_seconds may not exceed " max-tls " seconds")}))))
   (let [[job-types app]    (.getAppSubmissionInfo apps-client system-id app-id)
         input-params-by-id (get-app-params app ap/param-ds-input-types)
         input-paths-by-id  (build-input-path-map (:config submission) input-params-by-id)
