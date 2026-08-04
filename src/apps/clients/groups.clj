@@ -2,7 +2,7 @@
   (:require [apps.util.config :as config]
             [cemerick.url :as curl]
             [clj-http.client :as http]
-            [clojure-commons.exception-util :as exception-util]
+            [clojure.string :as string]
             [slingshot.slingshot :refer [try+]]))
 
 (def ^:private de-users-group "de-users")
@@ -55,6 +55,34 @@
    (:body (http/get (groups-url "groups" "lookup")
                     (as-de-grouper {:group_type group-type :name name})))
    (catch [:status 404] _ nil)))
+
+(defn- get-group-by-id
+  [group-id]
+  (try+
+   (:body (http/get (groups-url "groups" group-id) (as-de-grouper)))
+   (catch [:status 404] _ nil)))
+
+;; Group IDs are 32 hex digits: Grouper's own format for imported groups, and
+;; what `subjects.subject_id` defaults to for ones created since.
+(def ^:private group-id-pattern #"^[0-9a-f]{32}$")
+
+(defn- community-short-name
+  "The short name in a community identifier. Tags written before the migration
+   hold the full Grouper path, and community names contain no colons, so the
+   segment after the last one is the name."
+  [identifier]
+  (last (string/split identifier #":")))
+
+(defn lookup-community
+  "Resolves a community identifier to the community itself, or nil. Accepts a
+   group ID, a plain name, or a legacy colon-delimited Grouper path, so that a
+   browser holding a stale bundle still names something real."
+  [identifier]
+  (let [group (if (re-matches group-id-pattern identifier)
+                (get-group-by-id identifier)
+                (lookup-group "community" (community-short-name identifier)))]
+    (when (= "community" (:group_type group))
+      group)))
 
 (defn- create-group
   [group-type name]
@@ -109,15 +137,13 @@
 ;; and that person administers it too.
 (def ^:private community-admin-levels #{"admin" "own"})
 
-(defn get-community-admins
-  "Lists the administrators of a community. Throws if the community does not exist."
-  [_user community-name]
-  (let [{group-id :id} (or (lookup-group "community" community-name)
-                           (exception-util/not-found "No such community" :community community-name))]
-    (->> (:permissions (:body (http/get (groups-url "groups" group-id "permissions") (as-de-grouper))))
-         (filter (comp community-admin-levels :level))
-         (map :subject)
-         (filter (comp (partial = "user") :subject_type))
-         (mapv (fn [{:keys [subject_id]}] {:id subject_id}))
-         (remove (comp (partial = (config/de-grouper-user)) :id))
-         (hash-map :members))))
+(defn list-community-admins
+  "Lists the administrators of the community with the given ID."
+  [community-id]
+  (->> (:permissions (:body (http/get (groups-url "groups" community-id "permissions") (as-de-grouper))))
+       (filter (comp community-admin-levels :level))
+       (map :subject)
+       (filter (comp (partial = "user") :subject_type))
+       (mapv (fn [{:keys [subject_id]}] {:id subject_id}))
+       (remove (comp (partial = (config/de-grouper-user)) :id))
+       (hash-map :members)))

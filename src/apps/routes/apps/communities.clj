@@ -6,7 +6,7 @@
    [apps.util.service :as service]
    [common-swagger-api.routes :refer [get-endpoint-delegate-block]]
    [common-swagger-api.schema :refer [defroutes DELETE POST undocumented]]
-   [common-swagger-api.schema.apps :refer [AppCategoryMetadataAddRequest AppCategoryMetadataDeleteRequest AppIdParam]]
+   [common-swagger-api.schema.apps :refer [AppIdParam]]
    [common-swagger-api.schema.apps.communities :as schema]
    [common-swagger-api.schema.metadata :refer [AvuList]]
    [compojure.route :as route]
@@ -17,16 +17,23 @@
   (POST "/" []
     :path-params [app-id :- AppIdParam]
     :query [params SecuredQueryParams]
-    :body [body AppCategoryMetadataAddRequest]
+    :body [body schema/AppCommunityListRequest]
     :return AvuList
-    :summary schema/AppCommunityMetadataAddSummary
-    :description schema/AppCommunityMetadataAddDocs
+    :summary schema/AppCommunityAddSummary
+    :description schema/AppCommunityAddDocs
     (ok (communities/add-app-to-communities current-user app-id body false)))
+
+  (DELETE "/:community-id" []
+    :path-params [app-id :- AppIdParam community-id :- schema/CommunityIdPathParam]
+    :query [params SecuredQueryParams]
+    :summary schema/AppCommunityDeleteSummary
+    :description schema/AppCommunityDeleteDocs
+    (ok (communities/remove-app-from-community current-user app-id community-id false)))
 
   (DELETE "/" []
     :path-params [app-id :- AppIdParam]
     :query [params SecuredQueryParams]
-    :body [body AppCategoryMetadataDeleteRequest]
+    :body [body schema/AppCommunityListRequest]
     :summary schema/AppCommunityMetadataDeleteSummary
     :description schema/AppCommunityMetadataDeleteDocs
     (ok (communities/remove-app-from-communities current-user app-id body false)))
@@ -38,23 +45,31 @@
   (POST "/" []
     :path-params [app-id :- AppIdParam]
     :query [params SecuredQueryParams]
-    :body [body AppCategoryMetadataAddRequest]
+    :body [body schema/AppCommunityListRequest]
     :return AvuList
-    :summary "Add/Update Community Metadata AVUs"
+    :summary schema/AppCommunityAddSummary
     :description (str
-                  "Adds or updates Community Metadata AVUs on the app."
+                  schema/AppCommunityAddDocs
+                  " An administrator does not have to be a community admin, but the"
+                  " communities must exist."
                   (get-endpoint-delegate-block
                    "metadata"
                    "POST /avus/{target-type}/{target-id}")
-                  "Where `{target-type}` is `app`."
-                  " Please see the metadata service documentation for request information.")
+                  "Where `{target-type}` is `app`.")
     (ok (communities/add-app-to-communities current-user app-id body true)))
+
+  (DELETE "/:community-id" []
+    :path-params [app-id :- AppIdParam community-id :- schema/CommunityIdPathParam]
+    :query [params SecuredQueryParams]
+    :summary schema/AppCommunityDeleteSummary
+    :description schema/AppCommunityDeleteDocs
+    (ok (communities/remove-app-from-community current-user app-id community-id true)))
 
   (DELETE "/" []
     :path-params [app-id :- AppIdParam]
     :query [params SecuredQueryParams]
-    :body [body AppCategoryMetadataDeleteRequest]
-    :summary "Remove Community Metadata AVUs"
+    :body [body schema/AppCommunityListRequest]
+    :summary schema/AppCommunityMetadataDeleteSummary
     :description (str
                   "Removes the given Community AVUs associated with an app."
                   (get-endpoint-delegate-block

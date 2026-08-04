@@ -176,7 +176,7 @@
 (defn- notify-community-admins
   [username integrator-name app-name community-names]
   (->> community-names
-       (map #(admin->communities-map % (communities/get-community-admin-set username %)))
+       (map #(admin->communities-map % (communities/get-community-admin-set %)))
        (apply merge-with into)
        ;; if community1 has admin1 and 2, community2 has admin2 and 3, and community3 has admin3,
        ;; then by this point there should be a map like the following:
@@ -196,7 +196,7 @@
                (cheshire/encode {:avus m}))]
     (metadata-client/update-avus username app-id body))
 
-  (when-let [community-names (communities/extract-full-community-names avus)]
+  (when-let [community-names (seq (communities/extract-community-identifiers avus))]
     (notify-community-admins username
                              (:integrator_name (amp/get-integration-data-by-app-id app-id))
                              app-name
