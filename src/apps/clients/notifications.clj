@@ -1,5 +1,5 @@
 (ns apps.clients.notifications
-  (:require [apps.clients.iplant-groups :as groups-client]
+  (:require [apps.clients.groups :as groups-client]
             [apps.clients.notifications.app-sharing :as asn]
             [apps.clients.notifications.job-sharing :as jsn]
             [apps.clients.notifications.tool-sharing :as tool-notifications]

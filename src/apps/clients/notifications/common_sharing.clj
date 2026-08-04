@@ -1,5 +1,5 @@
 (ns apps.clients.notifications.common-sharing
-  (:require [apps.clients.iplant-groups :as ipg]
+  (:require [apps.clients.groups :as ipg]
             [clojure-commons.template :refer [render]]))
 
 (def grouping-threshold 10)

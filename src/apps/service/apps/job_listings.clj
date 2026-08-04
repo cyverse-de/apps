@@ -1,6 +1,6 @@
 (ns apps.service.apps.job-listings
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as ipg]
    [apps.clients.notifications :refer [interapps-url]]
    [apps.clients.permissions :as perms-client]
    [apps.persistence.jobs :as jp]

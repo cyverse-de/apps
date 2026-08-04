@@ -1,6 +1,6 @@
 (ns apps.service.apps.tapis.sharing
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as ipg]
    [apps.persistence.jobs :as jp]
    [apps.service.apps.permissions :as app-permissions]
    [clojure-commons.error-codes :as ce :refer [clj-http-error?]]

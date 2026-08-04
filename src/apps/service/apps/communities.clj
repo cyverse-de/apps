@@ -1,5 +1,5 @@
 (ns apps.service.apps.communities
-  (:require [apps.clients.iplant-groups :as groups]
+  (:require [apps.clients.groups :as groups]
             [apps.clients.metadata :as metadata-client]
             [apps.util.config :as config]
             [cheshire.core :as json]

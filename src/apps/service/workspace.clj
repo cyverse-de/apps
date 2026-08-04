@@ -1,6 +1,6 @@
 (ns apps.service.workspace
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as ipg]
    [apps.persistence.workspace :as wp]
    [apps.user :refer [append-username-suffix]]))
 

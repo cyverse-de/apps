@@ -4,29 +4,20 @@
    [schema.core :as s]))
 
 (s/defschema Group
-  {:name
-   (describe String "The internal group name.")
+  {:id
+   (describe String "The group ID.")
 
-   :type
-   (describe String "The group type name.")
+   :name
+   (describe String "The group's short name.")
 
-   (s/optional-key :description)
-   (describe String "A brief description of the group.")
-
-   (s/optional-key :display_extension)
-   (describe String "The displayable group name extension.")
+   :group_type
+   (describe String "The kind of group.")
 
    (s/optional-key :display_name)
    (describe String "The displayable group name.")
 
-   (s/optional-key :extension)
-   (describe String "The internal group name extension.")
-
-   :id_index
-   (describe String "The sequential ID index number.")
-
-   :id
-   (describe String "The group ID.")})
+   (s/optional-key :description)
+   (describe String "A brief description of the group.")})
 
 (s/defschema Subject
   {:id

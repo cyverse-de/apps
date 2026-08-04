@@ -1,6 +1,6 @@
 (ns apps.service.apps.tapis.listings
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as ipg]
    [apps.persistence.app-metadata :as ap]
    [apps.service.apps.util :refer [to-qualified-app-id]]
    [apps.service.util :refer [apply-limit apply-offset format-job-stats sort-apps valid-uuid?]]
