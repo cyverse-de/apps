@@ -214,16 +214,20 @@
         get-property-value (fn [id] (get property-values id (get-default-value id)))]
     (into {} (map (juxt identity get-property-value) (keys input-params-by-id)))))
 
-(defn submit
-  [apps-client user {app-id :app_id system-id :system_id :as submission}]
-  (when-let [tls (:time_limit_seconds submission)]
-    (when-not (pos? tls)
-      (throw+ {:type  :clojure-commons.exception/bad-request
+(defn- validate-time-limit
+  [{:keys [time_limit_seconds]}]
+  (when time_limit_seconds
+    (when-not (pos? time_limit_seconds)
+      (throw+ {:type  :clojure-commons.exception/illegal-argument
                :error "time_limit_seconds must be a positive integer"}))
     (let [max-tls (config/vice-max-initial-time-limit-seconds)]
-      (when (> tls max-tls)
-        (throw+ {:type  :clojure-commons.exception/bad-request
-                 :error (str "time_limit_seconds may not exceed " max-tls " seconds")}))))
+      (when (> time_limit_seconds max-tls)
+        (throw+ {:type  :clojure-commons.exception/illegal-argument
+                 :error (str "time_limit_seconds may not exceed " max-tls " seconds")})))))
+
+(defn submit
+  [apps-client user {app-id :app_id system-id :system_id :as submission}]
+  (validate-time-limit submission)
   (let [[job-types app]    (.getAppSubmissionInfo apps-client system-id app-id)
         input-params-by-id (get-app-params app ap/param-ds-input-types)
         input-paths-by-id  (build-input-path-map (:config submission) input-params-by-id)
