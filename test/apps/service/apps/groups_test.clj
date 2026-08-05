@@ -15,7 +15,7 @@
 (deftest test-workshop-group
   (let [group (groups/get-workshop-group)]
     (is (re-find #"workshop-users$" (:name group)))
-    (is (= "role" (:type group)))))
+    (is (= "system" (:group_type group)))))
 
 ;; We should be able to list the workshop group members.
 (deftest test-workshop-group-member-listing
@@ -25,6 +25,8 @@
 (deftest test-workshop-group-member-update
   (let [{:keys [members failures]} (groups/update-workshop-group-members ["testde1", "testde2", "testde3"])]
     (is (= (count members) 3))
+    (is (contains-member? members "testde1"))
+    (is (every? :source_id members))
     (is (= (count failures) 0)))
   (let [members (:members (groups/get-workshop-group-members))]
     (is (= (count members) 3))
