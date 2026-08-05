@@ -19,9 +19,11 @@
   [community-id]
   (set (mapv :id (:members (groups/list-community-admins community-id)))))
 
-(defn get-community-admin-set
+(defn get-community-name-and-admins
+  "Resolves a community identifier to the community's name and its admin set."
   [identifier]
-  (community-admin-ids (:id (resolve-community identifier))))
+  (let [{community-id :id community-name :name} (resolve-community identifier)]
+    {:name community-name :admins (community-admin-ids community-id)}))
 
 (defn- validate-community-admin
   [username {community-id :id community-name :name}]

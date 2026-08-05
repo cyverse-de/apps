@@ -166,17 +166,19 @@
             :unit  "attr"}]})
 
 (defn- admin->communities-map
-  "Takes a `community-name` and its corresponding `admin-set` and returns a map like the following:
-  {admin1 [community-name],
-   admin2 [community-name],
-   admin3 [community-name]}"
+  "Maps each admin in `admin-set` to a vector holding `community-name`, ready to
+   be merged into a single map from each admin to all of their communities' names."
   [community-name admin-set]
   (zipmap admin-set (repeat [community-name])))
 
 (defn- notify-community-admins
-  [username integrator-name app-name community-names]
-  (->> community-names
-       (map #(admin->communities-map % (communities/get-community-admin-set %)))
+  "Notifies each community's admins, naming the community by its resolved name:
+   the identifiers may be group IDs, which mean nothing in an email."
+  [username integrator-name app-name community-identifiers]
+  (->> community-identifiers
+       (map (fn [identifier]
+              (let [{community-name :name admins :admins} (communities/get-community-name-and-admins identifier)]
+                (admin->communities-map community-name admins))))
        (apply merge-with into)
        ;; if community1 has admin1 and 2, community2 has admin2 and 3, and community3 has admin3,
        ;; then by this point there should be a map like the following:
@@ -196,11 +198,11 @@
                (cheshire/encode {:avus m}))]
     (metadata-client/update-avus username app-id body))
 
-  (when-let [community-names (seq (communities/extract-community-identifiers avus))]
+  (when-let [community-identifiers (seq (communities/extract-community-identifiers avus))]
     (notify-community-admins username
                              (:integrator_name (amp/get-integration-data-by-app-id app-id))
                              app-name
-                             community-names)))
+                             community-identifiers)))
 
 (defn- publish-app
   [{:keys [shortUsername username] :as user} {app-id :id :keys [name version references avus] :as app}]
