@@ -84,7 +84,20 @@
 
     (testing "an identifier that names nothing is a 404, not a silently stored tag"
       (with-redefs [groups/lookup-community (constantly nil)]
-        (is (thrown? Exception (resolve-community "iplant:de:de:communities:Gone")))))))
+        (is (= :clojure-commons.exception/not-found
+               (caught-type (resolve-community "iplant:de:de:communities:Gone"))))))))
+
+(deftest admin-guard-test
+  (testing "the community's admin set gates callers who are not administrators"
+    (let [resolve-request #'communities/resolve-request-communities
+          imaging         {:id imaging-id :name "Imaging" :group_type "community"}]
+      (with-redefs [groups/lookup-community      (constantly imaging)
+                    groups/list-community-admins (constantly {:members [{:id "someadmin"}]})]
+        (testing "a caller outside the admin set is refused"
+          (is (= :clojure-commons.exception/forbidden
+                 (caught-type (resolve-request "outsider" {:community_ids [imaging-id]} false)))))
+        (testing "an administrator resolves the same request the guard refused"
+          (is (= [imaging] (resolve-request "outsider" {:community_ids [imaging-id]} true))))))))
 
 (deftest admin-still-resolves-communities-test
   (testing "an administrator skips the community-admin check but not resolution"
@@ -93,5 +106,5 @@
     (let [resolve-request #'communities/resolve-request-communities]
       (with-community-attr
         (with-redefs [groups/lookup-community (constantly nil)]
-          (is (thrown? Exception
-                       (resolve-request "someadmin" {:community_ids ["nope"]} true))))))))
+          (is (= :clojure-commons.exception/not-found
+                 (caught-type (resolve-request "someadmin" {:community_ids ["nope"]} true)))))))))
