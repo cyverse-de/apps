@@ -67,20 +67,24 @@
 (def ^:private group-id-pattern #"^[0-9a-f]{32}$")
 
 (defn- community-short-name
-  "The short name in a community identifier. Tags written before the migration
-   hold the full Grouper path, and community names contain no colons, so the
-   segment after the last one is the name."
+  "The short name from a legacy Grouper community path, or nil for anything
+   else. Tags written before the migration hold the full path; only a path
+   whose second-to-last segment is `communities` names a community, so taking
+   the last segment of any other path could capture an unrelated group's name."
   [identifier]
-  (last (string/split identifier #":")))
+  (let [segments (string/split identifier #":")]
+    (when (and (<= 2 (count segments))
+               (= "communities" (nth segments (- (count segments) 2))))
+      (last segments))))
 
 (defn lookup-community
   "Resolves a community identifier to the community itself, or nil. Accepts a
-   group ID, a plain name, or a legacy colon-delimited Grouper path, so that a
-   browser holding a stale bundle still names something real."
+   group ID, a plain name, or a legacy colon-delimited Grouper community path,
+   so that a browser holding a stale bundle still names something real."
   [identifier]
   (let [group (if (re-matches group-id-pattern identifier)
                 (get-group-by-id identifier)
-                (lookup-group "community" (community-short-name identifier)))]
+                (lookup-group "community" (or (community-short-name identifier) identifier)))]
     (when (= "community" (:group_type group))
       group)))
 
