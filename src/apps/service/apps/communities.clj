@@ -3,7 +3,8 @@
             [apps.clients.metadata :as metadata-client]
             [apps.util.config :as config]
             [cheshire.core :as json]
-            [clojure-commons.exception-util :as exception-util]))
+            [clojure-commons.exception-util :as exception-util]
+            [clojure.tools.logging :as log]))
 
 (defn- resolve-community
   "Resolves a community identifier, failing with a 404 if it names nothing.
@@ -46,8 +47,11 @@
    list is what a browser holding a stale bundle still sends, and is accepted
    until those bundles are gone."
   [{:keys [community_ids avus]}]
-  (seq (or (seq community_ids)
-           (extract-community-identifiers avus))))
+  (or (seq community_ids)
+      (when-let [identifiers (seq (extract-community-identifiers avus))]
+        (log/warn "request names communities with the legacy AVU shape instead of community_ids;"
+                  "the requesting browser is probably running a stale bundle")
+        identifiers)))
 
 (defn- resolve-request-communities
   [username request admin?]

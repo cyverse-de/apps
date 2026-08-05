@@ -3,6 +3,7 @@
             [cemerick.url :as curl]
             [clj-http.client :as http]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [slingshot.slingshot :refer [try+]]))
 
 (def ^:private de-users-group "de-users")
@@ -84,7 +85,11 @@
   [identifier]
   (let [group (if (re-matches group-id-pattern identifier)
                 (get-group-by-id identifier)
-                (lookup-group "community" (or (community-short-name identifier) identifier)))]
+                (if-let [short-name (community-short-name identifier)]
+                  (do (log/warn "resolving community identifier" identifier "as legacy Grouper path;"
+                                "the requesting browser is probably running a stale bundle")
+                      (lookup-group "community" short-name))
+                  (lookup-group "community" identifier)))]
     (when (= "community" (:group_type group))
       group)))
 
