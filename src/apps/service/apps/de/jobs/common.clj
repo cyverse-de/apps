@@ -1,6 +1,6 @@
 (ns apps.service.apps.de.jobs.common
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as ipg]
    [apps.containers :as c]
    [apps.persistence.users :refer [get-user-id]]
    [apps.service.apps.de.jobs.params :as params]
@@ -198,7 +198,7 @@
          :extra                @extra
          :username             (:shortUsername user)
          :user_id              (get-user-id (:username user))
-         :user_groups          (map (comp ipg/remove-environment-from-group :name) @groups)
+         :user_groups          (map :name @groups)
          :user_home            (:user_home submission)
          :uuid                 (or (:uuid submission) (uuid))
          :wiki_url             (:wiki_url app)

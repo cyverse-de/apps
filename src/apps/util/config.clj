@@ -340,20 +340,20 @@
   [props config-valid configs]
   "apps.notificationagent.base-url" "http://notification-agent:60000")
 
-(cc/defprop-optstr ipg-base
-  "The base URL for the iplant-groups service."
+(cc/defprop-optstr groups-base
+  "The base URL for the groups service."
   [props config-valid configs]
-  "apps.iplant-groups.base-url" "http://iplant-groups:60000")
+  "apps.groups.base-url" "http://groups")
 
 (cc/defprop-optstr de-grouper-user
-  "The username that the DE uses to authenticate to Grouper."
+  "The username that the DE uses to authenticate to the groups service."
   [props config-valid configs]
-  "apps.iplant-groups.grouper-user" "de_grouper")
+  "apps.groups.user" "de_grouper")
 
 (cc/defprop-optstr grouper-user-source
-  "The subject ID that Grouper uses for DE users."
+  "The subject source ID used for DE users."
   [props config-valid configs]
-  "apps.iplant-groups.grouper-user-source" "ldap")
+  "apps.groups.user-source" "ldap")
 
 (cc/defprop-optstr metadata-base
   "The base URL for the metadata service."

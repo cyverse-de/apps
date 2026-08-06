@@ -1,6 +1,6 @@
 (ns apps.user
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as ipg]
    [apps.util.config :refer [uid-domain]]
    [clojure.string :as string]
    [clojure.tools.logging :as log]

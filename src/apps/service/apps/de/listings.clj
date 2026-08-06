@@ -1,5 +1,6 @@
 (ns apps.service.apps.de.listings
   (:require
+   [apps.clients.groups :as groups]
    [apps.clients.metadata :as metadata-client]
    [apps.clients.permissions :as perms-client]
    [apps.constants :refer [de-system-id executable-tool-type]]
@@ -386,11 +387,16 @@
           (remove-nil-vals)))))
 
 (defn- filter-app-ids-by-community
-  "Filters the given list of app-ids into a set containing the ids of apps tagged with the given community-id"
+  "Filters the given list of app-ids into a set containing the ids of apps tagged with the given community"
   [username community-id app-ids]
-  (let [community-avu {:attr  (workspace-metadata-communities-attr)
-                       :value community-id}]
-    (set (metadata-client/filter-by-avus username app-ids [community-avu]))))
+  ;; The identifier is resolved rather than matched verbatim, so a community ID,
+  ;; a plain name, and a legacy colon-delimited path all select the same apps.
+  ;; The stored tag is the community's ID, which is what the write path records.
+  (if-let [community (groups/lookup-community community-id)]
+    (let [community-avu {:attr  (workspace-metadata-communities-attr)
+                         :value (:id community)}]
+      (set (metadata-client/filter-by-avus username app-ids [community-avu])))
+    #{}))
 
 (defn- app-listing-by-id
   [{:keys [username] :as user} params perms app-ids admin?]
