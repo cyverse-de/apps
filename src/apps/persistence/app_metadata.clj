@@ -404,7 +404,8 @@
                (join [:tasks :task] {:step.task_id :task.id})
                (join [:tools :tool] {:task.tool_id :tool.id})
                (join [:tool_types :tt] {:tool.tool_type_id :tt.id})
-               (fields :tt.notification_type)
+               (join [:notification_types :nt] {:tt.notification_type_id :nt.id})
+               (fields [:nt.name :notification_type])
                (where {:step.app_version_id app-version-id}))
        (map :notification_type)))
 
