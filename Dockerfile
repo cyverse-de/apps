@@ -1,5 +1,5 @@
 # Build stage
-FROM clojure:temurin-22-lein-jammy AS builder
+FROM clojure:temurin-25-lein-trixie AS builder
 
 WORKDIR /usr/src/app
 
@@ -18,7 +18,7 @@ RUN lein do clean, uberjar && \
     mv target/apps-standalone.jar .
 
 # Runtime stage
-FROM eclipse-temurin:22-jre-jammy
+FROM eclipse-temurin:25-jre-noble
 
 WORKDIR /usr/src/app
 
@@ -38,7 +38,9 @@ ENV OTEL_TRACES_EXPORTER=none
 COPY --from=builder /usr/src/app/apps-standalone.jar /usr/src/app/
 COPY conf/main/logback.xml /usr/src/app/
 
-ENTRYPOINT ["apps", "-Dlogback.configurationFile=/usr/src/app/logback.xml", "-cp", ".:apps-standalone.jar:/", "apps.core"]
+# Only the jar belongs on the classpath. logback is configured by absolute path above, and apps.core
+# takes its config from --config, so neither the working directory nor / ever supplied anything.
+ENTRYPOINT ["apps", "-Dlogback.configurationFile=/usr/src/app/logback.xml", "-cp", "apps-standalone.jar", "apps.core"]
 
 ARG git_commit=unknown
 ARG version=unknown
