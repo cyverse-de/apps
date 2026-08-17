@@ -38,9 +38,20 @@ ENV OTEL_TRACES_EXPORTER=none
 COPY --from=builder /usr/src/app/apps-standalone.jar /usr/src/app/
 COPY conf/main/logback.xml /usr/src/app/
 
+# Pre-load the class metadata apps needs at startup into an AOT cache, roughly halving startup time.
+# Trained here rather than in the builder stage because the cache is only usable by the exact JVM
+# build that wrote it, and the two stages' base images are updated independently.
+RUN apps -XX:AOTCacheOutput=/usr/src/app/apps.aot \
+      -Dlogback.configurationFile=/usr/src/app/logback.xml \
+      -cp apps-standalone.jar \
+      clojure.main -e "(require 'apps.core 'apps.routes)"
+
 # Only the jar belongs on the classpath. logback is configured by absolute path above, and apps.core
 # takes its config from --config, so neither the working directory nor / ever supplied anything.
-ENTRYPOINT ["apps", "-Dlogback.configurationFile=/usr/src/app/logback.xml", "-cp", "apps-standalone.jar", "apps.core"]
+# Keeping it that way is also what lets the AOT cache load: the dumper refuses a non-empty directory
+# on the classpath, and a runtime classpath that differs from the dumped one is rejected. A missing
+# or rejected cache only logs an error; apps still starts.
+ENTRYPOINT ["apps", "-Dlogback.configurationFile=/usr/src/app/logback.xml", "-XX:AOTCache=/usr/src/app/apps.aot", "-cp", "apps-standalone.jar", "apps.core"]
 
 ARG git_commit=unknown
 ARG version=unknown
