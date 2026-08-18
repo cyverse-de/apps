@@ -14,6 +14,34 @@
             :url "https://cyverse.org/license"}
   :manifest {"Git-Ref" ~(git-ref)}
   :uberjar-name "apps-standalone.jar"
+  ;; Fail the build on a new dependency conflict rather than printing a
+  ;; warning nobody reads.
+  :pedantic? :abort
+  ;; Records versions Leiningen already resolves, read off the resolved
+  ;; classpath rather than copied from lein's "Consider using these
+  ;; :managed-dependencies" hint -- that hint names the version that LOST the
+  ;; conflict, so pasting it would be a silent upgrade.
+  ;;
+  ;; The jackson-* group is pinned to the coherent 2.17.2 family that main
+  ;; resolves. It needs stating explicitly: compojure-api 1.1.14 is declared
+  ;; directly here and drags cheshire 5.9.0 -> jackson-core 2.9.9, which wins by
+  ;; nearest-wins over the newer jackson the org.cyverse libraries bring
+  ;; transitively. Left alone, that pairs jackson-core 2.9.9 with databind
+  ;; 2.18.3 -- an eight-minor spread that surfaces as a runtime
+  ;; NoSuchMethodError, not a resolution failure, and that :pedantic? cannot see
+  ;; because each artifact is individually unambiguous.
+  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.17.2"]
+                         [com.fasterxml.jackson.core/jackson-core "2.17.2"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.17.2"]
+                         [com.fasterxml.jackson.dataformat/jackson-dataformat-cbor "2.17.2"]
+                         [com.fasterxml.jackson.dataformat/jackson-dataformat-smile "2.17.2"]
+                         [cheshire "5.9.0"]
+                         [com.google.code.findbugs/jsr305 "1.3.9"]
+                         [commons-codec "1.16.1"]
+                         [prismatic/schema "1.1.12"]
+                         [riddley "0.1.12"]
+                         [ring/ring-codec "1.1.0"]
+                         [tigris "0.1.1"]]
   :dependencies [[org.clojure/clojure "1.12.5"]
                  [clj-http "3.13.1"]
                  [com.cemerick/url "0.1.1" :exclusions [com.cemerick/clojurescript.test]]
