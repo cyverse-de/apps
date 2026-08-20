@@ -85,3 +85,9 @@
         stats-to-show  (if admin? job-stats-keys [:job_count_completed :job_last_completed])
         app            (assoc app :job_stats (remove-nil-vals (select-keys app stats-to-show)))]
     (apply dissoc app job-stats-keys)))
+
+(defn validate-params-specified-together
+  [ks params]
+  (let [vals (mapv (partial get params) ks)]
+    (when-not (or (every? string/blank? vals) (every? (complement string/blank?) vals))
+      (cxu/bad-request (str "these parameters must be used together: " (string/join ", " (map name ks)))))))
