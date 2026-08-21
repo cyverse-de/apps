@@ -4,6 +4,7 @@
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs :as jobs]
             [apps.service.apps-client :refer [get-apps-client get-apps-client-for-username]]
+            [apps.service.util :refer [validate-params-specified-together]]
             [apps.util.conversions :refer [remove-nil-vals]]
             [apps.util.db :refer [transaction]]
             [apps.util.json :as json-util]
@@ -42,6 +43,7 @@
 
 (defn search-apps
   [user {:keys [search] :as params}]
+  (validate-params-specified-together [:attribute :attribute_value] params)
   (.searchApps (get-apps-client user) search params))
 
 (defn list-single-app
@@ -50,6 +52,7 @@
 
 (defn admin-search-apps
   [user {:keys [search] :as params}]
+  (validate-params-specified-together [:attribute :attribute_value] params)
   (.adminSearchApps (get-apps-client user) search params))
 
 (defn add-app

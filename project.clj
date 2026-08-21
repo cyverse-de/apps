@@ -59,7 +59,7 @@
                  [org.cyverse/metadata-client "3.2.2"]
                  [org.cyverse/common-cli "2.8.3"]
                  [org.cyverse/common-cfg "2.8.4"]
-                 [org.cyverse/common-swagger-api "3.4.23"]
+                 [org.cyverse/common-swagger-api "3.4.24"]
                  [org.cyverse/cyverse-groups-client "0.1.10"]
                  [org.cyverse/permissions-client "2.8.6"]
                  [org.cyverse/service-logging "2.8.6"]

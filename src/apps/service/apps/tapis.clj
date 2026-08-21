@@ -111,7 +111,8 @@
 
   (searchApps [self search-term params]
     (when (user-has-access-token?)
-      (if (apps-util/app-type-qualifies? self params)
+      (if (and (apps-util/app-type-qualifies? self params)
+               (every? string/blank? ((juxt :attribute :attribute_value) params)))
         (listings/search-apps tapis search-term params false)
         (.emptyAppListing tapis))))
 
@@ -121,7 +122,8 @@
 
   (adminSearchApps [self search-term params]
     (when (user-has-access-token?)
-      (if (apps-util/app-type-qualifies? self params)
+      (if (and (apps-util/app-type-qualifies? self params)
+               (every? string/blank? ((juxt :attribute :attribute_value) params)))
         (listings/search-apps tapis search-term params true)
         (.emptyAppListing tapis))))
 

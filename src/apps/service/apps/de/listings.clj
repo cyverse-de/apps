@@ -61,6 +61,7 @@
    [clojure.string :as string]
    [kameleon.uuids :refer [uuidify]]
    [korma.core :refer [fields join select where with]]
+   [medley.core :refer [remove-vals]]
    [slingshot.slingshot :refer [throw+ try+]]))
 
 (def my-public-apps-id  (uuidify "00000000-0000-0000-0000-000000000000"))
@@ -72,11 +73,38 @@
   {:sort-field :lower_case_name
    :sort-dir   :ASC})
 
+(defn- app-ids->tagged-ids-set
+  "Filters the given list of app-ids into a set containing the ids of apps tagged with the given AVU."
+  ([avu username app-ids]
+   (set (metadata-client/filter-by-avus username app-ids [avu])))
+  ([attr value unit username app-ids]
+   (-> (remove-vals string/blank? {:attr attr :value value :unit unit})
+       (app-ids->tagged-ids-set username app-ids))))
+
+(defn- filter-app-ids-by-avus
+  "Filters the AVUs in a set of app search parameters by AVUs if an attribute name and an value are specified."
+  [username {:keys [attribute attribute_value app-ids] :as params}]
+  (if (every? (complement string/blank?) [attribute attribute_value])
+    (assoc params :app-ids (app-ids->tagged-ids-set attribute attribute_value "" username app-ids))
+    params))
+
+(defn- app-ids->certified-ids-set
+  "Filters the given list of app-ids into a set containing the ids of apps marked as `certified`"
+  [username app-ids]
+  (app-ids->tagged-ids-set (dissoc c/certified-avu :unit) username app-ids))
+
+(defn- include-orphans?
+  "Determines whether or not orhpans should be included in an app listing. NOTE: this function assumes that admins
+   do not want to list orphaned apps if they're also filtering for apps tagged with a specific AVU, which means that
+   attempts to list orphaned apps that have been tagged with a specific AVU will not work as expected."
+  [{:keys [attribute attribute_value] :as _params} admin?]
+  (and admin? (not (every? (complement string/blank?) [attribute attribute_value]))))
+
 (defn- augment-listing-params
   ([params _short-username perms]
    (let [public (perms-client/get-public-app-ids)]
      (assoc params
-            :app-ids        (set (keys @perms))
+            :app-ids (set (keys @perms))
             :public-app-ids public)))
   ([params short-username]
    (augment-listing-params params short-username (future (perms-client/load-app-permissions short-username)))))
@@ -125,11 +153,6 @@
     (-> result
         (assoc :total app_count)
         (dissoc :app_count :parent_id :workspace_id :description))))
-
-(defn- app-ids->certified-ids-set
-  "Filters the given list of app-ids into a set containing the ids of apps marked as `certified`"
-  [username app-ids]
-  (set (metadata-client/filter-by-avus username app-ids [(dissoc c/certified-avu :unit)])))
 
 (defn format-trash-category
   "Formats the virtual group for the admin's deleted and orphaned apps category."
@@ -512,11 +535,12 @@
   (let [search_term    (curl/url-decode (:search params))
         workspace      (get-workspace username)
         perms          (future (perms-client/load-app-permissions shortUsername))
-        params         (-> params
-                           (augment-listing-params shortUsername perms)
-                           (assoc :orphans admin?)
-                           fix-sort-params)
-        params         (augment-search-params search_term params shortUsername admin?)
+        params         (as-> params p
+                         (augment-listing-params p shortUsername perms)
+                         (assoc p :orphans (include-orphans? params admin?))
+                         (fix-sort-params p)
+                         (augment-search-params search_term p shortUsername admin?)
+                         (filter-app-ids-by-avus shortUsername p))
         count-apps-fn  (if admin? count-apps-for-admin count-apps-for-user)
         total          (count-apps-fn search_term (:id workspace) params)
         app-listing-fn (if admin? get-apps-for-admin get-apps-for-user)

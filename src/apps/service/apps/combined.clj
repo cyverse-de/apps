@@ -61,14 +61,15 @@
            (util/combine-app-listings params))))
 
   (searchApps [_ search-term params]
-    (->> (map #(future (.searchApps % search-term (select-keys params [:search :app-type]))) clients)
-         (util/combine-app-listings params)))
+    (let [filtered-params (select-keys params [:search :app-type :attribute :attribute_value])]
+      (->> (map #(future (.searchApps % search-term filtered-params)) clients)
+           (util/combine-app-listings params))))
 
   (listSingleApp [_ system-id app-id]
     (.listSingleApp (util/get-apps-client clients system-id) system-id app-id))
 
   (adminSearchApps [_ search-term params]
-    (let [known-params [:search :app-subset :start_date :end_date :app-type]]
+    (let [known-params [:search :app-subset :start_date :end_date :app-type :attribute :attribute_value]]
       (->> (map #(future (.adminSearchApps % search-term (select-keys params known-params))) clients)
            (util/combine-app-listings params))))
 
