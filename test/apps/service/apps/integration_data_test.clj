@@ -128,7 +128,7 @@
     (is (= id1 (get-integration-data u1)))))
 
 (defn- list-integration-data [params]
-  (ids/list-integration-data (get-user :testde1) params))
+  (ids/list-integration-data (get-user :testde1) (assoc params :sort-dir "ASC")))
 
 ;; We should be able to list integration data.
 (deftest test-integration-data-listing
