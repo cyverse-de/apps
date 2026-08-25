@@ -23,11 +23,6 @@
    during request processing."
   (cache/ttl-cache fetch-active-hierarchy-version 60000))
 
-(defn invalidate-hierarchy-version-cache
-  "Clears the cached hierarchy version. Call after setting a new version."
-  []
-  ((:invalidate hierarchy-version-cache)))
-
 (def get-active-hierarchy-version
   "Returns the active hierarchy version, served from a 60-second TTL cache."
   (:lookup hierarchy-version-cache))

@@ -2,22 +2,16 @@
   (:require [apps.routes.params :refer [SecuredQueryParams]]
             [apps.routes.schemas.analysis.listing :as listing-schema]
             [apps.routes.schemas.app.category
-             :refer [AdminOntologyAppListingPagingParams
-                     ActiveOntologyDetailsList
-                     AdminAppListingPagingParams
+             :refer [AdminAppListingPagingParams
                      AdminCategorySearchParams
-                     AppCategoryOntologyVersionDetails
                      AppCategoryPatchRequest
                      AppCategoryRequest
-                     AppCategorySearchResults
-                     OntologyHierarchyFilterParams]]
+                     AppCategorySearchResults]]
             [apps.routes.schemas.workspace
              :refer [WorkspaceDeletionParams
                      WorkspaceListing
                      WorkspaceListingParams]]
             [apps.service.apps :as apps]
-            [apps.service.apps.de.admin :as admin]
-            [apps.service.apps.de.listings :as listings]
             [apps.service.workspace :as workspace]
             [apps.user :refer [current-user]]
             [apps.util.coercions :refer [coerce!]]
@@ -39,10 +33,6 @@
              :refer [AppCategoryListing
                      AppCategoryAppListing
                      AppCommunityGroupNameParam]]
-            [common-swagger-api.schema.ontologies
-             :refer [OntologyClassIRIParam
-                     OntologyHierarchy
-                     OntologyVersionParam]]
             [ring.util.http-response :refer [ok]]))
 
 (defroutes admin-analyses
@@ -124,86 +114,6 @@
                        "metadata"
                        "POST /avus/filter-targets"))
     (ok (coerce! schema/AdminAppListing (apps/admin-list-apps-in-community current-user community-id params)))))
-
-(defroutes admin-ontologies
-
-  (GET "/" []
-    :query [params SecuredQueryParams]
-    :return ActiveOntologyDetailsList
-    :summary "List Ontology Details"
-    :description (str
-                  "Lists Ontology details saved in the metadata service."
-                  (routes/get-endpoint-delegate-block
-                   "metadata"
-                   "GET /ontologies"))
-    (ok (admin/list-ontologies current-user)))
-
-  (DELETE "/:ontology-version" []
-    :path-params [ontology-version :- OntologyVersionParam]
-    :query [params SecuredQueryParams]
-    :summary "Delete an Ontology"
-    :description (str
-                  "Marks an Ontology as deleted in the metadata service.
- Returns `ERR_ILLEGAL_ARGUMENT` when attempting to delete the active `ontology-version`."
-                  (routes/get-endpoint-delegate-block
-                   "metadata"
-                   "DELETE /admin/ontologies/{ontology-version}"))
-    (admin/delete-ontology current-user ontology-version))
-
-  (POST "/:ontology-version" []
-    :path-params [ontology-version :- OntologyVersionParam]
-    :query [params SecuredQueryParams]
-    :return AppCategoryOntologyVersionDetails
-    :summary "Set Active Ontology Version"
-    :description
-    "Sets the active `ontology-version` to use in non-admin endpoints when querying the ontology
-    endpoints of the metadata service."
-    (ok (admin/set-category-ontology-version current-user ontology-version)))
-
-  (GET "/:ontology-version/:root-iri" []
-    :path-params [ontology-version :- OntologyVersionParam
-                  root-iri :- OntologyClassIRIParam]
-    :query [{:keys [attr] :as params} OntologyHierarchyFilterParams]
-    :return OntologyHierarchy
-    :summary "Get App Category Hierarchy"
-    :description (str
-                  "Gets the list of app categories that are visible to the user for the given `ontology-version`,
- rooted at the given `root-iri`."
-                  (routes/get-endpoint-delegate-block
-                   "metadata"
-                   "POST /ontologies/{ontology-version}/{root-iri}/filter")
-                  "Please see the metadata service documentation for response information.")
-    (ok (listings/get-app-hierarchy current-user ontology-version root-iri attr)))
-
-  (GET "/:ontology-version/:root-iri/apps" []
-    :path-params [ontology-version :- OntologyVersionParam
-                  root-iri :- OntologyClassIRIParam]
-    :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
-    :return schema/AdminAppListing
-    :summary "List Apps in a Category"
-    :description (str
-                  "Lists all of the apps under an app category hierarchy, for the given `ontology-version`,
- that are visible to the user."
-                  (routes/get-endpoint-delegate-block
-                   "metadata"
-                   "POST /ontologies/{ontology-version}/{root-iri}/filter-targets"))
-    (ok (coerce! schema/AdminAppListing
-                 (apps/admin-list-apps-under-hierarchy current-user ontology-version root-iri attr params))))
-
-  (GET "/:ontology-version/:root-iri/unclassified" [root-iri]
-    :path-params [ontology-version :- OntologyVersionParam
-                  root-iri :- OntologyClassIRIParam]
-    :query [{:keys [attr] :as params} AdminOntologyAppListingPagingParams]
-    :return schema/AdminAppListing
-    :summary "List Unclassified Apps"
-    :description (str
-                  "Lists all of the apps that are visible to the user that are not under the given `root-iri`, or any of
- its subcategories, for the given `ontology-version`."
-                  (routes/get-endpoint-delegate-block
-                   "metadata"
-                   "POST /ontologies/{ontology-version}/{root-iri}/filter-unclassified"))
-    (ok (coerce! schema/AdminAppListing
-                 (listings/get-unclassified-app-listing current-user ontology-version root-iri attr params true)))))
 
 (defroutes admin-workspaces
   (GET "/" []

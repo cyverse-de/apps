@@ -2,12 +2,11 @@
   (:require
    [apps.routes.params :refer [SecuredQueryParams SecuredQueryParamsEmailRequired]]
    [apps.routes.schemas.app :refer [AdminAppListingValidSortFields AppListingPagingParams]]
-   [common-swagger-api.schema :refer [->optional-param NonBlankString SortFieldDocs SortFieldOptionalKey describe]]
+   [common-swagger-api.schema :refer [->optional-param SortFieldDocs SortFieldOptionalKey describe]]
    [common-swagger-api.schema.apps.categories :as categories-schema]
-   [common-swagger-api.schema.ontologies :as ontologies-schema]
    [schema.core :refer [defschema enum optional-key]])
   (:import
-   (java.util Date UUID)))
+   (java.util UUID)))
 
 (defschema CategoryListingParams
   (merge SecuredQueryParamsEmailRequired
@@ -41,30 +40,3 @@
       (->optional-param :name)
       (->optional-param :system_id)
       (->optional-param :parent_id)))
-
-(defschema AppCategoryOntologyVersionDetails
-  {:version    (describe String "The unique version of the Ontology")
-   :applied_by (describe NonBlankString "The user that set this version as active")
-   :applied    (describe Date "The date this version was set as active")})
-
-(defschema ActiveOntologyDetails
-  (merge ontologies-schema/OntologyDetails
-         {:active (describe Boolean
-                            "Marks this Ontology version as the active version used when querying
-                             metadata service ontology endpoints")}))
-
-(defschema ActiveOntologyDetailsList
-  {:ontologies (describe [ActiveOntologyDetails] "List of available Ontologies")})
-
-(defschema OntologyHierarchyFilterParams
-  (merge SecuredQueryParams
-         ontologies-schema/OntologyHierarchyFilterParams))
-
-(defschema OntologyAppListingPagingParams
-  (merge SecuredQueryParamsEmailRequired
-         categories-schema/OntologyAppListingPagingParams))
-
-(defschema AdminOntologyAppListingPagingParams
-  (assoc OntologyAppListingPagingParams
-         SortFieldOptionalKey
-         (describe (apply enum AdminAppListingValidSortFields) SortFieldDocs)))

@@ -133,10 +133,6 @@
                                        :validate false)))
         remove-nil-vals)))
 
-(defn list-hierarchies
-  [{:keys [username]}]
-  (metadata-client/list-hierarchies username))
-
 (defn- fix-sort-params
   [params]
   (let [params (merge default-sort-params params)]

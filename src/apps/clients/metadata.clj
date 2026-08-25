@@ -36,22 +36,6 @@
                  :error "An app hierarchy version has not been set."}))
       version)))
 
-(defn delete-ontology
-  [username ontology-version]
-  (metadata-client/delete-ontology (config/metadata-client) username ontology-version))
-
-(defn list-ontologies
-  [username]
-  (metadata-client/list-ontologies (config/metadata-client) username))
-
-(defn list-hierarchies
-  [username]
-  (:body
-   (metadata-client/list-hierarchies (config/metadata-client)
-                                     username
-                                     (get-active-hierarchy-version)
-                                     {:as :json})))
-
 (defn filter-hierarchies
   [username ontology-version attrs app-id]
   (metadata-client/filter-hierarchies (config/metadata-client)

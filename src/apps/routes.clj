@@ -48,7 +48,6 @@
                   {:name "callbacks", :description "General callback endpoints"}
                   {:name "app-categories", :description "App Category endpoints."}
                   {:name "app-communities", :description "App Community endpoints."}
-                  {:name "app-hierarchies", :description "App Hierarchy endpoints."}
                   {:name "app-element-types", :description "App Element endpoints."}
                   {:name "apps", :description "App endpoints."}
                   {:name "app-versions", :description "App Version endpoints."}
@@ -72,7 +71,6 @@
                   {:name "admin-app-metadata", :description "Admin App Metadata endpoints."}
                   {:name "admin-categories", :description "Admin App Category endpoints."}
                   {:name "admin-communities", :description "Admin App Community endpoints."}
-                  {:name "admin-ontologies", :description "Admin App Ontology endpoints."}
                   {:name "admin-container-images", :description "Admin Tool Docker Images endpoints."}
                   {:name "admin-data-containers", :description "Admin Docker Data Container endpoints."}
                   {:name "admin-tools", :description "Admin Tool endpoints."}
@@ -106,9 +104,6 @@
     (schema/context "/apps/communities" []
       :tags ["app-communities"]
       app-category-routes/app-communities)
-    (schema/context "/apps/hierarchies" []
-      :tags ["app-hierarchies"]
-      app-category-routes/app-hierarchies)
     (schema/context "/apps/elements" []
       :tags ["app-element-types"]
       app-element-routes/app-elements)
@@ -178,9 +173,6 @@
     (schema/context "/admin/apps" []
       :tags ["admin-apps"]
       admin-apps-routes/admin-apps)
-    (schema/context "/admin/ontologies" []
-      :tags ["admin-ontologies"]
-      admin-routes/admin-ontologies)
     (schema/context "/admin/reference-genomes" []
       :tags ["admin-reference-genomes"]
       admin-reference-genomes-routes/reference-genomes)
