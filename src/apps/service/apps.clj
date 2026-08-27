@@ -4,7 +4,7 @@
             [apps.persistence.jobs :as jp]
             [apps.service.apps.jobs :as jobs]
             [apps.service.apps-client :refer [get-apps-client get-apps-client-for-username]]
-            [apps.service.util :refer [validate-params-specified-together]]
+            [apps.service.util :refer [validate-avu-filter-params]]
             [apps.util.conversions :refer [remove-nil-vals]]
             [apps.util.db :refer [transaction]]
             [apps.util.json :as json-util]
@@ -21,6 +21,7 @@
 
 (defn list-apps-in-category
   [user system-id category-id params]
+  (validate-avu-filter-params params)
   (let [state-info (str "type=apps&system-id=" system-id "&category-id=" category-id)
         client     (get-apps-client user state-info)]
     (.listAppsInCategory client system-id category-id params)))
@@ -35,15 +36,17 @@
 
 (defn list-apps-in-community
   [user community-id params]
+  (validate-avu-filter-params params)
   (.listAppsInCommunity (get-apps-client user) community-id params))
 
 (defn admin-list-apps-in-community
   [user community-id params]
+  (validate-avu-filter-params params)
   (.adminListAppsInCommunity (get-apps-client user) community-id params))
 
 (defn search-apps
   [user {:keys [search] :as params}]
-  (validate-params-specified-together [:attribute :attribute_value] params)
+  (validate-avu-filter-params params)
   (.searchApps (get-apps-client user) search params))
 
 (defn list-single-app
@@ -52,7 +55,7 @@
 
 (defn admin-search-apps
   [user {:keys [search] :as params}]
-  (validate-params-specified-together [:attribute :attribute_value] params)
+  (validate-avu-filter-params params)
   (.adminSearchApps (get-apps-client user) search params))
 
 (defn add-app

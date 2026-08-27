@@ -8,8 +8,16 @@
    [apps.service.apps.tapis.pipelines :as pipelines]
    [apps.service.apps.tapis.sharing :as sharing]
    [apps.service.apps.util :as apps-util]
+   [apps.service.util :as svc-util]
    [apps.util.service :as service]
    [clojure.string :as string]))
+
+(defn- listing-qualifies?
+  "Determines whether or not a Tapis app listing should be included in a set of results. Tapis apps are never tagged
+   with AVUs in the DE metadata service, so the listing is always empty when the caller is filtering apps by AVU."
+  [client params]
+  (and (apps-util/app-type-qualifies? client params)
+       (not (svc-util/avu-filter-specified? params))))
 
 (defn- reject-app-versions-request
   []
@@ -80,7 +88,7 @@
 
   (listAppsInCategory [self system-id category-id params]
     (validate-system-id system-id)
-    (if (apps-util/app-type-qualifies? self params)
+    (if (listing-qualifies? self params)
       (listings/list-apps tapis category-id params)
       (.emptyAppListing tapis)))
 
@@ -99,20 +107,19 @@
   ;; Since Tapis doesn't list apps under ontology hierarchies, we'll use the ontology listing with communities for now.
   (listAppsInCommunity [self community-id params]
     (when (user-has-access-token?)
-      (if (apps-util/app-type-qualifies? self params)
+      (if (listing-qualifies? self params)
         (listings/list-apps-with-ontology tapis community-id params false)
         (.emptyAppListing tapis))))
 
   (adminListAppsInCommunity [self community-id params]
     (when (user-has-access-token?)
-      (if (apps-util/app-type-qualifies? self params)
+      (if (listing-qualifies? self params)
         (listings/list-apps-with-ontology tapis community-id params true)
         (.emptyAppListing tapis))))
 
   (searchApps [self search-term params]
     (when (user-has-access-token?)
-      (if (and (apps-util/app-type-qualifies? self params)
-               (every? string/blank? ((juxt :attribute :attribute_value) params)))
+      (if (listing-qualifies? self params)
         (listings/search-apps tapis search-term params false)
         (.emptyAppListing tapis))))
 
@@ -122,8 +129,7 @@
 
   (adminSearchApps [self search-term params]
     (when (user-has-access-token?)
-      (if (and (apps-util/app-type-qualifies? self params)
-               (every? string/blank? ((juxt :attribute :attribute_value) params)))
+      (if (listing-qualifies? self params)
         (listings/search-apps tapis search-term params true)
         (.emptyAppListing tapis))))
 

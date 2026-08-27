@@ -91,3 +91,13 @@
   (let [vals (mapv (partial get params) ks)]
     (when-not (or (every? string/blank? vals) (every? (complement string/blank?) vals))
       (cxu/bad-request (str "these parameters must be used together: " (string/join ", " (map name ks)))))))
+
+(defn avu-filter-specified?
+  "Determines whether or not both of the parameters used to filter an app listing by AVU were specified."
+  [{:keys [attribute attribute_value] :as _params}]
+  (every? (complement string/blank?) [attribute attribute_value]))
+
+(defn validate-avu-filter-params
+  "Verifies that either both or neither of the parameters used to filter an app listing by AVU were specified."
+  [params]
+  (validate-params-specified-together [:attribute :attribute_value] params))
