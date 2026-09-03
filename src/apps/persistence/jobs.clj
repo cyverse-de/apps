@@ -73,7 +73,8 @@
    :deleted
    :user_id
    :notify
-   :parent_id])
+   :parent_id
+   :initial_time_limit_seconds])
 
 (def job-step-fields
   [:job_id

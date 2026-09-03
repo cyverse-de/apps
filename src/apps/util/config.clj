@@ -104,6 +104,11 @@
   [props config-valid configs]
   "apps.vice.k8s-enabled" true)
 
+(cc/defprop-optint vice-max-initial-time-limit-seconds
+  "The maximum initial duration, in seconds, that a user may request when launching a VICE analysis."
+  [props config-valid configs]
+  "apps.vice.max-initial-time-limit-seconds" (* 30 24 60 60)) ;; 30 days
+
 (cc/defprop-optstr data-info-base-url
   "The base URL to use when connecting to the JEX."
   [props config-valid configs]

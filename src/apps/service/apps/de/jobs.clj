@@ -85,6 +85,9 @@
              :username           (:username user)
              :status             status
              :parent_id          (:parent_id submission))
+      (cond-> (and (= (:execution_target job) "interapps")
+                   (pos-int? (:time_limit_seconds submission)))
+        (assoc :initial_time_limit_seconds (:time_limit_seconds submission)))
       (jp/save-job submission)))
 
 (defn- job-type-for-step

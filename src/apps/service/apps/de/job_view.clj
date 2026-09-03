@@ -130,7 +130,8 @@
 (defn- format-app
   [user {:keys [id name version_id] :as app} include-hidden-params?]
   (let [app-steps           (get-steps version_id)
-        limit-check-results (limits/load-limit-check-results user)]
+        limit-check-results (limits/load-limit-check-results user)
+        interactive?        (= (:overall_job_type app) ac/interactive-tool-type)]
     (-> (select-keys app [:id :name :description :disabled :deleted :version :version_id :overall_job_type])
         (assoc :label name
                :versions (amp/list-app-versions id)
@@ -138,7 +139,9 @@
                :groups (remove (comp empty? :parameters) (format-steps user include-hidden-params? app-steps))
                :app_type "DE"
                :system_id c/system-id
-               :limitChecks (limits/format-app-limit-check-results limit-check-results app)))))
+               :limitChecks (limits/format-app-limit-check-results limit-check-results app))
+        (cond-> interactive?
+          (assoc :max_time_limit_seconds (config/vice-max-initial-time-limit-seconds))))))
 
 (defn- validate-hidden-inputs
   [user app-version-id]
