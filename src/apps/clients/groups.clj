@@ -13,11 +13,24 @@
   [& components]
   (str (apply curl/url (config/groups-base) components)))
 
+;; clj-http applies no timeout of its own. This client sits on job submission
+;; and both job listings, so a groups service that accepts connections without
+;; answering would tie up every request thread until apps stops responding too.
+(def ^:private timeouts
+  {:connection-timeout 5000
+   :socket-timeout     30000})
+
+(defn- as-user
+  ([user] (as-user user {}))
+  ([user query-params]
+   (merge timeouts
+          {:query-params (assoc query-params :user user)
+           :as           :json})))
+
 (defn- as-de-grouper
   ([] (as-de-grouper {}))
   ([query-params]
-   {:query-params (assoc query-params :user (config/de-grouper-user))
-    :as           :json}))
+   (as-user (config/de-grouper-user) query-params)))
 
 (defn user-source? [subject-source-id]
   (= subject-source-id (config/grouper-user-source)))
@@ -28,8 +41,7 @@
 (defn lookup-subject
   "Retrieves user details for a single subject."
   [user short-username]
-  (:body (http/get (groups-url "subjects" short-username)
-                   {:query-params {:user user} :as :json})))
+  (:body (http/get (groups-url "subjects" short-username) (as-user user))))
 
 (defn lookup-subjects
   "Looks up multiple subjects by subject ID, returning a map of ID to subject."
@@ -120,8 +132,7 @@
 (defn list-group-members-by-id
   "Lists the members of the group with the given ID."
   [user group-id]
-  (:body (http/get (groups-url "groups" group-id "members")
-                   {:query-params {:user user} :as :json})))
+  (:body (http/get (groups-url "groups" group-id "members") (as-user user))))
 
 (defn get-workshop-group
   "Retrieves information about the workshop users group, creating it if necessary."

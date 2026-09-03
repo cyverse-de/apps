@@ -1,6 +1,6 @@
 (ns apps.service.apps.test-fixtures
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.constants :refer [de-system-id]]
    [apps.persistence.jobs :as jp]
    [apps.service.apps :as apps]
@@ -129,7 +129,7 @@
 
 (defn register-public-apps []
   (for [app (list-public-apps)]
-    (do (pc/grant-permission (config/permissions-client) "app" (:id app) "group" (ipg/grouper-user-group-id) "read")
+    (do (pc/grant-permission (config/permissions-client) "app" (:id app) "group" (groups-client/de-users-group-id) "read")
         app)))
 
 (defn category-name-subselect [_category-name]

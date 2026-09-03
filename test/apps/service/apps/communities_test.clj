@@ -1,5 +1,5 @@
 (ns apps.service.apps.communities-test
-  (:require [apps.clients.groups :as groups]
+  (:require [apps.clients.groups :as groups-client]
             [apps.service.apps.communities :as communities]
             [apps.util.config :as config]
             [clojure.test :refer [deftest is testing]]
@@ -51,8 +51,8 @@
 (deftest lookup-community-identifier-forms-test
   (let [resolve-community #'communities/resolve-community
         imaging           {:id imaging-id :name "Imaging" :group_type "community"}]
-    (with-redefs-fn {#'groups/lookup-group    (fn [_group-type name] (when (= "Imaging" name) imaging))
-                     #'groups/get-group-by-id (constantly nil)}
+    (with-redefs-fn {#'groups-client/lookup-group    (fn [_group-type name] (when (= "Imaging" name) imaging))
+                     #'groups-client/get-group-by-id (constantly nil)}
       (fn []
         (testing "a legacy Grouper communities path resolves by its short name"
           (is (= imaging (resolve-community "iplant:de:de:communities:Imaging"))))
@@ -65,25 +65,25 @@
 (deftest lookup-community-branch-precedence-test
   (testing "which lookup each identifier form goes through"
     (let [imaging (fn [via] {:id imaging-id :name "Imaging" :group_type "community" :via via})]
-      (with-redefs-fn {#'groups/get-group-by-id (fn [group-id] (imaging [:id group-id]))
-                       #'groups/lookup-group    (fn [_group-type name] (imaging [:name name]))}
+      (with-redefs-fn {#'groups-client/get-group-by-id (fn [group-id] (imaging [:id group-id]))
+                       #'groups-client/lookup-group    (fn [_group-type name] (imaging [:name name]))}
         (fn []
-          (is (= [:id imaging-id] (:via (groups/lookup-community imaging-id)))
+          (is (= [:id imaging-id] (:via (groups-client/lookup-community imaging-id)))
               "a 32-hex identifier is looked up as a group ID")
-          (is (= [:name "Imaging"] (:via (groups/lookup-community "Imaging")))
+          (is (= [:name "Imaging"] (:via (groups-client/lookup-community "Imaging")))
               "a plain name is looked up as a community name")
-          (is (= [:name "Imaging"] (:via (groups/lookup-community "iplant:de:de:communities:Imaging")))
+          (is (= [:name "Imaging"] (:via (groups-client/lookup-community "iplant:de:de:communities:Imaging")))
               "a communities path is looked up by its short name"))))))
 
 (deftest resolve-community-test
   (let [resolve-community #'communities/resolve-community
         imaging           {:id imaging-id :name "Imaging" :group_type "community"}]
     (testing "an identifier that names a community resolves to it"
-      (with-redefs [groups/lookup-community (constantly imaging)]
+      (with-redefs [groups-client/lookup-community (constantly imaging)]
         (is (= imaging (resolve-community "Imaging")))))
 
     (testing "an identifier that names nothing is a 404, not a silently stored tag"
-      (with-redefs [groups/lookup-community (constantly nil)]
+      (with-redefs [groups-client/lookup-community (constantly nil)]
         (is (= :clojure-commons.exception/not-found
                (caught-type (resolve-community "iplant:de:de:communities:Gone"))))))))
 
@@ -91,8 +91,8 @@
   (testing "the community's admin set gates callers who are not administrators"
     (let [resolve-request #'communities/resolve-request-communities
           imaging         {:id imaging-id :name "Imaging" :group_type "community"}]
-      (with-redefs [groups/lookup-community      (constantly imaging)
-                    groups/list-community-admins (constantly {:members [{:id "someadmin"}]})]
+      (with-redefs [groups-client/lookup-community      (constantly imaging)
+                    groups-client/list-community-admins (constantly {:members [{:id "someadmin"}]})]
         (testing "a caller outside the admin set is refused"
           (is (= :clojure-commons.exception/forbidden
                  (caught-type (resolve-request "outsider" {:community_ids [imaging-id]} false)))))
@@ -101,10 +101,8 @@
 
 (deftest admin-still-resolves-communities-test
   (testing "an administrator skips the community-admin check but not resolution"
-    ;; Skipping resolution for administrators is what allowed an unresolvable
-    ;; value to be written verbatim, producing a tag no listing can match.
     (let [resolve-request #'communities/resolve-request-communities]
       (with-community-attr
-        (with-redefs [groups/lookup-community (constantly nil)]
+        (with-redefs [groups-client/lookup-community (constantly nil)]
           (is (= :clojure-commons.exception/not-found
                  (caught-type (resolve-request "someadmin" {:community_ids ["nope"]} true)))))))))

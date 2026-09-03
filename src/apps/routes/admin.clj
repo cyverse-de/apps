@@ -120,6 +120,8 @@
     :return schema/AdminAppListing
     :summary "List Apps in a Community"
     :description (str "Lists all of the apps under an App Community that are visible to an admin."
+                      " An identifier that names no community lists no apps rather than failing,"
+                      " unlike the endpoints that tag an app, which reject it with a 404."
                       (routes/get-endpoint-delegate-block
                        "metadata"
                        "POST /avus/filter-targets"))

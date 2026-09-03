@@ -1,5 +1,5 @@
 (ns apps.service.apps.communities
-  (:require [apps.clients.groups :as groups]
+  (:require [apps.clients.groups :as groups-client]
             [apps.clients.metadata :as metadata-client]
             [apps.util.config :as config]
             [cheshire.core :as json]
@@ -12,12 +12,12 @@
    is what a community listing matches on, so accepting one that resolves to no
    community writes a tag no app will ever be found by."
   [identifier]
-  (or (groups/lookup-community identifier)
+  (or (groups-client/lookup-community identifier)
       (exception-util/not-found "No such community" :community identifier)))
 
 (defn- community-admin-ids
   [community-id]
-  (set (mapv :id (:members (groups/list-community-admins community-id)))))
+  (set (mapv :id (:members (groups-client/list-community-admins community-id)))))
 
 (defn get-community-name-and-admins
   "Resolves a community identifier to the community's name and its admin set."

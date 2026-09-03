@@ -1,5 +1,5 @@
 (ns apps.clients.notifications.common-sharing
-  (:require [apps.clients.groups :as ipg]
+  (:require [apps.clients.groups :as groups-client]
             [clojure-commons.template :refer [render]]))
 
 (def grouping-threshold 10)
@@ -53,8 +53,8 @@
 
 (defn notifications-for-sharee
   [notifications-fn sharer {sharee :id subject-source-id :source_id} responses]
-  (if (ipg/user-source? subject-source-id)
+  (if (groups-client/user-source? subject-source-id)
     (notifications-fn sharer sharee responses)
-    (->> (:members (ipg/list-group-members-by-id sharer sharee))
-         (filter (comp ipg/user-source? :source_id))
+    (->> (:members (groups-client/list-group-members-by-id sharer sharee))
+         (filter (comp groups-client/user-source? :source_id))
          (mapcat (fn [{sharee :id}] (notifications-fn sharer sharee responses))))))

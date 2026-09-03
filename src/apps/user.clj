@@ -1,6 +1,6 @@
 (ns apps.user
   (:require
-   [apps.clients.groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.util.config :refer [uid-domain]]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
@@ -47,13 +47,13 @@
   [username act-as-username]
   (let [short-username        (string/replace username #"@.*" "")
         short-act-as-username (string/replace act-as-username #"@.*" "")
-        user-info             (ipg/lookup-subject short-act-as-username short-username)]
+        user-info             (groups-client/lookup-subject short-act-as-username short-username)]
     {:username      (append-username-suffix short-username)
      :password      nil
      :email         (:email user-info)
      :shortUsername short-username
-     :first-name    (:first-name user-info)
-     :last-name     (:last-name user-info)}))
+     :first-name    (:first_name user-info)
+     :last-name     (:last_name user-info)}))
 
 (defn load-user
   "Loads information for the user with the given username."

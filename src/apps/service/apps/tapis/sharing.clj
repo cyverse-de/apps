@@ -1,6 +1,6 @@
 (ns apps.service.apps.tapis.sharing
   (:require
-   [apps.clients.groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.persistence.jobs :as jp]
    [apps.service.apps.permissions :as app-permissions]
    [clojure-commons.error-codes :as ce :refer [clj-http-error?]]
@@ -9,7 +9,7 @@
 
 (defn- try-share-app-with-subject
   [tapis sharee app-id level success-fn failure-fn]
-  (if-not (ipg/user-source? (:source_id sharee))
+  (if-not (groups-client/user-source? (:source_id sharee))
     (failure-fn "Sharing HPC apps with a group is not supported")
     (try+
      (if level

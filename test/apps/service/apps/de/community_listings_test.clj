@@ -1,5 +1,5 @@
 (ns apps.service.apps.de.community-listings-test
-  (:require [apps.clients.groups :as groups]
+  (:require [apps.clients.groups :as groups-client]
             [apps.clients.metadata :as metadata-client]
             [apps.service.apps.de.listings :as listings]
             [apps.util.config :as config]
@@ -20,7 +20,7 @@
       (doseq [identifier [imaging-id "Imaging" "iplant:de:prod:communities:Imaging"]]
         (let [sent (atom nil)]
           (with-redefs [config/workspace-metadata-communities-attr (constantly community-attr)
-                        groups/lookup-community                   (constantly imaging)
+                        groups-client/lookup-community            (constantly imaging)
                         metadata-client/filter-by-avus            (fn [_ ids avus]
                                                                     (reset! sent avus)
                                                                     ids)]
@@ -35,7 +35,7 @@
       ;; longer exists.
       (let [called (atom false)]
         (with-redefs [config/workspace-metadata-communities-attr (constantly community-attr)
-                      groups/lookup-community                   (constantly nil)
+                      groups-client/lookup-community            (constantly nil)
                       metadata-client/filter-by-avus            (fn [& _] (reset! called true) app-ids)]
           (is (= #{} (filter-by-community "someuser" "iplant:de:prod:communities:Vanished" app-ids)))
           (is (false? @called)))))))

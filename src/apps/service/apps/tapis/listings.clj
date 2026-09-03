@@ -1,6 +1,6 @@
 (ns apps.service.apps.tapis.listings
   (:require
-   [apps.clients.groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.persistence.app-metadata :as ap]
    [apps.service.apps.util :refer [to-qualified-app-id]]
    [apps.service.util :refer [apply-limit apply-offset format-job-stats sort-apps valid-uuid?]]
@@ -33,7 +33,7 @@
 
 (defn- add-app-integrator-info
   ([app-listing]
-   (let [subject-info-for (ipg/lookup-subjects (map :owner (:apps app-listing)))
+   (let [subject-info-for (groups-client/lookup-subjects (map :owner (:apps app-listing)))
          add-integrator   (partial add-app-integrator-info subject-info-for)]
      (update app-listing :apps (partial mapv add-integrator))))
   ([subject-info-for {:keys [owner] :as app-listing}]
@@ -45,7 +45,7 @@
 
 (defn- add-app-details-integrator-info
   [{:keys [owner] :as app-details}]
-  (let [subject-info-for (ipg/lookup-subjects [owner])]
+  (let [subject-info-for (groups-client/lookup-subjects [owner])]
     (add-app-integrator-info subject-info-for app-details)))
 
 (defn get-app-details

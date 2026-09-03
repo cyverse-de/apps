@@ -1,6 +1,6 @@
 (ns apps.service.apps.job-listings
   (:require
-   [apps.clients.groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.clients.notifications :refer [interapps-url]]
    [apps.clients.permissions :as perms-client]
    [apps.persistence.jobs :as jp]
@@ -104,7 +104,7 @@
 (defn list-jobs
   [apps-client {:keys [username] :as user} {:keys [sort-field] :as params}]
   (let [perms            (future (perms-client/load-analysis-permissions (:shortUsername user)))
-        group-ids        (future (->> (ipg/lookup-subject-groups (:shortUsername user)) :groups (mapv :id)))
+        group-ids        (future (->> (groups-client/lookup-subject-groups (:shortUsername user)) :groups (mapv :id)))
         subject-ids      (future (conj @group-ids (:shortUsername user)))
         default-sort-dir (if (nil? sort-field) :desc :asc)
         search-params    (util/default-search-params params :startdate default-sort-dir)
@@ -119,7 +119,7 @@
 
 (defn list-job-stats
   [apps-client user params]
-  (let [group-ids   (future (->> (ipg/lookup-subject-groups (:shortUsername user)) :groups (mapv :id)))
+  (let [group-ids   (future (->> (groups-client/lookup-subject-groups (:shortUsername user)) :groups (mapv :id)))
         subject-ids (future (conj @group-ids (:shortUsername user)))
         types       (.getJobTypes apps-client)]
     {:status-count (count-job-statuses user params types @subject-ids)}))

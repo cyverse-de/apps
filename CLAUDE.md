@@ -53,7 +53,7 @@ The application follows a layered Clojure web service architecture:
    - Transactions via `apps.util.db/transaction`
 
 5. **Client Layer** (`src/apps/clients/`)
-   - HTTP clients for external microservices (jex, data-info, metadata, permissions, notifications, iplant-groups)
+   - HTTP clients for external microservices (jex, data-info, metadata, permissions, notifications, groups)
 
 ### Multi-System App Client Pattern
 - **Protocol-based abstraction** (`apps.protocols/Apps`): Defines all app operations as protocol methods.

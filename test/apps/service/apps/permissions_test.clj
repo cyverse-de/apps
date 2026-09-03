@@ -1,6 +1,6 @@
 (ns apps.service.apps.permissions-test
   (:require
-   [apps.clients.iplant-groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.clients.permissions :as perms-client]
    [apps.constants :refer [de-system-id]]
    [apps.service.apps :as apps]
@@ -37,7 +37,7 @@
   (let [{username :shortUsername :as user} (get-user :testde1)
         dev-category-id                    (:id (atf/get-dev-category user))
         beta-category-id                   (:id (atf/get-beta-category user))
-        group-id                           (ipg/grouper-user-group-id)]
+        group-id                           (groups-client/de-users-group-id)]
     (is (= 1 (:total (apps/list-apps-in-category user de-system-id dev-category-id {}))))
     (is (= (count atf/beta-apps) (:total (apps/list-apps-in-category user de-system-id beta-category-id {}))))
     (perms-client/unshare-app (:id atf/test-app) "user" username)
@@ -51,7 +51,7 @@
 
 (deftest test-app-hierarchy-counts
   (let [{username :shortUsername :as user} (get-user :testde1)
-        group-id                           (ipg/grouper-user-group-id)]
+        group-id                           (groups-client/de-users-group-id)]
     (is (= 1 (:total (atf/get-dev-category user))))
     (is (= (count atf/beta-apps) (:total (atf/get-beta-category user))))
     (perms-client/unshare-app (:id atf/test-app) "user" username)
@@ -67,7 +67,7 @@
 ;; FIXME the Beta category is obsolete
 (deftest test-admin-app-hierarchy-counts
   (let [user     (get-user :testde1)
-        group-id (ipg/grouper-user-group-id)]
+        group-id (groups-client/de-users-group-id)]
     (is (= (count atf/beta-apps) (:total (atf/get-admin-beta-category user))))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first atf/beta-apps)) "group" group-id)
     (is (= (dec (count atf/beta-apps)) (:total (atf/get-admin-beta-category user))))))
@@ -79,7 +79,7 @@
 (deftest test-app-category-listing
   (let [user             (get-user :testde1)
         beta-category-id (:id (atf/get-beta-category user))
-        group-id         (ipg/grouper-user-group-id)
+        group-id         (groups-client/de-users-group-id)
         app-id           (:id (first atf/beta-apps))]
     (is (find-app (apps/list-apps-in-category user de-system-id beta-category-id {}) app-id))
     (pc/revoke-permission (config/permissions-client) "app" (:id (first atf/beta-apps)) "group" group-id)
@@ -261,10 +261,10 @@
   (let [{username :shortUsername :as user} (get-user :testde1)]
     (sql/delete :app_documentation (sql/where {:app_id (:id atf/test-app)}))
     (is (has-permission? "app" (:id atf/test-app) "user" username "own"))
-    (is (not (has-permission? "app" (:id atf/test-app) "group" (ipg/grouper-user-group-id) "read")))
+    (is (not (has-permission? "app" (:id atf/test-app) "group" (groups-client/de-users-group-id) "read")))
     (apps/make-app-public user de-system-id atf/test-app)
     (is (not (has-permission? "app" (:id atf/test-app) "user" username "own")))
-    (is (has-permission? "app" (:id atf/test-app) "group" (ipg/grouper-user-group-id) "read"))))
+    (is (has-permission? "app" (:id atf/test-app) "group" (groups-client/de-users-group-id) "read"))))
 
 (defn share-app [sharer sharee app-id level]
   (apps/share-apps sharer false [{:user (:shortUsername sharee)

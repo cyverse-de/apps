@@ -1,5 +1,5 @@
 (ns apps.clients.permissions
-  (:require [apps.clients.groups :as ipg]
+  (:require [apps.clients.groups :as groups-client]
             [apps.util.cache :as cache]
             [apps.util.config :as config]
             [apps.util.service :as service]
@@ -119,7 +119,7 @@
 
 (defn- get-public-resource-ids [resource-type]
   (->> (pc/get-abbreviated-subject-permissions-for-resource-type
-        (client) "group" (ipg/de-users-group-id) resource-type false)
+        (client) "group" (groups-client/de-users-group-id) resource-type false)
        :permissions
        (map (comp uuidify :resource_name))
        set))
@@ -145,12 +145,12 @@
 (defn make-app-public
   [user app-id]
   (revoke-app-user-permission user app-id)
-  (pc/grant-permission (client) (rt-app) app-id "group" (ipg/de-users-group-id) "read")
+  (pc/grant-permission (client) (rt-app) app-id "group" (groups-client/de-users-group-id) "read")
   ((:invalidate public-app-ids-cache)))
 
 (defn register-public-tool
   [tool-id]
-  (pc/grant-permission (client) (rt-tool) tool-id "group" (ipg/de-users-group-id) "read")
+  (pc/grant-permission (client) (rt-tool) tool-id "group" (groups-client/de-users-group-id) "read")
   ((:invalidate public-tool-ids-cache)))
 
 (defn make-tool-public
@@ -172,7 +172,7 @@
 
 (defn- share-resource
   ([resource-type resource-name {subject-source-id :source_id subject-id :id} level]
-   (share-resource resource-type resource-name (ipg/get-subject-type subject-source-id) subject-id level))
+   (share-resource resource-type resource-name (groups-client/get-subject-type subject-source-id) subject-id level))
   ([resource-type resource-name subject-type subject-id level]
    (try+
     (pc/grant-permission (client) resource-type resource-name subject-type subject-id level)
@@ -184,7 +184,7 @@
 
 (defn- unshare-resource
   ([resource-type resource-name {subject-source-id :source_id subject-id :id}]
-   (unshare-resource resource-type resource-name (ipg/get-subject-type subject-source-id) subject-id))
+   (unshare-resource resource-type resource-name (groups-client/get-subject-type subject-source-id) subject-id))
   ([resource-type resource-name subject-type subject-id]
    (try+
     (pc/revoke-permission (client) resource-type resource-name subject-type subject-id)

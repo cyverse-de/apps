@@ -1,6 +1,6 @@
 (ns apps.service.workspace
   (:require
-   [apps.clients.groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.persistence.workspace :as wp]
    [apps.user :refer [append-username-suffix]]))
 
@@ -12,7 +12,7 @@
 
 (defn get-workspace
   [{short-username :shortUsername :keys [username]}]
-  (ipg/add-de-user short-username)
+  (groups-client/add-de-user short-username)
   (if-let [workspace (wp/get-workspace username)]
     (format-workspace workspace false)
     (format-workspace (wp/create-workspace username) true)))

@@ -1,5 +1,5 @@
 (ns apps.service.groups-test
-  (:require [apps.clients.groups :as ipg]
+  (:require [apps.clients.groups :as groups-client]
             [apps.routes.schemas.groups :as schema]
             [apps.service.groups :as groups]
             [clojure.test :refer [deftest is testing]]
@@ -29,8 +29,8 @@
 
 (deftest update-workshop-group-members-test
   (testing "members come from re-reading the group, failures from the results"
-    (with-redefs [ipg/update-workshop-group-members (constantly update-response)
-                  ipg/get-workshop-group-members    (constantly membership-after)]
+    (with-redefs [groups-client/update-workshop-group-members (constantly update-response)
+                  groups-client/get-workshop-group-members    (constantly membership-after)]
       (let [response (groups/update-workshop-group-members ["kept-user" "added-user" "imaginary-user"])]
         (is (= {:members  [{:id "kept-user" :name "Kept User" :source_id "ldap"}
                            {:id "added-user" :name "Added User" :source_id "ldap"}]

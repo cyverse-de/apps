@@ -1,6 +1,6 @@
 (ns apps.service.apps.de.jobs.common
   (:require
-   [apps.clients.groups :as ipg]
+   [apps.clients.groups :as groups-client]
    [apps.containers :as c]
    [apps.persistence.users :refer [get-user-id]]
    [apps.service.apps.de.jobs.params :as params]
@@ -177,7 +177,7 @@
 
 (defn build-submission
   [request-builder user email submission app]
-  (let [groups (future (:groups (ipg/lookup-subject-groups (:shortUsername user))))
+  (let [groups (future (:groups (groups-client/lookup-subject-groups (:shortUsername user))))
         steps  (future (.buildSteps request-builder))
         extra  (future (.buildExtra request-builder))]
     (-> {:app_description      (:description app)

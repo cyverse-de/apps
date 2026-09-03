@@ -95,7 +95,9 @@
     :query [params AppListingPagingParams]
     :return AppListing
     :summary schema/AppCommunityAppListingSummary
-    :description schema/AppCommunityAppListingDocs
+    :description (str schema/AppCommunityAppListingDocs
+                      " An identifier that names no community lists no apps rather than failing,"
+                      " unlike the endpoints that tag an app, which reject it with a 404.")
     (ok (coerce! AppListing (apps/list-apps-in-community current-user community-id params))))
 
   (undocumented (route/not-found (service/unrecognized-path-response))))
