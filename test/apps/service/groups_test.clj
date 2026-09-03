@@ -37,3 +37,13 @@
                 :failures ["imaginary-user"]}
                response))
         (is (= response (s/validate schema/GroupMembersUpdateResponse response)))))))
+
+(deftest get-workshop-group-members-test
+  (testing "fields the groups service adds do not reach the response schema"
+    ;; total is reported alongside the members so a caller can page a large
+    ;; group; GroupMembers is closed, so forwarding it verbatim would 500.
+    (with-redefs [groups-client/get-workshop-group-members
+                  (constantly (assoc membership-after :total 2))]
+      (let [response (groups/get-workshop-group-members)]
+        (is (= membership-after response))
+        (is (= response (s/validate schema/GroupMembers response)))))))
