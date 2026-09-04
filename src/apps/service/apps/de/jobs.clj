@@ -206,7 +206,7 @@
 
 (defn get-job-step-status
   [{:keys [external_id]}]
-  (when-let [step (jp/get-job-state external_id)]
+  (let [step (jp/get-job-state external_id)]
     {:status  (:status step)
      :enddate (:completion_date step)}))
 

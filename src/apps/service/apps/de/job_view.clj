@@ -145,7 +145,7 @@
 
 (defn- validate-hidden-inputs
   [user app-version-id]
-  (when-let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-version-id)))]
+  (let [paths (mapv :default_value (filter util/input? (mp/load-hidden-params app-version-id)))]
     (try+
      (data-info/get-path-info user :paths paths :validation-behavior "read" :filter-include "path")
      (catch [:status 500] e

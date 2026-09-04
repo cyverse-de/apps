@@ -73,14 +73,20 @@
   (sql/raw "NOT EXISTS (SELECT * FROM app_category_app aca WHERE aca.app_id = app_listing.id)"))
 
 (defn- add-app-id-where-clause
+  "Restricts an app listing query to a set of app IDs. An empty set of app IDs restricts the listing to no apps at
+   all; the listing is left unrestricted only when no set of app IDs is given."
   [query {:keys [app-ids orphans public-app-ids]}]
-  (if (seq app-ids)
-    (if (and orphans (seq public-app-ids))
-      (sql/where query (or {:id [:in app-ids]}
-                           (and {:id [:not-in (sequence public-app-ids)]}
-                                (get-app-listing-orphaned-condition))))
-      (sql/where query {:id [:in app-ids]}))
-    query))
+  (cond
+    (nil? app-ids)
+    query
+
+    (and orphans (seq public-app-ids))
+    (sql/where query (or {:id [:in app-ids]}
+                         (and {:id [:not-in (sequence public-app-ids)]}
+                              (get-app-listing-orphaned-condition))))
+
+    :else
+    (sql/where query {:id [:in app-ids]})))
 
 (defn- add-omitted-app-id-where-clause
   [query {:keys [omitted-app-ids]}]

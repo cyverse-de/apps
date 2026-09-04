@@ -6,7 +6,6 @@
    [apps.persistence.app-groups :as app-groups]
    [apps.persistence.app-metadata :as persistence]
    [apps.persistence.app-metadata.relabel :refer [update-app-labels]]
-   [apps.persistence.categories :as db-categories]
    [apps.service.apps.de.categorization :as categorization]
    [apps.service.apps.de.constants :as c]
    [apps.service.apps.de.validation :as av]
@@ -199,23 +198,3 @@
        (app-groups/decategorize-category category-id)
        (validate-category-not-ancestor-of-parent category-id parent_id)
        (app-groups/add-subgroup parent_id category-id)))))
-
-(defn list-ontologies
-  [{:keys [username]}]
-  (let [active-version              (db-categories/get-active-hierarchy-version)
-        {ontology-list :ontologies} (metadata-client/list-ontologies username)]
-    {:ontologies (map #(assoc % :active (= active-version (:version %))) ontology-list)}))
-
-(defn set-category-ontology-version
-  "Sets the active ontology-version for use in apps hierarchy endpoints."
-  [{:keys [username]} ontology-version]
-  (let [version-details (db-categories/add-hierarchy-version username ontology-version)]
-    (db-categories/invalidate-hierarchy-version-cache)
-    (assoc version-details :applied_by username)))
-
-(defn delete-ontology
-  [{:keys [username]} ontology-version]
-  (let [active-version (db-categories/get-active-hierarchy-version)]
-    (when (= ontology-version active-version)
-      (ex-util/illegal-argument "The active app hierarchy version cannot be marked as deleted.")))
-  (metadata-client/delete-ontology username ontology-version))
