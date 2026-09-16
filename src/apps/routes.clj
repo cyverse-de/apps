@@ -2,6 +2,7 @@
   (:require [apps.routes.admin :as admin-routes]
             [apps.routes.admin.apps :as admin-apps-routes]
             [apps.routes.admin.reference-genomes :as admin-reference-genomes-routes]
+            [apps.routes.admin.resource-presets :as admin-resource-preset-routes]
             [apps.routes.admin.tool-requests :as admin-tool-request-routes]
             [apps.routes.analyses :as analysis-routes]
             [apps.routes.apps :as app-routes]
@@ -63,6 +64,7 @@
                   {:name "users", :description "User endpoints."}
                   {:name "tool-requests", :description "Tool Request endpoints."}
                   {:name "reference-genomes", :description "Reference Genome endpoints."}
+                  {:name "resource-presets", :description "Resource Preset endpoints."}
                   {:name "oauth", :description "OAuth callback and information endpoints."}
                   {:name "submissions", :description "Analysis submission endpoints"}
                   {:name "admin-analyses", :description "Admin Analysis Endpoints"}
@@ -75,6 +77,7 @@
                   {:name "admin-data-containers", :description "Admin Docker Data Container endpoints."}
                   {:name "admin-tools", :description "Admin Tool endpoints."}
                   {:name "admin-reference-genomes", :description "Admin Reference Genome endpoints."}
+                  {:name "admin-resource-presets", :description "Admin Resource Preset endpoints."}
                   {:name "admin-tool-requests", :description "Admin Tool Request endpoints."}
                   {:name "admin-oauth", :description "Admin OAuth endpoints."}
                   {:name "admin-integration-data", :description "Admin Integration Data endpoints."}
@@ -149,6 +152,9 @@
     (schema/context "/reference-genomes" []
       :tags ["reference-genomes"]
       reference-genome-routes/reference-genomes)
+    (schema/context "/resource-presets" []
+      :tags ["resource-presets"]
+      admin-resource-preset-routes/resource-presets)
     (schema/context "/oauth" []
       :tags ["oauth"]
       oauth-routes/oauth)
@@ -176,6 +182,9 @@
     (schema/context "/admin/reference-genomes" []
       :tags ["admin-reference-genomes"]
       admin-reference-genomes-routes/reference-genomes)
+    (schema/context "/admin/resource-presets" []
+      :tags ["admin-resource-presets"]
+      admin-resource-preset-routes/admin-resource-presets)
     (schema/context "/admin/tools/container-images" []
       :tags ["admin-container-images"]
       tool-routes/container-images)
