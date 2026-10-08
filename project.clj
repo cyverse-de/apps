@@ -87,6 +87,15 @@
   ;; `lein with-profile +cljfmt cljfmt check`.
   :profiles {:dev    {:plugins        [[lein-ring "0.12.6"]]
                       :resource-paths ["conf/test"]}
+             ;; Endpoint tests start PostgreSQL with Testcontainers, so they need a running Docker daemon.
+             ;; Testcontainers needs the newer commons-compress and commons-io it declares; without these pins,
+             ;; nearest-wins hands it the much older versions that me.raynes/fs and clj-http bring. Neither of
+             ;; those libraries is exercised in a way that the newer versions break, and this only affects the
+             ;; test classpath.
+             :test   {:dependencies [[org.testcontainers/testcontainers-postgresql "2.0.3"]
+                                     [org.apache.commons/commons-compress "1.28.0"]
+                                     [commons-io "2.20.0"]
+                                     [ring/ring-mock "0.4.0"]]}
              :kondo  {:plugins [[com.github.clj-kondo/lein-clj-kondo "2026.08.04"]]
                       :pedantic? :warn}
              :cljfmt {:plugins [[dev.weavejester/lein-cljfmt "0.16.5"]]
@@ -96,6 +105,11 @@
                                 [refactor-nrepl/refactor-nrepl "3.14.0"]]
                       :pedantic? :warn}
              :uberjar {:aot :all}}
+  ;; Endpoint tests need Docker and a de-database checkout, so plain `lein test` leaves them out.
+  ;; Run them with `lein test :endpoint`, or everything with `lein test :all`.
+  :test-selectors {:default  (complement :endpoint)
+                   :endpoint :endpoint
+                   :all      (constantly true)}
   :repl-options {:timeout 120000}
   :main ^:skip-aot apps.core
   :ring {:handler apps.routes/app
