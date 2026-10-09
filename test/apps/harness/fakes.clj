@@ -7,6 +7,7 @@
    the real service's schema. The endpoint test fixture fails the test when either happens, which turns a new
    outbound call into an obvious, one-place fix instead of a confusing downstream error."
   (:require
+   [apps.harness.contracts :as contracts]
    [cheshire.core :as json]
    [common-swagger-api.schema.groups :as group-schema]
    [common-swagger-api.schema.metadata :as metadata-schema]
@@ -35,7 +36,12 @@
 (defn unhandled-requests [] @unhandled)
 (defn clear-unhandled! [] (reset! unhandled []))
 
-(defn- uuid [] (str (UUID/randomUUID)))
+(defn- uuid [] (str (random-uuid)))
+
+(defn- name-uuid
+  "Returns a UUID derived from the given strings, for fake IDs that have to stay the same across calls."
+  [& ss]
+  (str (UUID/nameUUIDFromBytes (.getBytes ^String (string/join ":" ss)))))
 
 (defn- json-response
   ([body] (json-response 200 body))
@@ -57,8 +63,32 @@
 (defn- not-found [reason]
   (json-response 404 {:reason reason}))
 
-(defn- path-segments [uri]
-  (mapv codec/url-decode (remove string/blank? (string/split uri #"/"))))
+(defn- path-segments [path]
+  (mapv codec/url-decode (remove string/blank? (string/split path #"/"))))
+
+(defn- match-route
+  "Returns the path parameters when the request uses the given method and its path segments match the pattern, or nil
+   otherwise. Pattern segments that start with a colon match any one segment and become keys in the result:
+
+     (match-route :get \"/groups/:name\" request [\"groups\" \"g1\"]) ;=> {:name \"g1\"}"
+  [method pattern {:keys [request-method]} segments]
+  (let [pattern (path-segments pattern)]
+    (when (and (= method request-method) (= (count pattern) (count segments)))
+      (reduce (fn [params [p v]]
+                (cond (string/starts-with? p ":") (assoc params (keyword (subs p 1)) v)
+                      (= p v)                     params
+                      :else                       (reduced nil)))
+              {}
+              (map vector pattern segments)))))
+
+(defn- route
+  "Dispatches a request to the first route, given as [method pattern handler], that matches it. The handler is called
+   with the request and the path parameters."
+  [routes request segments]
+  (some (fn [[method pattern f]]
+          (when-let [params (match-route method pattern request segments)]
+            (f request params)))
+        routes))
 
 (defn- read-json-body [{:keys [body]}]
   (when body
@@ -69,52 +99,28 @@
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; Permissions service
 ;;
-;; Schemas transcribed from the definitions in cyverse-de/permissions swagger.yml. Every user is treated as a member
-;; of the de-users group, which is what makes public (group-shared) resources visible on lookup.
+;; Responses are checked against the permissions service's own Swagger spec; see apps.harness.contracts. With lookup
+;; enabled, a user also sees the permissions granted to the groups they belong to in the iplant-groups fake.
 ;; ---------------------------------------------------------------------------------------------------------------
 
-(def permission-levels ["read" "admin" "write" "own"])
 (def ^:private precedence (zipmap ["own" "write" "admin" "read"] (range)))
 
-(s/defschema PermissionLevel (apply s/enum permission-levels))
+(s/defschema Permission (contracts/definition :permissions "permission"))
+(s/defschema PermissionList (contracts/definition :permissions "permission_list"))
+(s/defschema AbbreviatedPermissionList (contracts/definition :permissions "abbreviated_permission_list"))
 
-(s/defschema SubjectOut
-  {:id                s/Str
-   :subject_id        s/Str
-   :subject_type      (s/enum "user" "group")
-   :subject_source_id s/Str})
-
-(s/defschema ResourceOut
-  {:id            s/Str
-   :name          s/Str
-   :resource_type s/Str})
-
-(s/defschema Permission
-  {:id               s/Str
-   :subject          SubjectOut
-   :resource         ResourceOut
-   :permission_level PermissionLevel})
-
-(s/defschema PermissionList {:permissions [Permission]})
-
-(s/defschema AbbreviatedPermissionList
-  {:permissions [{:id               s/Str
-                  :resource_name    s/Str
-                  :resource_type    s/Str
-                  :permission_level PermissionLevel}]})
-
-(def de-users-group-id "fake-de-users-group-id")
+(declare groups-for-subject)
 
 (defn- perms [] (vals (get-in @state [:permissions :grants])))
 
 (defn- subject-out [subject-type subject-id]
-  {:id                (str (UUID/nameUUIDFromBytes (.getBytes (str subject-type ":" subject-id))))
+  {:id                (name-uuid subject-type subject-id)
    :subject_id        subject-id
    :subject_type      subject-type
    :subject_source_id (if (= subject-type "user") "ldap" "g:gsa")})
 
 (defn- resource-out [resource-type resource-name]
-  {:id            (str (UUID/nameUUIDFromBytes (.getBytes (str resource-type ":" resource-name))))
+  {:id            (name-uuid resource-type resource-name)
    :name          resource-name
    :resource_type resource-type})
 
@@ -131,14 +137,13 @@
 (defn- revoke! [resource-type resource-name subject-type subject-id]
   (swap! state update-in [:permissions :grants] dissoc [resource-type resource-name subject-type subject-id]))
 
-(defn- subject-matches?
-  "With lookup enabled a user also sees permissions granted to the groups they belong to."
-  [subject-type subject-id lookup? {:keys [subject]}]
-  (or (and (= (:subject_type subject) subject-type) (= (:subject_id subject) subject-id))
-      (and lookup?
-           (= subject-type "user")
-           (= (:subject_type subject) "group")
-           (= (:subject_id subject) de-users-group-id))))
+(defn- subjects
+  "Returns the [subject-type subject-id] pairs whose permissions apply to a subject. With lookup enabled, a user's
+   groups are included, as the real service does by asking iplant-groups."
+  [subject-type subject-id lookup?]
+  (cond-> #{[subject-type subject-id]}
+    (and lookup? (= subject-type "user")) (into (map (fn [{:keys [id]}] ["group" id]))
+                                                (groups-for-subject subject-id))))
 
 (defn- at-least? [min-level {:keys [permission_level]}]
   (or (nil? min-level) (<= (precedence permission_level) (precedence min-level))))
@@ -150,11 +155,12 @@
        vals
        (map (partial apply min-key (comp precedence :permission_level)))))
 
-(defn- subject-perms [{:keys [query-params]} subject-type subject-id & [resource-type resource-name]]
+(defn- subject-perms [{:keys [query-params]} {:keys [subject-type subject-id resource-type resource-name]}]
   (let [lookup?   (= "true" (get query-params "lookup"))
-        min-level (get query-params "min_level")]
+        min-level (get query-params "min_level")
+        subjects  (subjects subject-type subject-id lookup?)]
     (cond->> (perms)
-      true          (filter (partial subject-matches? subject-type subject-id lookup?))
+      true          (filter (comp subjects (juxt :subject_type :subject_id) :subject))
       resource-type (filter (comp #{resource-type} :resource_type :resource))
       resource-name (filter (comp #{resource-name} :name :resource))
       min-level     (filter (partial at-least? min-level))
@@ -166,32 +172,34 @@
    :resource_type    (:resource_type resource)
    :permission_level permission_level})
 
-(defn- permissions-handler [{:keys [request-method] :as request} segments]
-  (let [vs (vec segments)]
-    (cond
-      ;; PUT/DELETE /permissions/resources/:type/:name/subjects/:subject-type/:subject-id
-      (and (= (subvec vs 0 (min 2 (count vs))) ["permissions" "resources"]) (= (count vs) 7) (= (vs 4) "subjects"))
-      (let [[_ _ rt rn _ st sid] vs]
-        (case request-method
-          :put    (validated Permission (grant! rt rn st sid (:permission_level (read-json-body request))))
-          :delete (do (revoke! rt rn st sid) {:status 200 :body ""})
-          nil))
+(defn- list-subject-perms [request params]
+  (validated PermissionList {:permissions (subject-perms request params)}))
 
-      ;; GET /permissions/resources/:type/:name
-      (and (= request-method :get) (= (count vs) 4) (= (subvec vs 0 2) ["permissions" "resources"]))
-      (let [[_ _ rt rn] vs]
+(def ^:private permissions-routes
+  (let [grant-path "/permissions/resources/:resource-type/:resource-name/subjects/:subject-type/:subject-id"]
+    [[:put grant-path
+      (fn [request {:keys [resource-type resource-name subject-type subject-id]}]
+        (validated Permission (grant! resource-type resource-name subject-type subject-id
+                                      (:permission_level (read-json-body request)))))]
+
+     [:delete grant-path
+      (fn [_ {:keys [resource-type resource-name subject-type subject-id]}]
+        (revoke! resource-type resource-name subject-type subject-id)
+        {:status 200 :body ""})]
+
+     [:get "/permissions/resources/:resource-type/:resource-name"
+      (fn [_ {:keys [resource-type resource-name]}]
         (validated PermissionList
-                   {:permissions (filter (comp #{[rt rn]} (juxt :resource_type :name) :resource) (perms))}))
+                   {:permissions (filter (comp #{[resource-type resource-name]} (juxt :resource_type :name) :resource)
+                                         (perms))}))]
 
-      ;; GET /permissions/abbreviated/subjects/:subject-type/:subject-id/:resource-type
-      (and (= request-method :get) (= (count vs) 6) (= (subvec vs 0 3) ["permissions" "abbreviated" "subjects"]))
-      (let [[_ _ _ st sid rt] vs]
-        (validated AbbreviatedPermissionList {:permissions (map abbreviate (subject-perms request st sid rt))}))
+     [:get "/permissions/abbreviated/subjects/:subject-type/:subject-id/:resource-type"
+      (fn [request params]
+        (validated AbbreviatedPermissionList {:permissions (map abbreviate (subject-perms request params))}))]
 
-      ;; GET /permissions/subjects/:subject-type/:subject-id[/:resource-type[/:resource-name]]
-      (and (= request-method :get) (<= 4 (count vs) 6) (= (subvec vs 0 2) ["permissions" "subjects"]))
-      (let [[_ _ st sid rt rn] vs]
-        (validated PermissionList {:permissions (subject-perms request st sid rt rn)})))))
+     [:get "/permissions/subjects/:subject-type/:subject-id" list-subject-perms]
+     [:get "/permissions/subjects/:subject-type/:subject-id/:resource-type" list-subject-perms]
+     [:get "/permissions/subjects/:subject-type/:subject-id/:resource-type/:resource-name" list-subject-perms]]))
 
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; iplant-groups
@@ -203,6 +211,8 @@
 
 (s/defschema GroupWithDetail (group-schema/group-with-detail "group"))
 
+(def ^:private de-users-group-id (name-uuid "group" "de-users"))
+
 (defn- de-users-group? [group-name]
   (string/ends-with? group-name ":users:de-users"))
 
@@ -211,47 +221,46 @@
       (when (de-users-group? group-name)
         {:name group-name :type "role" :id de-users-group-id :id_index "1"})))
 
-(defn- groups-handler [{:keys [request-method]} segments]
-  (let [vs (vec segments)]
-    (cond
-      ;; GET /groups/:name
-      (and (= request-method :get) (= (count vs) 2) (= (vs 0) "groups"))
-      (if-let [group (find-group (vs 1))]
-        (validated GroupWithDetail group)
-        (not-found (str "group not found: " (vs 1))))
+(defn- groups-for-subject
+  "Returns the groups that a subject has been added to."
+  [subject-id]
+  (keep (fn [[group-name members]] (when (members subject-id) (find-group group-name)))
+        (:group-members @state)))
 
-      ;; PUT /groups/:name/members/:subject-id
-      (and (= request-method :put) (= (count vs) 4) (= (vs 0) "groups") (= (vs 2) "members"))
-      (if (find-group (vs 1))
-        (do (swap! state update-in [:group-members (vs 1)] (fnil conj #{}) (vs 3))
+(def ^:private groups-routes
+  [[:get "/groups/:group-name"
+    (fn [_ {:keys [group-name]}]
+      (if-let [group (find-group group-name)]
+        (validated GroupWithDetail group)
+        (not-found (str "group not found: " group-name))))]
+
+   [:put "/groups/:group-name/members/:subject-id"
+    (fn [_ {:keys [group-name subject-id]}]
+      (if (find-group group-name)
+        (do (swap! state update-in [:group-members group-name] (fnil conj #{}) subject-id)
             {:status 200 :body ""})
-        (not-found (str "group not found: " (vs 1)))))))
+        (not-found (str "group not found: " group-name))))]])
 
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; metadata
 ;;
-;; Only AVUs so far. Schemas follow metadata.routes.schemas in cyverse-de/metadata.
+;; Only AVUs so far. The metadata service declares its responses with the schemas in common-swagger-api and in
+;; metadata.routes.schemas, so UUIDs are kept as UUIDs here and encoded as strings on the way out, as they are there.
 ;; ---------------------------------------------------------------------------------------------------------------
 
-(s/defschema TargetIDList {:target-ids [(s/pred #(re-matches #"[0-9a-fA-F-]{36}" %) 'uuid-string?)]})
-
-;; The metadata service's own AVU schema lives in common-swagger-api; UUIDs travel as strings in JSON.
-(s/defschema Avu (-> metadata-schema/Avu
-                     (dissoc (s/optional-key :avus))
-                     (assoc :id s/Str :target_id s/Str)))
-
-(s/defschema AvuList {:avus [Avu]})
+;; metadata.routes.schemas.common/TargetIDList in cyverse-de/metadata.
+(s/defschema TargetIDList {:target-ids [UUID]})
 
 (defn add-avu!
   "Attaches an AVU to a target, for tests that need an app to carry metadata (e.g. a beta or certified tag)."
   [target-type target-id {:keys [attr value unit] :or {unit ""}}]
   (let [now (System/currentTimeMillis)]
     (swap! state update-in [:metadata :avus [target-type (str target-id)]] (fnil conj [])
-           {:id          (uuid)
+           {:id          (random-uuid)
             :attr        attr
             :value       value
             :unit        unit
-            :target_id   (str target-id)
+            :target_id   (parse-uuid (str target-id))
             :created_by  "fake-metadata"
             :modified_by "fake-metadata"
             :created_on  now
@@ -270,29 +279,26 @@
           :when (some (fn [target-type]
                         (some #(and (attrs (:attr %)) (values (:value %))) (target-avus target-type target-id)))
                       target-types)]
-      target-id)))
+      (parse-uuid target-id))))
 
-(defn- metadata-handler [{:keys [request-method] :as request} segments]
-  (cond
-    (and (= request-method :post) (= segments ["avus" "filter-targets"]))
-    (validated TargetIDList {:target-ids (vec (filter-targets (read-json-body request)))})
+(def ^:private metadata-routes
+  [[:post "/avus/filter-targets"
+    (fn [request _]
+      (validated TargetIDList {:target-ids (vec (filter-targets (read-json-body request)))}))]
 
-    ;; GET /avus/:target-type/:target-id
-    (and (= request-method :get) (= (count segments) 3) (= (first segments) "avus"))
-    (let [[_ target-type target-id] segments]
-      (validated AvuList {:avus (vec (target-avus target-type target-id))}))))
+   [:get "/avus/:target-type/:target-id"
+    (fn [_ {:keys [target-type target-id]}]
+      (validated metadata-schema/AvuList {:avus (vec (target-avus target-type target-id))}))]])
 
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; analyses and requests
 ;;
-;; Both are Go services. Response shapes follow db.ConcurrentJobLimit in cyverse-de/analyses and model.RequestListing
-;; in cyverse-de/requests. The default limit matches the one seeded by de-database.
+;; Both are Go services. Analyses responses are checked against its Swagger spec; see apps.harness.contracts. The
+;; requests service doesn't publish a spec, so its one response is described by hand after model.RequestListing in
+;; cyverse-de/requests. The default limit matches the one seeded by de-database.
 ;; ---------------------------------------------------------------------------------------------------------------
 
-(s/defschema ConcurrentJobLimit
-  {(s/optional-key :username) s/Str
-   :concurrent_jobs           s/Int
-   :is_default                s/Bool})
+(s/defschema ConcurrentJobLimit (contracts/definition :analyses "db.ConcurrentJobLimit"))
 
 (def default-concurrent-job-limit 8)
 
@@ -301,19 +307,16 @@
   [username limit]
   (swap! state assoc-in [:analyses :job-limits username] limit))
 
-(defn- analyses-handler [{:keys [request-method]} segments]
-  (let [vs (vec segments)]
-    (when (and (= request-method :get) (= (count vs) 3) (= (subvec vs 0 2) ["settings" "concurrent-job-limits"]))
-      (let [username (vs 2)
-            limit    (get-in @state [:analyses :job-limits username])]
-        (validated ConcurrentJobLimit
-                   (if limit
-                     {:username username :concurrent_jobs limit :is_default false}
-                     {:concurrent_jobs default-concurrent-job-limit :is_default true}))))))
+(def ^:private analyses-routes
+  [[:get "/settings/concurrent-job-limits/:username"
+    (fn [_ {:keys [username]}]
+      (validated ConcurrentJobLimit
+                 (if-let [limit (get-in @state [:analyses :job-limits username])]
+                   {:username username :concurrent_jobs limit :is_default false}
+                   {:concurrent_jobs default-concurrent-job-limit :is_default true})))]])
 
-(defn- requests-handler [{:keys [request-method]} segments]
-  (when (and (= request-method :get) (= segments ["requests"]))
-    (validated {:requests [s/Any]} {:requests []})))
+(def ^:private requests-routes
+  [[:get "/requests" (fn [_ _] (validated {:requests [s/Any]} {:requests []}))]])
 
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; notifications
@@ -326,31 +329,31 @@
   [username]
   (filter (comp #{username} :user) (get-in @state [:notifications])))
 
-(defn- notifications-handler [{:keys [request-method] :as request} segments]
-  (when (and (= request-method :post) (= segments ["notification"]))
-    (swap! state update :notifications (fnil conj []) (read-json-body request))
-    (json-response {})))
+(def ^:private notifications-routes
+  [[:post "/notification"
+    (fn [request _]
+      (swap! state update :notifications (fnil conj []) (read-json-body request))
+      (json-response {}))]])
 
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; Dispatch
 ;; ---------------------------------------------------------------------------------------------------------------
 
 (def ^:private services
-  "Maps the first path segment of a fake URL to the handler for that service. Configuration points each client's
-   base URL at http://localhost:<port>/<prefix>."
-  {"permissions" permissions-handler
-   "groups"      groups-handler
-   "metadata"    metadata-handler
-   "analyses"    analyses-handler
-   "requests"    requests-handler
-   "notifications" notifications-handler})
+  "Maps the first path segment of a fake URL to the routes for that service. Configuration points each client's base
+   URL at http://localhost:<port>/<prefix>."
+  {"permissions"   permissions-routes
+   "groups"        groups-routes
+   "metadata"      metadata-routes
+   "analyses"      analyses-routes
+   "requests"      requests-routes
+   "notifications" notifications-routes})
 
 (defn- handler [request]
   (let [request             (assoc request :query-params (some-> (:query-string request) codec/form-decode
                                                                  (#(if (map? %) % {}))))
-        [prefix & segments] (path-segments (:uri request))
-        service-handler     (services prefix)]
-    (or (when service-handler (service-handler request segments))
+        [prefix & segments] (path-segments (:uri request))]
+    (or (some-> (services prefix) (route request (vec segments)))
         (do (swap! unhandled conj (select-keys request [:request-method :uri :query-string]))
             (json-response 501 {:reason (str "no fake for " (string/upper-case (name (:request-method request)))
                                              " " (:uri request))})))))
