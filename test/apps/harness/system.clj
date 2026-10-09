@@ -10,8 +10,7 @@
    [clojure.test :refer [is]]
    [ring.mock.request :as mock])
   (:import
-   (java.io File)
-   (java.util UUID)))
+   (java.io File)))
 
 (defn- properties [db fake-services]
   (let [fake (partial fakes/base-url-for fake-services)]
@@ -88,7 +87,7 @@
 (defn unique-name
   "Returns a name that won't collide with data created by other tests, since the database isn't reset between them."
   [prefix]
-  (str prefix "-" (subs (str (UUID/randomUUID)) 0 8)))
+  (str prefix "-" (subs (str (random-uuid)) 0 8)))
 
 (defn- body->json [response]
   (let [body (:body response)

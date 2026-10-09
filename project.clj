@@ -93,6 +93,7 @@
              ;; those libraries is exercised in a way that the newer versions break, and this only affects the
              ;; test classpath.
              :test   {:dependencies [[org.testcontainers/testcontainers-postgresql "2.0.3"]
+                                     [clj-commons/clj-yaml "0.6.0"]
                                      [org.apache.commons/commons-compress "1.28.0"]
                                      [commons-io "2.20.0"]
                                      [ring/ring-mock "0.4.0"]]}

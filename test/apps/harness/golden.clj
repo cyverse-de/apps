@@ -9,6 +9,7 @@
   (:require
    [clojure.java.io :as io]
    [clojure.pprint :refer [pprint]]
+   [clojure.string :as string]
    [clojure.walk :as walk]))
 
 (def ^:private golden-dir "test/golden")
@@ -30,12 +31,10 @@
         id  (fn [u] (or (@ids u) ((swap! ids assoc u (str "<uuid-" (inc (count @ids)) ">")) u)))]
     (walk/prewalk (fn [x]
                     (if (string? x)
-                      (-> x
-                          (.replaceAll (str timestamp-re) "<timestamp>")
-                          (as-> s (reduce (fn [s u] (.replace ^String s ^String u ^String (id u)))
-                                          s
-                                          (re-seq uuid-re s)))
-                          (.replaceAll (str unique-suffix-re) "-<unique>"))
+                      (as-> x s
+                        (string/replace s timestamp-re "<timestamp>")
+                        (reduce (fn [s u] (string/replace s u (id u))) s (distinct (re-seq uuid-re s)))
+                        (string/replace s unique-suffix-re "-<unique>"))
                       x))
                   (sorted body))))
 
