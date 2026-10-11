@@ -1,0 +1,8 @@
+{:analyses
+ {:repo "cyverse-de/analyses",
+  :path "docs/swagger.json",
+  :commit "2442817cb458d8c03eb169483b6b1f2fde2f3cd5"},
+ :permissions
+ {:repo "cyverse-de/permissions",
+  :path "swagger.yml",
+  :commit "347f93d4bd72bca39802eba05ce66f1c6d4fcddf"}}
