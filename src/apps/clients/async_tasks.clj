@@ -46,7 +46,11 @@
     :data      data
     :statuses  [{:status "registered"}]
     :behaviors [{:type "statuschangetimeout"
-                 :data {:statuses [{:start_status "running" :end_status "detected-stalled" :timeout timeout}]}}]}))
+                 :data {:statuses (for [status ["registered" "started" "running"]]
+                                    {:start_status status
+                                     :end_status   "detected-stalled"
+                                     :timeout      timeout
+                                     :complete     true})}}]}))
 
 (defn update-fn
   [async-task-id status]
