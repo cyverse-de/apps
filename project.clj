@@ -92,11 +92,17 @@
              ;; nearest-wins hands it the much older versions that me.raynes/fs and clj-http bring. Neither of
              ;; those libraries is exercised in a way that the newer versions break, and this only affects the
              ;; test classpath.
-             :test   {:dependencies [[org.testcontainers/testcontainers-postgresql "2.0.3"]
-                                     [clj-commons/clj-yaml "0.6.0"]
-                                     [org.apache.commons/commons-compress "1.28.0"]
-                                     [commons-io "2.20.0"]
-                                     [ring/ring-mock "0.4.0"]]}
+             ;;
+             ;; test/resources/logback-test.xml turns logging off for test runs (set TEST_LOG_LEVEL to turn it back
+             ;; on). The JVM honors the last -D for a property, so this overrides the top-level logback setting
+             ;; without touching what `lein run` or `lein repl` use.
+             :test   {:dependencies   [[org.testcontainers/testcontainers-postgresql "2.0.3"]
+                                       [clj-commons/clj-yaml "0.6.0"]
+                                       [org.apache.commons/commons-compress "1.28.0"]
+                                       [commons-io "2.20.0"]
+                                       [ring/ring-mock "0.4.0"]]
+                      :resource-paths ["test/resources"]
+                      :jvm-opts       ["-Dlogback.configurationFile=logback-test.xml"]}
              :kondo  {:plugins [[com.github.clj-kondo/lein-clj-kondo "2026.08.04"]]
                       :pedantic? :warn}
              :cljfmt {:plugins [[dev.weavejester/lein-cljfmt "0.16.5"]]
