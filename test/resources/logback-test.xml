@@ -1,0 +1,20 @@
+<!--
+  Logging for `lein test`. The :test profile puts this on the classpath and points logback.configurationFile at it,
+  so it applies only to test runs; `lein run`, `lein repl`, and `lein ring server` keep using conf/test/logback.xml.
+
+  Logging is off by default because the endpoint tests deliberately exercise error paths, and AccessLogger writes a
+  full stack trace for each one. To see logs while debugging a test, set TEST_LOG_LEVEL:
+
+    TEST_LOG_LEVEL=DEBUG lein test :endpoint
+-->
+<configuration debug="false">
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d %-5level [%thread] %logger: %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="${TEST_LOG_LEVEL:-OFF}">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

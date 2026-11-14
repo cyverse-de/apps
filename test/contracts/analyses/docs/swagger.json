@@ -1,0 +1,1401 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for the Discovery Environment's analyses, including Quick Launches and settings.",
+        "title": "Analyses API",
+        "contact": {},
+        "license": {
+            "name": "3-Clause BSD License",
+            "url": "https://github.com/cyverse-de/analyses?tab=License-1-ov-file#readme"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:60000",
+    "basePath": "/",
+    "paths": {
+        "/quicklaunch/defaults/global": {
+            "get": {
+                "description": "Get all of the Quick Launch global defaults that the user has created.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-global-defaults"
+                ],
+                "summary": "Get all Quick Launch global defaults",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.QuickLaunchGlobalDefault"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a new Quick Launch global default. Assigns a new UUID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-global-defaults"
+                ],
+                "summary": "Add a Quick Launch global default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Global default to add",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.NewQuickLaunchGlobalDefault"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchGlobalDefault"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunch/defaults/global/{id}": {
+            "get": {
+                "description": "Get a Quick Launch global default.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-global-defaults"
+                ],
+                "summary": "Get a Quick Launch global default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Global Default ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchGlobalDefault"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete the Quick Launch global default.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-global-defaults"
+                ],
+                "summary": "Delete a Quick Launch global default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Global Default ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.DeletionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Modifies an existing Quick Launch global default.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-global-defaults"
+                ],
+                "summary": "Update a Quick Launch global default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Global Default ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.UpdateQuickLaunchGlobalDefaultRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchGlobalDefault"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunch/defaults/user": {
+            "get": {
+                "description": "Get all of the Quick Launch user defaults for the logged in user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-user-defaults"
+                ],
+                "summary": "Get all Quick Launch user defaults",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.QuickLaunchUserDefault"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a Quick Launch user default. A new UUID will be assigned to the user default and will be returned in the response.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-user-defaults"
+                ],
+                "summary": "Add a Quick Launch user default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "User default to add",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.NewQuickLaunchUserDefault"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchUserDefault"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunch/defaults/user/{id}": {
+            "get": {
+                "description": "Get a Quick Launch user default.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-user-defaults"
+                ],
+                "summary": "Get a Quick Launch user default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Default ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchUserDefault"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete the Quick Launch user default.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-user-defaults"
+                ],
+                "summary": "Delete a Quick Launch user default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Default ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.DeletionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Modifies an existing Quick Launch user default.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-user-defaults"
+                ],
+                "summary": "Update a Quick Launch user default",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Default ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.UpdateQuickLaunchUserDefaultRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchUserDefault"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunch/favorites": {
+            "get": {
+                "description": "Gets all of the user's Quick Launch favorites.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-favorites"
+                ],
+                "summary": "Get all Quick Launch favorites",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.QuickLaunchFavorite"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Adds a favorite Quick Launch to the database for the user. The username passed in should already exist. A new UUID will be assigned to the favorite and returned with the rest of the record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-favorites"
+                ],
+                "summary": "Add a Quick Launch favorite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Quick Launch to favorite",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/httphandlers.NewQuickLaunchFavoriteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchFavorite"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunch/favorites/{id}": {
+            "get": {
+                "description": "Gets information about a favorited Quick Launch. Returns a Quick Launch UUID which can be passed to the /quicklaunches endpoints to grab more information.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-favorites"
+                ],
+                "summary": "Get a Quick Launch favorite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Favorite ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunchFavorite"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a Quick Launch favorite. Does not delete the actual Quick Launch, just the entry that listed it as a favorite for the user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunch-favorites"
+                ],
+                "summary": "Delete a Quick Launch favorite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Favorite ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.DeletionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunches": {
+            "get": {
+                "description": "Gets all of the Quick Launches for a user. Includes UUIDs.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunches"
+                ],
+                "summary": "Get all Quick Launches",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.QuickLaunch"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Adds a Quick Launch and corresponding submission information to the database. The username passed in should already exist. A new UUID will be assigned and returned.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunches"
+                ],
+                "summary": "Add a Quick Launch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Quick Launch to add",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.NewQuickLaunch"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunches/apps/{id}": {
+            "get": {
+                "description": "Returns a list of Quick Launches that the user can access based on the app's UUID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunches"
+                ],
+                "summary": "Get Quick Launches by App",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.QuickLaunch"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunches/{id}": {
+            "get": {
+                "description": "Gets the Quick Launch information from the database, including its UUID, the name of the user that owns it, and the submission JSON.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunches"
+                ],
+                "summary": "Get a Quick Launch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Quick Launch ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a Quick Launch from the database. Will return a success even if called on a Quick Launch that has either already been deleted or never existed.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunches"
+                ],
+                "summary": "Delete a Quick Launch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Quick Launch ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.DeletionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Modifies an existing Quick Launch, allowing the caller to change owners and the contents of the submission JSON.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunches"
+                ],
+                "summary": "Update a Quick Launch",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Quick Launch ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.UpdateQuickLaunchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.QuickLaunch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/quicklaunches/{id}/app-info": {
+            "get": {
+                "description": "Returns the app info needed to create and populate the app launcher in the UI. Populates the parameters with the values from the submission stored for the quick launch.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quicklaunches"
+                ],
+                "summary": "Get Quick Launch app info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Quick Launch ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/concurrent-job-limits": {
+            "get": {
+                "description": "Lists all defined concurrent job limits.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "List concurrent job limits",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.ConcurrentJobLimits"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/concurrent-job-limits/{username}": {
+            "get": {
+                "description": "Gets the concurrent job limit for a user. The returned job limit may either be the limit that was explicitly assigned to the user or the default job limit.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Get concurrent job limit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.ConcurrentJobLimit"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Sets the concurrent job limit for a user. The user's limit will be updated explicitly in the database even if the requested limit is the same as the default limit.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Set concurrent job limit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Job limit to set",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.ConcurrentJobLimitUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.ConcurrentJobLimit"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes the explicitly set concurrent job limit for a user. This will effectively return the user's limit to whatever the default limit is.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Remove concurrent job limit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/db.ConcurrentJobLimit"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "common.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "error_code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.ConcurrentJobLimit": {
+            "type": "object",
+            "properties": {
+                "concurrent_jobs": {
+                    "type": "integer"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.ConcurrentJobLimitUpdate": {
+            "type": "object",
+            "properties": {
+                "concurrent_jobs": {
+                    "type": "integer"
+                }
+            }
+        },
+        "db.ConcurrentJobLimits": {
+            "type": "object",
+            "properties": {
+                "limits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.ConcurrentJobLimit"
+                    }
+                }
+            }
+        },
+        "db.DeletionResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.NewQuickLaunch": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "app_version_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "submission": {
+                    "type": "object"
+                }
+            }
+        },
+        "db.NewQuickLaunchGlobalDefault": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "quick_launch_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.NewQuickLaunchUserDefault": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "quick_launch_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.QuickLaunch": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "app_version_id": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "submission": {
+                    "type": "object"
+                }
+            }
+        },
+        "db.QuickLaunchFavorite": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "quick_launch_id": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.QuickLaunchGlobalDefault": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "quick_launch_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.QuickLaunchUserDefault": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "quick_launch_id": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.UpdateQuickLaunchGlobalDefaultRequest": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "quick_launch_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.UpdateQuickLaunchRequest": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "app_version_id": {
+                    "type": "string"
+                },
+                "creator": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "submission": {
+                    "type": "object"
+                }
+            }
+        },
+        "db.UpdateQuickLaunchUserDefaultRequest": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "quick_launch_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "httphandlers.NewQuickLaunchFavoriteRequest": {
+            "type": "object",
+            "properties": {
+                "quick_launch_id": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
