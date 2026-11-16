@@ -16,6 +16,7 @@
   (buildParams [_ params outputs])
   (buildConfig [_ steps step])
   (buildEnvironment [_ step])
+  (buildSensitiveEnvironment [_ step])
   (buildComponent [_ step requirements])
   (buildStep [_ requirements steps step])
   (buildSteps [_])

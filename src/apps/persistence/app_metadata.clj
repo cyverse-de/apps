@@ -70,7 +70,8 @@
                     :display_order
                     :parameter_type
                     :required
-                    :omit_if_blank])))
+                    :omit_if_blank
+                    :is_sensitive])))
 
 (defn- filter-valid-file-parameter-values
   "Filters valid keys from the given file-parameter for inserting or updating in the database."

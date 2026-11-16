@@ -49,9 +49,24 @@
       [[(:name param) value]]
       [])))
 
+(defn- environment-params
+  "Returns the EnvironmentVariable-typed params, split into [non-sensitive
+   sensitive] by :is_sensitive. See also build-sensitive-environment."
+  [params]
+  ((juxt remove filter) #(:is_sensitive %)
+   (filter #(= (:type %) util/environment-variable-type) params)))
+
 (defn build-environment
   [config default-values params]
-  (->> (filter #(= (:type %) util/environment-variable-type) params)
+  (->> (first (environment-params params))
+       (mapcat (partial build-environment-entries config default-values))
+       (into {})))
+
+(defn build-sensitive-environment
+  "Builds the map of sensitive EnvironmentVariable-typed params for a step.
+   See also cyverse-de/app-exposer's VICESpec.SensitiveEnvironment."
+  [config default-values params]
+  (->> (second (environment-params params))
        (mapcat (partial build-environment-entries config default-values))
        (into {})))
 
@@ -127,12 +142,13 @@
         step_requirements (first (filter #(= (:step_number step) (:step_number %)) requirements))]
     (conj steps
           (remove-nil-vals
-           {:component   (.buildComponent request-builder step step_requirements)
-            :environment (.buildEnvironment request-builder step)
-            :config      (dissoc config :stdout :stderr)
-            :stdout      stdout
-            :stderr      stderr
-            :type        "condor"}))))
+           {:component             (.buildComponent request-builder step step_requirements)
+            :environment           (.buildEnvironment request-builder step)
+            :sensitive_environment (.buildSensitiveEnvironment request-builder step)
+            :config                (dissoc config :stdout :stderr)
+            :stdout                stdout
+            :stderr                stderr
+            :type                  "condor"}))))
 
 (defn- load-steps
   [app-version-id]
@@ -206,3 +222,9 @@
          :file-metadata        (:file-metadata submission)
          :mount_data_store     (:mount_data_store submission true)}
         execution-target)))
+
+(defn redact-sensitive-environment
+  "Strips :sensitive_environment from every step of a built job submission.
+   Should be called on anything that writes the submission to disk (logs, DB, etc.)"
+  [submission]
+  (update submission :steps (partial mapv #(dissoc % :sensitive_environment))))

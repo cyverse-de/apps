@@ -153,3 +153,74 @@
           result       (#'common/reconcile-container-requirements container requirements)]
       (is (not (contains? result :gpu_models))
           "gpu_models key must be absent (not nil or empty) when tool has no models"))))
+
+;; ---------------------------------------------------------------------------
+;; build-environment / build-sensitive-environment — sensitive param split
+;; ---------------------------------------------------------------------------
+
+(defn- env-param
+  [name value & {:keys [sensitive? omit-if-blank? step-id id]
+                 :or   {step-id "step1"}}]
+  {:type          "EnvironmentVariable"
+   :step_id       step-id
+   :id            (or id name)
+   :name          name
+   :default_value value
+   :is_sensitive  sensitive?
+   :omit_if_blank omit-if-blank?})
+
+(deftest test-build-environment-excludes-sensitive-params
+  (testing "build-environment only returns non-sensitive EnvironmentVariable params"
+    (let [params         [(env-param "PLAIN_VAR" "plain-value")
+                           (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
+          default-values (common/build-default-values-map params)
+          result         (common/build-environment {} default-values params)]
+      (is (= {"PLAIN_VAR" "plain-value"} result)
+          "Should include only the non-sensitive param")
+      (is (not (contains? result "SECRET_VAR"))
+          "Sensitive param must never appear in the regular environment map"))))
+
+(deftest test-build-sensitive-environment-includes-only-sensitive-params
+  (testing "build-sensitive-environment only returns sensitive EnvironmentVariable params"
+    (let [params         [(env-param "PLAIN_VAR" "plain-value")
+                           (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
+          default-values (common/build-default-values-map params)
+          result         (common/build-sensitive-environment {} default-values params)]
+      (is (= {"SECRET_VAR" "super-secret"} result)
+          "Should include only the sensitive param")
+      (is (not (contains? result "PLAIN_VAR"))
+          "Non-sensitive param must not appear in the sensitive environment map"))))
+
+(deftest test-build-environment-ignores-non-environment-params
+  (testing "Both builders ignore non-EnvironmentVariable params regardless of is_sensitive"
+    (let [params [{:type "Text" :step_id "step1" :id "NOT_ENV" :name "NOT_ENV"
+                   :default_value "x" :is_sensitive true}]
+          default-values (common/build-default-values-map params)]
+      (is (= {} (common/build-environment {} default-values params)))
+      (is (= {} (common/build-sensitive-environment {} default-values params))))))
+
+(deftest test-build-environment-handles-no-sensitive-params
+  (testing "build-sensitive-environment returns an empty map when nothing is marked sensitive"
+    (let [params         [(env-param "PLAIN_VAR" "plain-value")]
+          default-values (common/build-default-values-map params)]
+      (is (= {} (common/build-sensitive-environment {} default-values params))))))
+
+;; ---------------------------------------------------------------------------
+;; redact-sensitive-environment — persistence/logging redaction helper
+;; ---------------------------------------------------------------------------
+
+(deftest test-redact-sensitive-environment-strips-field
+  (testing "redact-sensitive-environment removes :sensitive_environment from every step"
+    (let [submission {:steps [{:environment {"A" "1"} :sensitive_environment {"B" "2"}}
+                               {:environment {} :sensitive_environment {"C" "3"}}]}
+          result     (common/redact-sensitive-environment submission)]
+      (is (every? #(not (contains? % :sensitive_environment)) (:steps result))
+          "No step should retain :sensitive_environment")
+      (is (= [{"A" "1"} {}] (map :environment (:steps result)))
+          "Regular :environment maps must be left untouched"))))
+
+(deftest test-redact-sensitive-environment-handles-missing-field
+  (testing "redact-sensitive-environment is a no-op when steps have no sensitive_environment"
+    (let [submission {:steps [{:environment {"A" "1"}}]}
+          result     (common/redact-sensitive-environment submission)]
+      (is (= submission result)))))
