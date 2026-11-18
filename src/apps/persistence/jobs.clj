@@ -6,6 +6,7 @@
             [apps.persistence.users :refer [get-user-id]]
             [apps.util.config :as config]
             [apps.util.db :as db]
+            [apps.util.redactions :refer [redact-sensitive-environment]]
             [cheshire.core :as cheshire]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
@@ -229,15 +230,6 @@
   (-> (sql/select :job_listings (sql/fields :status) (sql/where {:id job-id}))
       first
       :status))
-
-(defn- redact-sensitive-environment
-  "Strips :sensitive_environment from every step before a submission is
-   persisted. Only called for persistence to the DB/disk/logs, unredacted
-   values are sent to the job launch."
-  [submission]
-  (if (:steps submission)
-    (update submission :steps (partial mapv #(dissoc % :sensitive_environment)))
-    submission))
 
 (defn save-job
   "Saves information about a job in the database."

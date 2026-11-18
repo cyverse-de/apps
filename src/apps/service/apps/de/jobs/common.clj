@@ -222,9 +222,3 @@
          :file-metadata        (:file-metadata submission)
          :mount_data_store     (:mount_data_store submission true)}
         execution-target)))
-
-(defn redact-sensitive-environment
-  "Strips :sensitive_environment from every step of a built job submission.
-   Should be called on anything that writes the submission to disk (logs, DB, etc.)"
-  [submission]
-  (update submission :steps (partial mapv #(dissoc % :sensitive_environment))))

@@ -204,23 +204,3 @@
     (let [params         [(env-param "PLAIN_VAR" "plain-value")]
           default-values (common/build-default-values-map params)]
       (is (= {} (common/build-sensitive-environment {} default-values params))))))
-
-;; ---------------------------------------------------------------------------
-;; redact-sensitive-environment — persistence/logging redaction helper
-;; ---------------------------------------------------------------------------
-
-(deftest test-redact-sensitive-environment-strips-field
-  (testing "redact-sensitive-environment removes :sensitive_environment from every step"
-    (let [submission {:steps [{:environment {"A" "1"} :sensitive_environment {"B" "2"}}
-                               {:environment {} :sensitive_environment {"C" "3"}}]}
-          result     (common/redact-sensitive-environment submission)]
-      (is (every? #(not (contains? % :sensitive_environment)) (:steps result))
-          "No step should retain :sensitive_environment")
-      (is (= [{"A" "1"} {}] (map :environment (:steps result)))
-          "Regular :environment maps must be left untouched"))))
-
-(deftest test-redact-sensitive-environment-handles-missing-field
-  (testing "redact-sensitive-environment is a no-op when steps have no sensitive_environment"
-    (let [submission {:steps [{:environment {"A" "1"}}]}
-          result     (common/redact-sensitive-environment submission)]
-      (is (= submission result)))))
