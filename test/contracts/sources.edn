@@ -2,6 +2,10 @@
  {:repo "cyverse-de/analyses",
   :path "docs/swagger.json",
   :commit "2442817cb458d8c03eb169483b6b1f2fde2f3cd5"},
+ :de-database
+ {:repo "cyverse-de/de-database",
+  :path "migrations",
+  :commit "d4978db20ae2fc732e6422f54f5341d116738c14"},
  :permissions
  {:repo "cyverse-de/permissions",
   :path "swagger.yml",

@@ -10,7 +10,8 @@
      lein with-profile +test run -m apps.harness.contracts
 
    This downloads each spec from the head of the service's main branch and records the commit it came from in
-   test/contracts/sources.edn."
+   test/contracts/sources.edn. It also moves the de-database pin in that file to the head of de-database's main
+   branch; apps.harness.db builds the test database from the migrations at that commit."
   (:require
    [cheshire.core :as json]
    [clj-http.client :as http]
@@ -27,6 +28,11 @@
    path it has in the service's repository."
   {:permissions {:repo "cyverse-de/permissions" :path "swagger.yml"}
    :analyses    {:repo "cyverse-de/analyses" :path "docs/swagger.json"}})
+
+(def ^:private migrations-source
+  "Where the test database's migrations come from. Only the commit is recorded here; apps.harness.db downloads the
+   migrations themselves when it first needs them."
+  {:repo "cyverse-de/de-database" :path "migrations"})
 
 (defn- spec-file [{:keys [repo path]}]
   (io/file contracts-dir (last (string/split repo #"/")) path))
@@ -97,10 +103,16 @@
 (defn- head-commit [repo]
   (get-in (http/get (str "https://api.github.com/repos/" repo "/commits/main") {:as :json}) [:body :sha]))
 
+(defn- pin-migrations []
+  (let [sha (head-commit (:repo migrations-source))]
+    (println "pinned" (:repo migrations-source) "at" sha)
+    (assoc migrations-source :commit sha)))
+
 (defn update-specs!
-  "Downloads the current spec of every service in `sources` and records the commit each one came from."
+  "Downloads the current spec of every service in `sources`, records the commit each one came from, and pins the
+   de-database migrations to the head of that repository's main branch."
   []
-  (let [commits (into (sorted-map)
+  (let [commits (into (sorted-map :de-database (pin-migrations))
                       (for [[service {:keys [repo path] :as source}] sources]
                         (let [sha (head-commit repo)
                               f   (spec-file source)]

@@ -64,21 +64,27 @@
                                                      (Thread. #(do (fakes/stop! (:fakes sys)) (db/stop! (:db sys)))))
                                    sys)))
 
+(defn- report-unhandled [reqs context]
+  (is (empty? reqs) (str "apps made requests the fakes couldn't answer correctly " context
+                         "; update apps.harness.fakes: " (pr-str reqs))))
+
 (defn with-system
-  "A :once fixture that starts the shared system if it isn't already running."
+  "A :once fixture that starts the shared system if it isn't already running. Once the namespace's tests finish, it
+   fails the run if any unhandled request is left over. Those come from calls that apps made in the background and
+   that finished after the test that caused them had already been checked."
   [f]
   @system
-  (f))
+  (f)
+  (report-unhandled (fakes/take-unhandled-from! 0) "outside of any test"))
 
 (defn fail-on-unhandled-requests
   "An :each fixture that fails the test if apps made a request that none of the fakes know how to answer, or if a
-   fake produced a response that doesn't match the real service's schema."
+   fake produced a response that doesn't match the real service's schema. Only requests recorded while the test ran
+   are reported here; `with-system` reports the rest."
   [f]
-  (fakes/clear-unhandled!)
-  (f)
-  (let [reqs (fakes/unhandled-requests)]
-    (is (empty? reqs) (str "apps made requests the fakes couldn't answer correctly; update apps.harness.fakes: "
-                           (pr-str reqs)))))
+  (let [start (count (fakes/unhandled-requests))]
+    (f)
+    (report-unhandled (fakes/take-unhandled-from! start) "during this test")))
 
 ;; ---------------------------------------------------------------------------------------------------------------
 ;; Test data and request helpers

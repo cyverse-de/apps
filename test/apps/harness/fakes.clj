@@ -34,7 +34,13 @@
   (reset! unhandled []))
 
 (defn unhandled-requests [] @unhandled)
-(defn clear-unhandled! [] (reset! unhandled []))
+
+(defn take-unhandled-from!
+  "Removes and returns the unhandled requests recorded at or after the given position. Requests recorded before it
+   are left in place so that a later check still reports them."
+  [start]
+  (let [[recorded] (swap-vals! unhandled #(subvec % 0 (min start (count %))))]
+    (subvec recorded (min start (count recorded)))))
 
 (defn- uuid [] (str (random-uuid)))
 

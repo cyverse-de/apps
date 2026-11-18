@@ -112,7 +112,8 @@
                                 [refactor-nrepl/refactor-nrepl "3.14.0"]]
                       :pedantic? :warn}
              :uberjar {:aot :all}}
-  ;; Endpoint tests need Docker and a de-database checkout, so plain `lein test` leaves them out.
+  ;; Endpoint tests need Docker, and network access the first time they use a new de-database pin, so plain
+  ;; `lein test` leaves them out.
   ;; Run them with `lein test :endpoint`, or everything with `lein test :all`.
   :test-selectors {:default  (complement :endpoint)
                    :endpoint :endpoint
