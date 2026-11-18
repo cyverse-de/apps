@@ -172,7 +172,7 @@
 (deftest test-build-environment-excludes-sensitive-params
   (testing "build-environment only returns non-sensitive EnvironmentVariable params"
     (let [params         [(env-param "PLAIN_VAR" "plain-value")
-                           (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
+                          (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
           default-values (common/build-default-values-map params)
           result         (common/build-environment {} default-values params)]
       (is (= {"PLAIN_VAR" "plain-value"} result)
@@ -183,7 +183,7 @@
 (deftest test-build-sensitive-environment-includes-only-sensitive-params
   (testing "build-sensitive-environment only returns sensitive EnvironmentVariable params"
     (let [params         [(env-param "PLAIN_VAR" "plain-value")
-                           (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
+                          (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
           default-values (common/build-default-values-map params)
           result         (common/build-sensitive-environment {} default-values params)]
       (is (= {"SECRET_VAR" "super-secret"} result)

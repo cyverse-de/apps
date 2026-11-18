@@ -54,7 +54,7 @@
    sensitive] by :is_sensitive. See also build-sensitive-environment."
   [params]
   ((juxt remove filter) #(:is_sensitive %)
-   (filter #(= (:type %) util/environment-variable-type) params)))
+                        (filter #(= (:type %) util/environment-variable-type) params)))
 
 (defn build-environment
   [config default-values params]
