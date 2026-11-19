@@ -11,6 +11,7 @@
    [apps.util.conversions :refer [remove-nil-vals]]
    [apps.util.db :refer [transaction]]
    [apps.util.json :as json-util]
+   [apps.util.redactions :refer [redact-sensitive-environment]]
    [cheshire.core :as cheshire]
    [clojure-commons.file-utils :refer [build-result-folder-path]]
    [clojure.string :as str]
@@ -170,13 +171,13 @@
   [user submission]
   (->> (prep-submission submission)
        (build-submission user)
-       (json-util/log-json "job")
+       (json-util/log-json "job" redact-sensitive-environment)
        (submit-job user submission)))
 
 (defn submit-step
   [user job-id submission]
   (let [{ticket-map :ticket_map :as job-step} (build-submission user submission)]
-    (json-util/log-json "job step" job-step)
+    (json-util/log-json "job step" redact-sensitive-environment job-step)
     (try+
      (do-jex-submission job-step)
      (jp/record-tickets job-id ticket-map)

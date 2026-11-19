@@ -106,6 +106,7 @@
                                       :required
                                       [:is_visible :isVisible]
                                       :omit_if_blank
+                                      :is_sensitive
                                       [:parameter_types.name :type]
                                       [:value_type.name :value_type]
                                       [:info_type.name :file_info_type]

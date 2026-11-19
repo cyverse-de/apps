@@ -62,6 +62,9 @@
   (buildEnvironment [_this step]
     (ca/build-environment (:config submission) defaults (params (:id step))))
 
+  (buildSensitiveEnvironment [_this step]
+    (ca/build-sensitive-environment (:config submission) defaults (params (:id step))))
+
   (buildComponent [_this step requirements]
     (ca/build-component step requirements))
 

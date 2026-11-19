@@ -58,3 +58,24 @@
           result       (#'job-view/format-step-resource-requirements requirements step-number false)]
       (is (not (contains? result :gpu_models))
           "Should not inject gpu_models when add-defaults is false"))))
+
+;; ---------------------------------------------------------------------------
+;; format-parameter — is_sensitive reaches the launch form
+;; ---------------------------------------------------------------------------
+
+(defn- format-test-parameter
+  [parameter]
+  (with-redefs [apps.metadata.params/get-param-values (constantly [])
+                apps.metadata.params/get-validators   (constantly [])]
+    (#'job-view/format-parameter {:username "test"} {:id "step1"} parameter)))
+
+(deftest test-format-parameter-includes-is-sensitive
+  (testing "format-parameter passes is_sensitive through so the launch form can mask the input"
+    (let [result (format-test-parameter {:id "p1" :type "EnvironmentVariable" :name "SECRET" :is_sensitive true})]
+      (is (true? (:is_sensitive result)))
+      (is (= "step1_p1" (:id result))))))
+
+(deftest test-format-parameter-omits-nil-is-sensitive
+  (testing "format-parameter leaves is_sensitive out when the parameter doesn't have it"
+    (let [result (format-test-parameter {:id "p1" :type "Text" :name "--flag"})]
+      (is (not (contains? result :is_sensitive))))))

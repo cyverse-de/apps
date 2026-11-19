@@ -79,6 +79,7 @@
                 [:p.is_visible     :is_visible]
                 [:p.required       :required]
                 [:p.omit_if_blank  :omit_if_blank]
+                [:p.is_sensitive   :is_sensitive]
                 [:p.ordering       :order]
                 [:p.parameter_type :type]
                 :p.retain
@@ -99,6 +100,7 @@
                   [:p.is_visible    :is_visible]
                   [:p.required      :required]
                   [:p.omit_if_blank :omit_if_blank]
+                  [:p.is_sensitive  :is_sensitive]
                   [:p.ordering      :order]
                   [:parameter_type  :type]
                   :retain

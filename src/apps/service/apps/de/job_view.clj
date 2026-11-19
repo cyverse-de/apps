@@ -84,6 +84,7 @@
       :description  (:description parameter)
       :id           (str (:id step) "_" (:id parameter))
       :isVisible    (:is_visible parameter)
+      :is_sensitive (:is_sensitive parameter)
       :label        (:label parameter)
       :name         (:name parameter)
       :required     (:required parameter)

@@ -1,7 +1,8 @@
 (ns apps.service.apps.de.jobs.common-test
   (:require
    [apps.service.apps.de.jobs.common :as common]
-   [clojure.test :as t :refer [deftest is testing]]))
+   [clojure.test :as t :refer [deftest is testing]]
+   [slingshot.slingshot :refer [try+]]))
 
 (deftest test-reconcile-container-requirements-includes-gpus
   (testing "Container requirements reconciliation includes GPU fields"
@@ -153,3 +154,89 @@
           result       (#'common/reconcile-container-requirements container requirements)]
       (is (not (contains? result :gpu_models))
           "gpu_models key must be absent (not nil or empty) when tool has no models"))))
+
+;; ---------------------------------------------------------------------------
+;; build-environment / build-sensitive-environment — sensitive param split
+;; ---------------------------------------------------------------------------
+
+(defn- env-param
+  [name value & {:keys [sensitive? omit-if-blank? step-id id]
+                 :or   {step-id "step1"}}]
+  {:type          "EnvironmentVariable"
+   :step_id       step-id
+   :id            (or id name)
+   :name          name
+   :default_value value
+   :is_sensitive  sensitive?
+   :omit_if_blank omit-if-blank?})
+
+(deftest test-build-environment-excludes-sensitive-params
+  (testing "build-environment only returns non-sensitive EnvironmentVariable params"
+    (let [params         [(env-param "PLAIN_VAR" "plain-value")
+                          (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
+          default-values (common/build-default-values-map params)
+          result         (common/build-environment {} default-values params)]
+      (is (= {"PLAIN_VAR" "plain-value"} result)
+          "Should include only the non-sensitive param")
+      (is (not (contains? result "SECRET_VAR"))
+          "Sensitive param must never appear in the regular environment map"))))
+
+(deftest test-build-sensitive-environment-includes-only-sensitive-params
+  (testing "build-sensitive-environment only returns sensitive EnvironmentVariable params"
+    (let [params         [(env-param "PLAIN_VAR" "plain-value")
+                          (env-param "SECRET_VAR" "super-secret" :sensitive? true)]
+          default-values (common/build-default-values-map params)
+          result         (common/build-sensitive-environment {} default-values params)]
+      (is (= {"SECRET_VAR" "super-secret"} result)
+          "Should include only the sensitive param")
+      (is (not (contains? result "PLAIN_VAR"))
+          "Non-sensitive param must not appear in the sensitive environment map"))))
+
+(deftest test-build-environment-ignores-non-environment-params
+  (testing "Both builders ignore non-EnvironmentVariable params regardless of is_sensitive"
+    (let [params [{:type "Text" :step_id "step1" :id "NOT_ENV" :name "NOT_ENV"
+                   :default_value "x" :is_sensitive true}]
+          default-values (common/build-default-values-map params)]
+      (is (= {} (common/build-environment {} default-values params)))
+      (is (= {} (common/build-sensitive-environment {} default-values params))))))
+
+(deftest test-build-environment-handles-no-sensitive-params
+  (testing "build-sensitive-environment returns an empty map when nothing is marked sensitive"
+    (let [params         [(env-param "PLAIN_VAR" "plain-value")]
+          default-values (common/build-default-values-map params)]
+      (is (= {} (common/build-sensitive-environment {} default-values params))))))
+
+;; ---------------------------------------------------------------------------
+;; validate-sensitive-params — required sensitive values must be present
+;; ---------------------------------------------------------------------------
+
+(defn- validation-error
+  "Runs validate-sensitive-params against a single DE step and returns the thrown error map, or nil."
+  [config params]
+  (with-redefs [common/load-steps (constantly [{:id "step1" :step_number 1}])]
+    (try+
+     (common/validate-sensitive-params "version" {:config config}
+                                       (common/build-default-values-map params)
+                                       (group-by :step_id params))
+     nil
+     (catch map? e e))))
+
+(defn- required-secret
+  []
+  (assoc (env-param "SECRET_VAR" nil :sensitive? true :id "secret") :required true :label "Secret"))
+
+(deftest test-validate-sensitive-params-rejects-missing-required-value
+  (testing "A required sensitive param with no value (e.g. rebuilt from a stored submission) is refused"
+    (let [error (validation-error {} [(required-secret)])]
+      (is (= :clojure-commons.exception/bad-request (:type error)))
+      (is (re-find #"Secret" (:error error)))))
+  (testing "A blank value is refused too"
+    (is (some? (validation-error {:step1_secret ""} [(required-secret)])))))
+
+(deftest test-validate-sensitive-params-allows-present-or-optional-values
+  (testing "A required sensitive param with a value is accepted"
+    (is (nil? (validation-error {:step1_secret "hunter2"} [(required-secret)]))))
+  (testing "An optional sensitive param without a value is accepted"
+    (is (nil? (validation-error {} [(assoc (required-secret) :required false)]))))
+  (testing "Required non-sensitive params aren't this check's concern"
+    (is (nil? (validation-error {} [(assoc (env-param "PLAIN" nil :id "plain") :required true)])))))

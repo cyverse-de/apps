@@ -9,6 +9,7 @@
    [apps.tools :as t]
    [apps.util.assertions :refer [assert-not-nil]]
    [apps.util.conversions :refer [remove-nil-vals]]
+   [clojure-commons.exception-util :as cxu]
    [clojure.set :as set]
    [clojure.string :as string]
    [kameleon.uuids :refer [uuid]]
@@ -49,11 +50,33 @@
       [[(:name param) value]]
       [])))
 
+(defn- environment-params
+  "Returns the EnvironmentVariable-typed params, split into [non-sensitive
+   sensitive] by :is_sensitive. See also build-sensitive-environment."
+  [params]
+  ((juxt remove filter) #(:is_sensitive %)
+                        (filter #(= (:type %) util/environment-variable-type) params)))
+
 (defn build-environment
   [config default-values params]
-  (->> (filter #(= (:type %) util/environment-variable-type) params)
+  (->> (first (environment-params params))
        (mapcat (partial build-environment-entries config default-values))
        (into {})))
+
+(defn build-sensitive-environment
+  "Builds the map of sensitive EnvironmentVariable-typed params for a step.
+   See also cyverse-de/app-exposer's VICESpec.SensitiveEnvironment."
+  [config default-values params]
+  (->> (second (environment-params params))
+       (mapcat (partial build-environment-entries config default-values))
+       (into {})))
+
+(defn- validate-sensitive-param-value
+  [config default-values {:keys [label name required] :as param}]
+  (when (and required (not (util/not-blank? (params/value-for-param config default-values param))))
+    (cxu/bad-request (str "The sensitive parameter " (or label name) " requires a value. Sensitive values aren't "
+                          "stored, so they have to be entered again each time an analysis is launched.")
+                     :parameter (or name label))))
 
 (defn- reconcile-gpu-models
   "Returns the effective GPU model list for a job step.
@@ -127,12 +150,13 @@
         step_requirements (first (filter #(= (:step_number step) (:step_number %)) requirements))]
     (conj steps
           (remove-nil-vals
-           {:component   (.buildComponent request-builder step step_requirements)
-            :environment (.buildEnvironment request-builder step)
-            :config      (dissoc config :stdout :stderr)
-            :stdout      stdout
-            :stderr      stderr
-            :type        "condor"}))))
+           {:component             (.buildComponent request-builder step step_requirements)
+            :environment           (.buildEnvironment request-builder step)
+            :sensitive_environment (.buildSensitiveEnvironment request-builder step)
+            :config                (dissoc config :stdout :stderr)
+            :stdout                stdout
+            :stderr                stderr
+            :type                  "condor"}))))
 
 (defn- load-steps
   [app-version-id]
@@ -145,12 +169,27 @@
           (where {:s.app_version_id app-version-id})
           (order :s.step)))
 
+(defn- steps-to-build
+  [app-version-id submission]
+  (->> (load-steps app-version-id)
+       (drop (dec (:starting_step submission 1)))
+       (take-while (comp nil? :external_app_id))))
+
 (defn build-steps
   [request-builder app submission]
-  (->> (load-steps (:version_id app))
-       (drop (dec (:starting_step submission 1)))
-       (take-while (comp nil? :external_app_id))
-       (reduce #(.buildStep request-builder (:requirements submission) %1 %2) [])))
+  (reduce #(.buildStep request-builder (:requirements submission) %1 %2)
+          []
+          (steps-to-build (:version_id app) submission)))
+
+(defn validate-sensitive-params
+  "Sensitive values aren't stored with a job, so a submission rebuilt from a stored one (a later pipeline step, or an
+   old relaunch) has none. Refuses to build a submission whose required sensitive params have no value, rather than
+   launch them empty. params-by-step-id maps each step ID to its params. Runs before the steps are built, because
+   they're built in a future and an exception thrown there would lose its type."
+  [app-version-id submission default-values params-by-step-id]
+  (doseq [{step-id :id} (steps-to-build app-version-id submission)
+          param         (second (environment-params (params-by-step-id step-id)))]
+    (validate-sensitive-param-value (:config submission) default-values param)))
 
 (defn- load-htcondor-extra-requirements
   [app-version-id]

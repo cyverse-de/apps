@@ -7,6 +7,7 @@
    [apps.util.db :refer [transaction]]
    [apps.util.service :as service]
    [cheshire.core :as cheshire]
+   [clojure-commons.exception-util :as cxu]
    [clojure-commons.file-utils :as ft]
    [clojure.tools.logging :as log]
    [kameleon.db :as db]
@@ -119,11 +120,32 @@
      (log/error (:throwable &throw-context) "job step submission failed")
      (when-not (boolean (:parent_id submission)) (throw+)))))
 
+(defn- sensitive-params-from-app-step
+  "Lists the sensitive parameters in the app steps from app-step-number (1-based) onward."
+  [app-version-id app-step-number]
+  (let [step-ids (->> (ap/load-app-steps app-version-id)
+                      (drop (dec app-step-number))
+                      (map :step_id)
+                      set)]
+    (filter (comp step-ids :step_id) (ap/get-sensitive-parameters app-version-id))))
+
+(defn- validate-sensitive-params
+  "Only the first unit of execution is built from the original request. Later ones are built from the stored
+   submission, which has no sensitive values, so a pipeline can only use sensitive parameters in its first unit."
+  [app-version-id job-steps]
+  (when-let [{app-step-number :app_step_number} (second job-steps)]
+    (when (seq (sensitive-params-from-app-step app-version-id app-step-number))
+      (cxu/bad-request
+       (str "Sensitive parameters are only supported in the first step of a pipeline that includes external apps, "
+            "because their values aren't stored for the later steps.")
+       :app_version_id (str app-version-id)))))
+
 (defn submit
   [user clients {system-id :system_id app-id :app_id version-id :app_version_id :as submission}]
   (let [job-id      (uuids/uuid)
         version-id  (or version-id (ap/get-app-latest-version app-id))
         job-steps   (build-job-step-list job-id version-id)
+        _           (validate-sensitive-params version-id job-steps)
         app-info    (service/assert-found (ap/load-app-info app-id) "app" app-id)
         job-info    (build-job-save-info user (ft/build-result-folder-path submission)
                                          job-id system-id version-id app-info submission)
@@ -199,12 +221,25 @@
     (->> (load-mapped-inputs app-steps next-step)
          (add-mapped-inputs-to-config combined-client job submission app-steps))))
 
+(defn- fail-next-step
+  "Marks a pipeline step, and the pipeline, failed without submitting the step."
+  [{job-id :id} {step-number :step_number}]
+  (log/error "job" job-id "step" step-number "uses sensitive parameters, whose values aren't stored; failing it")
+  (let [end-date (db/now)]
+    (jp/update-job-step-number job-id step-number {:status jp/failed-status :end_date end-date})
+    (jp/update-job job-id jp/failed-status end-date)))
+
 (defn- submit-next-step
+  "Submits the next step of a pipeline from the stored submission. That submission has no sensitive values, so a step
+   that needs them fails instead of launching without them. Pipelines submitted since sensitive parameters were
+   restricted to the first step only reach that case if the app was edited while the pipeline ran."
   [combined-client clients job {:keys [job_id step_number]}]
   (let [next-step (jp/get-job-step-number job_id (inc step_number))]
-    (->> (cheshire/decode (.getValue (:submission job)) true)
-         (add-mapped-inputs combined-client job next-step)
-         (submit-job-step (cu/apps-client-for-job-step clients next-step) job next-step))))
+    (if (seq (sensitive-params-from-app-step (:app_version_id job) (:app_step_number next-step)))
+      (fail-next-step job next-step)
+      (->> (cheshire/decode (.getValue (:submission job)) true)
+           (add-mapped-inputs combined-client job next-step)
+           (submit-job-step (cu/apps-client-for-job-step clients next-step) job next-step)))))
 
 (defn- handle-next-step-submission
   [combined-client clients job {:keys [step_number] :as job-step} max-step-number status]

@@ -102,11 +102,14 @@
     (map (partial format-job-param-for-value full-param-id default-value param) values)))
 
 (defn get-parameter-values
+  "Lists the parameter values used by a job. Sensitive parameters are left out entirely: their values aren't stored,
+   and submissions saved before that was the case may still hold them."
   [apps-client {system-id :system_id app-id :app_id app-version-id :app_version_id :as job}]
   (let [config (:config (get-job-submission job))]
     (->> (.getParamDefinitions apps-client system-id app-id app-version-id)
          (remove-mapped-params app-version-id)
          (remove omit-param?)
+         (remove :is_sensitive)
          (mapcat (partial format-job-param config)))))
 
 (defn- get-prop-value
@@ -123,10 +126,11 @@
    behavior is a little bit different for input properties because we have to worry about file permissions. If the
    input property value is specified in the saved job submission then the corresponding value will be used provided
    that the user has permission to read all of the associated paths. If the user does not have permission to read all
-   of the paths then no paths will be selected by default, even if the app itself specifies default input paths."
-  [user config {:keys [id] :as prop}]
+   of the paths then no paths will be selected by default, even if the app itself specifies default input paths.
+   Sensitive properties are never pre-filled from a saved submission, so the user has to enter them again."
+  [user config {:keys [id is_sensitive] :as prop}]
   (remove-nil-vals
-   (if (contains? config (keyword id))
+   (if (and (not is_sensitive) (contains? config (keyword id)))
      (let [prop-value (get-prop-value user config prop)]
        (assoc prop
               :value        prop-value

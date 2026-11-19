@@ -240,9 +240,18 @@
       (cxu/bad-request reason)
       (cxu/internal-system-error reason))))
 
+(defn- redact-submission-for-log
+  "Removes sensitive parameter values from a raw submission before it's logged. If they can't be identified (e.g. the
+   app doesn't exist, which submission will report shortly), all parameter values are left out instead."
+  [submission]
+  (try
+    (jp/redact-submission submission)
+    (catch Exception _
+      (dissoc submission :config :job_config))))
+
 (defn submit-job
   [{username :shortUsername email :email :as user} submission]
-  (json-util/log-json "submission" submission)
+  (json-util/log-json "submission" redact-submission-for-log submission)
   (let [job-info (jobs/submit (get-apps-client user) user submission)]
     (cn/send-job-status-update username email job-info)
     ;; For standalone jobs that failed, throw HTTP error with reason
