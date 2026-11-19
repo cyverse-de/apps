@@ -2,11 +2,13 @@
   "Functions for storing and retrieving information about jobs that the DE has
    submitted to any excecution service."
   (:require [apps.constants :as c]
+            [apps.persistence.app-listing :refer [get-app-listing]]
+            [apps.persistence.app-metadata :refer [get-sensitive-parameters]]
             [apps.persistence.entities :refer [job-status-updates]]
             [apps.persistence.users :refer [get-user-id]]
             [apps.util.config :as config]
             [apps.util.db :as db]
-            [apps.util.redactions :refer [redact-sensitive-environment]]
+            [apps.util.redactions :as redactions]
             [cheshire.core :as cheshire]
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
@@ -16,7 +18,7 @@
             [honey.sql :as hsql]
             [honey.sql.helpers :as h]
             [kameleon.db :refer [now-str]]
-            [kameleon.uuids :refer [uuidify]]
+            [kameleon.uuids :refer [is-uuid? uuidify]]
             [korma.core :as sql]
             [permissions-client.core :as pc])
   (:refer-clojure :exclude [count max]))
@@ -231,14 +233,43 @@
       first
       :status))
 
+(def ^:private de-system-ids #{de-client-name interactive-client-name osg-client-name})
+
+(defn- app-version-id-for
+  "Determines the DE app version a job or submission refers to, falling back to the app's latest version. Returns nil
+   for apps outside the DE."
+  [{system-id :system_id app-id :app_id app-version-id :app_version_id}]
+  (when (de-system-ids system-id)
+    (cond
+      (is-uuid? app-version-id) app-version-id
+      (is-uuid? app-id)         (:version_id (get-app-listing (uuidify app-id))))))
+
+(defn sensitive-config-keys
+  "Returns the set of submission config keys that hold sensitive parameter values for the app version referred to by
+   app-info, a job or submission map with :system_id, :app_id and (optionally) :app_version_id. Apps outside the DE
+   have no sensitive parameters."
+  [app-info]
+  (if-let [app-version-id (app-version-id-for app-info)]
+    (redactions/sensitive-config-keys (get-sensitive-parameters app-version-id))
+    #{}))
+
+(defn redact-submission
+  "Removes sensitive parameter values from a job submission, using the app version referred to by app-info (which
+   defaults to the submission itself). See apps.util.redactions/redact-submission."
+  ([submission]
+   (redact-submission submission submission))
+  ([submission app-info]
+   (redactions/redact-submission submission (sensitive-config-keys app-info))))
+
 (defn save-job
-  "Saves information about a job in the database."
+  "Saves information about a job in the database. Sensitive parameter values are removed from the submission before
+   it's stored."
   [{system-id :system_id username :username :as job-info} submission]
   (-> (select-keys job-info job-fields)
       (assoc :job_type_id (job-type-id-from-system-id system-id)
              :user_id     (get-user-id username))
       remove-nil-values
-      (save-job-with-submission (cheshire/encode (redact-sensitive-environment submission)))))
+      (save-job-with-submission (cheshire/encode (redact-submission submission job-info)))))
 
 (defn save-job-step
   "Saves a single job step in the database."

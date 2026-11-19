@@ -15,6 +15,7 @@
         params     (mp/load-app-params version-id)
         defaults   (ca/build-default-values-map params)
         params     (group-by :step_id params)]
+    (ca/validate-sensitive-params version-id submission defaults params)
     (apps.service.apps.de.jobs.condor.JobRequestFormatter.
      user email submission app io-maps defaults params)))
 

@@ -1,6 +1,7 @@
 (ns apps.service.apps.jobs.resubmit
   (:require
    [apps.clients.data-info :as data-info]
+   [apps.persistence.jobs :as jp]
    [apps.service.apps.jobs.submissions :as submissions]
    [apps.service.apps.jobs.submissions.async :as async]
    [cheshire.core :as cheshire]
@@ -73,8 +74,19 @@
       format-resubmission-output-dir
       format-resubmission-name))
 
+(defn- validate-no-sensitive-params
+  "Sensitive parameter values aren't stored with a job, so a job that has any can't be resubmitted from its stored
+   submission. The user has to relaunch it from the launch form and enter the values again."
+  [jobs]
+  (when-let [job-ids (seq (map :id (filter (comp seq jp/sensitive-config-keys) jobs)))]
+    (exception-util/bad-request
+     (str "One or more analyses use sensitive parameters, whose values aren't stored. Relaunch them from the launch "
+          "form instead, and enter the sensitive values again.")
+     :job-ids job-ids)))
+
 (defn resubmit-jobs
   [apps-client user jobs]
+  (validate-no-sensitive-params jobs)
   (let [jobs                  (map (comp format-resubmission decode-job-submission) jobs)
         [ht-jobs single-jobs] ((juxt filter remove) :is_batch jobs)
         existing-output-dirs  (find-existing-output-dirs user jobs)]

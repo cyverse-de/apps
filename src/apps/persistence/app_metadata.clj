@@ -986,6 +986,7 @@
                   :p.is_visible
                   :p.ordering
                   :p.omit_if_blank
+                  :p.is_sensitive
                   [:p.parameter_type :type]
                   :p.value_type
                   :p.is_implicit
@@ -1000,6 +1001,15 @@
           (join [:app_versions :v]
                 {:v.id :s.app_version_id})
           (where {:v.id app-version-id})))
+
+(defn get-sensitive-parameters
+  "Lists the step and parameter IDs of the sensitive parameters in an app version."
+  [app-version-id]
+  (select [:task_param_listing :p]
+          (join [:app_steps :s] {:s.task_id :p.task_id})
+          (fields [:s.id :step_id] :p.id :p.is_sensitive)
+          (where {:s.app_version_id (uuidify app-version-id)
+                  :p.is_sensitive   true})))
 
 (defn get-app-names
   [app-ids]

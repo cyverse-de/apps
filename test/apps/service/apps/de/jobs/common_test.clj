@@ -1,7 +1,8 @@
 (ns apps.service.apps.de.jobs.common-test
   (:require
    [apps.service.apps.de.jobs.common :as common]
-   [clojure.test :as t :refer [deftest is testing]]))
+   [clojure.test :as t :refer [deftest is testing]]
+   [slingshot.slingshot :refer [try+]]))
 
 (deftest test-reconcile-container-requirements-includes-gpus
   (testing "Container requirements reconciliation includes GPU fields"
@@ -204,3 +205,38 @@
     (let [params         [(env-param "PLAIN_VAR" "plain-value")]
           default-values (common/build-default-values-map params)]
       (is (= {} (common/build-sensitive-environment {} default-values params))))))
+
+;; ---------------------------------------------------------------------------
+;; validate-sensitive-params — required sensitive values must be present
+;; ---------------------------------------------------------------------------
+
+(defn- validation-error
+  "Runs validate-sensitive-params against a single DE step and returns the thrown error map, or nil."
+  [config params]
+  (with-redefs [common/load-steps (constantly [{:id "step1" :step_number 1}])]
+    (try+
+     (common/validate-sensitive-params "version" {:config config}
+                                       (common/build-default-values-map params)
+                                       (group-by :step_id params))
+     nil
+     (catch map? e e))))
+
+(defn- required-secret
+  []
+  (assoc (env-param "SECRET_VAR" nil :sensitive? true :id "secret") :required true :label "Secret"))
+
+(deftest test-validate-sensitive-params-rejects-missing-required-value
+  (testing "A required sensitive param with no value (e.g. rebuilt from a stored submission) is refused"
+    (let [error (validation-error {} [(required-secret)])]
+      (is (= :clojure-commons.exception/bad-request (:type error)))
+      (is (re-find #"Secret" (:error error)))))
+  (testing "A blank value is refused too"
+    (is (some? (validation-error {:step1_secret ""} [(required-secret)])))))
+
+(deftest test-validate-sensitive-params-allows-present-or-optional-values
+  (testing "A required sensitive param with a value is accepted"
+    (is (nil? (validation-error {:step1_secret "hunter2"} [(required-secret)]))))
+  (testing "An optional sensitive param without a value is accepted"
+    (is (nil? (validation-error {} [(assoc (required-secret) :required false)]))))
+  (testing "Required non-sensitive params aren't this check's concern"
+    (is (nil? (validation-error {} [(assoc (env-param "PLAIN" nil :id "plain") :required true)])))))

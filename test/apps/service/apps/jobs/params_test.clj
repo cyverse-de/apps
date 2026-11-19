@@ -1,7 +1,10 @@
 (ns apps.service.apps.jobs.params-test
   (:require
+   [apps.protocols]
    [apps.service.apps.jobs.params :as params]
-   [clojure.test :as t :refer [deftest is testing]]))
+   [cheshire.core :as cheshire]
+   [clojure.test :as t :refer [deftest is testing]])
+  (:import [org.postgresql.util PGobject]))
 
 ;; ---------------------------------------------------------------------------
 ;; update-resource-reqs — step matching and key renaming
@@ -65,3 +68,41 @@
           "Renamed max_gpus from request should be present")
       (is (= ["A16"] (:default_gpu_models result))
           "Renamed gpu_models from request should be present"))))
+
+;; ---------------------------------------------------------------------------
+;; Sensitive parameters on relaunch and in parameter value listings
+;; ---------------------------------------------------------------------------
+
+(deftest test-update-prop-does-not-prefill-sensitive-props
+  (testing "update-prop never pre-fills a sensitive property from a saved submission's config"
+    (let [config {:step1_secret "hunter2" :step1_plain "visible"}
+          prop   {:id "step1_secret" :type "EnvironmentVariable" :is_sensitive true :required true}
+          result (#'params/update-prop {:username "test"} config prop)]
+      (is (= prop result) "The sensitive property must come back unchanged")
+      (is (not (contains? result :value)))
+      (is (not (contains? result :defaultValue)))))
+  (testing "update-prop still pre-fills non-sensitive properties"
+    (let [result (#'params/update-prop {:username "test"} {:step1_plain "visible"}
+                                       {:id "step1_plain" :type "EnvironmentVariable"})]
+      (is (= "visible" (:value result)))
+      (is (= "visible" (:defaultValue result))))))
+
+(defn- json-pgobject
+  [v]
+  (doto (PGobject.)
+    (.setType "json")
+    (.setValue (cheshire/encode v))))
+
+(deftest test-get-parameter-values-omits-sensitive-params
+  (testing "get-parameter-values leaves sensitive params out, even if an old submission stored their values"
+    (let [param-defs  [{:id "secret" :step_id "step1" :type "EnvironmentVariable" :label "Secret"
+                        :is_sensitive true}
+                       {:id "plain" :step_id "step1" :type "EnvironmentVariable" :label "Plain"}]
+          apps-client (reify apps.protocols.Apps
+                        (getParamDefinitions [_ _ _ _] param-defs))
+          job         {:system_id  "de"
+                       :app_id     "app"
+                       :submission (json-pgobject {:config {:step1_secret "hunter2" :step1_plain "visible"}})}
+          result      (params/get-parameter-values apps-client job)]
+      (is (= ["step1_plain"] (map :full_param_id result)))
+      (is (not-any? #(= "hunter2" (get-in % [:param_value :value])) result)))))
